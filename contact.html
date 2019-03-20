@@ -52,26 +52,41 @@
   
   
 
-  <main id="contact">
-    <h1 class="lg-heading">
-      Contact
-      <span class="text-secondary">Me</span>
-    </h1>
-    <h2 class="sm-heading">
-      This is how you can reach me...
-    </h2>
-    <div class="boxes">
-      <div>
-        <span class="text-secondary">Email: </span> jayjeetchakraborty25@gmail.com
-      </div>
-      <div>
-        <span class="text-secondary">Phone: </span> (+91) 8436500886
-      </div>
-      <div>
-        <span class="text-secondary">Address: </span> 117, Hall 2 , National Institute Of Technology, Durgapur , West Bengal , India
-      </div>
-    </div>
-  </main>
+  <form action="//submit.form" id="ContactUs100" method="post" onsubmit="return ValidateForm(this);">
+<script type="text/javascript">
+function ValidateForm(frm) {
+if (frm.Name.value == "") { alert('Name is required.'); frm.Name.focus(); return false; }
+if (frm.FromEmailAddress.value == "") { alert('Email address is required.'); frm.FromEmailAddress.focus(); return false; }
+if (frm.FromEmailAddress.value.indexOf("@") < 1 || frm.FromEmailAddress.value.indexOf(".") < 1) { alert('Please enter a valid email address.'); frm.FromEmailAddress.focus(); return false; }
+if (frm.Comments.value == "") { alert('Please enter comments or questions.'); frm.Comments.focus(); return false; }
+return true; }
+</script>
+<table style="width:550px;border:0;" cellpadding="8" cellspacing="0">
+<tr> <td>
+<label for="Name">Name*:</label>
+</td> <td>
+<input name="Name" type="text" maxlength="60" style="width:250px;" />
+</td> </tr> <tr> <td>
+<label for="PhoneNumber">Phone number:</label>
+</td> <td>
+<input name="PhoneNumber" type="text" maxlength="43" style="width:250px;" />
+</td> </tr> <tr> <td>
+<label for="FromEmailAddress">Email address*:</label>
+</td> <td>
+<input name="FromEmailAddress" type="text" maxlength="90" style="width:250px;" />
+</td> </tr> <tr> <td>
+<label for="Comments">Comments*:</label>
+</td> <td>
+<textarea name="Comments" rows="7" cols="40" style="width:350px;"></textarea>
+</td> </tr> <tr> <td>
+* - required fields
+</td> <td>
+<div style="float:right"><a href="https://www.100forms.com" id="lnk100" title="form to email">form to email</a></div>
+<input name="skip_Submit" type="submit" value="Submit" />
+<script src="https://www.100forms.com/js/FORMKEY:RZCH7UZEMD5L/SEND:my@email.com" type="text/javascript"></script>
+</td> </tr>
+</table>
+</form>
   
   
   
