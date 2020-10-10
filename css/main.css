@@ -95,7 +95,6 @@ body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5; }
-background: url(../img/background.png);
   body#bg-img {
     background: url(../img/background.png);
     background-attachment: fixed;
