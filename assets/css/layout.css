@@ -20,11 +20,12 @@
 }
 .site-header__inner {
   display: flex; align-items: center; gap: var(--sp-4);
-  min-height: 4rem;
+  min-height: 5rem;
 }
 .brand {
-  font-weight: 700; letter-spacing: -.02em; color: var(--c-text);
-  text-decoration: none; font-size: var(--fs-md); white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 700; letter-spacing: -.01em; color: var(--c-text);
+  text-decoration: none; font-size: var(--fs-lg); white-space: nowrap;
 }
 .brand:hover { color: var(--c-accent); }
 
@@ -43,7 +44,8 @@
 .site-nav a {
   display: block; padding: var(--sp-2) var(--sp-3);
   border-radius: var(--radius); text-decoration: none;
-  color: var(--c-text-mute); font-size: var(--fs-sm); font-weight: 550;
+  color: var(--c-text-mute); font-size: var(--fs-xs); font-weight: 600;
+  text-transform: uppercase; letter-spacing: var(--tracking-caps);
   transition: color var(--transition), background var(--transition);
 }
 .site-nav a:hover { color: var(--c-text); background: var(--c-surface-2); }

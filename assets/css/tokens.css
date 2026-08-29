@@ -23,6 +23,8 @@
                "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
                "Liberation Mono", monospace;
+  /* Editorial display face: h1/h2 only. Body never uses it. */
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
 
   /* 1.250 major third, fluid */
   --fs-xs:   0.79rem;
@@ -33,6 +35,8 @@
   --fs-xl:   clamp(1.55rem, 1.2vw + 1.30rem, 2.00rem);
   --fs-2xl:  clamp(1.95rem, 2.2vw + 1.50rem, 2.75rem);
   --fs-3xl:  clamp(2.40rem, 3.5vw + 1.70rem, 3.50rem);
+  --fs-display: clamp(2.6rem, 4.5vw + 1.6rem, 4.25rem);  /* featured hero only */
+  --tracking-caps: .08em;
 
   --lh-tight: 1.2;
   --lh-body:  1.65;

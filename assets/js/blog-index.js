@@ -8,9 +8,9 @@
 
   var T = {
     en: { empty: 'No posts published yet.', fail: 'Could not load posts.',
-          min: ' min read', all: 'All' },
+          min: ' min read', all: 'All', by: 'By Engin Bozaba' },
     tr: { empty: 'Henüz yazı yayımlanmadı.', fail: 'Yazılar yüklenemedi.',
-          min: ' dk okuma', all: 'Tümü' }
+          min: ' dk okuma', all: 'Tümü', by: 'Yazan: Engin Bozaba' }
   }[LANG];
 
   var listEl = document.getElementById('post-list');
@@ -41,14 +41,15 @@
     if (!shown.length) { statusEl.hidden = false; statusEl.textContent = T.empty; return; }
     statusEl.hidden = true;
 
-    shown.forEach(function (p) {
-      var li = el('li', 'post-item');
+    shown.forEach(function (p, i) {
+      var li = el('li', i === 0 ? 'post-item post-item--lead' : 'post-item');
       var h2 = el('h2', 'post-item__title');
       var a = el('a', null, p.title);
       a.href = BASE + '/post.html?slug=' + encodeURIComponent(p.slug);
       h2.appendChild(a);
 
-      var meta = el('div', 'post-item__meta');
+      var meta = el('div', 'post-item__meta byline');
+      meta.appendChild(el('span', 'byline__name', T.by));
       var time = el('time', null, fmtDate(p.date));
       time.setAttribute('datetime', p.date);
       meta.appendChild(time);

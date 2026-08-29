@@ -17,6 +17,8 @@ body {
 img, picture, svg, video { display: block; max-width: 100%; height: auto; }
 
 h1, h2, h3, h4 { line-height: var(--lh-tight); font-weight: 650; letter-spacing: -.015em; }
+/* Editorial: display levels take the serif; h3/h4 stay sans as functional subheads. */
+h1, h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -.01em; }
 h1 { font-size: var(--fs-3xl); }
 h2 { font-size: var(--fs-2xl); }
 h3 { font-size: var(--fs-xl); }

@@ -16,12 +16,12 @@
   var T = {
     en: { notFound: 'Post not found.', failIndex: 'Could not load the post index.',
           jekyll: 'Content failed to load. (Is .nojekyll present at repo root?)',
-          min: ' min read', noTrans: 'This post is not available in English.',
+          min: ' min read', by: 'By Engin Bozaba', noTrans: 'This post is not available in English.',
           noTransNotice: 'This post has no English version yet.',
           allPosts: 'All English posts' },
     tr: { notFound: 'Yazı bulunamadı.', failIndex: 'Yazı dizini yüklenemedi.',
           jekyll: 'İçerik yüklenemedi. (.nojekyll deposu kökünde var mı?)',
-          min: ' dk okuma', noTrans: 'Bu yazı Türkçe olarak mevcut değil.',
+          min: ' dk okuma', by: 'Yazan: Engin Bozaba', noTrans: 'Bu yazı Türkçe olarak mevcut değil.',
           noTransNotice: 'Bu yazının henüz Türkçe çevirisi yok.',
           allPosts: 'Tüm Türkçe yazılar' }
   };
@@ -130,6 +130,14 @@
             if (/^\s*<(!doctype|html)\b/i.test(md)) throw new Error('jekyll');
 
             document.getElementById('post-title').textContent = meta.title;
+
+            var eyebrow = document.getElementById('post-eyebrow');
+            if (eyebrow && (meta.tags || []).length) {
+              eyebrow.textContent = meta.tags[0];
+              eyebrow.hidden = false;
+            }
+            var bylineEl = document.getElementById('post-byline');
+            if (bylineEl) bylineEl.textContent = t.by;
 
             var timeEl = document.getElementById('post-date');
             timeEl.textContent = fmtDate(meta.date);

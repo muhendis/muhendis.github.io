@@ -159,3 +159,50 @@ a.tag:hover { border-color: var(--c-accent); }
   background: var(--c-accent-subtle); border-radius: var(--radius-sm);
   padding: var(--sp-1) var(--sp-3); align-self: flex-start;
 }
+
+/* ---- Editorial system ---- */
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs); font-weight: 700;
+  text-transform: uppercase; letter-spacing: var(--tracking-caps);
+  color: var(--c-accent); margin-bottom: var(--sp-2);
+}
+
+.section-label {
+  display: flex; align-items: center; gap: var(--sp-4);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm); font-weight: 700;
+  text-transform: uppercase; letter-spacing: var(--tracking-caps);
+  margin-bottom: var(--sp-6);
+}
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--c-border); }
+
+/* Featured hero (inserted by home.js when a published post exists) */
+.featured { padding-block: var(--sp-10) var(--sp-8); }
+.featured__title { font-size: var(--fs-display); line-height: 1.08; max-width: 24ch; }
+.featured__title a { color: var(--c-text); text-decoration: none; }
+.featured__title a:hover { color: var(--c-accent); }
+.featured__summary {
+  font-size: var(--fs-md); color: var(--c-text-mute);
+  max-width: 52ch; margin-top: var(--sp-4);
+}
+
+.byline { font-size: var(--fs-sm); color: var(--c-text-mute); margin-top: var(--sp-4); }
+.byline__name { color: var(--c-text); font-weight: 600; }
+
+/* About hero demoted below the featured story */
+.has-featured .hero { padding-block: var(--sp-8); border-top: 1px solid var(--c-border); }
+.has-featured .hero__cover { display: none; }
+.has-featured .hero__body { margin-top: 0; }
+.has-featured .hero__avatar { width: 6rem; height: 6rem; }
+.has-featured .hero__text { padding-top: 0; }
+.has-featured .hero__name { font-size: var(--fs-2xl); }
+
+/* Post page editorial header */
+.post-header { border-bottom-width: 2px; }
+.post-header h1 { font-size: var(--fs-3xl); }
+
+/* Blog index: lead story + grid */
+.post-list { grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--sp-6); }
+.post-item--lead { grid-column: 1 / -1; border-bottom-width: 2px; }
+.post-item--lead .post-item__title { font-size: var(--fs-2xl); }
