@@ -219,23 +219,57 @@ Bütün 3. bölüm, tek kartta:
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Transformer, bu bloğun onlarca-yüzü aşkın kez üst üste konmuşudur — ve her katman vektörleri değiştirmek yerine *düzenler* (bunun uygulanışı **residual bağlantılardır**: katmanın çıktısı girdisinin yerine geçmez, üstüne *eklenir*); anlam böylece birikir:
-*tilki* önce *kahverengi-hızlı-tilki*, sonra *harekete geçmek üzere olan
-özne* olur, katman katman. Her katmanın içinde attention bağlamı toplar
-(kütüphaneci), **ileri beslemeli ağ** ise — her token'a tek tek uygulanan
-küçük bir ağ — "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri
-depolar (ambar; **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı ve dil bilgisini üstlenir; derin katmanlar olguları ve uzun menzilli mantığı — banyoda beliren bir fotoğraf gibi: önce hatlar, sonra yüzler.
-GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü modeller bugün
-trilyonlara varıyor — modern bir dokunuş olan **mixture of experts (MoE)**
-ise tek ambar yerine birçoğunu kurar ve bir yönlendirici her token'ı en iyi
-bir-iki tanesine gönderir: devasa toplam kapasite, token başına bunun
-yalnızca bir kesri hesaplama öder.
+Bir attention alt katmanı artı bir ileri beslemeli alt katman: bu ikili
+bir **katmandır** ve transformer, bu katmanın onlarca-yüzü aşkın kez üst
+üste konmuşudur. Neden üst üste? Çünkü tek geçiş, her kelimeye yalnızca
+bir tur bağlam toplama hakkı tanır. Üst üste geçişler anlamı biriktirir:
+ilk katmanlardan sonra *tilki*, *kahverengi-hızlı-tilki* olmuştur; derin
+katmanlardan sonra, *harekete geçmek üzere olan özne*.
 
-En tepede **softmax** — attention'ın kullandığı yüzde çeviricinin aynısı —
-son puanları, modelin bildiği her token için bir olasılığa çevirir. "Bir
-varmış bir"den sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra
-yüzlerce şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru
-cevabıdır: *sırada ne gelmesi muhtemel?*
+Üst üste koymanın tek kuralı vardır: katman, vektörlerin yerine yenisini
+*koymaz* — onları *düzenler*. Bunun adı **residual bağlantıdır**: her
+katmanın çıktısı, girdisinin üstüne *eklenir*; kitabın kenar boşluğuna
+düşülen notlar gibi. Önceki katmanların kurduğu hiçbir şey silinmez;
+incelikler birikir.
+
+Her katmanın içinde iki alt katman işi paylaşır. **Attention**, bilgiyi
+kelimeler *arasında* taşır — kütüphaneci: her kelimeye ihtiyacı olan
+bağlamı getirir. **İleri beslemeli ağ** ise her kelimeyi *tek başına*
+sindirir, etrafına bakmadan — ambar: eğitimin örüntülerini bıraktığı
+yer, "Paris, Fransa ile eşleşir" gibi. Modelin **parametrelerinin** —
+öğrenilmiş sayılarının — kabaca üçte ikisi bu ambarlarda durur. Bölümün
+başlığı da böylece cevaplanmış olur: bir LLM'in bilgisi,
+gösterebileceğiniz bir cümlede yaşamaz; milyarlarca ileri-besleme
+ağırlığına yayılmıştır.
+
+Katmanlara görevlerini kimse dağıtmaz; iş bölümü eğitimden kendiliğinden
+doğar. İlk katmanlar yazımı ve dil bilgisini üstlenir; derin katmanlar
+olguları ve uzun menzilli mantığı — banyoda beliren bir fotoğraf gibi:
+önce hatlar, sonra yüzler.
+
+Büyümek de bu yüzden çoğunlukla ambarı büyütmektir. GPT-2, 2019'da 1,5
+milyar parametreyle manşet olmuştu; öncü modeller bugün trilyonlara
+varıyor. Modern bir dokunuş olan **mixture of experts (MoE)**, katman
+başına birçok ambar kurar ve küçük bir yönlendiriciyi her token'ı en iyi
+bir-iki tanesine gönderecek şekilde eğitir: devasa toplam kapasite, ama
+her token bunun yalnızca bir kesrini öder.
+
+Makineyi tamamlayan tek soru kaldı: vektör düzenleyicilerden oluşan bir
+yığın, nasıl olup da bir *tahmin* üretir? En tepede model, **son**
+token'ın nihai vektörünü alır — onca katmandan sonra bu vektör artık tek
+bir kelimeyi değil, oraya varan bağlamın tamamını kodlar. Sonra bu tek
+vektör, modelin bildiği her token'la puanlanır; hamle, attention'ın
+kullandığının aynısıdır — bir iç çarpım. Üstelik birçok modelde puanlama,
+2. bölümdeki embedding tablosunun ta kendisiyle yapılır, bu kez
+tersinden:
+
+> puan(aday) = son vektör · adayın embedding'i — modelin bildiği her token'a bir puan (GPT-2'de ~50.000 tane)
+
+**Softmax** — attention'daki yüzde çeviricinin aynısı (3. Adım) — bu
+puanları, toplamı %100 eden olasılıklara çevirir. "Bir varmış bir"den
+sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra yüzlerce
+şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru cevabıdır:
+*sırada ne gelmesi muhtemel?*
 
 ## 5. Eğitim ve ölçek
 

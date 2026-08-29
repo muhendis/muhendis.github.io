@@ -223,22 +223,54 @@ All of section 3, on one card:
 
 ## 4. Layers: where knowledge lives
 
-A transformer is this block stacked dozens to a hundred-plus times — and
-each layer *edits* the vectors rather than replacing them (implemented as **residual connections**: a layer's output is *added* to its input, never substituted), so meaning accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
-layer by layer. Inside every layer, attention gathers context (the
-librarian) while a **feed-forward network** — a small network applied to
-each token on its own — stores learned patterns like "Paris pairs with
-France" (the warehouse; most **parameters** live here). Early layers handle spelling and grammar; deeper layers, facts and long-range logic — like a photograph developing in the tray: outlines first, faces later. GPT-2 made
-news in 2019 with 1.5 billion parameters; frontier models now run to the
-trillions — and a modern twist, **mixture of experts (MoE)**, builds many
-warehouses and lets a router send each token to its best one or two: huge
-total capacity, only a fraction of it paying compute per token.
+One attention sub-layer plus one feed-forward sub-layer: that pair is a
+**layer**, and a transformer is this layer stacked dozens to a
+hundred-plus times. Why stack? Because a single pass gives each word only
+one round of context-gathering. Stacked passes let meaning build: after
+the early layers, *fox* has become *brown-quick-fox*; after the deep
+ones, *the subject about to act*.
 
-At the very top, **softmax** — the same percentage converter attention
-uses — turns the final scores into a probability for every token the model
-knows. After "Once upon a", the mass piles onto "time". After "My favorite
-city is", it spreads across hundreds of cities. Both correctly answer the
-only question the model ever answers: *what likely comes next?*
+The stacking follows one rule: a layer never *replaces* the vectors — it
+*edits* them. This is the **residual connection**: each layer's output is
+*added* on top of its input, like notes in a book's margin. Nothing an
+earlier layer built gets erased, so refinements accumulate.
+
+Inside every layer, the two sub-layers split the work. **Attention**
+moves information *between* words — the librarian, fetching each word the
+context it needs. The **feed-forward network** digests each word *alone*,
+no looking around — the warehouse, where training left its patterns:
+"Paris pairs with France". Roughly two-thirds of a model's
+**parameters** — its learned numbers — sit in these warehouses. That
+answers this section's title: an LLM's knowledge lives in no sentence you
+can point to; it is smeared across billions of feed-forward weights.
+
+Nobody assigns the layers their jobs; a division of labor emerges from
+training on its own. Early layers handle spelling and grammar; deep
+layers, facts and long-range logic — like a photograph developing in the
+tray: outlines first, faces later.
+
+Growth, then, mostly means more warehouse. GPT-2 made news in 2019 with
+1.5 billion parameters; frontier models now run to the trillions. A
+modern twist, **mixture of experts (MoE)**, builds many warehouses per
+layer and trains a small router to send each token to the best one or
+two of them: huge total capacity, of which each token pays for only a
+fraction.
+
+One question completes the machine: how does a stack of vector-editors
+produce a *prediction*? At the very top, the model takes the final
+vector of the **last** token — after all those layers, it encodes not
+one word but the whole context that led here. That single vector is then
+scored against every token the model knows, with the same move attention
+uses — a dot product. In many models the scoring even reuses the
+embedding table of section 2, run in reverse:
+
+> score(candidate) = final vector · candidate's embedding — one score per token in the vocabulary (~50,000 of them in GPT-2)
+
+**Softmax** — the same percentage converter as attention's Step 3 —
+turns those scores into probabilities that sum to 100%. After "Once upon
+a", the mass piles onto "time". After "My favorite city is", it spreads
+across hundreds of cities. Both are correct answers to the only question
+the model ever answers: *what likely comes next?*
 
 ## 5. Training and scale
 
