@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Engin Bozaba — AI Engineer</title>
+  <meta name="description" content="Engin Bozaba — Expert AI Engineer at Vodafone, AWS Certified Solutions Architect. Site available in English and Turkish.">
+  <link rel="canonical" href="https://muhendis.github.io/">
+  <link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/">
+  <link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/">
+  <link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Engin Bozaba — AI Engineer">
+  <meta property="og:description" content="Expert AI Engineer at Vodafone. AWS Certified Solutions Architect.">
+  <meta property="og:url" content="https://muhendis.github.io/">
+  <meta property="og:image" content="https://muhendis.github.io/assets/img/og-default.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <script>
+    (function () {
+      try {
+        var s = localStorage.getItem('theme');
+        if (s === 'dark' || s === 'light') document.documentElement.dataset.theme = s;
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+  <main id="main" class="landing">
+    <div>
+      <img class="landing__avatar" src="/assets/img/avatar.png" alt="Engin Bozaba"
+           width="800" height="800">
+      <h1 class="landing__name">Engin Bozaba</h1>
+      <p class="landing__headline">Expert AI Engineer @ Vodafone · AWS Certified Solutions Architect</p>
+      <nav class="landing__choices" aria-label="Choose a language">
+        <a class="btn btn--primary" href="/en/" hreflang="en" lang="en">English</a>
+        <a class="btn btn--ghost" href="/tr/" hreflang="tr" lang="tr">Türkçe</a>
+      </nav>
+    </div>
+  </main>
+  <script>
+    /* First visit only, and only when JS is on: follow the browser language.
+       Never traps the reader -- once they pick a language it is remembered. */
+    (function () {
+      try {
+        if (sessionStorage.getItem('langChosen')) return;
+        sessionStorage.setItem('langChosen', '1');
+        if ((navigator.language || '').toLowerCase().indexOf('tr') === 0) {
+          location.replace('/tr/');
+        }
+      } catch (e) {}
+    })();
+  </script>
+</body>
+</html>

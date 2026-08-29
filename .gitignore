@@ -1,0 +1,20 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# Never ignore .nojekyll or the .github folder -- both are load-bearing.
+
+# Local tooling
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.log
+
+# One-off page scaffolder; output is committed, the script is not part of the site.
+.build/

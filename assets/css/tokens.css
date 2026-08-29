@@ -1,0 +1,100 @@
+/* Design tokens. Light palette on :root; dark redefines the same names.
+   Nothing else in the codebase should hardcode a colour. */
+:root {
+  color-scheme: light dark;
+
+  --c-accent:        #0d7c8a;
+  --c-accent-hover:  #0a6270;
+  --c-accent-subtle: #e6f4f6;
+  --c-accent-2:      #7c5cff;
+
+  --c-bg:        #fbfcfd;
+  --c-surface:   #ffffff;
+  --c-surface-2: #f3f6f8;
+  --c-border:    #dfe4ea;
+  --c-text:      #16202b;  /* 16.0:1 on --c-bg */
+  --c-text-mute: #5a6b7c;  /*  5.3:1 on --c-bg */
+
+  --c-success: #1a7f4b;
+  --c-warn:    #a15c00;
+  --c-danger:  #b3261e;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+               "Liberation Mono", monospace;
+
+  /* 1.250 major third, fluid */
+  --fs-xs:   0.79rem;
+  --fs-sm:   0.889rem;
+  --fs-base: 1rem;
+  --fs-md:   1.125rem;
+  --fs-lg:   clamp(1.25rem, 0.5vw + 1.13rem, 1.44rem);
+  --fs-xl:   clamp(1.55rem, 1.2vw + 1.30rem, 2.00rem);
+  --fs-2xl:  clamp(1.95rem, 2.2vw + 1.50rem, 2.75rem);
+  --fs-3xl:  clamp(2.40rem, 3.5vw + 1.70rem, 3.50rem);
+
+  --lh-tight: 1.2;
+  --lh-body:  1.65;
+  --measure:  68ch;
+
+  --sp-1: .25rem;  --sp-2: .5rem;  --sp-3: .75rem; --sp-4: 1rem;
+  --sp-5: 1.5rem;  --sp-6: 2rem;   --sp-8: 3rem;   --sp-10: 4rem;
+  --sp-12: 6rem;
+
+  --radius-sm: 4px; --radius: 8px; --radius-lg: 14px; --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(16 32 43 / .06);
+  --shadow-md: 0 4px 14px rgb(16 32 43 / .08);
+
+  --container: 72rem;
+  --container-prose: 44rem;
+  --transition: 160ms cubic-bezier(.2,.6,.35,1);
+}
+
+/* Dark tokens. --c-accent MUST brighten: #0d7c8a on #0d1117 is ~3.9:1 and
+   fails AA for body-size link text; #2ed3e4 is ~10.4:1. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-accent:        #2ed3e4;
+    --c-accent-hover:  #6ce3ef;
+    --c-accent-subtle: #10303a;
+    --c-accent-2:      #a58bff;
+
+    --c-bg:        #0d1117;
+    --c-surface:   #151c25;
+    --c-surface-2: #1b242f;
+    --c-border:    #2a3542;
+    --c-text:      #e6edf3;  /* 16.0:1 */
+    --c-text-mute: #9aa9b8;  /*  7.9:1 */
+
+    --c-success: #46c07f;
+    --c-warn:    #d99a2b;
+    --c-danger:  #f2726a;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / .5);
+    --shadow-md: 0 4px 14px rgb(0 0 0 / .6);
+  }
+}
+
+/* Explicit toggle wins over the media query in both directions. */
+:root[data-theme="dark"] {
+  --c-accent:        #2ed3e4;
+  --c-accent-hover:  #6ce3ef;
+  --c-accent-subtle: #10303a;
+  --c-accent-2:      #a58bff;
+
+  --c-bg:        #0d1117;
+  --c-surface:   #151c25;
+  --c-surface-2: #1b242f;
+  --c-border:    #2a3542;
+  --c-text:      #e6edf3;
+  --c-text-mute: #9aa9b8;
+
+  --c-success: #46c07f;
+  --c-warn:    #d99a2b;
+  --c-danger:  #f2726a;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / .5);
+  --shadow-md: 0 4px 14px rgb(0 0 0 / .6);
+}

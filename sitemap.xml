@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://muhendis.github.io/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/publications.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/publications.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/publications.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/publications.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/publications.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/publications.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/publications.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/publications.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/projects.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/projects.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/projects.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/projects.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/projects.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/projects.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/projects.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/projects.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/speaking.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/speaking.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/speaking.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/speaking.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/speaking.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/speaking.html"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/speaking.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/speaking.html"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/"/>
+    <lastmod>2026-08-29</lastmod>
+    <priority>0.8</priority>
+  </url>
+</urlset>

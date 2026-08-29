@@ -1,0 +1,23 @@
+name: Content correction
+description: A typo, broken link, or factual error in a post or page.
+labels: [content]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where is it?
+      description: Page URL, and the heading or paragraph if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: What should it say?
+      description: Quote the current text and the suggested correction.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source (optional)
+      description: A reference supporting the correction, if it is a factual one.

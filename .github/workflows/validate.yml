@@ -1,0 +1,58 @@
+name: Validate site
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check .nojekyll is tracked
+        run: |
+          # Must be tracked by git, not merely present on disk.
+          test "$(git ls-files .nojekyll | wc -l)" -eq 1 \
+            || { echo "::error::.nojekyll is not tracked. Markdown posts will 404 in production."; exit 1; }
+
+      - name: Validate manifests, translations and shared markup
+        run: python3 .github/scripts/validate_site.py
+
+      - name: Check HTML is well-formed
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
+          from html.parser import HTMLParser
+          VOID = {"area","base","br","col","embed","hr","img","input","link",
+                  "meta","param","source","track","wbr"}
+          bad = 0
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.stack=[]; self.problems=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag not in VOID: self.stack.append(tag)
+              def handle_endtag(self, tag):
+                  if tag in VOID: return
+                  if not self.stack or self.stack[-1] != tag:
+                      self.problems.append(f"unexpected </{tag}> (open: {self.stack[-3:]})")
+                  else: self.stack.pop()
+          for f in sorted(pathlib.Path(".").glob("**/*.html")):
+              if ".build" in f.parts: continue
+              p = P(); p.feed(f.read_text(encoding="utf-8"))
+              if p.problems or p.stack:
+                  bad += 1
+                  print(f"::error file={f}::{p.problems or 'unclosed: ' + str(p.stack)}")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Check JavaScript parses
+        run: for f in assets/js/*.js; do node --check "$f" || exit 1; done

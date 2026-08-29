@@ -1,0 +1,80 @@
+/* Reset + element defaults. */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--c-text);
+  background: var(--c-bg);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+img, picture, svg, video { display: block; max-width: 100%; height: auto; }
+
+h1, h2, h3, h4 { line-height: var(--lh-tight); font-weight: 650; letter-spacing: -.015em; }
+h1 { font-size: var(--fs-3xl); }
+h2 { font-size: var(--fs-2xl); }
+h3 { font-size: var(--fs-xl); }
+h4 { font-size: var(--fs-lg); }
+
+p, li { text-wrap: pretty; }
+h1, h2, h3, h4 { text-wrap: balance; }
+
+a { color: var(--c-accent); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+a:hover { color: var(--c-accent-hover); }
+
+/* Never outline:none. Fallback for engines without :focus-visible. */
+:focus { outline: 3px solid var(--c-accent-2); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+:focus-visible { outline: 3px solid var(--c-accent-2); outline-offset: 2px; }
+
+code, pre, kbd, samp { font-family: var(--font-mono); font-size: .9em; }
+
+code {
+  background: var(--c-surface-2);
+  padding: .15em .4em;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c-border);
+}
+
+pre {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  overflow-x: auto;   /* wide code scrolls itself, never the page */
+}
+pre code { background: none; border: 0; padding: 0; }
+
+blockquote {
+  border-left: 3px solid var(--c-accent);
+  padding-left: var(--sp-4);
+  color: var(--c-text-mute);
+  font-style: italic;
+}
+
+hr { border: 0; border-top: 1px solid var(--c-border); margin: var(--sp-8) 0; }
+
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--c-border); }
+th { font-weight: 650; }
+
+ul, ol { padding-left: var(--sp-5); }
+
+button { font: inherit; color: inherit; }
+
+::selection { background: var(--c-accent); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

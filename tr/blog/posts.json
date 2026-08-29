@@ -1,0 +1,16 @@
+{
+  "lang": "tr",
+  "updated": "2026-08-29",
+  "posts": [
+    {
+      "slug": "langgraph-llm-uygulamalari",
+      "title": "LangGraph ile LLM uygulamalarında akış tasarımı",
+      "date": "2026-08-29",
+      "summary": "Zincirden çizgeye geçmek ne kazandırıyor: durumu açık tutmak, dallanma ve ajan tasarımında ölçü.",
+      "tags": ["llm", "langgraph", "langchain"],
+      "readingMinutes": 4,
+      "translationSlug": null,
+      "draft": true
+    }
+  ]
+}

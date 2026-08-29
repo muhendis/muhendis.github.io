@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found — Engin Bozaba</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <script>
+    (function () {
+      try {
+        var s = localStorage.getItem('theme');
+        if (s === 'dark' || s === 'light') document.documentElement.dataset.theme = s;
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+  <main id="main" class="landing">
+    <div>
+      <h1 class="landing__name">404</h1>
+      <p class="landing__headline">
+        This page could not be found. &middot; <span lang="tr">Bu sayfa bulunamadı.</span>
+      </p>
+      <nav class="landing__choices" aria-label="Continue">
+        <a class="btn btn--primary" href="/en/" hreflang="en" lang="en">English home</a>
+        <a class="btn btn--ghost" href="/tr/" hreflang="tr" lang="tr">Türkçe ana sayfa</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

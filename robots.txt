@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Do not disallow /assets/ -- blocking CSS/JS degrades rendered-page evaluation.
+
+Sitemap: https://muhendis.github.io/sitemap.xml

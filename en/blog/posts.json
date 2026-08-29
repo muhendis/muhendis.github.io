@@ -1,0 +1,16 @@
+{
+  "lang": "en",
+  "updated": "2026-08-29",
+  "posts": [
+    {
+      "slug": "retinanet-nuclei-detection",
+      "title": "Detecting nuclei in histopathology with RetinaNet",
+      "date": "2026-08-29",
+      "summary": "Notes on one-stage detection for breast cancer histopathology: why focal loss fits the problem, and what mattered more than the architecture.",
+      "tags": ["computer-vision", "medical-imaging", "pytorch"],
+      "readingMinutes": 4,
+      "translationSlug": null,
+      "draft": true
+    }
+  ]
+}

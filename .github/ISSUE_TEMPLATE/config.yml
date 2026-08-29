@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Contact by email
+    url: mailto:enginbozaba@gmail.com
+    about: For anything that is not about this website itself.
+  - name: LinkedIn
+    url: https://www.linkedin.com/in/enginbozaba
+    about: Professional enquiries.
