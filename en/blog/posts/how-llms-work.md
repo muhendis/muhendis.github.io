@@ -43,9 +43,13 @@ in "strawberry" was famously hard — like counting brushstrokes in a
 Each token then becomes an **embedding**: a long list of numbers, its
 coordinates on a map of meaning. Think of them as thousands of dials —
 one for formality, one for tense, most for qualities no human ever
-named. On this map *king* sits near *queen*; the arrow from *Paris* to
-*France* runs parallel to the arrow from *Rome* to *Italy*; *king − man
-+ woman* lands near *queen*. Nobody drew the map — it is learned. One
+named. Three snapshots of the map:
+
+- *king* sits near *queen*, far from *spreadsheet*;
+- the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction;
+- *king − man + woman* lands near *queen*.
+
+Nobody drew the map — it is learned. One
 last stamp goes in, each token's **position**, because "dog bites man"
 must stay different from "man bites dog".
 
@@ -162,14 +166,13 @@ All of section 3, on one card:
 
 One attention sub-layer plus one feed-forward sub-layer make a
 **layer**; a transformer is a tower of them, dozens to a hundred-plus
-floors. On every floor, attention — the librarian — gathers context,
-and the feed-forward network — the warehouse — digests it alone,
-holding learned patterns like "Paris pairs with France". Each floor's
-output is *added* to its input (the **residual connection**), so
-nothing is erased: *fox* grows, floor by floor, into *brown-quick-fox*,
-then *the subject about to act*. Lower floors handle spelling and
-grammar; upper floors, facts and logic. And knowledge lives mostly in
-the warehouses — roughly two-thirds of all **parameters** — smeared
+floors. On every floor, the same routine:
+
+- **Attention** — the librarian — gathers context from the other tokens.
+- The **feed-forward network** — the warehouse — digests it alone, holding learned patterns like "Paris pairs with France".
+- The **residual connection** — the house rule — *adds* the floor's output to its input, so nothing below is erased.
+
+Floor by floor, *fox* grows into *brown-quick-fox*, then *the subject about to act*; lower floors handle spelling and grammar, upper floors facts and logic. Knowledge itself lives mostly in the warehouses — roughly two-thirds of all **parameters** — smeared
 across billions of weights, never stored as sentences. Growing a model
 mostly means growing warehouse: GPT-2's famous 1.5 billion parameters
 (2019) became today's trillions, and **mixture of experts (MoE)** puts
@@ -215,12 +218,12 @@ nothing more. Ask it "What is the capital of France?" and you may get
 "Paris." — or nine more quiz questions — or "asked the teacher, and
 nobody raised a hand." All faithful continuations; coaxing an answer
 once meant writing "Q: … A:" yourself, and prompt engineering was born
-there. Two cheap stages make an assistant. **Instruction tuning**:
-further training on tens of thousands of question → ideal-answer pairs,
-until answering helpfully is the likeliest continuation. **RLHF**: humans compare candidate answers, a reward model learns their taste, and the LLM is tuned toward it — capturing what examples cannot spell out: tone, honesty, refusal. (Cheaper still,
-**LoRA** freezes the model and trains tiny adapter matrices alongside —
-near fine-tuning quality for a sliver of the parameters.) The
-punchline: GPT-3 existed for more than two years before ChatGPT. The
+there. Two cheap stages make an assistant:
+
+- **Instruction tuning** — train further on tens of thousands of question → ideal-answer pairs, until answering helpfully is the likeliest continuation.
+- **RLHF** — humans compare candidate answers, a reward model learns their taste, and the LLM is tuned toward it: tone, honesty, refusal — what examples cannot spell out. (Cheaper still, **LoRA** freezes the model and trains tiny adapter matrices alongside.)
+
+The punchline: GPT-3 existed for more than two years before ChatGPT. The
 revolution was these stages, not a bigger network.
 
 ## 7. Generation: a loop, not a plan
@@ -247,10 +250,13 @@ One economic fact completes the picture. Training processes whole
 documents in parallel; chat produces tokens one at a time — and the
 **KV cache** keeps that serial loop cheap, cashing in section 3's
 promise: past keys and values never change, so they are computed once
-and stored. Watch one turn with context "I love": the cached K, V of
-"I" and "love" meet a fresh query Q₃ (the weights land 30% / 70%), the
-blend rides up the tower, softmax says *you* 85%, the draw picks
-"you", and its K, V join the cache for the next turn. **Q is computed fresh; K and V are fetched from the cache** — that sentence is the whole story. You have felt it: the pause before a long prompt's first word is **prefill**, building the cache; afterwards, words stream. The bill is memory:
+and stored. One turn with context "I love":
+
+1. The cached K, V of "I" and "love" meet a fresh query Q₃ — the weights land 30% / 70%.
+2. The blend rides up the tower; softmax says *you* 85%; the draw picks "you".
+3. K₃, V₃ are computed for "you" and join the cache; the loop restarts.
+
+**Q is computed fresh; K and V are fetched from the cache** — that sentence is the whole story. You have felt it: the pause before a long prompt's first word is **prefill**, building the cache; afterwards, words stream. The bill is memory:
 
 > cache = 2 × layers × context × width × bytes ≈ 2 × 32 × 100,000 × 4,096 × 2 ≈ **52 GB** for one long conversation
 
@@ -279,11 +285,13 @@ engine, not a database. Where training data is rich, the likeliest
 continuation is usually true; where it is thin, the model still
 produces something *shaped* like an answer — plausible, not true, is
 what it optimizes. This is not lying — lying requires knowing the
-truth. It is completing the sentence. The fixes form a ladder:
-**prompting** shapes behavior in context; **RAG** fetches fresh
-knowledge at answer time; **fine-tuning** bakes in what must be
-permanent. Climb in that order — each step costs more — and check the
-sources yourself: the step the lawyers skipped.
+truth. It is completing the sentence. The fixes form a ladder — climb in order, each step costs more:
+
+- **prompting** shapes behavior in context;
+- **RAG** fetches fresh knowledge at answer time;
+- **fine-tuning** bakes in what must be permanent.
+
+And check the sources yourself: the step the lawyers skipped.
 
 ## The whole story in five lines
 

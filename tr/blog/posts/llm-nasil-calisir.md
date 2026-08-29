@@ -43,10 +43,13 @@ roman eder. Model harfleri değil yalnız token kimliklerini gördüğü için
 Sonra her token bir **embedding**'e dönüşür: uzun bir sayı listesi —
 anlam haritasındaki koordinatları. Binlerce kadran düşünün: biri
 resmiyet, biri zaman, çoğu hiçbir insanın adlandırmadığı nitelikler
-için. Bu haritada *kral*, *kraliçe*ye yakındır; *Paris*ten *Fransa*ya
-giden ok, *Roma*dan *İtalya*ya giden okla paraleldir; *kral − erkek +
-kadın*, *kraliçe*nin yakınına düşer. Haritayı kimse çizmedi —
-öğrenildi. Bir de her token'ın **konumu** işlenir, çünkü "köpek adamı
+için. Haritadan üç kare:
+
+- *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak durur;
+- *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü;
+- *kral − erkek + kadın*, *kraliçe*nin yakınına düşer.
+
+Haritayı kimse çizmedi — öğrenildi. Bir de her token'ın **konumu** işlenir, çünkü "köpek adamı
 ısırdı", "adam köpeği ısırdı"dan farklı kalmalıdır.
 
 ## 3. Transformer: bir bağlam makinesi
@@ -170,13 +173,13 @@ Bütün 3. bölüm, tek kartta:
 
 Bir attention alt katmanı artı bir ileri beslemeli alt katman, bir
 **katman** eder; transformer, bunlardan örülü bir kuledir — onlarca,
-yüzü aşkın kat. Her katta attention — kütüphaneci — bağlamı toplar;
-ileri beslemeli ağ — ambar — onu tek başına sindirir ve "Paris, Fransa
-ile eşleşir" gibi öğrenilmiş örüntüleri taşır. Katın çıktısı girdisinin
-üstüne *eklenir* (**residual bağlantı**), hiçbir şey silinmez: *tilki*
-kat kat *kahverengi-hızlı-tilki*ye, sonra *harekete geçmek üzere olan
-özne*ye büyür. Alt katlar yazım ve dil bilgisi; üst katlar olgular ve
-mantık. Bilgi de çoğunlukla ambarlarda yaşar — tüm **parametrelerin**
+yüzü aşkın kat. Her katta aynı rutin işler:
+
+- **Attention** — kütüphaneci — diğer token'lardan bağlamı toplar.
+- **İleri beslemeli ağ** — ambar — onu tek başına sindirir; "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri taşır.
+- **Residual bağlantı** — bina kuralı — katın çıktısını girdisinin üstüne *ekler*; alttaki hiçbir şey silinmez.
+
+*Tilki* kat kat *kahverengi-hızlı-tilki*ye, sonra *harekete geçmek üzere olan özne*ye büyür; alt katlar yazım ve dil bilgisini, üst katlar olguları ve mantığı üstlenir. Bilgi de çoğunlukla ambarlarda yaşar — tüm **parametrelerin**
 kabaca üçte ikisi — cümle olarak değil, milyarlarca ağırlığa yayılmış
 halde. Modeli büyütmek çoğunlukla ambarı büyütmektir: GPT-2'nin meşhur
 1,5 milyar parametresi (2019) bugün trilyonlara vardı; **mixture of
@@ -223,14 +226,12 @@ kadar. "Fransa'nın başkenti nedir?" deyin; "Paris." alabilirsiniz — ya
 da dokuz quiz sorusu daha — ya da "diye sordu öğretmen; kimse parmak
 kaldırmadı." Hepsi sadık devamlardır; cevabı çekip çıkarmak bir
 zamanlar başına kendiniz "S: … C:" yazmayı gerektirirdi — prompt
-mühendisliği orada doğdu. İki ucuz aşama asistan yapar. **Talimat
-eğitimi**: on binlerce soru → ideal cevap çiftiyle eğitime devam, ta ki
-yardımcı cevap en olası devam olana dek. **RLHF**: insanlar aday
-cevapları karşılaştırır, bir ödül modeli zevklerini öğrenir, LLM ona
-doğru ayarlanır — örneklerin yazamadığını yakalar: ton, dürüstlük, ret.
-(Daha da ucuzu **LoRA**: modeli dondurup yanına minik adaptör
-matrisleri eğitir — parametrelerin kırıntısıyla ince ayara yakın
-kalite.) Vurucu son: GPT-3, ChatGPT'den iki yılı aşkın süre önce
+mühendisliği orada doğdu. İki ucuz aşama asistan yapar:
+
+- **Talimat eğitimi** — on binlerce soru → ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı cevap en olası devam olana dek.
+- **RLHF** — insanlar aday cevapları karşılaştırır, bir ödül modeli zevklerini öğrenir, LLM ona doğru ayarlanır: ton, dürüstlük, ret — örneklerin yazamadığı. (Daha da ucuzu **LoRA**: modeli dondurup yanına minik adaptör matrisleri eğitir.)
+
+Vurucu son: GPT-3, ChatGPT'den iki yılı aşkın süre önce
 vardı. Devrim bu aşamalardı, daha büyük ağ değil.
 
 ## 7. Üretim: plan değil, döngü
@@ -259,11 +260,11 @@ yürüten modeller tam bunu sanayileştirir.
 Resmi bir ekonomik gerçek tamamlar. Eğitim, belgeleri paralel işler;
 sohbet, token'ları teker teker üretir — ve **KV cache**, 3. bölümün
 sözünü bozdurur: geçmiş anahtarlarla değerler hiç değişmez, bir kez
-hesaplanır ve saklanır. "Ben seni" bağlamıyla tek turu izleyin:
-"Ben" ile "seni"nin önbellekteki K, V'leri taze bir sorgu Q₃ ile
-buluşur (ağırlıklar %30 / %70 düşer), karışım kulede yükselir, softmax
-*seviyorum* der (%85), çekiliş onu seçer ve K₃, V₃ bir sonraki tur için
-önbelleğe katılır. **Q hep taze hesaplanır; K ile V hep önbellekten
+hesaplanır ve saklanır. "Ben seni" bağlamıyla tek tur:
+
+1. "Ben" ile "seni"nin önbellekteki K, V'leri taze sorgu Q₃ ile buluşur — ağırlıklar %30 / %70 düşer.
+2. Karışım kulede yükselir; softmax *seviyorum* der (%85); çekiliş onu seçer.
+3. "seviyorum" için K₃, V₃ hesaplanır ve önbelleğe katılır; döngü yeniden başlar. **Q hep taze hesaplanır; K ile V hep önbellekten
 gelir** — bütün hikâye bu cümledir. Bunu hissettiniz de: uzun bir
 istemin ilk kelimesinden önceki duraklama, önbelleği kuran
 **prefill**'dir; sonrası akar. Fatura bellektir:
@@ -294,11 +295,13 @@ meşhur etti. Sır yok: model bir olasılık motorudur, veritabanı değil.
 Eğitim verisinin zengin olduğu yerde en olası devam genellikle
 doğrudur; ince olduğu yerde model yine de cevap *biçiminde* bir şey
 üretir — optimize ettiği, doğru değil makuldür. Bu yalan değildir —
-yalan, doğruyu bilmeyi gerektirir. Bu, cümleyi tamamlamaktır. Çözümler
-bir merdivendir: **prompting** davranışı bağlamda biçimler; **RAG**
-taze bilgiyi cevap anında getirir; **fine-tuning** kalıcı olması
-gerekeni içine işler. Bu sırayla tırmanın — her basamak daha pahalı —
-ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
+yalan, doğruyu bilmeyi gerektirir. Bu, cümleyi tamamlamaktır. Çözümler bir merdivendir — sırayla tırmanın, her basamak daha pahalı:
+
+- **prompting** davranışı bağlamda biçimler;
+- **RAG** taze bilgiyi cevap anında getirir;
+- **fine-tuning** kalıcı olması gerekeni içine işler.
+
+Ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
 
 ## Bütün hikâye beş satırda
 
