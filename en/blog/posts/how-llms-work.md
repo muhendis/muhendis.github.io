@@ -82,6 +82,12 @@ values weighted by those percentages — say 85% of *animal*'s, 10% of
 is a mixture, weighted by relevance. Swap *tired* for *wide*, and the very
 same machinery flips the weights toward *street*.
 
+Notice the asymmetry in the three roles. A token's query is used exactly
+once — at the moment that token looks around. Its key and value, though, stay
+relevant for the rest of the text: every later token that looks back must
+compare against this key, and may draw on this value. Hold that thought; in
+the generation section it turns into real money.
+
 And it does not happen once. Each layer runs many attention "heads" in
 parallel, and each head learns to track a different kind of relationship — one
 follows grammar, another resolves references like the example above, another
@@ -214,6 +220,25 @@ When you send a prompt, the model does not plan an answer and then type it. It
 computes the probability of every possible next token, **samples** one — draws it at random, weighted by its probability — appends it to the text, and repeats — each new token immediately becoming part of the
 input for the next prediction — until it produces a special stop token that means "I'm done."
 
+This loop hides an engineering problem. When token number 1,000 is being
+generated, its query must be compared against the keys of all 999 tokens
+before it — which, at first glance, seems to require re-processing the entire
+text at every step. It does not, and the reason is the asymmetry noted in the
+attention section: the keys and values of past tokens never change once
+computed. So the model computes them once and keeps them in memory — the
+**KV cache**. Each new token then does only its own small share of work: it
+compares its fresh query against the stored keys, blends the stored values,
+and appends its own key and value to the cache for the tokens still to come.
+
+You have felt this cache without knowing its name. Send a long prompt and
+there is a pause before the first word appears — that is **prefill**, the
+model building the cache for your entire input. After it, words stream out
+quickly, because each one pays only for itself. The cache is also why long
+conversations consume serious memory — it grows with every token, in every
+layer — and why API providers charge less for "cached" input: when the
+beginning of your prompt has not changed, its keys and values are already
+sitting there, paid for.
+
 It does not always pick the single most likely token — always taking the top
 choice produces repetitive, stilted text — so the pick is a controlled
 lottery, governed by three dials worth knowing by name. Concretely: after
@@ -309,7 +334,8 @@ check yourself — the step the lawyers skipped.
    autocomplete; instruction tuning and RLHF shape it into an assistant.
 4. Generation is a loop: softmax gives a probability for every token,
    **sampling** picks one, the choice feeds the next step. **Temperature**, **top-k**, and **top-p** control the randomness; step-by-step "thinking" is the model using the
-   page as its scratchpad.
+   page as its scratchpad; the **KV cache** stores past tokens' keys and
+   values so each step pays only for the newest token.
 5. Parameters are **frozen** after training — apparent memory is the context
    window, and **in-context learning** is patterns picked up from the prompt
    alone (*sea → mer, cat → chat*).

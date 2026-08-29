@@ -84,6 +84,13 @@ kalandan. Hiçbir şey olduğu gibi kopyalanmaz: her güncelleme, ilgiye göre
 ağırlıklanmış bir karışımdır. *Yorgun*u *geniş*le değiştirin; aynı mekanizma
 ağırlıkları *cadde*ye çevirir.
 
+Üç roldeki asimetriye dikkat edin. Bir token'ın sorgusu tam bir kez
+kullanılır — o token'ın etrafına bakındığı anda. Anahtarı ve değeri ise metnin
+geri kalanı boyunca geçerli kalır: sonradan gelip geriye bakan her token bu
+anahtarla karşılaştırma yapmak zorundadır ve gerektiğinde bu değerden
+beslenir. Bu düşünceyi aklınızda tutun; üretim bölümünde gerçek paraya
+dönüşecek.
+
 Ve bu bir kez olmaz. Her katman, paralel çalışan birçok attention "kafası"
 (head) barındırır ve her kafa farklı türden bir ilişkiyi izlemeyi öğrenir —
 biri dil bilgisini takip eder, biri yukarıdaki gibi göndermeleri çözer, bir
@@ -219,6 +226,26 @@ sonraki token'ın olasılığını hesaplar, birini **örnekler** — yani olas�
 tekrar eder — her yeni token, bir sonraki tahminin girdisine anında dahil
 olur — ta ki "bitirdim" anlamına gelen özel bir durdurma token'ı üretene kadar.
 
+Bu döngü bir mühendislik sorunu saklıyor. 1.000'inci token üretilirken,
+sorgusunun ondan önceki 999 token'ın anahtarlarıyla karşılaştırılması
+gerekir — ki bu, ilk bakışta her adımda bütün metni yeniden işlemek gerekiyor
+gibi görünür. Gerekmez; sebebi de attention bölümünde işaret ettiğimiz
+asimetridir: geçmiş token'ların anahtarları ve değerleri bir kez
+hesaplandıktan sonra asla değişmez. Model de onları bir kez hesaplayıp
+bellekte tutar — **KV cache** (anahtar-değer önbelleği). Böylece her yeni
+token yalnızca kendi küçük payını öder: taze sorgusunu saklanmış anahtarlarla
+karşılaştırır, saklanmış değerleri karıştırır ve kendi anahtarıyla değerini,
+henüz gelmemiş token'lar için önbelleğe ekler.
+
+Bu önbelleği adını bilmeden hissettiniz. Uzun bir istem gönderin; ilk kelime
+görünmeden önce bir duraklama olur — buna **prefill** denir: model, girdinizin
+tamamı için önbelleği kurmaktadır. Sonrasında kelimeler hızla akar, çünkü her
+biri yalnızca kendi bedelini öder. Uzun sohbetlerin ciddi bellek tüketmesinin
+sebebi de bu önbellektir — her token'la, her katmanda büyür — API
+sağlayıcılarının "önbelleklenmiş" girdiye daha az ücret almasının sebebi de:
+isteminizin başı değişmediyse, o kısmın anahtarları ve değerleri çoktan
+orada, bedeli ödenmiş olarak durmaktadır.
+
 Her zaman en olası token'ı seçmez — hep birinci tercihi almak tekrarlı,
 kasılmış metin üretir — bu yüzden seçim, adını bilmeye değer üç düğmenin
 yönettiği kontrollü bir çekiliştir. Somutlaştıralım: "Gökyüzü" girdisinden
@@ -316,7 +343,8 @@ kaynaklar istemek — avukatların atladığı adım.
    onu asistana biçimlendirir.
 4. Üretim bir döngüdür: softmax her token'a bir olasılık verir, **örnekleme**
    birini seçer, seçim bir sonraki adımı besler. Rastgeleliği **temperature**, **top-k** ve **top-p** kontrol eder; "adım adım düşünmek", modelin sayfayı karalama defteri olarak
-   kullanmasıdır.
+   kullanmasıdır; **KV cache**, geçmiş token'ların anahtar ve değerlerini
+   saklar, böylece her adım yalnızca en yeni token'ın bedelini öder.
 5. Eğitimden sonra parametreler **donmuştur** — hafıza sanılan şey bağlam
    penceresidir; **in-context learning**, örüntünün yalnızca istemden
    kapılmasıdır (*deniz → sea, kedi → cat*).
