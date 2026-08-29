@@ -32,9 +32,7 @@ Two practical consequences fall out of this:
 
 ## Numbers with meaning: embeddings
 
-Each token ID is then mapped to an **embedding**: a long list of numbers — a
-vector, often thousands of dimensions — that acts like the token's coordinates
-on a map of meaning. On a real map, Paris sits near Brussels and far from
+Each token ID is then mapped to an **embedding** — a vector: a list of numbers, often thousands of them, that acts like the token's coordinates on a map of meaning. On a real map, Paris sits near Brussels and far from
 Sydney. On the meaning-map, *king* sits near *queen* and *throne*, far from
 *spreadsheet*. Even relationships become consistent directions: the arrow from
 *Paris* to *France* points the same way as the arrow from *Rome* to *Italy* —
@@ -45,15 +43,13 @@ Nobody drew this map by hand. It is learned, and it is the model's native
 language — from here on, everything is arithmetic on vectors.
 
 One thing is still missing: order. A bag of coordinates does not know that
-"dog bites man" is news and "man bites dog" is a headline, so each token's
-**position** in the sequence is encoded into its representation too. Word
+"dog bites man" is news and "man bites dog" is a headline, so each token's **position** in the sequence is stamped into its vector as well. Word
 order survives the trip into math.
 
 ## Attention: reading in context
 
 Coordinates alone cannot say what "bank" means — river bank or the one with
-the money? The word's meaning depends on its neighbors. This is the problem the
-**transformer** architecture solves, and its central tool is **attention**.
+the money? The word's meaning depends on its neighbors. This is the problem the **transformer** solves — the neural-network design behind every modern language model, and the T in GPT. Its central tool is **attention**.
 
 The cleanest demonstration comes from the original Transformer paper's own
 example. Compare:
@@ -81,8 +77,7 @@ emerge, because each one helps predict what comes next.
 ## Layers: where the knowledge lives
 
 A transformer stacks this machinery in **layers** — dozens to over a hundred.
-Each layer has two blocks: attention (mix in context from other tokens) and a
-**feed-forward network** (transform each token's vector on its own). A useful
+Each layer has two blocks: attention (mix in context from other tokens) and a **feed-forward network** — a small neural network applied to each token's vector on its own. A useful
 mental model: the feed-forward blocks are the warehouse where learned patterns
 are stored — "Paris pairs with France", "code after `def` is a function
 name" — and attention is the librarian deciding which shelf the current
@@ -95,13 +90,10 @@ made headlines in 2019 with 1.5 billion of them; today's frontier models are
 measured in the hundreds of billions to trillions.
 
 At the very top, the model converts the final vector into a score for every
-token in its vocabulary and squashes the scores into probabilities — the
-**softmax** step. That is the model's entire output at each step: not a
+token in its vocabulary and converts the scores into percentages that add up to 100% — the **softmax** step. That is the model's entire output at each step: not a
 sentence, not an idea — a probability for every token it knows. After "Once
 upon a", nearly all of the probability piles onto "time". After "My favorite
-city is", it spreads across hundreds of plausible cities. Both of those
-distributions are the correct answer to the only question the model ever
-answers.
+city is", it spreads across hundreds of plausible cities. Both are correct answers to the only question the model ever answers: what is likely to come next?
 
 ## Training: where the knowledge comes from
 
@@ -109,7 +101,7 @@ How do the parameters get their values? **Pretraining**: show the model
 enormous amounts of text — much of the public internet, books, code; trillions
 of tokens, more than a human could read in ten thousand lifetimes — hide the
 next token, and let it guess. The **loss function** measures how surprised the
-model was by the true answer; **gradient descent** then nudges every parameter
+model was by the true answer; an algorithm called **gradient descent** then nudges every parameter
 a tiny amount in the direction that would have made it less surprised. Repeat,
 trillions of times.
 
@@ -117,9 +109,7 @@ Nobody writes rules into the model. Grammar, geography, chemistry, Python — al
 of it is absorbed as a side effect of getting better at one game: guess the
 next token. To predict the next word of a detective novel's final chapter, it
 helps to have tracked who had a motive; to predict the next line of a physics
-textbook, it helps to have internalized some physics. You can think of the
-result as a lossy compression of the training data — patterns kept, exact
-copies mostly not.
+textbook, it helps to have internalized some physics. You can think of the result as a compressed copy of the training data — compressed the way a JPEG compresses a photo: the overall picture is kept, the exact pixels are not.
 
 Scale is the other half of the story. Make the model bigger, feed it more
 data, spend more compute, and the loss falls in a smooth, almost lawlike way —
@@ -137,7 +127,7 @@ usually followed by another. Two more stages turn it into an assistant:
 
 1. **Instruction tuning** — further training on examples of questions paired
    with good answers, teaching the *format* of being helpful.
-2. **Learning from human preferences** (RLHF and its relatives) — people
+2. **Learning from human preferences** (**RLHF** — reinforcement learning from human feedback — and its relatives) — people
    compare candidate answers, and the model is tuned toward the ones humans
    prefer: helpful, honest, harmless.
 
@@ -146,9 +136,8 @@ Same architecture, same next-token machinery — different behavior.
 ## Generation: a loop, not a plan
 
 When you send a prompt, the model does not plan an answer and then type it. It
-computes the probability of every possible next token, **samples** one, appends
-it to the text, and repeats — each new token immediately becoming part of the
-input for the next prediction — until it emits a stop token.
+computes the probability of every possible next token, **samples** one — draws it at random, weighted by its probability — appends it to the text, and repeats — each new token immediately becoming part of the
+input for the next prediction — until it produces a special stop token that means "I'm done."
 
 It does not always pick the single most likely token; always taking the top
 choice produces repetitive, stilted text. Instead a bit of controlled
@@ -156,8 +145,7 @@ randomness is mixed in, and **temperature** scales it. At low temperature,
 "The sky was" continues with *blue* almost every time — the right setting for
 extracting data or writing SQL. At high temperature it might continue with *a
 bruised shade of purple over the harbor* — the right setting for
-brainstorming. Settings like top-p trim the truly unlikely options before
-sampling. This is also why the same question can get different answers on
+brainstorming. A companion setting, **top-p**, first discards the wildly unlikely options, so the randomness can vary the wording but never picks nonsense. This is also why the same question can get different answers on
 different days.
 
 The loop also explains why "think step by step" genuinely works. Ask a model
@@ -209,8 +197,7 @@ confident tone. **Hallucination** is not a bug bolted onto the system; it is
 the default behavior of the system, tamed but not eliminated by the training
 stages above.
 
-The practical fixes mostly change the input, not the model: retrieval (fetch
-real documents into the context and let the model answer from them), tool use
+The practical fixes mostly change the input, not the model: retrieval (often called RAG: fetch real documents into the context and let the model answer from them), tool use
 (let it call a search engine or run code), and asking for sources you can
 check yourself — the step the lawyers skipped.
 

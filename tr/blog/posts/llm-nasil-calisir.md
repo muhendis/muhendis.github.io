@@ -32,29 +32,25 @@ Bunun iki pratik sonucu var:
 
 ## Anlam taşıyan sayılar: embedding'ler
 
-Sonra her token kimliği bir **embedding**'e eşlenir: çoğu zaman binlerce
-boyutlu uzun bir sayı listesi — token'ın bir anlam haritasındaki koordinatları
-gibi davranan bir vektör. Gerçek haritada Paris, Brüksel'e yakın, Sidney'e
+Sonra her token kimliği bir **embedding**'e eşlenir — bir vektöre: çoğu zaman binlerce sayıdan oluşan, token'ın bir anlam haritasındaki koordinatları gibi davranan uzun bir liste. Gerçek haritada Paris, Brüksel'e yakın, Sidney'e
 uzaktır. Anlam haritasında *kral*, *kraliçe* ve *taht*ın yanında, *hesap
 tablosu*ndan uzakta oturur. İlişkiler bile tutarlı yönlere dönüşür: *Paris*ten
 *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla aynı yönü gösterir — bir
-"başkenti-olmak" yönü. Meşhur salon numarası da vektör aritmetiğidir: *kral −
+"başkenti-olmak" yönü. Meşhur gösteri numarası da vektör aritmetiğidir: *kral −
 erkek + kadın*, *kraliçe*nin yakınına düşer.
 
 Bu haritayı kimse elle çizmedi; öğrenildi. Ve modelin ana dili budur — buradan
 sonrası vektörler üzerinde aritmetiktir.
 
 Eksik bir şey kaldı: sıra. Bir torba koordinat, "köpek adamı ısırdı" ile "adam
-köpeği ısırdı" arasındaki farkı bilmez; bu yüzden her token'ın dizideki
-**konumu** da temsiline işlenir. Kelime sırası, matematiğe yolculuğu sağ salim
+köpeği ısırdı" arasındaki farkı bilmez; bu yüzden her token'ın dizideki **konumu** da vektörüne işlenir. Kelime sırası, matematiğe yolculuğu sağ salim
 atlatır.
 
 ## Attention: bağlam içinde okumak
 
 Koordinatlar tek başına "yüz" kelimesinin ne demek olduğunu söyleyemez —
 surattaki yüz mü, sayı olan yüz mü? Kelimenin anlamı komşularına bağlıdır.
-**Transformer** mimarisinin çözdüğü sorun budur ve temel aracı **attention**
-(dikkat) mekanizmasıdır.
+Bu sorunu **Transformer** çözer — modern bütün dil modellerinin arkasındaki sinir ağı tasarımı, GPT'deki T harfi. Temel aracı da **attention** (dikkat) mekanizmasıdır.
 
 En temiz gösterim, orijinal Transformer makalesinin kendi örneğinden gelir.
 Karşılaştırın:
@@ -85,8 +81,7 @@ etmeye yarar.
 
 Transformer bu mekanizmayı **katmanlar** halinde üst üste diziyor — onlarcadan
 yüzü aşkına kadar. Her katmanda iki blok var: attention (diğer token'lardan
-bağlamı karıştır) ve **ileri beslemeli ağ** (her token'ın vektörünü kendi
-başına dönüştür). Kullanışlı bir zihinsel model: ileri beslemeli bloklar,
+bağlamı karıştır) ve **ileri beslemeli ağ** — her token'ın vektörüne tek tek uygulanan küçük bir sinir ağı. Kullanışlı bir zihinsel model: ileri beslemeli bloklar,
 öğrenilmiş örüntülerin depolandığı ambardır — "Paris, Fransa ile eşleşir",
 "`def`ten sonra gelen kod bir fonksiyon adıdır" — attention ise eldeki cümlenin
 hangi rafa ihtiyacı olduğuna karar veren kütüphanecidir.
@@ -98,11 +93,11 @@ katmanlardaki öğrenilmiş sayıları — **parametreleri** — sayar. GPT-2, 2
 milyarlarla ve trilyonlarla ölçülüyor.
 
 En tepede model, son vektörü sözlüğündeki her token için bir puana çevirir ve
-puanları olasılığa sıkıştırır — **softmax** adımı. Her adımda modelin bütün
+puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı. Her adımda modelin bütün
 çıktısı budur: bir cümle değil, bir fikir değil — bildiği her token için bir
 olasılık. "Bir varmış bir" dedikten sonra olasılığın neredeyse tamamı
 "yokmuş"un üzerine yığılır. "En sevdiğim şehir" dedikten sonra yüzlerce makul
-şehre dağılır. İkisi de, modelin cevapladığı tek sorunun doğru cevabıdır.
+şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru cevabıdır: sırada ne gelmesi muhtemel?
 
 ## Eğitim: bilgi nereden geliyor
 
@@ -110,21 +105,18 @@ Parametreler değerlerini nasıl alıyor? **Ön eğitimle (pretraining)**: model
 devasa miktarda metin gösterilir — açık internetin büyük bölümü, kitaplar,
 kod; trilyonlarca token, bir insanın on bin ömürde okuyabileceğinden fazlası —
 sıradaki token gizlenir ve model tahmin eder. **Kayıp fonksiyonu (loss)**
-modelin doğru cevaba ne kadar şaşırdığını ölçer; **gradyan inişi** de her
-parametreyi, modeli daha az şaşırtacak yönde minicik bir adım kaydırır. Bunu
+modelin doğru cevaba ne kadar şaşırdığını ölçer; **gradyan inişi** denen algoritma da her parametreyi, modeli daha az şaşırtacak yönde minicik bir adım kaydırır. Bunu
 trilyonlarca kez tekrarlayın.
 
 Modelin içine kimse kural yazmaz. Dil bilgisi, coğrafya, kimya, Python — hepsi
 tek bir oyunda ustalaşmanın yan etkisi olarak özümsenir: sıradaki token'ı bil.
 Bir polisiye romanın son bölümünde sıradaki kelimeyi tahmin etmek için kimin
 cinayet sebebi olduğunu takip etmiş olmak gerekir; bir fizik ders kitabının
-sonraki satırı için biraz fizik içselleştirmiş olmak. Sonucu, eğitim verisinin
-kayıplı bir sıkıştırması gibi düşünebilirsiniz — örüntüler saklanır, birebir
-kopyalar çoğunlukla saklanmaz.
+sonraki satırı için biraz fizik içselleştirmiş olmak. Sonucu, eğitim verisinin sıkıştırılmış bir kopyası gibi düşünebilirsiniz — bir JPEG'in fotoğrafı sıkıştırdığı gibi: resmin bütünü kalır, piksellerin birebir aynısı kalmaz.
 
 Hikâyenin diğer yarısı ölçek. Modeli büyütün, daha çok veri verin, daha çok
 hesaplama harcayın; kayıp, pürüzsüz ve neredeyse yasa gibi bir eğriyle düşer —
-devasa eğitim koşularını meşrulaştıran **ölçek yasaları (scaling laws)**
+devasa eğitim yatırımlarını meşrulaştıran **ölçek yasaları (scaling laws)**
 bunlardır. Yol boyunca kimsenin hedeflemediği yetenekler belirir: çeviri,
 aritmetik, çalışan kod. Ortaya çıkarlar, çünkü her biri modelin sahip olduğu
 tek hedefe hizmet eder.
@@ -138,7 +130,7 @@ genellikle bir tane daha gelir. Onu asistana çeviren iki aşama daha vardır:
 
 1. **Talimat eğitimi (instruction tuning)** — soru ve iyi cevap çiftlerinden
    oluşan örneklerle ek eğitim; yardımcı olmanın *biçimini* öğretir.
-2. **İnsan tercihlerinden öğrenme** (RLHF ve akrabaları) — insanlar aday
+2. **İnsan tercihlerinden öğrenme** (**RLHF** — insan geri bildirimiyle pekiştirmeli öğrenme — ve akrabaları) — insanlar aday
    cevapları karşılaştırır, model insanların tercih ettiği yöne doğru
    ayarlanır: yardımcı, dürüst, zararsız.
 
@@ -146,18 +138,17 @@ Aynı mimari, aynı sıradaki-token makinesi — farklı davranış.
 
 ## Üretim: plan değil, döngü
 
-Bir istem gönderdiğinizde model önce cevabı planlayıp sonra yazmaz. Olası her
-sonraki token'ın olasılığını hesaplar, birini **örnekler**, metne ekler ve
+Bir istem (prompt) gönderdiğinizde model önce cevabı planlayıp sonra yazmaz. Olası her
+sonraki token'ın olasılığını hesaplar, birini **örnekler** — yani olasılığıyla orantılı biçimde rastgele çeker — metne ekler ve
 tekrar eder — her yeni token, bir sonraki tahminin girdisine anında dahil
-olur — ta ki bir durdurma token'ı üretene kadar.
+olur — ta ki "bitirdim" anlamına gelen özel bir durdurma token'ı üretene kadar.
 
 Her zaman en olası token'ı seçmez; hep birinci tercihi almak tekrarlı,
 kasılmış metin üretir. Bunun yerine araya kontrollü bir rastgelelik katılır ve
 bunu **temperature** ölçekler. Düşük sıcaklıkta "Gökyüzü" neredeyse her
 seferinde *maviydi* diye devam eder — veri çıkarmak ya da SQL yazdırmak için
 doğru ayar. Yüksek sıcaklıkta *limanın üzerinde çürük moruna çalıyordu* diye
-devam edebilir — beyin fırtınası için doğru ayar. Top-p gibi ayarlar da
-örneklemeden önce gerçekten olasılıksız seçenekleri budar. Aynı sorunun farklı
+devam edebilir — beyin fırtınası için doğru ayar. Yardımcı bir ayar olan **top-p** ise en baştan gerçekten olasılıksız seçenekleri eler; rastgelelik ifadeyi çeşitlendirir ama asla saçmalığa savrulmaz. Aynı sorunun farklı
 günlerde farklı cevaplar almasının sebebi de budur.
 
 Bu döngü, "adım adım düşün" komutunun neden gerçekten işe yaradığını da
@@ -209,8 +200,7 @@ tek işi yapmaya devam eder ve doğru bir cevabın *biçimini* taşıyan bir dev
 sisteme sonradan bulaşmış bir hata değildir; sistemin varsayılan davranışıdır —
 yukarıdaki eğitim aşamalarıyla evcilleştirilmiş ama yok edilmemiştir.
 
-Pratik çözümler çoğunlukla modeli değil girdiyi değiştirir: retrieval (gerçek
-belgeleri bağlama getirip modele oradan cevap verdirmek), araç kullanımı
+Pratik çözümler çoğunlukla modeli değil girdiyi değiştirir: retrieval (RAG diye de bilinir: gerçek belgeleri bağlama getirip modele oradan cevap verdirmek), araç kullanımı
 (arama motoru çağırtmak, kod çalıştırtmak) ve kendiniz kontrol edebileceğiniz
 kaynaklar istemek — avukatların atladığı adım.
 
