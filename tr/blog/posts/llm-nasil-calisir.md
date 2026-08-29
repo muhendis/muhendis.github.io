@@ -46,32 +46,32 @@ Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
 
 ### Q, K, V — mekanizma, sayılarla
 
-Ağırlıkları seçmek için her token'a, her biri vektörünün küçük öğrenilmiş
-bir dönüşümü olan üç rol verilir:
+Bir token ağırlıklarını nasıl seçer? Aynı anda üç rol oynayarak — her biri
+kendi vektörünün küçük, öğrenilmiş bir dönüşümü:
 
 - **sorgu (query)** — ne arıyorum?
 - **anahtar (key)** — başkaları beni nasıl bulsun?
 - **değer (value)** — seçilirsem ne teslim ederim?
 
-Bu üçü nereden geliyor? Token'ın kendi vektöründen. Model, üç öğrenilmiş
-sayı tablosu tutar — ağırlık matrisleri **W_Q, W_K, W_V**; her biri sıradan
-bir yoğun (dense) katmandır. Token'ın embedding'ini her biriyle çarpmak,
-onun sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet — ve
-her token üçünü aynı anda giyer: her kelime hem arayıcıdır (Q), hem
-bulunabilirdir (K), hem de devredilecek içeriktir (V). (Ve YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar, videoların kendisi değer.)
+YouTube aynı üçlüyle çalışır: yazdığınız metin sorgudur, her videonun
+başlığı bir anahtar, videoların kendisi ise değerdir. Modelde üçü de tek
+kaynaktan gelir — token'ın embedding'inden — üç öğrenilmiş sayı tablosuyla,
+yani ağırlık matrisleri **W_Q, W_K, W_V** ile çarpılarak (her biri sıradan
+bir yoğun katmandır). Aynı kelime, üç kıyafet; ve her token üçünü aynı anda
+giyer — hem arayıcı, hem bulunabilir, hem devredilecek içerik.
 
-Peki neden doğrudan ham embedding'lerle karşılaştırma yapmıyoruz? Çünkü bir
-embedding, kelimenin birçok yönünü aynı anda karıştırır — dil bilgisi, anlam,
-konum. Üç tablo, modelin *tam da bu aramanın ihtiyacı olan yönü* çekmesine
-izin verir: "yorgun olabilir" üzerinden eşleşen bir sorgu-anahtar çifti,
-"f ile başlar" üzerinden değil. Aynı mantık değer için de geçerlidir:
-seçilen token bütün embedding'ini devretmez, yalnızca aktarılmaya değer
-dilimi devreder — hangi dilim olduğuna W_V karar verir. Birlikte bir **yumuşak sözlük** gibi
-davranırlar: gerçek bir sözlük anahtarı ya tam eşleştirir ya da hiçbir şey
-döndürmez; attention her anahtarla *kısmen* eşleşir ve her değerden oransal
-bir dilim alır.
+Peki kıyafetleri atlayıp ham embedding'leri karşılaştırsak? Olmaz; çünkü
+embedding, kelimenin her yönünü birden karıştırır — dil bilgisi, anlam,
+konum — oysa iyi bir aramaya bunların yalnızca biri lazımdır. Üç tablo,
+*tam da bu işin gerektirdiği yönü* çeker: "yorgun olabilir" üzerinden
+eşleşen bir sorgu-anahtar çifti, "f ile başlar" üzerinden değil. Değer de
+bir seçimdir — seçilen token bütün embedding'ini değil, aktarılmaya değer
+dilimi devreder; hangi dilim olduğuna W_V karar verir. Ortaya çıkan şey bir
+**yumuşak sözlük** gibi davranır: gerçek sözlük anahtarı ya tam eşleştirir
+ya da hiçbir şey döndürmez; attention her anahtarla *kısmen* eşleşir ve her
+değerden oransal bir dilim alır.
 
-Bütün işi yalnızca iki matematik işlemi yapar:
+Kadro bu. Arkasındaki aritmetik ise yalnızca iki hamle:
 
 - **İç çarpım** — iki vektörü basamak basamak çarpıp hepsini topla:
   a · b = a₁b₁ + a₂b₂ + a₃b₃ + … Örneğin
@@ -80,7 +80,9 @@ Bütün işi yalnızca iki matematik işlemi yapar:
 - **Ağırlıklı toplam** — birkaç vektörü yüzdelere göre karıştır; bir tarif
   gibi: şundan %60, bundan %30.
 
-Şimdi "Hızlı kahverengi tilki"yi, model *tilki* üzerinde çalışırken izleyin — dört adım; sonda karşılaşacağınız resmî formülün aynısı, aynı sırayla.
+Şimdi çalıştıralım. "Hızlı kahverengi tilki"yi, model *tilki* üzerinde
+çalışırken izleyin — dört adım; sonda karşılaşacağınız resmî formülün
+aynısı, aynı sırayla.
 
 **1. Adım — Puanla: bana kim önemli?** *Tilki*nin sorgusu, kendisininki
 dahil her kelimenin anahtarıyla iç çarpıma girer:
@@ -132,28 +134,29 @@ Sonuç artık sözlükteki *tilki* kelimesi değildir; *bu-belirli-hızlı-
 kahverengi-tilki*dir ve bir sonraki katmana giden, bu zenginleşmiş
 vektördür.
 
-Elde tutmaya değer bir netlik: buradaki *öğrenilmiş* tek parça, Q, K ve
-V'yi üreten üç tablodur. İç çarpımlar, softmax, ağırlıklı toplam — sabit
-aritmetiktir, içlerinde öğrenme yoktur. Ve modele tilkilerin kahverengi
-olduğunu hiçbir kural söylemedi: üç tablo, trilyonlarca tahmin boyunca, işe
-yarar ağırlıklar kendiliğinden çıkana dek ayarlandı.
+O formülden önce iki not. Birincisi, bu dansta *öğrenilmiş* olan tek şey
+Q, K ve V'yi üreten üç tablodur; iç çarpımlar, softmax, ağırlıklı toplam —
+sabit aritmetiktir, içlerinde öğrenme yoktur. Modele tilkilerin kahverengi
+olduğunu hiçbir kural söylemedi: tablolar, trilyonlarca tahmin boyunca işe
+yarar ağırlıklar kendiliğinden çıkana dek ayarlandı. İkincisi, bedeli: her
+token diğer her token'ı puanladığından iş, uzunluğun *karesiyle* büyür —
+O(n²). Bağlamı ikiye katlayın, maliyet dörde katlansın; milyon token'lık
+pencereler bir kutucuk değil, mühendislik başarısıdır.
 
-Maliyete dair tek dipnot: her token diğer her token'ı puanladığından iş,
-uzunluğun *karesiyle* büyür — O(n²). Bağlamı ikiye katlayın, maliyet dörde katlansın;
-milyon token'lık pencereler bir kutucuk değil, mühendislik başarısıdır.
-
-Hepsini birleştirin; bu alt bölümün tamamı tek satırdır — 2017'den beri her
+Şimdi ödül. Yukarıdaki her şey tek satıra sıkışır — 2017'den beri her
 makalede basılan formül:
 
 > **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
 
-Soldan sağa okuyun; tilki izinin sembollere dökülmüşüdür — 1. Adım QKᵀ, 2. Adım √dₖ'ye bölme, 3. Adım softmax, 4. Adım V ile çarpma. Aynı dört hamle, aynı sıra, her seferinde. İçindeki her sembol artık tanıdık. Büyük harflere de dikkat: buradaki Q, K
-ve V birer matristir — bütün token'ların vektörleri tek blokta üst üste —
-yani bu tek satır, aramayı *bütün* token'lar için aynı anda, saf matris
-çarpımı olarak yürütür. Döngü yok; tam da GPU'ların silip süpürdüğü iş
-biçimi.
+Soldan sağa okuyun; tilki izinin sembollere dökülmüşüdür: 1. Adım QKᵀ,
+2. Adım √dₖ'ye bölme, 3. Adım softmax, 4. Adım V ile çarpma — aynı dört
+hamle, aynı sıra, her seferinde. Büyük harfler son bir armağan daha taşır:
+buradaki Q, K ve V birer matristir — bütün token'ların vektörleri tek
+blokta üst üste — yani bu tek satır, aramayı *bütün* token'lar için aynı
+anda, saf matris çarpımı olarak yürütür. Döngü yok; tam da GPU'ların silip
+süpürdüğü iş biçimi.
 
-Havada hiçbir şey kalmasın diye, QKV'nin künyesi tek tabloda:
+Ve havada hiçbir şey kalmasın diye, QKV'nin künyesi tek tabloda:
 
 | soru | cevap |
 |---|---|

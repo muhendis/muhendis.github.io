@@ -47,42 +47,44 @@ sentence: **a word's context is a weighted blend of the other words, and attenti
 
 ### Q, K, V — the mechanism, with numbers
 
-To choose the weights, every token is given three roles, each a small
-learned transformation of its vector:
+How does a token choose its weights? By playing three roles at once, each
+one a small learned transformation of its own vector:
 
 - **query** — what am I looking for?
 - **key** — how should others find me?
 - **value** — what do I hand over if picked?
 
-Where do these three come from? From the token's own vector. The model
-holds three learned tables of numbers — the weight matrices **W_Q, W_K,
-W_V**, each just an ordinary dense layer. Multiplying a token's embedding by
-each one produces its query, its key, and its value. Same word, three
-outfits — and every token wears all three at once: each word is
-simultaneously a searcher (Q), findable (K), and content to hand over (V). (And think YouTube: your search text is the query, every video's title is a key, the videos themselves are the values.)
+YouTube runs on the same trio: the text you type is a query, every video's
+title is a key, and the videos themselves are the values. In the model, all
+three come from one place — the token's embedding — multiplied by three
+learned tables of numbers, the weight matrices **W_Q, W_K, W_V** (each just
+an ordinary dense layer). Same word, three outfits; and every token wears
+all three at once, simultaneously a searcher, findable, and content to
+hand over.
 
-Why not compare raw embeddings directly? Because an embedding mixes many
-aspects of a word at once — grammar, meaning, position. The three tables let
-the model extract *just the aspect this particular search needs*: a query
-and key that match on "could be tired", not on "starts with f". The same
-logic applies to the value: a chosen token does not hand over its whole
-embedding, only the slice worth passing on — W_V decides which slice.
-Together
-they behave like a **soft dictionary**: a real dictionary matches a key
-exactly or returns nothing; attention matches every key *partially* and
-takes a proportional slice of every value.
+Why not skip the outfits and compare raw embeddings? Because an embedding
+mixes every aspect of a word — grammar, meaning, position — and a good
+search needs only one of them. The three tables extract *just the aspect
+this job requires*: a query and key that match on "could be tired", not on
+"starts with f". The value is a selection too — a chosen token hands over
+not its whole embedding but the slice worth passing on, and W_V decides
+which slice. What emerges behaves like a **soft dictionary**: where a real
+dictionary matches a key exactly or returns nothing, attention matches
+every key *partially* and takes a proportional slice of every value.
 
-Only two mathematical operations do all the work:
+That is the cast. The arithmetic behind it is only two moves:
 
-- **Dot product** — multiply two vectors position by position, then add it
-  all up: a · b = a₁b₁ + a₂b₂ + a₃b₃ + … For example,
-  [2, 1, 0] · [3, 1, 4] = 6 + 1 + 0 = **7**. One number comes out: large
-  when the vectors point the same way, small when they do not. A similarity
-  meter.
-- **Weighted sum** — mix several vectors according to percentages, like a
-  recipe: 60% of this, 30% of that.
+- **Dot product** — multiply two vectors position by position, then add:
+  a · b = a₁b₁ + a₂b₂ + a₃b₃ + … For example,
+  [2, 1, 0] · [3, 1, 4] = 6 + 1 + 0 = **7**. One number falls out — large
+  when the vectors point the same way, small when they do not. A
+  similarity meter.
+- **Weighted sum** — mix several vectors by percentages, like a recipe:
+  60% of this, 30% of that.
 
-Now trace "The quick brown fox" while the model works on *fox* — four steps, the same four you will meet in the official formula at the end.
+Time to run it. Trace "The quick brown fox" while the model works on
+*fox* — four steps, the same four you will meet in the official formula at
+the end.
 
 **Step 1 — Score: who matters to me?** *Fox*'s query is dot-producted with
 every word's key, its own included:
@@ -136,27 +138,29 @@ The result is no longer the dictionary word *fox*; it is
 *this-particular-quick-brown-fox*, and that enriched vector is what the
 next layer receives.
 
-One clarification worth holding on to: the *only* learned parts here are
-the three tables that produce Q, K, and V. The dot products, the softmax,
-the weighted sum — fixed arithmetic, no learning in them. And no rule ever
-told the model that foxes are brown: over trillions of guesses, the three
-tables were tuned until useful weights came out on their own.
+Two remarks before that formula. First, the *only* learned parts in this
+whole dance are the three tables behind Q, K, and V; the dot products, the
+softmax, the weighted sum are fixed arithmetic, with no learning in them.
+No rule ever told the model that foxes are brown — over trillions of
+guesses, the tables were tuned until useful weights came out on their own.
+Second, the price: every token scores every other token, so the work grows
+with the *square* of the length, O(n²). Double the context, quadruple the
+cost — million-token windows are an engineering feat, not a checkbox.
 
-One footnote on cost: since every token scores every other token, the work
-grows with the *square* of the length — O(n²). Double the context, quadruple the
-cost; million-token windows are an engineering feat, not a checkbox.
-
-Put together, this whole subsection is one line — the formula printed in
-every paper since 2017:
+Now the payoff. Everything above compresses into a single line — the
+formula printed in every paper since 2017:
 
 > **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
 
-Read it left to right and it is the fox trace in symbols — Step 1 is QKᵀ, Step 2 is the division by √dₖ, Step 3 is the softmax, Step 4 is the multiplication by V. Same four moves, same order, every time. Every symbol in it is now familiar. And notice the capital letters: Q, K,
-and V here are matrices — every token's vectors stacked into one block — so
-this single line runs the search for *all* tokens simultaneously, as pure
-matrix multiplication. No loops; exactly the shape of work GPUs devour.
+Read left to right, it is the fox trace in symbols: Step 1 is QKᵀ, Step 2
+the division by √dₖ, Step 3 the softmax, Step 4 the multiplication by V —
+same four moves, same order, every time. The capital letters carry one
+last gift: Q, K, and V here are matrices, every token's vectors stacked
+into a block, so this one line runs the search for *all* tokens at once as
+pure matrix multiplication. No loops — exactly the shape of work GPUs
+devour.
 
-To leave nothing dangling, the Q/K/V dossier in one table:
+And so nothing is left dangling, the Q/K/V dossier in one table:
 
 | question | answer |
 |---|---|
