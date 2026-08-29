@@ -78,15 +78,28 @@ every word's key, its own included:
 | Q(fox) · K(brown) | 4.0 | very relevant |
 | Q(fox) · K(fox) | 5.4 | itself — most of all |
 
-**Step 2 — Percentages: turn scores into a recipe.** Softmax converts the
-messy scores into clean weights that sum to 100%: **2%, 8%, 30%, 60%**. The
+**Step 2 — Percentages: turn scores into a recipe.** This is **softmax**,
+and it is just two moves. First, raise *e* to each score — that makes every
+number positive and stretches the gaps between them. Then divide each result
+by the total — now they sum to exactly 100%:
+
+| pair | score | e^score | share of total |
+|---|---|---|---|
+| Q(fox) · K(The) | 0.5 | 1.6 | **1%** |
+| Q(fox) · K(quick) | 2.1 | 8.2 | **3%** |
+| Q(fox) · K(brown) | 4.0 | 54.6 | **19%** |
+| Q(fox) · K(fox) | 5.4 | 221.4 | **77%** |
+| | | total ≈ 285.8 | 100% |
+
+Notice what the exponential did: 5.4 is only a little above 4.0, yet 77% is
+four times 19% — softmax rewards the leaders and starves the laggards. The
 model has just decided, in numbers, how much attention each word deserves.
 (Yes, a token attends to itself — usually most of all.)
 
 **Step 3 — Blend: cook the recipe.** The new *fox* vector is the weighted
 sum of the *values*:
 
-> fox_new = 0.02 × V(The) + 0.08 × V(quick) + 0.30 × V(brown) + 0.60 × V(fox)
+> fox_new = 0.01 × V(The) + 0.03 × V(quick) + 0.19 × V(brown) + 0.77 × V(fox)
 
 The result is no longer the dictionary word *fox*; it is
 *this-particular-quick-brown-fox*, and that enriched vector is what the

@@ -77,15 +77,27 @@ dahil her kelimenin anahtarıyla iç çarpıma girer:
 | Q(tilki) · K(kahverengi) | 4,0 | çok ilgili |
 | Q(tilki) · K(tilki) | 5,4 | kendisi — en çok |
 
-**2. Adım — Yüzdele: puanları tarife çevir.** Softmax, dağınık puanları
-toplamı %100 eden temiz ağırlıklara çevirir: **%10, %30, %60**. Model az
-önce, sayılarla, her kelimenin ne kadar dikkati hak ettiğine karar verdi.
-(Evet, token kendine de dikkat eder — genellikle en çok.)
+**2. Adım — Yüzdele: puanları tarife çevir.** Bu, **softmax**'tır ve
+yalnızca iki hamledir. Önce her puan için *e* üzeri puan alınır — bu, her
+sayıyı pozitif yapar ve aralarını açar. Sonra her sonuç toplama bölünür —
+artık toplamları tam %100'dür:
+
+| çift | puan | e^puan | toplam içindeki pay |
+|---|---|---|---|
+| Q(tilki) · K(Hızlı) | 2,1 | 8,2 | **%3** |
+| Q(tilki) · K(kahverengi) | 4,0 | 54,6 | **%19** |
+| Q(tilki) · K(tilki) | 5,4 | 221,4 | **%78** |
+| | | toplam ≈ 284 | %100 |
+
+Üstelin yaptığına dikkat edin: 5,4, 4,0'ın yalnızca biraz üstünde; ama %78,
+%19'un dört katı — softmax öndekileri ödüllendirir, geridekileri aç bırakır.
+Model az önce, sayılarla, her kelimenin ne kadar dikkati hak ettiğine karar
+verdi. (Evet, token kendine de dikkat eder — genellikle en çok.)
 
 **3. Adım — Karıştır: tarifi pişir.** Yeni *tilki* vektörü, *değerlerin*
 ağırlıklı toplamıdır:
 
-> tilki_yeni = 0,10 × V(Hızlı) + 0,30 × V(kahverengi) + 0,60 × V(tilki)
+> tilki_yeni = 0,03 × V(Hızlı) + 0,19 × V(kahverengi) + 0,78 × V(tilki)
 
 Sonuç artık sözlükteki *tilki* kelimesi değildir; *bu-belirli-hızlı-
 kahverengi-tilki*dir ve bir sonraki katmana giden, bu zenginleşmiş
