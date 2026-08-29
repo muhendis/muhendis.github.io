@@ -29,9 +29,12 @@ Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü
 olan yüz mü? Anlam komşulara bağlıdır. **Transformer** — modern bütün
 modellerin arkasındaki tasarım, GPT'deki T — komşuları okumak için
 kurulmuştur. Önceki mimariler metni soldan sağa sindirir, o ana dek görülen
-her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Transformer'ın
-hamlesi: her token, diğer her token'a *doğrudan* ve aynı anda baksın, neyin
-önemli olduğuna kendisi karar versin.
+her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Attention'ın kendisi transformer'dan yaşlıdır — önce o eski ağların üstüne
+yardımcı olarak eklendi ve 2017'de son teknoloji tam da bu birleşimdi.
+Makalenin radikal hamlesi ve başlığının — *Attention Is All You Need*,
+"ihtiyacınız olan tek şey attention" — gerçek anlamı, eski makineyi atıp
+yalnız attention'ı tutmaktı: her token, diğer her token'a *doğrudan* ve aynı
+anda baksın, neyin önemli olduğuna kendisi karar versin.
 
 Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 
@@ -39,7 +42,7 @@ Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
 Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
-**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Ve ağırlıklar yalnızca mesafeden gelemez — "o"yu çözen kelime yirmi token geride olabilir — içerikten hesaplanmak ve öğrenilmek zorundadırlar.
+**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Sayılar için daha basit bir tarif vardır: bir zaman serisini yumuşatırken de her noktayı komşularıyla karıştırırsınız ve ağırlıklar *mesafeden* gelir — en yakın nokta en çok sayılır. Dil bu tarifi bozar: "o"yu çözen kelime yirmi token geride olabilir, bitişikteki kelime ise gürültü. Demek ki ağırlıklar *içerikten* hesaplanmalı — ve öğrenilmelidir.
 
 ### Q, K, V — mekanizma, sayılarla
 
@@ -51,14 +54,19 @@ bir dönüşümü olan üç rol verilir:
 - **değer (value)** — seçilirsem ne teslim ederim?
 
 Bu üçü nereden geliyor? Token'ın kendi vektöründen. Model, üç öğrenilmiş
-sayı tablosu tutar; bir token'ın vektörünü her tabloyla çarpmak, onun
-sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet. (Ve YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar, videoların kendisi değer.)
+sayı tablosu tutar — ağırlık matrisleri **W_Q, W_K, W_V**; her biri sıradan
+bir yoğun (dense) katmandır. Token'ın embedding'ini her biriyle çarpmak,
+onun sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet — ve
+her token üçünü aynı anda giyer: her kelime hem arayıcıdır (Q), hem
+bulunabilirdir (K), hem de devredilecek içeriktir (V). (Ve YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar, videoların kendisi değer.)
 
 Peki neden doğrudan ham embedding'lerle karşılaştırma yapmıyoruz? Çünkü bir
 embedding, kelimenin birçok yönünü aynı anda karıştırır — dil bilgisi, anlam,
 konum. Üç tablo, modelin *tam da bu aramanın ihtiyacı olan yönü* çekmesine
 izin verir: "yorgun olabilir" üzerinden eşleşen bir sorgu-anahtar çifti,
-"f ile başlar" üzerinden değil. Birlikte bir **yumuşak sözlük** gibi
+"f ile başlar" üzerinden değil. Aynı mantık değer için de geçerlidir:
+seçilen token bütün embedding'ini devretmez, yalnızca aktarılmaya değer
+dilimi devreder — hangi dilim olduğuna W_V karar verir. Birlikte bir **yumuşak sözlük** gibi
 davranırlar: gerçek bir sözlük anahtarı ya tam eşleştirir ya da hiçbir şey
 döndürmez; attention her anahtarla *kısmen* eşleşir ve her değerden oransal
 bir dilim alır.
@@ -131,7 +139,22 @@ makalede basılan formül:
 
 Soldan sağa okuyun: her sorguyu her anahtarla iç çarpıma sok (QKᵀ), √dₖ ile
 ölçekle, puanları softmax ile yüzdeye çevir, değerleri bu yüzdelerle
-karıştır. İçindeki her sembol artık tanıdık.
+karıştır. İçindeki her sembol artık tanıdık. Büyük harflere de dikkat: buradaki Q, K
+ve V birer matristir — bütün token'ların vektörleri tek blokta üst üste —
+yani bu tek satır, aramayı *bütün* token'lar için aynı anda, saf matris
+çarpımı olarak yürütür. Döngü yok; tam da GPU'ların silip süpürdüğü iş
+biçimi.
+
+Havada hiçbir şey kalmasın diye, QKV'nin künyesi tek tabloda:
+
+| soru | cevap |
+|---|---|
+| **Ne?** | Token başına üç rol: sorgu (ne arıyorum), anahtar (nasıl bulunurum), değer (ne devrederim) |
+| **Nasıl oluşur?** | embedding × W_Q, W_K, W_V — üç öğrenilmiş lineer katman |
+| **Neden üç ayrı vektör?** | Embedding, kelimenin her yönünü karıştırır; her rol yalnızca kendi işinin gerektirdiği yönü çeker |
+| **Neden sabit değil, öğrenilmiş?** | Doğru ağırlıklar kelime mesafesinden çıkmaz; içerikten hesaplanmak zorundadır |
+| **Nerede ve ne zaman?** | Her katmanda, her kafada, bütün token'lar için aynı anda — tek matris çarpımı |
+| **Kim, ne zamandan beri?** | Vaswani vd., 2017 — *Attention Is All You Need* |
 
 ### Tek yön
 

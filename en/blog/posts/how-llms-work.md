@@ -29,9 +29,12 @@ An embedding alone cannot say what "bank" means — river bank, or the one
 with the money? Meaning depends on neighbors. The **transformer** — the
 design behind every modern model, the T in GPT — is built to read them.
 Earlier architectures digested text left to right, squeezing everything seen
-so far through one narrow running memory that faded with distance. The
-transformer's move: let every token look *directly* at every other token,
-all at once, and decide for itself what matters.
+so far through one narrow running memory that faded with distance. Attention itself is older than the transformer — it was first bolted onto
+those older networks as a helper, and that combination was the state of the
+art in 2017. The paper's radical move, and the literal meaning of its title
+*Attention Is All You Need*, was to throw the old machinery away and keep
+only attention: let every token look *directly* at every other token, all
+at once, and decide for itself what matters.
 
 Watch that decision, in the original paper's own example:
 
@@ -40,7 +43,7 @@ Watch that decision, in the original paper's own example:
 
 One word changes and "it" switches sides. You resolved that instantly;
 **attention** is how the model does. The whole trick reduces to one
-sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** And the weights cannot come from distance alone — the word that settles "it" may sit twenty tokens back — so they must be computed from content, and learned.
+sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** A simpler recipe exists for numbers: when smoothing a time series, you also blend each point with its neighbors, and the weights come from *distance* — the nearest points count most. Language breaks that recipe: the word that settles "it" may sit twenty tokens back, and the next-door word may be noise. So the weights must be computed from *content* — and learned.
 
 ### Q, K, V — the mechanism, with numbers
 
@@ -52,13 +55,19 @@ learned transformation of its vector:
 - **value** — what do I hand over if picked?
 
 Where do these three come from? From the token's own vector. The model
-holds three learned tables of numbers; multiplying a token's vector by each
-table produces its query, its key, and its value. Same word, three outfits. (And think YouTube: your search text is the query, every video's title is a key, the videos themselves are the values.)
+holds three learned tables of numbers — the weight matrices **W_Q, W_K,
+W_V**, each just an ordinary dense layer. Multiplying a token's embedding by
+each one produces its query, its key, and its value. Same word, three
+outfits — and every token wears all three at once: each word is
+simultaneously a searcher (Q), findable (K), and content to hand over (V). (And think YouTube: your search text is the query, every video's title is a key, the videos themselves are the values.)
 
 Why not compare raw embeddings directly? Because an embedding mixes many
 aspects of a word at once — grammar, meaning, position. The three tables let
 the model extract *just the aspect this particular search needs*: a query
-and key that match on "could be tired", not on "starts with f". Together
+and key that match on "could be tired", not on "starts with f". The same
+logic applies to the value: a chosen token does not hand over its whole
+embedding, only the slice worth passing on — W_V decides which slice.
+Together
 they behave like a **soft dictionary**: a real dictionary matches a key
 exactly or returns nothing; attention matches every key *partially* and
 takes a proportional slice of every value.
@@ -134,7 +143,21 @@ every paper since 2017:
 
 Read it left to right: dot-product every query with every key (QKᵀ), scale
 by √dₖ, softmax the scores into percentages, and blend the values with those
-percentages. Every symbol in it is now familiar.
+percentages. Every symbol in it is now familiar. And notice the capital letters: Q, K,
+and V here are matrices — every token's vectors stacked into one block — so
+this single line runs the search for *all* tokens simultaneously, as pure
+matrix multiplication. No loops; exactly the shape of work GPUs devour.
+
+To leave nothing dangling, the Q/K/V dossier in one table:
+
+| question | answer |
+|---|---|
+| **What?** | Three roles per token: query (what am I looking for), key (how am I found), value (what do I hand over) |
+| **How are they made?** | embedding × W_Q, W_K, W_V — three learned linear layers |
+| **Why three separate vectors?** | An embedding mixes every aspect of a word; each role extracts only the aspect its job needs |
+| **Why learned, not fixed?** | The right weights cannot come from word distance; they must be computed from content |
+| **Where and when?** | In every layer, in every head, for all tokens at once — one matrix multiplication |
+| **Who, and since when?** | Vaswani et al., 2017 — *Attention Is All You Need* |
 
 ### One direction only
 
