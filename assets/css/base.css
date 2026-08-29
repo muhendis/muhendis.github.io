@@ -26,6 +26,8 @@ h4 { font-size: var(--fs-lg); }
 
 p, li { text-wrap: pretty; }
 h1, h2, h3, h4 { text-wrap: balance; }
+/* Fragment jumps must clear the sticky masthead. */
+h2, h3 { scroll-margin-top: 6rem; }
 
 a { color: var(--c-accent); text-decoration-thickness: 1px; text-underline-offset: .18em; }
 a:hover { color: var(--c-accent-hover); }

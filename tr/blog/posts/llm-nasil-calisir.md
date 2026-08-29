@@ -12,6 +12,20 @@ metninde sıradaki kelimeyi *iyi* tahmin etmek için dil bilgisini,
 olguları, üslubu ve akıl yürütmenin işleyen bir taklidini özümsemek
 zorundasınızdır. Aşağıdaki her şey bu fikrin dipnotudur.
 
+**Bu yazıda**
+
+- [1. Metin sayıya dönüşür](#1-metin-sayıya-dönüşür)
+- [2. Anlam taşıyan sayılar](#2-anlam-taşıyan-sayılar)
+- [3. Transformer: bir bağlam makinesi](#3-transformer-bir-bağlam-makinesi) — [Q, K, V](#q-k-v-mekanizma-sayılarla) · [Tek yön](#tek-yön) · [Birçok kafa](#birçok-kafa)
+- [4. Katmanlar: bilgi nerede yaşıyor](#4-katmanlar-bilgi-nerede-yaşıyor)
+- [5. Eğitim ve ölçek](#5-eğitim-ve-ölçek)
+- [6. Otomatik tamamlamadan asistana](#6-otomatik-tamamlamadan-asistana)
+- [7. Üretim: plan değil, döngü](#7-üretim-plan-değil-döngü)
+- [8. Sizi hatırlamaz](#8-sizi-hatırlamaz)
+- [9. Neden uyduruyor](#9-neden-uyduruyor)
+- [Bütün hikâye beş satırda](#bütün-hikâye-beş-satırda)
+- [Daha derine inmek için](#daha-derine-inmek-için)
+
 ## 1. Metin sayıya dönüşür
 
 **Tokenizer** (standart algoritmanın adı **byte-pair encoding**, BPE), metni **token** denen parçalara böler — "için" tek parça,
@@ -24,8 +38,7 @@ Bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibidir.
 ## 2. Anlam taşıyan sayılar
 
 Her token bir **embedding**'e dönüşür: binlerce sayıyı kadran gibi düşünün — biri resmiyet, biri zaman, biri duygu, çoğuysa hiçbir insanın adlandırmadığı nitelikler için. Bu kadranlar, bir anlam haritasındaki koordinatları
-gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap
-tablosu*na uzaktır; yönler ilişkidir: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü — ve *kral − erkek + kadın*, *kraliçe*nin yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
+gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap tablosu*na uzaktır. Yönler de anlam taşır: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü. Kelime aritmetiği bile çalışır: *kral − erkek + kadın*, *kraliçe*nin yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
 sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
 "adam köpeği ısırdı"dan farklı kalmalıdır.
 
@@ -35,21 +48,11 @@ Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü
 olan yüz mü? Anlam komşulara bağlıdır. **Transformer** — modern bütün
 modellerin arkasındaki tasarım, GPT'deki T — komşuları okumak için
 kurulmuştur. Önceki mimariler metni soldan sağa sindirir, o ana dek görülen
-her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Attention'ın kendisi transformer'dan yaşlıdır — önce o eski ağların üstüne
-yardımcı olarak eklendi ve 2017'de son teknoloji tam da bu birleşimdi.
-Makalenin radikal hamlesi ve başlığının — *Attention Is All You Need*,
-"ihtiyacınız olan tek şey attention" — gerçek anlamı, eski makineyi atıp
-yalnız attention'ı tutmaktı: her token, diğer her token'a *doğrudan* ve aynı anda baksın, neyin önemli olduğuna kendisi karar versin.
-
-O 2017 tasarımı çeviri için kurulmuştu ve iki yarımdan oluşuyordu: kaynak
-cümleyi okuyan bir **encoder** yığını ve encoder'ın çıktısına danışa danışa
-çeviriyi yazan bir **decoder** yığını — **encoder-decoder** biçimi.
-Yarımlar çok geçmeden kendi yollarına gitti. Yalnız encoder'ı tutarsanız
-BERT ailesini elde edersiniz: metni iki yönde birden gören, anlamakta ve
-sınıflandırmakta güçlü okurlar. Yalnız decoder'ı tutarsanız GPT ailesi
-çıkar: token token metin üreten yazarlar — bu yazının konusu olanlar dahil,
-neredeyse bütün modern LLM'lerin biçimi. Bu üçlüyü aklınızda tutun; onları
-ayıran tek ayrıntı birazdan gelecek.
+her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. 2017 makalesinin radikal hamlesi — ve başlığının, *Attention Is All You
+Need*, "ihtiyacınız olan tek şey attention", gerçek anlamı — o makineyi
+atıp tek bir mekanizmayı, **attention**'ı tutmaktı: her token, diğer her
+token'a *doğrudan* ve aynı anda baksın, neyin önemli olduğuna kendisi
+karar versin.
 
 Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 
@@ -57,7 +60,7 @@ Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
 Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
-**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Sayılar için daha basit bir tarif vardır: bir zaman serisini yumuşatırken de her noktayı komşularıyla karıştırırsınız ve ağırlıklar *mesafeden* gelir — en yakın nokta en çok sayılır. Dil bu tarifi bozar: "o"yu çözen kelime yirmi token geride olabilir, bitişikteki kelime ise gürültü. Demek ki ağırlıklar *içerikten* hesaplanmalı — ve öğrenilmelidir.
+**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Ve ağırlıklar *mesafeden* gelemez — "o"yu çözen kelime yirmi token geride olabilir, bitişikteki kelime ise gürültü. Ağırlıklar *içerikten* hesaplanmalı — ve öğrenilmelidir.
 
 Transformer'ın cevabının belirgin bir biçimi var. Yığındaki her katman tam
 iki alt katman taşır. Birincisi **self-attention** — "self" (öz), çünkü
@@ -187,7 +190,7 @@ maske, modeli bir *sıradaki*-token tahmincisi yapan şeydir — ve geçmiş bir
 token'ın anahtarıyla değerinin, bir kez hesaplandıktan sonra asla
 değişmemesinin sebebi de budur: sonradan gelen hiçbir şey onlara dokunamaz. Bir kenara yazın; 7. bölümde KV cache olacak.
 
-Ve bu maske, girişteki üçlüyü ayıran ayrıntının ta kendisidir: decoder ailesi (GPT) maskeyle kurulur, o yüzden yazar; encoder ailesi (BERT) maskesiz kurulur, iki yöne birden bakar ve yazmak yerine sınıflandırır. Tek mimari anahtar, bütün soy ağacı.
+Bu maske aynı zamanda iki ünlü model ailesinin anahtarıdır. Maskeyle kurulan model soldan sağa okur, bu yüzden *yazar* — bu, **decoder** ailesidir: GPT ve neredeyse bütün modern LLM'ler. Maskesiz kurulan model iki yönü birden görür ve yazmak yerine *sınıflandırır* — bu da **encoder** ailesidir: BERT. (Adlar, transformer'ın ikisini yan yana kullanan orijinal çeviri tasarımından kalmadır.) Tek mimari anahtar, bütün soy ağacı.
 
 ### Birçok kafa
 

@@ -12,6 +12,20 @@ is merciless: to predict the next word of human text *well*, you must
 absorb grammar, facts, style, and a working imitation of reasoning.
 Everything below is a footnote to that idea.
 
+**In this article**
+
+- [1. Text becomes numbers](#1-text-becomes-numbers)
+- [2. Numbers with meaning](#2-numbers-with-meaning)
+- [3. The transformer: a context machine](#3-the-transformer-a-context-machine) — [Q, K, V](#q-k-v-the-mechanism-with-numbers) · [One direction only](#one-direction-only) · [Many heads](#many-heads)
+- [4. Layers: where knowledge lives](#4-layers-where-knowledge-lives)
+- [5. Training and scale](#5-training-and-scale)
+- [6. From autocomplete to assistant](#6-from-autocomplete-to-assistant)
+- [7. Generation: a loop, not a plan](#7-generation-a-loop-not-a-plan)
+- [8. It does not remember you](#8-it-does-not-remember-you)
+- [9. Why it makes things up](#9-why-it-makes-things-up)
+- [The whole story in five lines](#the-whole-story-in-five-lines)
+- [Going deeper](#going-deeper)
+
 ## 1. Text becomes numbers
 
 A **tokenizer** (the standard algorithm is **byte-pair encoding**, BPE) chops text into pieces called **tokens** — "the" is one piece,
@@ -24,8 +38,7 @@ hard. It is like counting brushstrokes in a *photo* of a painting.
 ## 2. Numbers with meaning
 
 Each token becomes an **embedding**: a long list of numbers that act as its
-coordinates on a map of meaning. Think of the thousands of numbers as dials — one for formality, one for tense, one for sentiment, most for qualities no human ever named. *King* sits near *queen* and far from
-*spreadsheet*, and directions encode relationships: the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction — and *king − man + woman* lands near *queen*. Nobody drew this map; it is learned. Because a bag of
+coordinates on a map of meaning. Think of the thousands of numbers as dials — one for formality, one for tense, one for sentiment, most for qualities no human ever named. *King* sits near *queen* and far from *spreadsheet*. Directions carry meaning too: the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction. Even word arithmetic works: *king − man + woman* lands near *queen*. Nobody drew this map; it is learned. Because a bag of
 coordinates has no order, each token's **position** is stamped in too: "dog
 bites man" must stay different from "man bites dog".
 
@@ -35,22 +48,10 @@ An embedding alone cannot say what "bank" means — river bank, or the one
 with the money? Meaning depends on neighbors. The **transformer** — the
 design behind every modern model, the T in GPT — is built to read them.
 Earlier architectures digested text left to right, squeezing everything seen
-so far through one narrow running memory that faded with distance. Attention itself is older than the transformer — it was first bolted onto
-those older networks as a helper, and that combination was the state of the
-art in 2017. The paper's radical move, and the literal meaning of its title
-*Attention Is All You Need*, was to throw the old machinery away and keep
-only attention: let every token look *directly* at every other token, all at once, and decide for itself what matters.
-
-That 2017 design was built for translation, and it had two halves: an
-**encoder** stack that reads the source sentence, and a **decoder** stack
-that writes the translation while consulting the encoder's output — the
-**encoder-decoder** shape. The halves soon went their own ways. Keep only
-the encoder and you get the BERT family: readers, seeing a text in both
-directions at once, strong at understanding and classifying it. Keep only
-the decoder and you get the GPT family: writers, producing text token by
-token — the shape of virtually every modern LLM, including the ones this
-article is about. Hold the trio in mind; the one detail that separates them
-arrives shortly.
+so far through one narrow running memory that faded with distance. The 2017 paper's radical move — and the literal meaning of its title
+*Attention Is All You Need* — was to throw that machinery away and keep a
+single mechanism, **attention**: let every token look *directly* at every
+other token, all at once, and decide for itself what matters.
 
 Watch that decision, in the original paper's own example:
 
@@ -59,7 +60,7 @@ Watch that decision, in the original paper's own example:
 
 One word changes and "it" switches sides. You resolved that instantly;
 **attention** is how the model does. The whole trick reduces to one
-sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** A simpler recipe exists for numbers: when smoothing a time series, you also blend each point with its neighbors, and the weights come from *distance* — the nearest points count most. Language breaks that recipe: the word that settles "it" may sit twenty tokens back, and the next-door word may be noise. So the weights must be computed from *content* — and learned.
+sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** And the weights cannot come from *distance* — the word that settles "it" may sit twenty tokens back while the next-door word is noise. They must be computed from *content*, and learned.
 
 The transformer's answer has a precise shape. Every layer of the stack
 holds exactly two sub-layers. The first is **self-attention** — "self"
@@ -192,7 +193,7 @@ look *backward*. *Fox* sees *brown*; *brown* never sees *fox*. That mask is
 what makes the model a *next*-token predictor — and it is why a past
 token's key and value, once computed, never change: nothing that arrives later can touch them. File that away; it becomes the KV cache in section 7.
 
-And this mask is precisely the detail that separates the trio from the introduction: the decoder family (GPT) is built with it, and therefore writes; the encoder family (BERT) is built without it, reads in both directions, and classifies instead. One architectural switch, the whole family tree.
+This mask is also the switch behind the two famous model families. Built *with* the mask, a model reads left to right and therefore writes — the **decoder** family: GPT, and virtually every modern LLM. Built *without* it, a model sees both directions at once and classifies instead of writing — the **encoder** family: BERT. (The names are leftovers from the transformer's original translation design, which paired the two.) One architectural switch, the whole family tree.
 
 ### Many heads
 

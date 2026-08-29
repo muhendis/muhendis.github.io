@@ -160,6 +160,14 @@
             marked.setOptions({ gfm: true, breaks: false });
             document.getElementById('post-body').innerHTML = marked.parse(md);
 
+            /* marked v5+ dropped headerIds; in-page ToC links need them. */
+            document.querySelectorAll('#post-body h2, #post-body h3').forEach(function (h) {
+              h.id = h.textContent.toLowerCase()
+                .replace(/[^\p{L}\p{N}\s-]/gu, '')
+                .trim()
+                .replace(/\s+/g, '-');
+            });
+
             var url = ORIGIN + '/' + LANG + '/blog/post.html?slug=' + slug;
             document.title = meta.title + ' — Engin Bozaba';
             setMeta('name', 'description', meta.summary || '');
