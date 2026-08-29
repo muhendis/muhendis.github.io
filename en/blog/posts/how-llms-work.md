@@ -61,12 +61,27 @@ Swap one word at the end, and "it" flips its meaning — tired points at the
 animal, wide points at the street. You resolved that instantly and
 unconsciously. Attention is the machinery that lets a model do the same.
 
-It works like matchmaking. Every token puts out a **query** — a description of
-what it is looking for ("I am a pronoun; I need a thing mentioned earlier that
-could be *tired*"). Every token also advertises a **key** — a description of
-what it is ("I am an animal, four words back"). Where a query and a key match
-strongly, information flows: the matched token hands over its **value**, and
-the pronoun's vector is updated to mean, effectively, *the animal*.
+How? Inside the model, every token wears three hats — each one a different
+small transformation of its vector:
+
+- a **query**: "what am I looking for?"
+- a **key**: "how should others find me?"
+- a **value**: "what do I hand over if I'm picked?"
+
+The closest everyday machine is a search engine. What you type into YouTube is
+a query. Every video's title and description is a key. The videos themselves
+are the values. The engine compares your query against all the keys, scores
+the matches, and serves you the content behind the best ones.
+
+Attention runs that search for every token at once. In "it was too *tired*",
+the token *it* issues a query that says, roughly, "I need a thing mentioned
+earlier that could be tired." The key of *animal* matches that query strongly;
+the key of *street* matches it weakly. The match scores are turned into
+percentages that sum to 100, and *it* updates its vector with a blend of the
+values weighted by those percentages — say 85% of *animal*'s, 10% of
+*street*'s, a little from the rest. Nothing is ever copied whole: every update
+is a mixture, weighted by relevance. Swap *tired* for *wide*, and the very
+same machinery flips the weights toward *street*.
 
 And it does not happen once. Each layer runs many attention "heads" in
 parallel, and each head learns to track a different kind of relationship — one
@@ -90,7 +105,7 @@ made headlines in 2019 with 1.5 billion of them; today's frontier models are
 measured in the hundreds of billions to trillions.
 
 At the very top, the model converts the final vector into a score for every
-token in its vocabulary and converts the scores into percentages that add up to 100% — the **softmax** step. That is the model's entire output at each step: not a
+token in its vocabulary and converts the scores into percentages that add up to 100% — the **softmax** step, the same scores-to-percentages move attention used internally. That is the model's entire output at each step: not a
 sentence, not an idea — a probability for every token it knows. After "Once
 upon a", nearly all of the probability piles onto "time". After "My favorite
 city is", it spreads across hundreds of plausible cities. Both are correct answers to the only question the model ever answers: what is likely to come next?
@@ -120,18 +135,51 @@ has.
 
 ## From autocomplete to assistant
 
-A pretrained model is raw autocomplete, and it behaves like it. Ask it "What
-is the capital of France?" and it might answer — or it might continue with
-nine more quiz questions, because on the internet, one quiz question is
-usually followed by another. Two more stages turn it into an assistant:
+What pretraining produces is called a **base model**, and it is worth being
+precise about what that is: a machine that continues text — nothing more. It
+has no job description, no notion that a question aimed at it is *its* to
+answer. It has simply read the internet, where text follows text.
 
-1. **Instruction tuning** — further training on examples of questions paired
-   with good answers, teaching the *format* of being helpful.
-2. **Learning from human preferences** (**RLHF** — reinforcement learning from human feedback — and its relatives) — people
-   compare candidate answers, and the model is tuned toward the ones humans
-   prefer: helpful, honest, harmless.
+Ask a base model "What is the capital of France?" and you might get "Paris."
+You might just as easily get "What is the capital of Germany? What is the
+capital of Spain?" — on the internet, quiz questions travel in packs — or
+"asked the teacher, and nobody raised a hand," continuing the scene as
+fiction. All three are faithful continuations. In the base-model era, getting
+answers out required tricks like writing "Q: ... A:" so that an answer became
+the likeliest continuation. Prompt engineering was born there.
 
-Same architecture, same next-token machinery — different behavior.
+Turning this raw material into an assistant takes two further stages. Neither
+changes the architecture; both are simply more next-token training, on
+carefully chosen text.
+
+**Stage one: instruction tuning.** People — increasingly helped by models —
+write tens of thousands of example dialogues, each an instruction paired with
+an ideal response:
+
+> **User:** Summarize this email in two sentences.
+> **Assistant:** (a genuinely good two-sentence summary)
+
+Train on enough of these, and "I am an assistant; a question is for answering;
+this is what helpful looks like" becomes the most probable continuation. The
+format of being helpful is learned the same way everything else was — from
+examples.
+
+**Stage two: learning from human preferences**, known as **RLHF**
+(reinforcement learning from human feedback). Have the model produce several
+answers to the same prompt. Show pairs to human reviewers: *which one is
+better?* Train a second model — a **reward model** — to predict those
+judgments, then tune the LLM toward answers the reward model scores highly.
+Why the detour? Because people are far better at *comparing* two answers than
+at writing perfect ones, and because comparisons capture what examples
+struggle to spell out: tone, honesty about uncertainty, declining harmful
+requests.
+
+The two halves are wildly lopsided in cost: pretraining takes months on
+thousands of GPUs; the assistant stages are a small fraction of that. And the
+gap between them is a gap you have personally felt. GPT-3 — the base model —
+existed for more than two years before ChatGPT. What turned a research
+curiosity into the fastest-growing product in history was not a bigger
+network. It was these two stages, bolted onto the same next-token machine.
 
 ## Generation: a loop, not a plan
 
@@ -139,14 +187,31 @@ When you send a prompt, the model does not plan an answer and then type it. It
 computes the probability of every possible next token, **samples** one — draws it at random, weighted by its probability — appends it to the text, and repeats — each new token immediately becoming part of the
 input for the next prediction — until it produces a special stop token that means "I'm done."
 
-It does not always pick the single most likely token; always taking the top
-choice produces repetitive, stilted text. Instead a bit of controlled
-randomness is mixed in, and **temperature** scales it. At low temperature,
-"The sky was" continues with *blue* almost every time — the right setting for
-extracting data or writing SQL. At high temperature it might continue with *a
-bruised shade of purple over the harbor* — the right setting for
-brainstorming. A companion setting, **top-p**, first discards the wildly unlikely options, so the randomness can vary the wording but never picks nonsense. This is also why the same question can get different answers on
-different days.
+It does not always pick the single most likely token — always taking the top
+choice produces repetitive, stilted text — so the pick is a controlled
+lottery, governed by three dials worth knowing by name. Concretely: after
+"The sky was", the model's list might read *blue* 60%, *clear* 20%, *dark*
+10%, *grey* 5%, then a tail of thousands of tokens at tiny probabilities —
+including, somewhere far down, *potato* at 0.0001%.
+
+- **Temperature** reshapes the list before the draw. Low temperature
+  exaggerates the leader: *blue* wins almost every time — what you want when
+  extracting data or writing SQL. High temperature flattens the list: *dark*
+  and *grey* get real chances, and once in a while you get *a bruised shade
+  of purple over the harbor* — what you want when brainstorming.
+- **Top-k** cuts the list to a fixed length before sampling. With k = 50,
+  only the 50 most likely tokens stay in the draw; the tail — *potato*
+  included — is simply deleted.
+- **Top-p** cuts by probability mass instead of count: keep the smallest set
+  of tokens whose percentages add up to p — say 90% — and discard the rest.
+  The clever part is that this set adapts. When the model is confident
+  ("Once upon a"), the 90% set may hold two tokens; when it is genuinely
+  torn ("My favorite city is"), it may hold eighty. That adaptiveness is why
+  top-p is the more common choice.
+
+Cut first, then draw from the survivors. This is why the same question can
+get different answers on different days — and why the sky is never completed
+with a potato.
 
 The loop also explains why "think step by step" genuinely works. Ask a model
 for 17 × 24 in one leap, and it must hit the answer in a single next-token
@@ -207,16 +272,15 @@ check yourself — the step the lawyers skipped.
    (**embedding**) — coordinates on a map of meaning — with **position**
    encoded so word order survives.
 2. Stacked **transformer** layers use **attention** — queries matching keys,
-   many heads in parallel — so every token's vector is informed by its
+   values blended by relevance, many heads in parallel — so every token's vector is informed by its
    context ("it was too tired" vs "it was too wide"); feed-forward blocks
    store most of the knowledge.
 3. **Pretraining** on next-token prediction over vast text is where the
    knowledge comes from; **scaling laws** say more model, data, and compute
-   predictably help; instruction tuning and human feedback shape the result
-   into an assistant.
+   predictably help. Pretraining alone yields a **base model** — raw
+   autocomplete; instruction tuning and RLHF shape it into an assistant.
 4. Generation is a loop: softmax gives a probability for every token,
-   **sampling** picks one, the choice feeds the next step. **Temperature**
-   controls the randomness; step-by-step "thinking" is the model using the
+   **sampling** picks one, the choice feeds the next step. **Temperature**, **top-k**, and **top-p** control the randomness; step-by-step "thinking" is the model using the
    page as its scratchpad.
 5. Parameters are **frozen** after training — apparent memory is the context
    window, and **in-context learning** is patterns picked up from the prompt

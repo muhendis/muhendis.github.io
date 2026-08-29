@@ -62,13 +62,27 @@ Sondaki tek kelimeyi değiştirin, "o" anlam değiştirsin — *yorgun* hayvanı
 gösterir, *geniş* caddeyi. Siz bunu anında ve farkında olmadan çözdünüz.
 Attention, modelin aynısını yapmasını sağlayan mekanizmadır.
 
-Bir eşleştirme servisi gibi çalışır. Her token bir **sorgu (query)** yayınlar —
-ne aradığının tarifi ("ben bir zamirim; daha önce geçen ve *yorgun* olabilecek
-bir şeye ihtiyacım var"). Her token aynı zamanda bir **anahtar (key)** ilan
-eder — ne olduğunun tarifi ("ben bir hayvanım, dört kelime önce geçtim").
-Sorgu ile anahtar güçlü eşleştiğinde bilgi akar: eşleşen token **değerini
-(value)** devreder ve zamirin vektörü fiilen *hayvan* anlamına gelecek şekilde
-güncellenir.
+Peki nasıl? Modelin içinde her token, her biri vektörünün farklı küçük bir
+dönüşümü olan üç şapka takar:
+
+- bir **sorgu (query)**: "ben ne arıyorum?"
+- bir **anahtar (key)**: "başkaları beni nasıl bulsun?"
+- bir **değer (value)**: "seçilirsem ne teslim ederim?"
+
+Günlük hayattaki en yakın makine bir arama motorudur. YouTube'a yazdığınız
+metin sorgudur. Her videonun başlığı ve açıklaması birer anahtardır. Videoların
+kendisi ise değerdir. Motor, sorgunuzu bütün anahtarlarla karşılaştırır,
+eşleşmeleri puanlar ve en iyi eşleşenlerin arkasındaki içeriği önünüze koyar.
+
+Attention bu aramayı her token için aynı anda çalıştırır. "O çok *yorgundu*"
+cümlesinde *o* token'ı kabaca şöyle bir sorgu yayınlar: "daha önce geçen ve
+yorgun olabilecek bir şey arıyorum." *Hayvan*ın anahtarı bu sorguyla güçlü
+eşleşir; *cadde*nin anahtarı zayıf. Eşleşme puanları, toplamı yüzde yüz olan
+ağırlıklara çevrilir ve *o*, vektörünü değerlerin bu ağırlıklarla karışımıyla
+günceller — diyelim %85'i *hayvan*dan, %10'u *cadde*den, birazı da geri
+kalandan. Hiçbir şey olduğu gibi kopyalanmaz: her güncelleme, ilgiye göre
+ağırlıklanmış bir karışımdır. *Yorgun*u *geniş*le değiştirin; aynı mekanizma
+ağırlıkları *cadde*ye çevirir.
 
 Ve bu bir kez olmaz. Her katman, paralel çalışan birçok attention "kafası"
 (head) barındırır ve her kafa farklı türden bir ilişkiyi izlemeyi öğrenir —
@@ -93,7 +107,7 @@ katmanlardaki öğrenilmiş sayıları — **parametreleri** — sayar. GPT-2, 2
 milyarlarla ve trilyonlarla ölçülüyor.
 
 En tepede model, son vektörü sözlüğündeki her token için bir puana çevirir ve
-puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı. Her adımda modelin bütün
+puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı; attention'ın içeride kullandığı puanı-yüzdeye-çevirme hamlesinin aynısı. Her adımda modelin bütün
 çıktısı budur: bir cümle değil, bir fikir değil — bildiği her token için bir
 olasılık. "Bir varmış bir" dedikten sonra olasılığın neredeyse tamamı
 "yokmuş"un üzerine yığılır. "En sevdiğim şehir" dedikten sonra yüzlerce makul
@@ -123,18 +137,51 @@ tek hedefe hizmet eder.
 
 ## Otomatik tamamlamadan asistana
 
-Ön eğitimden çıkan model ham bir otomatik tamamlayıcıdır ve öyle de davranır.
-"Fransa'nın başkenti neresi?" diye sorarsanız cevap verebilir — ya da dokuz
-quiz sorusu daha ekleyebilir; çünkü internette bir quiz sorusunun ardından
-genellikle bir tane daha gelir. Onu asistana çeviren iki aşama daha vardır:
+Ön eğitimin ürettiği şeye **taban model (base model)** denir ve ne olduğu
+konusunda net olmakta fayda var: metni sürdüren bir makine — başka hiçbir şey
+değil. Bir görev tanımı yoktur; kendisine yöneltilen bir sorunun kendisi
+tarafından cevaplanması gerektiği fikri bile yoktur. Sadece interneti
+okumuştur ve internette metin, metni izler.
 
-1. **Talimat eğitimi (instruction tuning)** — soru ve iyi cevap çiftlerinden
-   oluşan örneklerle ek eğitim; yardımcı olmanın *biçimini* öğretir.
-2. **İnsan tercihlerinden öğrenme** (**RLHF** — insan geri bildirimiyle pekiştirmeli öğrenme — ve akrabaları) — insanlar aday
-   cevapları karşılaştırır, model insanların tercih ettiği yöne doğru
-   ayarlanır: yardımcı, dürüst, zararsız.
+Taban modele "Fransa'nın başkenti neresi?" diye sorun; "Paris." alabilirsiniz.
+Aynı ihtimalle "Almanya'nın başkenti neresi? İspanya'nın başkenti neresi?" de
+alabilirsiniz — internette quiz soruları sürü halinde gezer — ya da "diye
+sordu öğretmen, kimse parmak kaldırmadı" diye sahneyi kurgu gibi sürdürmesi de
+mümkündür. Üçü de sadık birer devamdır. Taban model çağında cevap koparmak,
+"Soru: ... Cevap:" kalıbı yazmak gibi numaralar gerektirirdi — cevabı en
+olası devam haline getirmek için. Prompt mühendisliği orada doğdu.
 
-Aynı mimari, aynı sıradaki-token makinesi — farklı davranış.
+Bu ham malzemeyi asistana çevirmek iki aşama daha ister. İkisi de mimariyi
+değiştirmez; ikisi de özenle seçilmiş metin üzerinde aynı sıradaki-token
+eğitiminin devamıdır.
+
+**Birinci aşama: talimat eğitimi (instruction tuning).** İnsanlar — giderek
+artan ölçüde modellerin de yardımıyla — on binlerce örnek diyalog yazar: bir
+talimat ve ideal cevabı.
+
+> **Kullanıcı:** Bu e-postayı iki cümlede özetle.
+> **Asistan:** (gerçekten iyi, iki cümlelik bir özet)
+
+Bunlardan yeterince eğitin; "ben bir asistanım, soru cevaplanmak içindir,
+yardımcı olmak böyle görünür" en olası devam haline gelir. Yardımcı olmanın
+biçimi de her şey gibi öğrenilir — örneklerden.
+
+**İkinci aşama: insan tercihlerinden öğrenme** — **RLHF** (insan geri
+bildirimiyle pekiştirmeli öğrenme). Modele aynı isteme birden çok cevap
+ürettirin. Çiftleri insan değerlendiricilere gösterin: *hangisi daha iyi?* Bu
+yargıları tahmin etmeyi öğrenen ikinci bir model — **ödül modeli** — eğitin;
+sonra LLM'i, ödül modelinin yüksek puan verdiği cevaplara doğru ayarlayın. Bu
+dolambaç niye? Çünkü insanlar iki cevabı *karşılaştırmakta*, kusursuz cevap
+yazmaktan çok daha iyidir; ve karşılaştırmalar, örneklerle anlatması zor
+şeyleri yakalar: ton, emin olmadığında dürüstlük, zararlı istekleri geri
+çevirmek.
+
+İki yarının maliyeti orantısızdır: ön eğitim binlerce GPU üzerinde aylar
+sürer; asistan aşamaları bunun küçük bir kesridir. Aradaki fark da bizzat
+hissettiğiniz farktır. Taban model GPT-3, ChatGPT'den iki yıldan fazla önce
+vardı. Bir araştırma merakını tarihin en hızlı büyüyen ürününe çeviren şey
+daha büyük bir ağ değildi — aynı sıradaki-token makinesine eklenen bu iki
+aşamaydı.
 
 ## Üretim: plan değil, döngü
 
@@ -143,13 +190,32 @@ sonraki token'ın olasılığını hesaplar, birini **örnekler** — yani olas�
 tekrar eder — her yeni token, bir sonraki tahminin girdisine anında dahil
 olur — ta ki "bitirdim" anlamına gelen özel bir durdurma token'ı üretene kadar.
 
-Her zaman en olası token'ı seçmez; hep birinci tercihi almak tekrarlı,
-kasılmış metin üretir. Bunun yerine araya kontrollü bir rastgelelik katılır ve
-bunu **temperature** ölçekler. Düşük sıcaklıkta "Gökyüzü" neredeyse her
-seferinde *maviydi* diye devam eder — veri çıkarmak ya da SQL yazdırmak için
-doğru ayar. Yüksek sıcaklıkta *limanın üzerinde çürük moruna çalıyordu* diye
-devam edebilir — beyin fırtınası için doğru ayar. Yardımcı bir ayar olan **top-p** ise en baştan gerçekten olasılıksız seçenekleri eler; rastgelelik ifadeyi çeşitlendirir ama asla saçmalığa savrulmaz. Aynı sorunun farklı
-günlerde farklı cevaplar almasının sebebi de budur.
+Her zaman en olası token'ı seçmez — hep birinci tercihi almak tekrarlı,
+kasılmış metin üretir — bu yüzden seçim, adını bilmeye değer üç düğmenin
+yönettiği kontrollü bir çekiliştir. Somutlaştıralım: "Gökyüzü" girdisinden
+sonra modelin listesi şöyle olabilir: *maviydi* %60, *açıktı* %20,
+*karanlıktı* %10, *griydi* %5 ve binlerce token'lık minicik olasılıklı bir
+kuyruk — çok aşağılarda bir yerde, %0,0001 ile *patatesti* de dahil.
+
+- **Temperature**, çekilişten önce listeyi yeniden biçimlendirir. Düşük
+  sıcaklık lideri abartır: *maviydi* neredeyse her seferinde kazanır — veri
+  çıkarırken ya da SQL yazdırırken istediğiniz budur. Yüksek sıcaklık listeyi
+  düzleştirir: *karanlıktı* ve *griydi* gerçek şans kazanır, arada bir de
+  *limanın üzerinde çürük moruna çalıyordu* çıkar — beyin fırtınasında
+  istediğiniz budur.
+- **Top-k**, listeyi çekilişten önce sabit uzunlukta keser. k = 50 ise
+  çekilişte yalnızca en olası 50 token kalır; kuyruk — *patatesti* dahil —
+  düpedüz silinir.
+- **Top-p**, listeyi sayıyla değil olasılık toplamıyla keser: yüzdeleri
+  toplamı p'ye — diyelim %90'a — ulaşan en küçük token kümesini tut, gerisini
+  at. İncelik şu ki bu küme kendini duruma göre ayarlar. Model eminse ("Bir
+  varmış bir") %90'lık küme iki token olabilir; gerçekten kararsızsa ("En
+  sevdiğim şehir") seksen token. Top-p'nin daha yaygın tercih olmasının sebebi
+  bu uyarlanabilirliktir.
+
+Önce kes, sonra kalanlar arasından çek. Aynı sorunun farklı günlerde farklı
+cevaplar almasının sebebi budur — gökyüzünün asla bir patatesle
+tamamlanmamasının sebebi de.
 
 Bu döngü, "adım adım düşün" komutunun neden gerçekten işe yaradığını da
 açıklar. Modelden 17 × 24'ü tek hamlede isteyin; cevabı tek bir
@@ -210,16 +276,16 @@ kaynaklar istemek — avukatların atladığı adım.
    (**embedding**) dönüşür — bir anlam haritasındaki koordinatlar — ve kelime
    sırası kaybolmasın diye **konum** bilgisi işlenir.
 2. Üst üste dizilmiş **transformer** katmanları **attention** kullanır —
-   sorgular anahtarlarla eşleşir, birçok kafa paralel çalışır — böylece her
+   sorgular anahtarlarla eşleşir, değerler ilgiye göre karışır, birçok kafa paralel çalışır — böylece her
    token'ın vektörü bağlamıyla beslenir ("çok yorgundu" ile "çok genişti");
    bilginin çoğunu ileri beslemeli bloklar depolar.
 3. Devasa metin üzerinde sıradaki-token tahminiyle yapılan **ön eğitim**
    bilginin kaynağıdır; **ölçek yasaları** daha çok model, veri ve hesaplamanın
-   öngörülebilir biçimde işe yaradığını söyler; talimat eğitimi ve insan geri
-   bildirimi sonucu asistana biçimlendirir.
+   öngörülebilir biçimde işe yaradığını söyler. Ön eğitim tek başına ham bir
+   **taban model** verir — çıplak otomatik tamamlama; talimat eğitimi ve RLHF
+   onu asistana biçimlendirir.
 4. Üretim bir döngüdür: softmax her token'a bir olasılık verir, **örnekleme**
-   birini seçer, seçim bir sonraki adımı besler. Rastgeleliği **temperature**
-   kontrol eder; "adım adım düşünmek", modelin sayfayı karalama defteri olarak
+   birini seçer, seçim bir sonraki adımı besler. Rastgeleliği **temperature**, **top-k** ve **top-p** kontrol eder; "adım adım düşünmek", modelin sayfayı karalama defteri olarak
    kullanmasıdır.
 5. Eğitimden sonra parametreler **donmuştur** — hafıza sanılan şey bağlam
    penceresidir; **in-context learning**, örüntünün yalnızca istemden
