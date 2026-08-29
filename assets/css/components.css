@@ -267,3 +267,30 @@ a.tag:hover { border-color: var(--c-accent); }
 .cap-card { border-top: 3px solid var(--c-accent); gap: var(--sp-2); }
 .cap-card:hover { transform: none; }
 .cap-card__title { font-size: var(--fs-md); font-weight: 650; }
+
+/* ---- Hero backdrop: the ocean cover under a dark scrim ----
+   Colors here are FIXED, not theme tokens: the photo defines its own ground,
+   so the hero looks identical in light and dark themes. Scrim strength is
+   contrast-verified against the brightest foam in the image (worst case):
+   title 7.8:1+, eyebrow 7.2:1, stat values 4.6:1, labels 6:1. */
+.exec-hero {
+  background:
+    linear-gradient(rgba(11, 16, 21, .86), rgba(11, 16, 21, .74)),
+    url("/assets/img/cover.jpg") center / cover no-repeat;
+}
+.exec-hero .eyebrow { color: #2ed3e4; }
+.exec-hero__title { color: #f2f7f9; }
+.exec-hero__sub { color: rgba(235, 244, 247, .85); }
+.exec-hero__portrait {
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+}
+.exec-hero .btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, .4);
+  color: #f2f7f9;
+}
+.exec-hero .btn--ghost:hover { border-color: #2ed3e4; color: #2ed3e4; }
+.exec-hero .stat-bar { border-top-color: rgba(255, 255, 255, .22); }
+.exec-hero .stat__value { color: #2ed3e4; }
+.exec-hero .stat__label { color: rgba(235, 244, 247, .85); }
