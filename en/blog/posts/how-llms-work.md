@@ -65,9 +65,11 @@ takes a proportional slice of every value.
 
 Only two mathematical operations do all the work:
 
-- **Dot product** — multiply two vectors position by position and add it
-  all up. Out comes a single number: large when the two vectors point the
-  same way, small when they do not. A similarity meter.
+- **Dot product** — multiply two vectors position by position, then add it
+  all up: a · b = a₁b₁ + a₂b₂ + a₃b₃ + … For example,
+  [2, 1, 0] · [3, 1, 4] = 6 + 1 + 0 = **7**. One number comes out: large
+  when the vectors point the same way, small when they do not. A similarity
+  meter.
 - **Weighted sum** — mix several vectors according to percentages, like a
   recipe: 60% of this, 30% of that.
 
@@ -88,6 +90,8 @@ and it is just two moves. First, raise *e* to each score — that makes every
 number positive and stretches the gaps between them. Then divide each result
 by the total — now they sum to exactly 100%:
 
+> weightᵢ = e^scoreᵢ ÷ (e^score₁ + e^score₂ + … )
+
 | pair | score | e^score | share of total |
 |---|---|---|---|
 | Q(fox) · K(The) | 0.5 | 1.6 | **1%** |
@@ -96,7 +100,7 @@ by the total — now they sum to exactly 100%:
 | Q(fox) · K(fox) | 5.4 | 221.4 | **77%** |
 | | | total ≈ 285.8 | 100% |
 
-Notice what the exponential did: 5.4 is only a little above 4.0, yet 77% is
+Check the last row against the formula: 221.4 ÷ 285.8 ≈ 0.77 — the 77%. And notice what the exponential did: 5.4 is only a little above 4.0, yet 77% is
 four times 19% — softmax rewards the leaders and starves the laggards. The
 model has just decided, in numbers, how much attention each word deserves.
 (Yes, a token attends to itself — usually most of all.)
@@ -123,12 +127,23 @@ learning. Second, since every token scores every other token, the work grows
 with the *square* of the length — O(n²). Double the context, quadruple the
 cost; million-token windows are an engineering feat, not a checkbox.
 
+Put together, this whole subsection is one line — the formula printed in
+every paper since 2017:
+
+> **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
+
+Read it left to right: dot-product every query with every key (QKᵀ), scale
+by √dₖ, softmax the scores into percentages, and blend the values with those
+percentages. Every symbol in it is now familiar.
+
 ### One direction only
 
 A detail with large consequences: during generation, each token may only
 look *backward*. *Fox* sees *brown*; *brown* never sees *fox*. That mask is
 what makes the model a *next*-token predictor — and it is why a past
-token's key and value, once computed, never change: nothing that arrives later can touch them. File that away; it becomes the KV cache in section 7. The mask is also the field's dividing line: models built with it (GPT-style **decoders**) generate; models built without it (BERT-style **encoders**) read in both directions and classify rather than generate. Modern LLMs are almost all decoder-only.
+token's key and value, once computed, never change: nothing that arrives later can touch them. File that away; it becomes the KV cache in section 7.
+
+The mask is also the field's dividing line: models built with it (GPT-style **decoders**) generate; models built without it (BERT-style **encoders**) read in both directions and classify rather than generate. Modern LLMs are almost all decoder-only.
 
 ### Many heads
 
@@ -147,10 +162,12 @@ accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
 layer by layer. Inside every layer, attention gathers context (the
 librarian) while a **feed-forward network** — a small network applied to
 each token on its own — stores learned patterns like "Paris pairs with
-France" (the warehouse; most **parameters** live here). A modern twist, **mixture of experts (MoE)**: build many warehouses and let a router send each token to its best one or two — huge total capacity, only a fraction of it paying compute per token. Early layers handle
+France" (the warehouse; most **parameters** live here). Early layers handle
 spelling and grammar; deeper layers, facts and long-range logic. GPT-2 made
 news in 2019 with 1.5 billion parameters; frontier models now run to the
-trillions.
+trillions — and a modern twist, **mixture of experts (MoE)**, builds many
+warehouses and lets a router send each token to its best one or two: huge
+total capacity, only a fraction of it paying compute per token.
 
 At the very top, **softmax** — the same percentage converter attention
 uses — turns the final scores into a probability for every token the model
@@ -161,49 +178,115 @@ only question the model ever answers: *what likely comes next?*
 ## 5. Training and scale
 
 **Pretraining**: show the model trillions of tokens, hide the next one, let
-it guess. A **loss function** scores its surprise; **gradient descent**
-nudges every parameter a tiny step toward less surprise; repeat trillions of times. (The standard report card is **perplexity** — the exponential of the average surprise on held-out text. Central to pretraining; a weak proxy for real tasks.) Nobody writes rules in — predicting a detective novel's last chapter
+it guess. A **loss function** scores its surprise at the truth:
+
+> loss = −log p(correct token)
+
+Had the model given the true next token a 90% chance, the loss is
+−log 0.9 ≈ 0.1 — barely surprised. Had it given 20%, the loss is
+−log 0.2 ≈ 1.6 — badly surprised. **Gradient descent** then nudges every
+parameter a tiny step in the direction that shrinks this number; repeat
+trillions of times. (The standard report card, **perplexity**, is the
+exponential of the average loss: an average of 1.6 gives e^1.6 ≈ 5 — as
+unsure as picking among five equally likely words. Central to pretraining; a
+weak proxy for real tasks.)
+
+Nobody writes rules in — predicting a detective novel's last chapter
 requires tracking who had a motive, so the tracking gets learned. The result
 is the training data compressed like a JPEG: the picture survives, the
 pixels do not.
 
-Scale follows **scaling laws**: multiply compute by ten and the loss falls a
-predictable amount, which is what turned nine-figure training runs from
-gambles into plans — GPT-4's final loss was predicted from trials 10,000×
-smaller. DeepMind's **Chinchilla** added the balance rule: parameters and
-data must grow together (roughly 20 tokens per parameter); their 70B model
-beat a 280B rival on that arithmetic alone. One honest caveat: the curve is smooth, but skills can arrive abruptly — a model may fail three-digit arithmetic at size after size, then handle it reliably at the next jump: an **emergent ability**. And the raw material is finite: high-quality public text is nearly exhausted, which is pushing the frontier toward synthetic data and toward spending compute at answer time instead — the reasoning models below.
+Scale follows **scaling laws**: loss falls as a power law in compute —
+roughly loss ≈ a · C^(−α), a straight line on log-log paper — so multiplying
+compute by ten buys a predictable drop. That is what turned nine-figure
+training runs from gambles into plans: GPT-4's final loss was predicted from
+trials 10,000× smaller. DeepMind's **Chinchilla** added the balance rule:
+parameters and data must grow together (roughly 20 tokens per parameter);
+their 70B model beat a 280B rival on that arithmetic alone.
+
+One honest caveat: the curve is smooth, but skills can arrive abruptly — a
+model may fail three-digit arithmetic at size after size, then handle it
+reliably at the next jump: an **emergent ability**. And the raw material is
+finite: high-quality public text is nearly exhausted, which is pushing the
+frontier toward synthetic data and toward spending compute at answer time
+instead — the reasoning models below.
 
 ## 6. From autocomplete to assistant
 
 Pretraining yields a **base model**: a machine that continues text, nothing
 more. Ask it "What is the capital of France?" and you may get "Paris." — or
-nine more quiz questions, since quizzes travel in packs online — or a fictional scene: "asked the teacher, and nobody raised a hand." All are faithful continuations. Coaxing answers out once required writing "Q: … A:" so that an answer became the likeliest continuation; prompt engineering was born there. Two cheap
-stages make it an assistant. **Instruction tuning**: train further on tens of
-thousands of written examples of question → ideal answer, until "answer
-helpfully" becomes the most probable continuation. **RLHF** (reinforcement
-learning from human feedback): humans compare candidate answers, a reward
-model learns their taste, and the LLM is tuned toward it — comparing is far easier for people than authoring perfection, and comparisons capture what examples cannot spell out: tone, honesty about uncertainty, refusing harm. Both stages cost a small fraction of pretraining's months on thousands of GPUs — and when even that is too much, **LoRA** freezes the model and trains tiny low-rank adapter matrices alongside it: near fine-tuning quality for a sliver of the parameters, with adapters you can swap like lenses. The punchline: GPT-3 existed
-for two years before ChatGPT. The revolution was these stages, not a bigger
-network.
+nine more quiz questions, since quizzes travel in packs online — or a
+fictional scene: "asked the teacher, and nobody raised a hand." All are
+faithful continuations. Coaxing answers out once required writing "Q: … A:"
+so that an answer became the likeliest continuation; prompt engineering was
+born there.
+
+Two cheap stages make it an assistant. **Instruction tuning**: train further
+on tens of thousands of written examples of question → ideal answer, until
+"answer helpfully" becomes the most probable continuation. **RLHF**
+(reinforcement learning from human feedback): humans compare candidate
+answers, a reward model learns their taste, and the LLM is tuned toward it —
+comparing is far easier for people than authoring perfection, and
+comparisons capture what examples cannot spell out: tone, honesty about
+uncertainty, refusing harm.
+
+Both stages cost a small fraction of pretraining's months on thousands of
+GPUs — and when even that is too much, **LoRA** freezes the model and trains
+tiny low-rank adapter matrices alongside it: near fine-tuning quality for a
+sliver of the parameters, with adapters you can swap like lenses. The
+punchline: GPT-3 existed for two years before ChatGPT. The revolution was
+these stages, not a bigger network.
 
 ## 7. Generation: a loop, not a plan
 
-The model computes probabilities, **samples** one token (a weighted draw), appends it, and repeats — each new token instantly part of the next prediction's input — until a special stop token says "I'm done." Three dials govern the draw. After "The sky was":
-*blue* 60%, *dark* 10%, … *potato* 0.0001%. **Temperature** sharpens or flattens the list — low for SQL, high for brainstorming; temperature 0 is greedy decoding, nearly deterministic, though batching and floating-point order still leave tiny run-to-run drift; **top-k** keeps only
-the k most likely; **top-p** keeps the smallest set covering, say, 90% —
-adapting between two tokens when the model is sure and eighty when it is
-torn. Cut first, then draw: that is why answers vary day to day and the sky
+The model computes probabilities, **samples** one token (a weighted draw),
+appends it, and repeats — each new token instantly part of the next
+prediction's input — until a special stop token says "I'm done."
+
+Three dials govern the draw. After "The sky was", the list might read
+*blue* 60%, *dark* 10%, …, *potato* 0.0001%:
+
+- **Temperature** divides every score by T before softmax. Below 1, the
+  gaps stretch and the leader takes almost everything — T = 0 is greedy
+  decoding, nearly deterministic (batching and floating-point order still
+  leave tiny drift). Above 1, the gaps shrink and *dark* and *grey* get to
+  compete. Low for SQL, high for brainstorming.
+- **Top-k** keeps only the k most likely tokens and deletes the tail —
+  *potato* included.
+- **Top-p** keeps the smallest set covering, say, 90% of the probability —
+  two tokens when the model is sure, eighty when it is torn.
+
+Cut first, then draw: that is why answers vary day to day, and why the sky
 is never a potato.
 
-Two consequences of the loop: "think step by step" works because the page is
-the model's only scratchpad — writing "17 × 24 = 340 + 68" makes each next
-prediction easier, which reasoning models industrialize. And a contrast sharpens the last piece. In *training*, the model sees whole
-documents and processes every token in parallel — that parallelism is what
-let transformers, unlike their predecessors, soak up GPUs and scale. In
-*inference* — chatting — text arrives one token at a time, and the **KV
-cache** exists to make that serial loop cheap, cashing in the asymmetry from
-section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for. The other big serving lever is **quantization**: store the weights in fewer bits (16 → 8 → 4). Inference is bound by moving bytes, not by arithmetic, so smaller weights mean faster, cheaper answers at a modest accuracy cost.
+The loop explains why "think step by step" works: the page is the model's
+only scratchpad. Asked for 17 × 24 in one leap, it must land the answer in
+a single guess; allowed to write "17 × 24 = 17 × 20 + 17 × 4 = 340 + 68 =
+408", every intermediate step joins the context and sharpens the next
+prediction. Reasoning models industrialize exactly this.
+
+A contrast completes the picture. In *training*, the model sees whole
+documents and processes every token in parallel — the parallelism that let
+transformers soak up GPUs and scale. In *inference* — chatting — text
+arrives one token at a time, and the **KV cache** exists to make that
+serial loop cheap, cashing in the asymmetry from section 3. Token number
+1,000 must compare its query against 999 earlier keys, which looks like
+re-reading everything at every step. It is not: past keys and values never
+change, so they are computed once and stored.
+
+You have felt this cache. The pause before a long prompt's first word is
+**prefill**, building it; afterwards words stream quickly because each pays
+only for itself. It is also why long chats eat memory — the cache grows
+with every token, in every layer. The arithmetic is sobering:
+
+> cache = 2 (K and V) × layers × context length × vector width × bytes
+
+For a 32-layer, 4,096-wide model in 16-bit precision holding 100K tokens:
+2 × 32 × 100,000 × 4,096 × 2 bytes ≈ **52 GB** — for one conversation. That
+is also why "cached input" is priced cheaper: it is already paid for. The
+other big serving lever is **quantization** — store the weights in fewer
+bits (16 → 8 → 4); inference is bound by moving bytes, not arithmetic, so
+smaller weights mean faster, cheaper answers at a modest accuracy cost.
 
 Here is the whole machine in one tiny trace. Input: **"I love"** — the model
 must produce the next token.
