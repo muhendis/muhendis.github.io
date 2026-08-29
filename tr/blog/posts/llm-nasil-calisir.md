@@ -36,7 +36,7 @@ Sonra her token kimliği bir **embedding**'e eşlenir — bir vektöre: çoğu z
 uzaktır. Anlam haritasında *kral*, *kraliçe* ve *taht*ın yanında, *hesap
 tablosu*ndan uzakta oturur. İlişkiler bile tutarlı yönlere dönüşür: *Paris*ten
 *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla aynı yönü gösterir — bir
-"başkenti-olmak" yönü. Meşhur gösteri numarası da vektör aritmetiğidir: *kral −
+"başkenti-olmak" yönü. Meşhur bir gösterim de vektör aritmetiğidir: *kral −
 erkek + kadın*, *kraliçe*nin yakınına düşer.
 
 Bu haritayı kimse elle çizmedi; öğrenildi. Ve modelin ana dili budur — buradan
@@ -106,8 +106,7 @@ katmanlardaki öğrenilmiş sayıları — **parametreleri** — sayar. GPT-2, 2
 1,5 milyar parametreyle manşetlere çıkmıştı; bugünün öncü modelleri yüz
 milyarlarla ve trilyonlarla ölçülüyor.
 
-En tepede model, son vektörü sözlüğündeki her token için bir puana çevirir ve
-puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı; attention'ın içeride kullandığı puanı-yüzdeye-çevirme hamlesinin aynısı. Her adımda modelin bütün
+En tepede model, son vektörü sözlüğündeki her token için bir puana dönüştürür, sonra puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı; attention'ın içeride kullandığı puanı-yüzdeye-çevirme hamlesinin aynısı. Her adımda modelin bütün
 çıktısı budur: bir cümle değil, bir fikir değil — bildiği her token için bir
 olasılık. "Bir varmış bir" dedikten sonra olasılığın neredeyse tamamı
 "yokmuş"un üzerine yığılır. "En sevdiğim şehir" dedikten sonra yüzlerce makul
@@ -128,12 +127,42 @@ Bir polisiye romanın son bölümünde sıradaki kelimeyi tahmin etmek için kim
 cinayet sebebi olduğunu takip etmiş olmak gerekir; bir fizik ders kitabının
 sonraki satırı için biraz fizik içselleştirmiş olmak. Sonucu, eğitim verisinin sıkıştırılmış bir kopyası gibi düşünebilirsiniz — bir JPEG'in fotoğrafı sıkıştırdığı gibi: resmin bütünü kalır, piksellerin birebir aynısı kalmaz.
 
-Hikâyenin diğer yarısı ölçek. Modeli büyütün, daha çok veri verin, daha çok
-hesaplama harcayın; kayıp, pürüzsüz ve neredeyse yasa gibi bir eğriyle düşer —
-devasa eğitim yatırımlarını meşrulaştıran **ölçek yasaları (scaling laws)**
-bunlardır. Yol boyunca kimsenin hedeflemediği yetenekler belirir: çeviri,
-aritmetik, çalışan kod. Ortaya çıkarlar, çünkü her biri modelin sahip olduğu
-tek hedefe hizmet eder.
+## Ölçek yasaları: büyüğün neden hep daha iyi çıktığı
+
+2010'lar boyunca "daha büyüğünü yap" bir sezgiydi. 2020'de OpenAI'daki
+araştırmacılar bunu ölçtü ve daha güçlü bir şey buldu: ölçek ile performans
+arasındaki ilişki bir **kuvvet yasasını (power law)** izliyor — pürüzsüz ve
+şaşırtıcı derecede düzenli. Hesaplama bütçesini ona katlayın; kayıp — modelin
+ortalama şaşkınlığı — öngörülebilir bir miktar düşer. Bu, büyüğün her bakımdan
+daha akıllı olduğu garantisi değil; ama birçok büyüklük mertebesinde geçerli,
+ölçülmüş ve tekrarlanabilir bir eğri.
+
+Bu düzenlilik alanın ekonomisini değiştirdi. Bir modelin ne kadar iyi
+olacağını parayı harcamadan önce öngörebiliyorsanız, yüz milyon dolarlık bir
+eğitim kumar olmaktan çıkar, mühendislik planına dönüşür. OpenAI sonradan
+GPT-4'ün nihai kaybını, hesaplamanın 1/10.000'inden azıyla eğitilmiş deneme
+modellerinden önceden tahmin ettiğini bildirdi — eğri uzatıldı ve dediği yere
+indi.
+
+İkinci bir bulgu tarifi inceltti. 2022'de DeepMind'ın **Chinchilla** çalışması
+alanın dengeyi yanlış kurduğunu gösterdi: modeller, eğitildikleri veri
+miktarına göre fazla büyümüştü. Parametrelerle eğitim token'ları birlikte
+büyümeli — kaba bir kuralla, parametre başına yaklaşık yirmi token metin.
+Kanıt doğrudandı: çok daha fazla veriyle eğitilmiş 70 milyar parametrelik
+modelleri, 280 milyar parametrelik rakibini geçti. O günden beri "ne kadar
+büyük?" sorusu hep "ne kadar veriyle eğitildi?" sorusuyla birlikte soruluyor.
+
+Hikâyeyi dürüst tutan bir şerh var. Kayıp pürüzsüz düşer, ama tekil beceriler
+her zaman pürüzsüz belirmez. Bir model üç basamaklı aritmetikte art arda
+birkaç boyutta sıfıra yakın kalıp bir sonraki sıçrayışta bunu güvenilir
+biçimde yapabilir — **beliren yetenek (emergent ability)**. Araştırmacılar bu
+sıçramaların gerçekten ani mi, yoksa kısmen becerilerin notlandırılma
+biçiminin bir yanılsaması mı olduğunu hâlâ tartışıyor; pratikteki ders şu:
+tahmin kalitesinin pürüzsüz eğrisi, yeteneklerin ani gelişlerini
+gizleyebilir. Ham madde de sonsuz değil: yüksek kaliteli açık metin tükenmek
+üzere — sınırın sentetik eğitim verisine ve hesaplamayı cevap anında
+harcamaya, yani bu yazının ilerisinde karşılaşacağınız akıl yürüten modellere
+kaymasının sebebi bu.
 
 ## Otomatik tamamlamadan asistana
 
@@ -280,8 +309,9 @@ kaynaklar istemek — avukatların atladığı adım.
    token'ın vektörü bağlamıyla beslenir ("çok yorgundu" ile "çok genişti");
    bilginin çoğunu ileri beslemeli bloklar depolar.
 3. Devasa metin üzerinde sıradaki-token tahminiyle yapılan **ön eğitim**
-   bilginin kaynağıdır; **ölçek yasaları** daha çok model, veri ve hesaplamanın
-   öngörülebilir biçimde işe yaradığını söyler. Ön eğitim tek başına ham bir
+   bilginin kaynağıdır; **ölçek yasaları**, daha çok model, veri ve
+   hesaplamanın kazancını öngörülebilir kılar — yeter ki üçü dengeli büyüsün.
+   Ön eğitim tek başına ham bir
    **taban model** verir — çıplak otomatik tamamlama; talimat eğitimi ve RLHF
    onu asistana biçimlendirir.
 4. Üretim bir döngüdür: softmax her token'a bir olasılık verir, **örnekleme**

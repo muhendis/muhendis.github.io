@@ -16,8 +16,7 @@ text. Hold on to that idea; everything below is a footnote to it.
 Computers do not read words. The first step is a **tokenizer**, which chops
 text into pieces called tokens and gives each piece an ID number. Common words
 survive whole — "the" is one token, "model" is one token. Rarer words get
-split: "unbelievable" might become "un" + "believ" + "able", and a Turkish word
-like "kuantizasyon" might become "kuant" + "izasyon". A useful rule of thumb
+split: "unbelievable" might become "un" + "believ" + "able". A useful rule of thumb
 for English: **100 tokens is roughly 75 words**, so a "128K context window"
 means the model can hold about 96,000 words in view at once — a full novel.
 
@@ -36,7 +35,7 @@ Each token ID is then mapped to an **embedding** — a vector: a list of numbers
 Sydney. On the meaning-map, *king* sits near *queen* and *throne*, far from
 *spreadsheet*. Even relationships become consistent directions: the arrow from
 *Paris* to *France* points the same way as the arrow from *Rome* to *Italy* —
-a "capital-of" direction. The famous party trick is vector arithmetic:
+a "capital-of" direction. A famous demonstration is vector arithmetic:
 *king − man + woman* lands near *queen*.
 
 Nobody drew this map by hand. It is learned, and it is the model's native
@@ -104,8 +103,7 @@ counts the learned numbers in all these layers — the **parameters**. GPT-2
 made headlines in 2019 with 1.5 billion of them; today's frontier models are
 measured in the hundreds of billions to trillions.
 
-At the very top, the model converts the final vector into a score for every
-token in its vocabulary and converts the scores into percentages that add up to 100% — the **softmax** step, the same scores-to-percentages move attention used internally. That is the model's entire output at each step: not a
+At the very top, the model turns the final vector into a score for every token in its vocabulary, then converts the scores into percentages that add up to 100% — the **softmax** step, the same scores-to-percentages move attention used internally. That is the model's entire output at each step: not a
 sentence, not an idea — a probability for every token it knows. After "Once
 upon a", nearly all of the probability piles onto "time". After "My favorite
 city is", it spreads across hundreds of plausible cities. Both are correct answers to the only question the model ever answers: what is likely to come next?
@@ -126,12 +124,41 @@ next token. To predict the next word of a detective novel's final chapter, it
 helps to have tracked who had a motive; to predict the next line of a physics
 textbook, it helps to have internalized some physics. You can think of the result as a compressed copy of the training data — compressed the way a JPEG compresses a photo: the overall picture is kept, the exact pixels are not.
 
-Scale is the other half of the story. Make the model bigger, feed it more
-data, spend more compute, and the loss falls in a smooth, almost lawlike way —
-these are the **scaling laws** that justified the enormous training runs. Along
-the way, abilities show up that nobody targeted: translation, arithmetic,
-working code. They emerge because each one helps with the only goal the model
-has.
+## Scaling laws: why bigger kept getting better
+
+Through the 2010s, "make it bigger" was a hunch. In 2020, researchers at
+OpenAI measured it and found something stronger: the relationship between
+scale and performance follows a **power law** — smooth and remarkably
+regular. Multiply the compute budget by ten, and the loss — the model's
+average surprise — falls by a predictable amount. Not a guarantee that bigger
+is smarter in every respect, but a measured, repeatable curve that holds
+across many orders of magnitude.
+
+That regularity changed the economics of the field. If you can forecast how
+good a model will be before spending the money, a hundred-million-dollar
+training run stops being a gamble and becomes an engineering plan. OpenAI
+later reported predicting GPT-4's final loss in advance, from trial models
+trained with less than 1/10,000 of the compute — the curve, extended, landed
+where it said it would.
+
+A second finding refined the recipe. In 2022, DeepMind's **Chinchilla** study
+showed that the field had the balance wrong: models had grown too large for
+the amount of data they were trained on. Parameters and training tokens
+should grow together — as a rule of thumb, roughly twenty tokens of text per
+parameter. The proof was direct: their 70-billion-parameter model, trained on
+far more data, outperformed a 280-billion-parameter rival. Since then, "how
+big is it?" is always paired with "trained on how much?"
+
+One caveat keeps the story honest. The loss falls smoothly, but individual
+skills do not always appear smoothly. A model can score near zero on
+three-digit arithmetic at several sizes in a row, then handle it reliably at
+the next jump — an **emergent ability**. Researchers still debate whether
+these jumps are truly sudden or partly an artifact of how the skills are
+graded; the practical point is that a smooth curve of prediction quality can
+conceal abrupt arrivals of capability. And the raw material is not infinite:
+high-quality public text is close to exhausted, which is why the frontier has
+been shifting toward synthetic training data and toward spending compute at
+answer time — the reasoning models that appear later in this article.
 
 ## From autocomplete to assistant
 
@@ -174,7 +201,7 @@ at writing perfect ones, and because comparisons capture what examples
 struggle to spell out: tone, honesty about uncertainty, declining harmful
 requests.
 
-The two halves are wildly lopsided in cost: pretraining takes months on
+The two halves are sharply unequal in cost: pretraining takes months on
 thousands of GPUs; the assistant stages are a small fraction of that. And the
 gap between them is a gap you have personally felt. GPT-3 — the base model —
 existed for more than two years before ChatGPT. What turned a research
@@ -276,8 +303,9 @@ check yourself — the step the lawyers skipped.
    context ("it was too tired" vs "it was too wide"); feed-forward blocks
    store most of the knowledge.
 3. **Pretraining** on next-token prediction over vast text is where the
-   knowledge comes from; **scaling laws** say more model, data, and compute
-   predictably help. Pretraining alone yields a **base model** — raw
+   knowledge comes from; **scaling laws** make the gains
+   from more model, data, and compute predictable — provided the three grow
+   in balance. Pretraining alone yields a **base model** — raw
    autocomplete; instruction tuning and RLHF shape it into an assistant.
 4. Generation is a loop: softmax gives a probability for every token,
    **sampling** picks one, the choice feeds the next step. **Temperature**, **top-k**, and **top-p** control the randomness; step-by-step "thinking" is the model using the
