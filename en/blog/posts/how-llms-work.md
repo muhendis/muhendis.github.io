@@ -49,6 +49,40 @@ named. Three snapshots of the map:
 - the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction;
 - *king − man + woman* lands near *queen*.
 
+Two of the thousands of dials, drawn:
+
+<svg viewBox="0 0 480 310" role="img" aria-label="Words as points on a two-dimensional map of meaning: the arrows man to woman and king to queen are parallel, as are Paris to France and Rome to Italy; spreadsheet sits far away" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs><marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker></defs>
+<line x1="40" y1="280" x2="470" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="40" y1="280" x2="40" y2="15" style="stroke:var(--c-border);stroke-width:1.5"/>
+<text x="465" y="298" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">dial 1</text>
+<text x="20" y="160" transform="rotate(-90 20 160)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">dial 2</text>
+<line x1="140" y1="215" x2="215" y2="155" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="170" y1="115" x2="245" y2="55" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="315" y1="130" x2="385" y2="95" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="320" y1="235" x2="390" y2="200" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<circle cx="140" cy="215" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="215" cy="155" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="170" cy="115" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="245" cy="55" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="315" cy="130" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="385" cy="95" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="320" cy="235" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="390" cy="200" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="428" cy="252" r="4.5" style="fill:var(--c-text-mute)"/>
+<text x="140" y="233" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">man</text>
+<text x="215" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">woman</text>
+<text x="160" y="110" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">king</text>
+<text x="245" y="43" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">queen</text>
+<text x="309" y="147" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Paris</text>
+<text x="391" y="86" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">France</text>
+<text x="318" y="253" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Rome</text>
+<text x="396" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">Italy</text>
+<text x="428" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-style:italic">spreadsheet</text>
+<text x="48" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">same direction</text>
+<text x="352" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">the "capital-of" direction</text>
+</svg>
+
 Nobody drew the map — it is learned. One
 last stamp goes in, each token's **position**, because "dog bites man"
 must stay different from "man bites dog".
@@ -203,19 +237,7 @@ the model knows (~50,000 in GPT-2):
 
 **Softmax** turns the scores into probabilities. After "Once upon a",
 the mass piles onto "time"; after "My favorite city is", it spreads
-across hundreds of cities. Either way the model answers its only question: *what likely comes next?* The tower, ground floor to roof:
-
-```mermaid
-flowchart BT
-    T["tokens + positions"] --> L1["Floor 1 · attention → feed-forward, added via residual"]
-    L1 --> L2["Floor 2 · same routine"]
-    L2 --> LD["… dozens more floors …"]
-    LD --> LN["Floor N"]
-    LN --> F["last token's final vector — the whole context"]
-    F --> SC["dot product with every known token — ~50,000 scores"]
-    SC --> SM["softmax → probabilities"]
-    SM --> A["Once upon a ___ → time"]
-```
+across hundreds of cities. Either way the model answers its only question: *what likely comes next?*
 
 ## 5. Training and scale
 
@@ -273,17 +295,6 @@ sky was": *blue* 60%, *dark* 10%, …, *potato* 0.0001%.
 - **Top-p** keeps the smallest set covering, say, 90% of the probability — two tokens when sure, eighty when torn.
 
 Cut first, then draw: that is why answers vary day to day, and why the sky is never a potato.
-
-```mermaid
-flowchart LR
-    CTX["context"] --> P["probabilities"]
-    P --> CUT["cut — top-k / top-p"]
-    CUT --> DR["draw — temperature T"]
-    DR --> AP["append the token"]
-    AP --> ST{"stop token?"}
-    ST -->|"no — loop"| CTX
-    ST -->|"yes"| DONE["answer complete"]
-```
 
 The loop also explains "think step by step" — the page is the model's
 only scratchpad. Asked for 17 × 24 in one leap, it must land the answer

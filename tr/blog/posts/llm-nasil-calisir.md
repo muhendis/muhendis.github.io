@@ -2,7 +2,7 @@ Bu cümleyi bitirmeden zihniniz sıradaki kelimeyi tahmin etmeye başladı
 bile. Kanıt mı? "Bir varmış, bir ___." Durduramadınız: boşluk, sizden izin
 almadan kendini doldurdu.
 
-O refleksin bir adı var — sıradaki-token tahmini — ve bu yazının tek bir
+O refleksin bir adı var — sıradaki-token tahmini (next-token prediction) — ve bu yazının tek bir
 iddiası: bir dil modelinin size yazdığı her cümle, her deneme, her kod
 parçası, az önce yaptığı hata için her özür, aynı refleksin milyarlarca
 kat büyütülmüşüdür. Telefon klavyeniz "görüşürüz"den sonra *yarın*
@@ -33,8 +33,7 @@ kimlik numarası verir — "için" tek parça, "inanılmaz" belki
 "inan + ılmaz". LEGO gibi: dil, en çok yeniden kullanılan parçalarına
 ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
 (standart algoritma: **byte-pair encoding**, BPE). Pratik kural:
-100 token ≈ 75 İngilizce kelime; "128K bağlam penceresi" kabaca bir
-roman eder. Model harfleri değil yalnız token kimliklerini gördüğü için
+100 token ≈ 75 İngilizce kelime; "128K bağlam penceresi" (context window) kabaca bir roman eder. Model harfleri değil yalnız token kimliklerini gördüğü için
 "strawberry"deki r'leri saymak meşhur biçimde zordu — bir tablonun
 *fotoğrafındaki* fırça darbelerini saymak gibi.
 
@@ -48,6 +47,40 @@ için. Haritadan üç kare:
 - *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak durur;
 - *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü;
 - *kral − erkek + kadın*, *kraliçe*nin yakınına düşer.
+
+Binlerce kadrandan ikisi, çizimle:
+
+<svg viewBox="0 0 480 310" role="img" aria-label="Kelimeler iki boyutlu anlam haritasında noktalar olarak: erkek-kadın ile kral-kraliçe okları paralel; Paris-Fransa ile Roma-İtalya okları da paralel; hesap tablosu uzakta" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs><marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker></defs>
+<line x1="40" y1="280" x2="470" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="40" y1="280" x2="40" y2="15" style="stroke:var(--c-border);stroke-width:1.5"/>
+<text x="465" y="298" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">kadran 1</text>
+<text x="20" y="160" transform="rotate(-90 20 160)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">kadran 2</text>
+<line x1="140" y1="215" x2="215" y2="155" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="170" y1="115" x2="245" y2="55" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="315" y1="130" x2="385" y2="95" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<line x1="320" y1="235" x2="390" y2="200" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
+<circle cx="140" cy="215" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="215" cy="155" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="170" cy="115" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="245" cy="55" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="315" cy="130" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="385" cy="95" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="320" cy="235" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="390" cy="200" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="428" cy="252" r="4.5" style="fill:var(--c-text-mute)"/>
+<text x="140" y="233" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">erkek</text>
+<text x="215" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">kadın</text>
+<text x="160" y="110" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">kral</text>
+<text x="245" y="43" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">kraliçe</text>
+<text x="309" y="147" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Paris</text>
+<text x="391" y="86" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">Fransa</text>
+<text x="318" y="253" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Roma</text>
+<text x="396" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">İtalya</text>
+<text x="428" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-style:italic">hesap tablosu</text>
+<text x="48" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">aynı yön</text>
+<text x="352" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">"başkenti-olmak" yönü</text>
+</svg>
 
 Haritayı kimse çizmedi — öğrenildi. Bir de her token'ın **konumu** işlenir, çünkü "köpek adamı
 ısırdı", "adam köpeği ısırdı"dan farklı kalmalıdır.
@@ -82,8 +115,7 @@ bölüm birinciyi açar; ikincisi 4. bölümün konusu.
 
 ### Q, K, V — mekanizma, sayılarla
 
-Ağırlıklarını seçmek için her token aynı anda üç rol oynar — kendi
-embedding'inin üç küçük öğrenilmiş kılığı:
+Ağırlıklarını seçmek için her token aynı anda üç rol oynar — kendi embedding'inin öğrenilmiş üç küçük kılığı:
 
 - **sorgu (Q)** — ne arıyorum?
 - **anahtar (K)** — başkaları beni nasıl bulur?
@@ -95,13 +127,11 @@ token'ın embedding'inden gelir: üç öğrenilmiş tabloyla çarpım — **W_Q,
 W_K, W_V** — aynı kelime, üç kıyafet, üçü de aynı anda üstünde. Ham
 embedding'ler yetmezdi: embedding kelimenin her şeyini karıştırır,
 oysa arama tek seferde tek yön ister — "yorgun olabilir" üzerinden
-eşleşen bir sorgu-anahtar çifti, "f ile başlar" üzerinden değil. Sonuç
-bir **yumuşak sözlüktür**: her anahtar *kısmen* eşleşir, her değerden
+eşleşen bir sorgu-anahtar çifti, "f ile başlar" üzerinden değil. Sonuç bir **yumuşak sözlüktür** (soft dictionary): her anahtar *kısmen* eşleşir, her değerden
 orantılı bir dilim alınır.
 
-Aritmetik iki hamledir: **iç çarpım** (iki vektörü konum konum çarpıp
-topla — ne kadar hizalıysa o kadar büyük: bir benzerlik ölçer) ve
-**ağırlıklı toplam** (vektörleri yüzdelerle karıştır, tarif gibi).
+Aritmetik iki hamledir: **iç çarpım** (dot product: iki vektörü konum konum çarpıp topla — ne kadar hizalıysa o kadar büyük: bir benzerlik ölçer) ve
+**ağırlıklı toplam** (weighted sum: vektörleri yüzdelerle karıştır, tarif gibi).
 Bunları dört adım çalıştırır. "Hızlı kahverengi tilki"yi, model
 *tilki* üzerinde çalışırken izleyin:
 
@@ -121,9 +151,7 @@ bölünür; puanlar yüzdeye dönüşür: ağırlıkᵢ = e^puanᵢ ÷ (e^puan�
 | Q(tilki) · K(kahverengi) | 4,0 | 54,6 | **%19** |
 | Q(tilki) · K(tilki) | 5,4 | 221,4 | **%78** |
 
-Son satırı doğrulayın: 221,4 ÷ 284,2 ≈ %78. Üstele dikkat — 5,4, 4,0'ın
-yalnızca biraz üstünde, ama %78, %19'un dört katı: softmax liderleri
-ödüllendirir.
+Son satırı doğrulayın: 221,4 ÷ 284,2 ≈ %78. Üstel fonksiyonun yaptığına bakın: 5,4, 4,0'ın yalnızca biraz üstünde; ama %78, %19'un dört katı — softmax liderleri ödüllendirir.
 
 **4. Adım — Karıştır.** Yeni *tilki*, değerlerin ağırlıklı toplamıdır:
 tilki_yeni = 0,03·V(hızlı) + 0,19·V(kahverengi) + 0,78·V(tilki) —
@@ -136,7 +164,7 @@ Yukarıdaki her şey tek ünlü satırdır:
 1. Adım QKᵀ, 2. Adım bölme, 3. Adım softmax, 4. Adım V ile çarpım.
 Öğrenilen *tek* parça üç tablodur; gerisi sabit aritmetik — ve tüm
 token'lar matris olarak üst üste konduğundan bu tek satır bütün
-aramaları aynı anda koşturur: GPU'ların bayıldığı iş. Bedeli **O(n²)**: herkes herkesi puanlar — bağlamı ikiye katla, maliyeti dörtle.
+aramaları aynı anda koşturur: GPU'ların bayıldığı iş. Bedeli **O(n²)**: herkes herkesi puanlar — bağlamı ikiye katlayın, maliyet dörde katlanır.
 
 Bütün mekanizma, tek resimde:
 
@@ -186,9 +214,7 @@ Bütün 3. bölüm, tek kartta:
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Bir attention alt katmanı artı bir ileri beslemeli alt katman, bir
-**katman** eder; transformer, bunlardan örülü bir kuledir — onlarca,
-yüzü aşkın kat. Her katta aynı rutin işler:
+Bir attention alt katmanıyla bir ileri beslemeli alt katman, birlikte bir **katman** oluşturur; transformer, bu katlardan örülü bir kuledir — onlarca, kimi zaman yüzü aşkın kat. Her katta aynı rutin işler:
 
 - **Attention** — kütüphaneci — diğer token'lardan bağlamı toplar.
 - **İleri beslemeli ağ** — ambar — onu tek başına sindirir; "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri taşır.
@@ -201,7 +227,7 @@ halde. Modeli büyütmek çoğunlukla ambarı büyütmektir: GPT-2'nin meşhur
 experts (MoE)** ise her kata birçok ambar koyar, her token en iyi
 bir-iki tanesine yönlendirilir.
 
-Çatıda bir *tahmin* borcu vardır. Son token'ın nihai vektörü — artık
+Çatıda kule borcunu öder: bir *tahmin*. Son token'ın nihai vektörü — artık
 bağlamın tamamını kodlar — modelin bildiği her token'la iç çarpıma
 girer (GPT-2'de ~50.000):
 
@@ -209,29 +235,15 @@ girer (GPT-2'de ~50.000):
 
 **Softmax** puanları olasılığa çevirir. "Bir varmış bir"den sonra kütle
 "yokmuş"a yığılır; "En sevdiğim şehir"den sonra yüzlerce şehre dağılır.
-İki durumda da model tek sorusunu cevaplar: *sırada ne gelmesi muhtemel?* Kule, zeminden çatıya:
-
-```mermaid
-flowchart BT
-    T["token'lar + konumlar"] --> L1["Kat 1 · attention → ileri beslemeli ağ, residual ile eklenir"]
-    L1 --> L2["Kat 2 · aynı rutin"]
-    L2 --> LD["… onlarca kat daha …"]
-    LD --> LN["Kat N"]
-    LN --> F["son token'ın nihai vektörü — bağlamın tamamı"]
-    F --> SC["bilinen her token'la iç çarpım — ~50.000 puan"]
-    SC --> SM["softmax → olasılıklar"]
-    SM --> A["Bir varmış bir ___ → yokmuş"]
-```
+İki durumda da model tek sorusunu cevaplar: *sırada ne gelmesi muhtemel?*
 
 ## 5. Eğitim ve ölçek
 
-Makinedeki her sayı rastgele gürültü olarak başlar. Onları **ön
-eğitim** ayarlar: modele trilyonlarca token gerçek metin gösterin,
+Makinedeki her sayı rastgele gürültü olarak başlar. Onları **ön eğitim** (pretraining) ayarlar: modele trilyonlarca token gerçek metin gösterin,
 sıradakini gizleyin, tahmin ettirin. Cevap anahtarı bedavadır — metinde
-gerçekten sonra gelen token'dır; veri kendi kendini notlandırır. Her
-tahmini **kayıp** puanlar: kayıp = −log p(doğru token) — doğruya %90
+gerçekten sonra gelen token'dır; veri kendi kendini notlandırır. Her tahmini **kayıp** (loss) puanlar: kayıp = −log p(doğru token) — doğruya %90
 vermek ≈ 0,1'e, %20 vermek ≈ 1,6'ya mal olur (karne: **perplexity** =
-e^(ortalama kayıp)). **Gradyan inişi** her parametreyi yokuş aşağı
+e^(ortalama kayıp)). **Gradyan inişi** (gradient descent) her parametreyi yokuş aşağı
 minicik bir adım kaydırır — sisli bir iniş, trilyonlarca kez — ta ki model, eğitim verisinin JPEG gibi sıkıştırılmışı olana dek: resim kalır, pikseller kalmaz.
 
 ```mermaid
@@ -243,39 +255,37 @@ flowchart LR
     E -->|"trilyonlarca kez tekrar"| A
 ```
 
-Ölçeğin getirisi öngörülebilirdir. **Ölçek yasaları** — kayıp ≈
+Ölçeğin getirisi öngörülebilirdir. **Ölçek yasaları** (scaling laws) — kayıp ≈
 a · C^(−α), log-log kâğıdında düz çizgi — OpenAI'ın GPT-4'ün nihai
 kaybını 10.000 kat küçük denemelerden öngörmesini sağladı; DeepMind'ın
 **Chinchilla**sı tarifi parametre başına ~20 token'a sabitledi — 70
 milyarlığı, 280 milyarlık Gopher'ı geçti. İki şerh: beceriler yine de
-sıçramayla gelebilir (**beliren yetenekler**) ve kaliteli açık metin
+sıçramayla gelebilir (**beliren yetenekler**, emergent abilities) ve kaliteli açık metin
 tükeniyor — hesap, cevap anına kayıyor: 7. bölümün akıl yürüten
 modelleri.
 
 ## 6. Otomatik tamamlamadan asistana
 
-Ön eğitimin ürünü bir **taban modeldir**: metni sürdüren bir makine, o
+Ön eğitimin ürünü bir **taban modeldir** (base model): metni sürdüren bir makine, o
 kadar. "Fransa'nın başkenti nedir?" deyin; "Paris." alabilirsiniz — ya
 da dokuz quiz sorusu daha — ya da "diye sordu öğretmen; kimse parmak
 kaldırmadı." Hepsi sadık devamlardır; cevabı çekip çıkarmak bir
 zamanlar başına kendiniz "S: … C:" yazmayı gerektirirdi — prompt
 mühendisliği orada doğdu. İki ucuz aşama asistan yapar:
 
-- **Talimat eğitimi** — on binlerce soru → ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı cevap en olası devam olana dek.
-- **RLHF** — insanlar aday cevapları karşılaştırır, bir ödül modeli zevklerini öğrenir, LLM ona doğru ayarlanır: ton, dürüstlük, ret — örneklerin yazamadığı. (Daha da ucuzu **LoRA**: modeli dondurup yanına minik adaptör matrisleri eğitir.)
+- **Talimat eğitimi** (instruction tuning) — on binlerce soru → ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı cevap en olası devam olana dek.
+- **RLHF** — insanlar aday cevapları karşılaştırır, bir ödül modeli (reward model) zevklerini öğrenir, LLM ona doğru ayarlanır: ton, dürüstlük, ret — örneklerin yazamadığı. (Daha da ucuzu **LoRA**: modeli dondurup yanına minik adaptör matrisleri eğitir.)
 
 Vurucu son: GPT-3, ChatGPT'den iki yılı aşkın süre önce
 vardı. Devrim bu aşamalardı, daha büyük ağ değil.
 
 ## 7. Üretim: plan değil, döngü
 
-Model olasılıkları hesaplar, bir token **örnekler**, ekler ve özel bir
-durdurma token'ına dek tekrarlar — her yeni token, anında bir sonraki
+Model olasılıkları hesaplar, bir token **örnekler** (sampling), ekler ve özel bir durdurma token'ına (stop token) dek tekrarlar — her yeni token, anında bir sonraki
 tahminin girdisidir. Çekilişi üç kadran yönetir. "Gökyüzü ...ydi"den
 sonra: *mavi* %60, *karanlık* %10, …, *patates* %0,0001.
 
-- **Temperature**, softmax'tan önce her puanı T'ye böler — T = 0
-  açgözlü ve neredeyse deterministik; yüksek T, *karanlık* ile *gri*yi
+- **Temperature**, softmax'tan önce her puanı T'ye böler — T = 0, açgözlü (greedy) ve neredeyse deterministik seçimdir; yüksek T, *karanlık* ile *gri*yi
   yarıştırır. SQL için düşük, beyin fırtınası için yüksek.
 - **Top-k**, en olası k token'ı tutar — *patates* silindi.
 - **Top-p**, olasılığın örneğin %90'ını örten en küçük kümeyi tutar —
@@ -283,24 +293,13 @@ sonra: *mavi* %60, *karanlık* %10, …, *patates* %0,0001.
 
 Önce buda, sonra çek: cevaplar bu yüzden günden güne değişir ve gökyüzü bu yüzden asla patates olmaz.
 
-```mermaid
-flowchart LR
-    CTX["bağlam"] --> P["olasılıklar"]
-    P --> CUT["buda — top-k / top-p"]
-    CUT --> DR["çek — temperature T"]
-    DR --> AP["token'ı ekle"]
-    AP --> ST{"durdurma token'ı mı?"}
-    ST -->|"hayır — döngü"| CTX
-    ST -->|"evet"| DONE["cevap tamam"]
-```
-
 Döngü, "adım adım düşün"ün sırrını da açıklar — sayfa, modelin tek
 karalama defteridir. 17 × 24 tek hamlede istenirse cevabı tek tahminde
 tutturmak zorundadır; 17 × 24 = 340 + 68 = 408 yazmasına izin verilirse
 her ara adım bağlama katılır ve sonraki tahmini keskinleştirir. Akıl
 yürüten modeller tam bunu sanayileştirir.
 
-Resmi bir ekonomik gerçek tamamlar. Eğitim, belgeleri paralel işler;
+Tabloyu ekonomik bir gerçek tamamlar. Eğitim, belgeleri paralel işler;
 sohbet, token'ları teker teker üretir — ve **KV cache**, 3. bölümün
 sözünü bozdurur: geçmiş anahtarlarla değerler hiç değişmez, bir kez
 hesaplanır ve saklanır. "Ben seni" bağlamıyla tek tur:
@@ -308,7 +307,7 @@ hesaplanır ve saklanır. "Ben seni" bağlamıyla tek tur:
 1. "Ben" ile "seni"nin önbellekteki K, V'leri taze sorgu Q₃ ile buluşur — ağırlıklar %30 / %70 düşer.
 2. Karışım kulede yükselir; softmax *seviyorum* der (%85); çekiliş onu seçer.
 3. "seviyorum" için K₃, V₃ hesaplanır ve önbelleğe katılır; döngü yeniden başlar. **Q hep taze hesaplanır; K ile V hep önbellekten
-gelir** — bütün hikâye bu cümledir. Bunu hissettiniz de: uzun bir
+gelir** — bütün hikâye bu cümledir. Bunu siz de hissettiniz: uzun bir
 istemin ilk kelimesinden önceki duraklama, önbelleği kuran
 **prefill**'dir; sonrası akar. Fatura bellektir:
 
@@ -324,7 +323,7 @@ ağırlık, hızlı ve ucuz cevap demektir.
 Eğitimden sonra parametreler **donar**. Her mesaj, tüm konuşmayı ağdan
 yeniden geçirir — uzun süreli hafızası olmayan, her sabah dosyanın
 tamamı eline verilen parlak bir danışman. Hafıza sandığınız, bağlam
-penceresidir. Öbür yüzü **bağlam içi öğrenmedir**: "deniz → mer, ev →
+penceresidir. Öbür yüzü **bağlam içi öğrenmedir** (in-context learning): "deniz → mer, ev →
 maison, kedi → ?" gösterin; *chat* çıkar — görev yalnızca istemden
 öğrenildi, tek parametre değişmedi. Pratik prompt mühendisliği tam
 budur: bağlamı, istenen devam en olası olacak şekilde dizmek.
