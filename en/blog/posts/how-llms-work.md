@@ -1,10 +1,26 @@
 Every answer a language model has ever given you was produced the same way:
-by predicting the next small piece of text, over and over. Your phone keyboard
-does a tiny version of this — type "see you" and it offers *tomorrow*. An LLM
-is that trick scaled up by billions, and the interesting part is what the game
-demands: to predict the next word in human text well, a model must absorb
-grammar, facts, style, and a working imitation of reasoning. Everything below
-is a footnote to that idea.
+by predicting the next small piece of text, over and over. Your phone
+keyboard does a tiny version of this — type "see you" and it offers
+*tomorrow*. An LLM is that trick scaled up by billions, and the interesting
+part is what the game demands: to predict the next word in human text well,
+a model must absorb grammar, facts, style, and a working imitation of
+reasoning.
+
+This article unfolds that one idea in three acts. **Act I is the machine**:
+how a trained model computes a single next token, step by step — from
+tokens to attention to probabilities. **Act II is the education**: where
+the machine's trillions of numbers got their values, and how a raw
+autocomplete was raised into an assistant. **Act III is the field**: what
+actually happens while you type — sampling, caching, the illusion of
+memory, and why models make things up. At the end, all of it folds into
+five lines.
+
+## Act I — The machine
+
+We start with the machine on the table: a trained, frozen model whose
+entire job is to assign a probability to every possible next token of a
+given text. By the end of this act, you will have watched that probability
+get built, step by step.
 
 ## 1. Text becomes numbers
 
@@ -20,13 +36,11 @@ hard. It is like counting brushstrokes in a *photo* of a painting.
 Each token becomes an **embedding**: a long list of numbers that act as its
 coordinates on a map of meaning. *King* sits near *queen* and far from
 *spreadsheet*, and directions encode relationships: the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction — and *king − man + woman* lands near *queen*. Nobody drew this map; it is learned. Because a bag of
-coordinates has no order, each token's **position** is stamped in too: "dog
-bites man" must stay different from "man bites dog".
+coordinates has no order, each token's **position** is stamped in too: "dog bites man" must stay different from "man bites dog". Coordinates and order are in place; what "bank" means is still up in the air. The next stop is the heart of the machine.
 
 ## 3. The transformer: a context machine
 
-An embedding alone cannot say what "bank" means — river bank, or the one
-with the money? Meaning depends on neighbors. The **transformer** — the
+River bank, or the one with the money? The embedding alone cannot tell — meaning depends on neighbors. The **transformer** — the
 design behind every modern model, the T in GPT — is built to read them.
 Earlier architectures digested text left to right, squeezing everything seen
 so far through one narrow running memory that faded with distance. Attention itself is older than the transformer — it was first bolted onto
@@ -235,6 +249,12 @@ knows. After "Once upon a", the mass piles onto "time". After "My favorite
 city is", it spreads across hundreds of cities. Both correctly answer the
 only question the model ever answers: *what likely comes next?*
 
+## Act II — The education
+
+The machine is complete — but nobody wrote its numbers by hand. This act
+is about where the values came from, and how a raw completer was raised
+into an assistant.
+
 ## 5. Training and scale
 
 **Pretraining**: show the model trillions of tokens, hide the next one, let
@@ -295,6 +315,13 @@ tiny low-rank adapter matrices alongside it: near fine-tuning quality for a
 sliver of the parameters, with adapters you can swap like lenses. The
 punchline: GPT-3 existed for two years before ChatGPT. The revolution was
 these stages, not a bigger network.
+
+## Act III — In the field
+
+Now you are on stage: you typed a message and pressed send. This act
+follows what really happens from that moment to the answer's last token —
+and explains the two famous quirks along the way: why the model does not
+remember you, and why it makes things up.
 
 ## 7. Generation: a loop, not a plan
 
@@ -389,7 +416,7 @@ probability engine, not a database. Where training data is rich, the most probab
 entry to fail to find — it produces something *shaped* like an answer,
 because plausible, not true, is what it optimizes. The fixes change the input, and they form a decision ladder: **prompting** shapes behavior in context; **RAG** (retrieval) supplies knowledge that changes often, no weights touched; **fine-tuning** bakes in style or domain that must be permanent. Reach for them in that order — each step up costs more. Add tools, and check sources yourself: the step the lawyers skipped.
 
-## The whole story in five lines
+## Three acts, five lines
 
 1. Text → **tokens** → **embeddings** (coordinates of meaning, position included).
 2. **Attention** (query·key·value) blends each token's vector with its

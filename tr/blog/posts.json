@@ -6,7 +6,7 @@
       "slug": "llm-nasil-calisir",
       "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
       "date": "2026-08-29",
-      "summary": "Tüm makine kısa bir okumada: token'lar, embedding'ler, attention, eğitim, ölçek yasaları, örnekleme, KV cache ve modellerin neden uydurduğu — her kavrama tek net sezgi.",
+      "summary": "Üç perdede: makine (token'lar, attention, katmanlar), eğitim (ön eğitim, ölçek yasaları, RLHF) ve saha (örnekleme, KV cache, halüsinasyon) — her kavrama tek sezgi, her örneğin yanında formülü.",
       "tags": [
         "llm",
         "temeller",
