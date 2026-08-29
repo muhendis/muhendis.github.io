@@ -8,7 +8,7 @@ Aşağıdaki her şey bu fikrin dipnotudur.
 
 ## 1. Metin sayıya dönüşür
 
-**Tokenizer**, metni **token** denen parçalara böler — "için" tek parça,
+**Tokenizer** (standart algoritmanın adı **byte-pair encoding**, BPE), metni **token** denen parçalara böler — "için" tek parça,
 "inanılmaz" belki "inan + ılmaz" — ve her birine bir kimlik numarası verir.
 Kaba kural: 100 token ≈ 75 kelime; yani "128K bağlam penceresi" aşağı yukarı
 bir roman tutar. Bilmeye değer bir sonuç: model harf görmez, yalnızca token
@@ -202,6 +202,44 @@ değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin ze
 çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir:
 retrieval (RAG), araçlar ve kaynakları kendiniz kontrol etmek — avukatların
 atladığı adım.
+
+## 10. Mülakatçının kontrol listesi
+
+Yukarıdaki bölümler hikâyeyi anlatır; mülakatlar kenarları yoklar. Sürekli
+gelen sorular, kısa cevaplarıyla:
+
+- **Neden *ölçekli* iç çarpım — √d'ye bölme?** Uzun vektörler iç çarpımları
+  devasa yapar; devasa puanlar softmax'ı ya-hep-ya-hiç ağırlıklara doyurur
+  ve öğrenme durur. √(anahtar boyutu)'na bölmek, puanları gradyanların hâlâ
+  aktığı bir aralıkta tutar.
+- **GPT ile BERT farkı?** GPT bir *decoder*'dır: nedensel maske, yalnızca
+  geriye bakar, üretir. BERT bir *encoder*'dır: iki yöne de bakar, üretemez,
+  anlama ve sınıflandırmada güçlüdür. Modern LLM'lerin neredeyse hepsi
+  yalnız-decoder'dır.
+- **Uzun bağlam neden pahalı?** Attention O(n²)'dir: her token diğer her
+  token'ı puanlar; bağlamı ikiye katlamak işi kabaca dörde katlar — üstüne
+  KV cache de her token'la büyür. Milyon token'lık pencereler bir kutucuk
+  değil, mühendislik başarısıdır.
+- **Prompting mi, RAG mi, fine-tuning mi?** Prompting *davranışı*
+  biçimlendirir, bağlam içinde. RAG, sık değişen *bilgiyi* getirir —
+  ağırlıklara dokunmadan. Fine-tuning, kalıcı olması gereken *üslubu,
+  biçimi, alanı* içine işler. Bu sırayla deneyin; her basamak daha pahalıdır.
+- **LoRA nedir?** Modeli dondurup donmuş ağırlıkların yanına minicik düşük
+  ranklı adaptör matrisleri eğitmek — parametrelerin küçük bir kesriyle
+  fine-tuning'e yakın kalite; adaptörler lens gibi takılıp çıkarılır.
+- **Kuantizasyon nedir?** Ağırlıkları daha az bitle saklamak (16 → 8 → 4).
+  Servis, aritmetiğe değil bayt taşımaya takılır; küçük ağırlıklar, mütevazı
+  bir doğruluk bedeliyle daha hızlı ve ucuz çıkarım demektir.
+- **Mixture of experts (MoE) nedir?** Tek ileri beslemeli ambarın yerine
+  birçoğunu koyup bir yönlendiricinin her token'ı en iyi bir-iki uzmana
+  göndermesi. Devasa toplam kapasite; token başına bunun yalnızca bir kesri
+  hesaplama öder.
+- **Temperature 0 hep aynı cevabı mı verir?** Neredeyse — bu açgözlü
+  (greedy) çözümlemedir — ama pratikte yığınlama ve kayan nokta sırası yine
+  de küçük koşudan-koşuya sapmalar üretir.
+- **Perplexity nedir?** Tutulmuş metin üzerindeki ortalama şaşkınlığın
+  üsteli: ön eğitimin standart puanı ve alt görev kalitesi için zayıf bir
+  vekil — asıl görevinizde değerlendirin.
 
 ## Bütün hikâye beş satırda
 

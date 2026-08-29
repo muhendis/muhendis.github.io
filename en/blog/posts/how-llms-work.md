@@ -8,7 +8,7 @@ is a footnote to that idea.
 
 ## 1. Text becomes numbers
 
-A **tokenizer** chops text into pieces called **tokens** — "the" is one piece,
+A **tokenizer** (the standard algorithm is **byte-pair encoding**, BPE) chops text into pieces called **tokens** — "the" is one piece,
 "unbelievable" may be "un + believ + able" — and gives each an ID number. Rule
 of thumb: 100 tokens ≈ 75 English words, so a "128K context window" holds
 roughly a novel. One consequence worth knowing: the model never sees letters,
@@ -200,6 +200,43 @@ entry to fail to find — it produces something *shaped* like an answer,
 because plausible, not true, is what it optimizes. The fixes change the
 input: retrieval (RAG), tools, and checking sources yourself — the step the
 lawyers skipped.
+
+## 10. The interviewer's checklist
+
+The sections above tell the story; interviews probe the edges. The questions
+that come up constantly, with the short answers:
+
+- **Why *scaled* dot-product attention — the divide-by-√d?** Long vectors
+  make dot products huge; huge scores saturate softmax into all-or-nothing
+  weights and learning stalls. Dividing by √(key dimension) keeps scores in
+  a range where gradients still flow.
+- **GPT vs BERT?** GPT is a *decoder*: causal mask, looks only backward,
+  generates. BERT is an *encoder*: sees both directions, cannot generate,
+  excels at understanding and classification. Modern LLMs are almost all
+  decoder-only.
+- **Why is long context expensive?** Attention is O(n²): every token scores
+  every other token, so doubling the context roughly quadruples the work —
+  and the KV cache grows with every token on top. Million-token windows are
+  an engineering feat, not a checkbox.
+- **Prompting vs RAG vs fine-tuning?** Prompting shapes *behavior*, in
+  context. RAG supplies *knowledge* that changes often — no weights touched.
+  Fine-tuning bakes in *style, format, or domain* that must become
+  permanent. Reach for them in that order; each step up costs more.
+- **What is LoRA?** Freeze the model and train tiny low-rank adapter
+  matrices next to the frozen weights — near fine-tuning quality for a
+  small fraction of the parameters, with adapters you can swap like lenses.
+- **What is quantization?** Storing weights in fewer bits (16 → 8 → 4).
+  Serving is bound by moving bytes, not arithmetic, so smaller weights mean
+  faster and cheaper inference at a modest accuracy cost.
+- **What is a mixture of experts (MoE)?** Replace the one feed-forward
+  warehouse with many, and let a router send each token to its top one or
+  two. Huge total capacity; only a fraction of it pays compute per token.
+- **Does temperature 0 give the same answer every time?** Nearly — it is
+  greedy decoding — but batching and floating-point ordering still introduce
+  tiny run-to-run drift in practice.
+- **What is perplexity?** The exponential of average surprise on held-out
+  text: pretraining's standard score, and a weak proxy for downstream
+  quality — evaluate on your actual task.
 
 ## The whole story in five lines
 
