@@ -262,3 +262,10 @@ değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin ze
 Ve bir dahaki sefere biri bu modellerin nasıl çalıştığını sorduğunda — bir
 mülakatçı, bir öğrenci ya da içinizdeki meraklı ses — modelin başladığı
 yerden başlayın: sıradaki token'dan.
+
+## Daha derine inmek için
+
+- Vaswani vd., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — orijinal Transformer makalesi; yorgundu/genişti örneği onlarındır.
+- Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — klasikleşmiş görsel anlatım.
+- Ebrahim Pichka, [What are Query, Key, and Value in the Transformer Architecture?](https://medium.com/data-science/what-are-query-key-and-value-in-the-transformer-architecture-and-why-are-they-used-acbe73f731f2) — QKV sezgisinin, yumuşak sözlük bakışı dahil, özenli bir açılımı.
+- Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — bütün makinenin gözünüzün önünde kodla inşası.

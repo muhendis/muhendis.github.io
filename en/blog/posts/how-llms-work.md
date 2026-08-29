@@ -261,3 +261,10 @@ because plausible, not true, is what it optimizes. The fixes change the input, a
 And the next time someone asks how these models work — an interviewer, a
 student, or the curious voice in your own head — start where the model
 starts: with the next token.
+
+## Going deeper
+
+- Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — the original transformer paper; the tired/wide example is theirs.
+- Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — the classic visual walkthrough.
+- Ebrahim Pichka, [What are Query, Key, and Value in the Transformer Architecture?](https://medium.com/data-science/what-are-query-key-and-value-in-the-transformer-architecture-and-why-are-they-used-acbe73f731f2) — a careful unpacking of the QKV intuition, including the soft-dictionary view.
+- Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — the whole machine, written in code before your eyes.
