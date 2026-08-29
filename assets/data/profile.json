@@ -1,0 +1,25 @@
+{
+  "updated": "2026-08-29",
+  "scholar": {
+    "profile": "https://scholar.google.com/citations?user=qrj_QhMAAAAJ",
+    "citations": 170,
+    "hIndex": 4,
+    "i10Index": 3
+  },
+  "stats": {
+    "years": "7+",
+    "citations": "170",
+    "students": "20K+",
+    "award": "1st"
+  },
+  "publicationCitations": {
+    "mitosis-domain-generalization": 85,
+    "mitnet": 37,
+    "tubule-u-net": 36,
+    "patch-based-grading": 5,
+    "retinanet-nuclei": 4,
+    "wsi-grading-jco": 2,
+    "pleomorphism-caip": 1,
+    "mitotic-sarcoma": 0
+  }
+}

@@ -141,6 +141,20 @@ accept posts by pull request**, vendor DOMPurify and change one line in
 
 ---
 
+## Updating the numbers
+
+Volatile figures (Scholar citations, h-index, stat bar, per-publication
+citation counts) live in **one file**: `assets/data/profile.json`. Pages ship
+with baked fallback values and `assets/js/site-data.js` refreshes them from
+that JSON at load time — so updating a number is: edit the JSON, push. No page
+regeneration needed.
+
+Google Scholar sends no CORS headers, so a browser cannot read it directly —
+copy the numbers from [the profile](https://scholar.google.com/citations?user=qrj_QhMAAAAJ)
+into the JSON when they change. Repository star counts, by contrast, are
+fetched live from the GitHub API (which does allow browser requests) and need
+no maintenance; only public repositories appear there.
+
 ## Layout
 
 ```
