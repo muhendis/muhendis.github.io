@@ -23,49 +23,92 @@ coordinates on a map of meaning. *King* sits near *queen* and far from
 coordinates has no order, each token's **position** is stamped in too: "dog
 bites man" must stay different from "man bites dog".
 
-## 3. Attention: reading in context
+## 3. The transformer: a context machine
 
 An embedding alone cannot say what "bank" means — river bank, or the one
-with the money? Meaning depends on neighbors, and reading the neighbors is
-attention's job. Compare, from the original Transformer paper:
+with the money? Meaning depends on neighbors. The **transformer** — the
+design behind every modern model, the T in GPT — is built to read them.
+Earlier architectures digested text left to right, squeezing everything seen
+so far through one narrow running memory that faded with distance. The
+transformer's move: let every token look *directly* at every other token,
+all at once, and decide for itself what matters.
+
+Watch that decision, in the original paper's own example:
 
 > The animal didn't cross the street because **it** was too *tired*.
 > The animal didn't cross the street because **it** was too *wide*.
 
 One word changes and "it" switches sides. You resolved that instantly;
-**attention** is how the **transformer** — the design behind every modern
-model, the T in GPT — does the same. Every token plays three roles: a
-**query** ("what am I looking for?"), a **key** ("how should others find
-me?"), a **value** ("what do I hand over if picked?"). Think YouTube: your
-search is a query, video titles are keys, the videos are values. In "it was
-too tired", *it* asks for something earlier that could be tired; *animal*'s
-key matches strongly, *street*'s weakly; the scores become percentages and
-*it* rebuilds its vector as a weighted blend — say 85% *animal*, 10% *street*.
+**attention** is how the model does. The whole trick reduces to one
+sentence: **a word's context is a weighted blend of the other words, and
+attention's entire job is choosing the weights.**
 
-Strip the vocabulary away and the math is only two moves: a **dot product** —
-multiply two vectors, get a single similarity score — and a **weighted sum** —
-blend vectors according to percentages. Q·K dot products produce the scores,
-softmax turns the scores into percentages, and the percentages weight the
-blend of values. Context, in other words, is nothing more than a weighted
-blend of the other words; attention's entire job is choosing the weights. (A
-token attends to itself too — often with the largest weight of all.)
+### Q, K, V — the mechanism, with numbers
 
-Every layer runs many attention "heads" in parallel, each learning its own relationship to track: grammar, references, which adjective belongs to which noun. Nobody assigns these roles; they emerge, because each one helps predict what comes next.
+To choose the weights, every token is given three roles, each a small
+learned transformation of its vector:
 
-Note one asymmetry: a query fires once, but a token's key and value stay
-relevant to every later token that looks back. Remember that — it becomes
-money in a moment.
+- **query** — what am I looking for?
+- **key** — how should others find me?
+- **value** — what do I hand over if picked?
+
+(Think YouTube: your search is the query, video titles are the keys, the
+videos are the values.) And only two math operations are involved: the
+**dot product** — multiply two vectors, get one similarity score — and the
+**weighted sum** — blend vectors by percentages.
+
+Take "The quick brown fox", with the model working on *fox*:
+
+1. **Score.** *fox*'s query is dot-producted with every key, its own
+   included: Q·K(The) = 0.5, Q·K(quick) = 2.1, Q·K(brown) = 4.0,
+   Q·K(fox) = 5.4.
+2. **Percentages.** Softmax converts the scores into weights: 2%, 8%, 30%,
+   60%. The model has just *decided, in numbers*, that *brown* matters and
+   *The* barely does. Note that a token attends to itself — often most of
+   all.
+3. **Blend.** fox_new = 0.02 × V(The) + 0.08 × V(quick) + 0.30 × V(brown)
+   + 0.60 × V(fox). The result is no longer generic *fox*; it is
+   *this-quick-brown-fox*, and it is what the next layer receives.
+
+No rule ever told the model that foxes are brown. The Q, K, V
+transformations were tuned, over trillions of guesses, until useful weights
+came out on their own.
+
+### One direction only
+
+A detail with large consequences: during generation, each token may only
+look *backward*. *Fox* sees *brown*; *brown* never sees *fox*. That mask is
+what makes the model a *next*-token predictor — and it is why a past
+token's key and value, once computed, never change: nothing that arrives
+later can touch them. File that away; it becomes the KV cache in section 7.
+
+### Many heads
+
+One weighting per layer would be crude — a word needs grammar from one
+neighbor and a referent from another. So each layer runs many attention
+**heads** in parallel, each with its own Q/K/V lenses, each learning its
+own relationship to track: one follows syntax, one resolves "it", one binds
+adjectives to nouns. Nobody assigns these roles; they emerge, because each
+one helps predict what comes next.
 
 ## 4. Layers: where knowledge lives
 
-Stack this dozens to a hundred-plus times. In each layer, attention mixes in
-context (the librarian) and a **feed-forward network** stores learned
-patterns like "Paris pairs with France" (the warehouse — most **parameters** live here). Early layers pick up spelling and grammar; deeper layers, facts and long-range logic. GPT-2 made news in 2019 with 1.5 billion parameters; frontier
-models now run to the trillions. At the top, **softmax** turns scores into
-percentages summing to 100 — the model's entire output is a probability for
-every token it knows. After "Once upon a", the mass piles onto "time"; after
-"My favorite city is", it spreads across hundreds of cities. Both correctly
-answer the only question the model ever answers: *what likely comes next?*
+A transformer is this block stacked dozens to a hundred-plus times — and
+each layer *edits* the vectors rather than replacing them, so meaning
+accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
+layer by layer. Inside every layer, attention gathers context (the
+librarian) while a **feed-forward network** — a small network applied to
+each token on its own — stores learned patterns like "Paris pairs with
+France" (the warehouse; most **parameters** live here). Early layers handle
+spelling and grammar; deeper layers, facts and long-range logic. GPT-2 made
+news in 2019 with 1.5 billion parameters; frontier models now run to the
+trillions.
+
+At the very top, **softmax** — the same percentage converter attention
+uses — turns the final scores into a probability for every token the model
+knows. After "Once upon a", the mass piles onto "time". After "My favorite
+city is", it spreads across hundreds of cities. Both correctly answer the
+only question the model ever answers: *what likely comes next?*
 
 ## 5. Training and scale
 
@@ -162,7 +205,7 @@ lawyers skipped.
 
 1. Text → **tokens** → **embeddings** (coordinates of meaning, position included).
 2. **Attention** (query·key·value) blends each token's vector with its
-   context; feed-forward layers store the knowledge.
+   context — looking only backward; feed-forward layers store the knowledge.
 3. **Pretraining** = next-token prediction at scale; scaling laws make the
    gains predictable; instruction tuning + RLHF turn the base model into an
    assistant.

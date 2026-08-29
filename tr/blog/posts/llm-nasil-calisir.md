@@ -23,51 +23,93 @@ tablosu*na uzaktır; yönler ilişkidir: *Paris*ten *Fransa*ya giden ok, *Roma*d
 sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
 "adam köpeği ısırdı"dan farklı kalmalıdır.
 
-## 3. Attention: bağlam içinde okumak
+## 3. Transformer: bir bağlam makinesi
 
-Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü,
-sayı olan yüz mü? Anlam komşulara bağlıdır ve komşuları okumak attention'ın
-işidir. Orijinal Transformer makalesinden karşılaştırın:
+Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü, sayı
+olan yüz mü? Anlam komşulara bağlıdır. **Transformer** — modern bütün
+modellerin arkasındaki tasarım, GPT'deki T — komşuları okumak için
+kurulmuştur. Önceki mimariler metni soldan sağa sindirir, o ana dek görülen
+her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Transformer'ın
+hamlesi: her token, diğer her token'a *doğrudan* ve aynı anda baksın, neyin
+önemli olduğuna kendisi karar versin.
+
+Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 
 > Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
 Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
-**attention**, **Transformer**'ın — modern bütün modellerin arkasındaki
-tasarım, GPT'deki T — aynısını yapma biçimidir. Her token üç rol oynar:
-**sorgu** ("ne arıyorum?"), **anahtar** ("başkaları beni nasıl bulsun?"),
-**değer** ("seçilirsem ne teslim ederim?"). YouTube'u düşünün: aramanız
-sorgu, video başlıkları anahtar, videolar değer. "O çok yorgundu"da *o*,
-daha önce geçen ve yorgun olabilecek bir şey arar; *hayvan*ın anahtarı güçlü
-eşleşir, *cadde*ninki zayıf; puanlar yüzdeye çevrilir ve *o*, vektörünü ağırlıklı bir karışım olarak yeniden kurar — diyelim %85
-*hayvan*, %10 *cadde*.
+**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir
+kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve
+attention'ın bütün işi ağırlıkları seçmektir.**
 
-Kelimeleri soyarsanız matematik yalnızca iki hamledir: **iç çarpım (dot
-product)** — iki vektörü çarpıp tek bir benzerlik puanı almak — ve
-**ağırlıklı toplam** — vektörleri yüzdelere göre karıştırmak. Q·K iç
-çarpımları puanları üretir, softmax puanları yüzdeye çevirir, yüzdeler de
-değerlerin karışımını ağırlıklar. Başka bir deyişle bağlam, diğer kelimelerin
-ağırlıklı bir karışımından ibarettir; attention'ın bütün işi ağırlıkları
-seçmektir. (Token kendine de dikkat eder — çoğu zaman en büyük ağırlıkla.)
+### Q, K, V — mekanizma, sayılarla
 
-Her katman, her biri kendi ilişkisini izlemeyi öğrenen birçok attention
-"kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi sıfat hangi ismin. Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini tahmine yarar.
+Ağırlıkları seçmek için her token'a, her biri vektörünün küçük öğrenilmiş
+bir dönüşümü olan üç rol verilir:
 
-Bir asimetriye dikkat: sorgu bir kez ateşlenir; ama bir token'ın anahtarı ve
-değeri, geriye bakan her sonraki token için geçerli kalır. Bunu aklınızda
-tutun — birazdan paraya dönüşecek.
+- **sorgu (query)** — ne arıyorum?
+- **anahtar (key)** — başkaları beni nasıl bulsun?
+- **değer (value)** — seçilirsem ne teslim ederim?
+
+(YouTube'u düşünün: aramanız sorgu, video başlıkları anahtar, videolar
+değer.) Ve işin içinde yalnızca iki matematik işlemi vardır: **iç çarpım** —
+iki vektörü çarp, tek bir benzerlik puanı al — ve **ağırlıklı toplam** —
+vektörleri yüzdelere göre karıştır.
+
+"Hızlı kahverengi tilki"yi alın; model *tilki* üzerinde çalışıyor:
+
+1. **Puanla.** *Tilki*nin sorgusu, kendisininki dahil her anahtarla iç
+   çarpıma girer: Q·K(Hızlı) = 2,1, Q·K(kahverengi) = 4,0,
+   Q·K(tilki) = 5,4.
+2. **Yüzdele.** Softmax puanları ağırlığa çevirir: %10, %30, %60. Model az
+   önce, *sayılarla*, *kahverengi*nin önemli olduğuna karar verdi. Dikkat:
+   token kendine de bakar — çoğu zaman en çok kendine.
+3. **Karıştır.** tilki_yeni = 0,10 × V(Hızlı) + 0,30 × V(kahverengi) +
+   0,60 × V(tilki). Sonuç artık genel *tilki* değildir; *bu-hızlı-kahverengi-
+   tilki*dir ve bir sonraki katmana giden budur.
+
+Modele tilkilerin kahverengi olduğunu hiçbir kural söylemedi. Q, K, V
+dönüşümleri, trilyonlarca tahmin boyunca, işe yarar ağırlıklar kendiliğinden
+çıkana dek ayarlandı.
+
+### Tek yön
+
+Sonuçları büyük bir ayrıntı: üretim sırasında her token yalnızca *geriye*
+bakabilir. *Tilki*, *kahverengi*yi görür; *kahverengi*, *tilki*yi asla. Bu
+maske, modeli bir *sıradaki*-token tahmincisi yapan şeydir — ve geçmiş bir
+token'ın anahtarıyla değerinin, bir kez hesaplandıktan sonra asla
+değişmemesinin sebebi de budur: sonradan gelen hiçbir şey onlara dokunamaz.
+Bir kenara yazın; 7. bölümde KV cache olacak.
+
+### Birçok kafa
+
+Katman başına tek bir ağırlıklama kaba kalırdı — bir kelimenin bir
+komşusundan dil bilgisine, başka birinden göndermeye ihtiyacı var. Bu yüzden
+her katman, her biri kendi Q/K/V mercekleriyle donanmış birçok attention
+**kafasını** paralel çalıştırır ve her kafa izleyeceği ilişkiyi kendisi
+öğrenir: biri söz dizimini izler, biri "o"yu çözer, biri sıfatı isme bağlar.
+Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini
+tahmine yarar.
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Bunu onlarca-yüzü aşkın kez üst üste koyun. Her katmanda attention bağlamı
-karıştırır (kütüphaneci), **ileri beslemeli ağ** ise "Paris, Fransa ile
-eşleşir" gibi öğrenilmiş örüntüleri depolar (ambar — **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı ve dil bilgisini kapar; derin katmanlar olguları ve uzun menzilli mantığı. GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
-modeller bugün trilyonlara varıyor. En tepede **softmax**, puanları toplamı
-yüzde yüz olan olasılıklara çevirir — modelin bütün çıktısı, bildiği her
-token için bir olasılıktır. "Bir varmış bir"den sonra kütle "yokmuş"a
-yığılır; "En sevdiğim şehir"den sonra yüzlerce şehre dağılır. İkisi de
-modelin cevapladığı tek sorunun doğru cevabıdır: *sırada ne gelmesi
-muhtemel?*
+Transformer, bu bloğun onlarca-yüzü aşkın kez üst üste konmuşudur — ve her
+katman vektörleri değiştirmek yerine *düzenler*; anlam böylece birikir:
+*tilki* önce *kahverengi-hızlı-tilki*, sonra *harekete geçmek üzere olan
+özne* olur, katman katman. Her katmanın içinde attention bağlamı toplar
+(kütüphaneci), **ileri beslemeli ağ** ise — her token'a tek tek uygulanan
+küçük bir ağ — "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri
+depolar (ambar; **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı
+ve dil bilgisini üstlenir; derin katmanlar olguları ve uzun menzilli
+mantığı. GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
+modeller bugün trilyonlara varıyor.
+
+En tepede **softmax** — attention'ın kullandığı yüzde çeviricinin aynısı —
+son puanları, modelin bildiği her token için bir olasılığa çevirir. "Bir
+varmış bir"den sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra
+yüzlerce şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru
+cevabıdır: *sırada ne gelmesi muhtemel?*
 
 ## 5. Eğitim ve ölçek
 
@@ -165,7 +207,8 @@ atladığı adım.
 
 1. Metin → **token** → **embedding** (anlamın koordinatları, konum dahil).
 2. **Attention** (sorgu·anahtar·değer) her token'ın vektörünü bağlamıyla
-   karıştırır; bilgiyi ileri beslemeli katmanlar depolar.
+   karıştırır — yalnızca geriye bakarak; bilgiyi ileri beslemeli katmanlar
+   depolar.
 3. **Ön eğitim** = ölçekli sıradaki-token tahmini; ölçek yasaları kazancı
    öngörülebilir kılar; talimat eğitimi + RLHF taban modeli asistana çevirir.
 4. Üretim = örnekle, ekle, tekrarla — temperature, top-k, top-p çekilişi
