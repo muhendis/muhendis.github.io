@@ -39,9 +39,7 @@ Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
 Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
-**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir
-kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve
-attention'ın bütün işi ağırlıkları seçmektir.**
+**attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Ve ağırlıklar yalnızca mesafeden gelemez — "o"yu çözen kelime yirmi token geride olabilir — içerikten hesaplanmak ve öğrenilmek zorundadırlar.
 
 ### Q, K, V — mekanizma, sayılarla
 
@@ -54,9 +52,16 @@ bir dönüşümü olan üç rol verilir:
 
 Bu üçü nereden geliyor? Token'ın kendi vektöründen. Model, üç öğrenilmiş
 sayı tablosu tutar; bir token'ın vektörünü her tabloyla çarpmak, onun
-sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet. (Ve
-YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar,
-videoların kendisi değer.)
+sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet. (Ve YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar, videoların kendisi değer.)
+
+Peki neden doğrudan ham embedding'lerle karşılaştırma yapmıyoruz? Çünkü bir
+embedding, kelimenin birçok yönünü aynı anda karıştırır — dil bilgisi, anlam,
+konum. Üç tablo, modelin *tam da bu aramanın ihtiyacı olan yönü* çekmesine
+izin verir: "yorgun olabilir" üzerinden eşleşen bir sorgu-anahtar çifti,
+"f ile başlar" üzerinden değil. Birlikte bir **yumuşak sözlük** gibi
+davranırlar: gerçek bir sözlük anahtarı ya tam eşleştirir ya da hiçbir şey
+döndürmez; attention her anahtarla *kısmen* eşleşir ve her değerden oransal
+bir dilim alır.
 
 Bütün işi yalnızca iki matematik işlemi yapar:
 

@@ -40,8 +40,7 @@ Watch that decision, in the original paper's own example:
 
 One word changes and "it" switches sides. You resolved that instantly;
 **attention** is how the model does. The whole trick reduces to one
-sentence: **a word's context is a weighted blend of the other words, and
-attention's entire job is choosing the weights.**
+sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** And the weights cannot come from distance alone — the word that settles "it" may sit twenty tokens back — so they must be computed from content, and learned.
 
 ### Q, K, V — the mechanism, with numbers
 
@@ -54,9 +53,15 @@ learned transformation of its vector:
 
 Where do these three come from? From the token's own vector. The model
 holds three learned tables of numbers; multiplying a token's vector by each
-table produces its query, its key, and its value. Same word, three outfits.
-(And think YouTube: your search text is the query, every video's title is a
-key, the videos themselves are the values.)
+table produces its query, its key, and its value. Same word, three outfits. (And think YouTube: your search text is the query, every video's title is a key, the videos themselves are the values.)
+
+Why not compare raw embeddings directly? Because an embedding mixes many
+aspects of a word at once — grammar, meaning, position. The three tables let
+the model extract *just the aspect this particular search needs*: a query
+and key that match on "could be tired", not on "starts with f". Together
+they behave like a **soft dictionary**: a real dictionary matches a key
+exactly or returns nothing; attention matches every key *partially* and
+takes a proportional slice of every value.
 
 Only two mathematical operations do all the work:
 
