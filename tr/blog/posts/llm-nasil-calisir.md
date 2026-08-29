@@ -1,349 +1,149 @@
-Büyük bir dil modelinin size verdiği her yanıt — her deneme, her kod parçası,
-az önce yaptığı hata için her özür — aynı yöntemle üretildi: bir sonraki küçük
-metin parçasını tahmin ederek. Tekrar tekrar, her seferinde tek parça.
+Bir dil modelinin size verdiği her yanıt aynı yöntemle üretildi: bir sonraki
+küçük metin parçasını tahmin ederek, tekrar tekrar. Telefon klavyeniz bunun
+minik halini yapıyor — "görüşürüz" yazın, *yarın* önerir. LLM, aynı numaranın
+milyarlarca kat büyütülmüşüdür ve ilginç olan, oyunun talep ettiği şeydir:
+insan metninde sıradaki kelimeyi iyi tahmin etmek için model dil bilgisini,
+olguları, üslubu ve akıl yürütmenin işleyen bir taklidini özümsemek zorunda.
+Aşağıdaki her şey bu fikrin dipnotudur.
 
-Telefonunuz bunun minik bir sürümünü zaten yapıyor. "Görüşürüz" yazın, klavye
-*yarın*, *orada*, *akşam* önerir. Büyük dil modeli, aynı numaranın milyarlarca
-kat büyütülmüş halidir — ve işin ilginç kısmı, bu oyunu o kadar iyi oynamanın
-*neler gerektirdiği*. Bir sonraki kelimeyi üst düzeyde tahmin edebilmek için
-model dil bilgisini, olguları, üslubu ve akıl yürütmenin işleyen bir taklidini
-özümsemek zorunda kalıyor; çünkü insan metninde sıradaki parçayı kestirmek için
-bunların hepsi gerekiyor. Bu fikri aklınızda tutun; aşağıdaki her şey onun
-dipnotu.
+## 1. Metin sayıya dönüşür
 
-## Metin sayıya dönüşür: token'lar
+**Tokenizer**, metni **token** denen parçalara böler — "için" tek parça,
+"inanılmaz" belki "inan + ılmaz" — ve her birine bir kimlik numarası verir.
+Kaba kural: 100 token ≈ 75 kelime; yani "128K bağlam penceresi" aşağı yukarı
+bir roman tutar. Bilmeye değer bir sonuç: model harf görmez, yalnızca token
+kimlikleri görür — "strawberry"deki r'leri saymanın meşhur zorluğu bundandır.
+Bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibidir.
 
-Bilgisayarlar kelime okumaz. İlk adım **tokenizer**: metni token denen
-parçalara böler ve her parçaya bir kimlik numarası verir. Yaygın kelimeler tek
-parça kurtulur — "için" bir token, "model" bir token. Nadir kelimeler bölünür:
-"inanılmaz" belki "inan" + "ılmaz" olur, "kuantizasyon" belki "kuant" +
-"izasyon". İngilizce için kaba bir kural: **100 token aşağı yukarı 75
-kelimedir**; yani "128K bağlam penceresi", modelin aynı anda yaklaşık 96.000
-kelimeyi — koca bir romanı — görebildiği anlamına gelir.
+## 2. Anlam taşıyan sayılar
 
-Bunun iki pratik sonucu var:
+Her token bir **embedding**'e dönüşür: bir anlam haritasındaki koordinatları
+gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap
+tablosu*na uzaktır; yönler ilişkidir — *kral − erkek + kadın*, *kraliçe*nin
+yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
+sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
+"adam köpeği ısırdı"dan farklı kalmalıdır.
 
-- **Bağlam sınırı kelimeyle ya da sayfayla değil, token'la ölçülür.**
-- **Tuhaf hatalar çoğu zaman token düzeyinde yaşar.** Modeller yıllarca
-  "strawberry" kelimesindeki r harflerini yanlış saymalarıyla meşhur oldu. Bu,
-  meyve cahilliği değil — model harf görmez. Onun gözünde "çilek" ç-i-l-e-k
-  değil, bir iki opak parçadır; ondan harf saymasını istemek, sizden bir
-  tablonun *fotoğrafındaki* fırça darbelerini saymanızı istemek gibidir.
+## 3. Attention: bağlam içinde okumak
 
-## Anlam taşıyan sayılar: embedding'ler
-
-Sonra her token kimliği bir **embedding**'e eşlenir — bir vektöre: çoğu zaman binlerce sayıdan oluşan, token'ın bir anlam haritasındaki koordinatları gibi davranan uzun bir liste. Gerçek haritada Paris, Brüksel'e yakın, Sidney'e
-uzaktır. Anlam haritasında *kral*, *kraliçe* ve *taht*ın yanında, *hesap
-tablosu*ndan uzakta oturur. İlişkiler bile tutarlı yönlere dönüşür: *Paris*ten
-*Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla aynı yönü gösterir — bir
-"başkenti-olmak" yönü. Meşhur bir gösterim de vektör aritmetiğidir: *kral −
-erkek + kadın*, *kraliçe*nin yakınına düşer.
-
-Bu haritayı kimse elle çizmedi; öğrenildi. Ve modelin ana dili budur — buradan
-sonrası vektörler üzerinde aritmetiktir.
-
-Eksik bir şey kaldı: sıra. Bir torba koordinat, "köpek adamı ısırdı" ile "adam
-köpeği ısırdı" arasındaki farkı bilmez; bu yüzden her token'ın dizideki **konumu** da vektörüne işlenir. Kelime sırası, matematiğe yolculuğu sağ salim
-atlatır.
-
-## Attention: bağlam içinde okumak
-
-Koordinatlar tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü,
-sayı olan yüz mü? Anlam, komşulara bağlıdır. Bunu çözmek **Transformer**'ın
-işidir — modern bütün dil modellerinin arkasındaki sinir ağı tasarımı,
-GPT'deki T — ve temel aracı **attention**'ın.
-
-Orijinal Transformer makalesinin kendi örneği sorunu tek hamlede gösterir:
+Orijinal Transformer makalesinden karşılaştırın:
 
 > Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
-Tek kelime değişir ve "o" taraf değiştirir — *yorgun* hayvanı gösterir,
-*geniş* caddeyi. Siz bunu anında çözdünüz. Attention, modelin çözme biçimidir.
+Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
+**attention**, **Transformer**'ın — modern bütün modellerin arkasındaki
+tasarım, GPT'deki T — aynısını yapma biçimidir. Her token üç rol oynar:
+**sorgu** ("ne arıyorum?"), **anahtar** ("başkaları beni nasıl bulsun?"),
+**değer** ("seçilirsem ne teslim ederim?"). YouTube'u düşünün: aramanız
+sorgu, video başlıkları anahtar, videolar değer. "O çok yorgundu"da *o*,
+daha önce geçen ve yorgun olabilecek bir şey arar; *hayvan*ın anahtarı güçlü
+eşleşir, *cadde*ninki zayıf; puanlar yüzdeye çevrilir ve *o*, vektörünü
+ağırlıklı bir karışım olarak yeniden kurar — diyelim %85 *hayvan*, %10
+*cadde*. Her katman, her biri kendi ilişkisini izlemeyi öğrenen birçok
+attention "kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi
+sıfat hangi ismin.
 
-Her token üç rol oynar; her biri vektörünün küçük bir dönüşümüdür:
+Bir asimetriye dikkat: sorgu bir kez ateşlenir; ama bir token'ın anahtarı ve
+değeri, geriye bakan her sonraki token için geçerli kalır. Bunu aklınızda
+tutun — birazdan paraya dönüşecek.
 
-- **sorgu (query)** — ne arıyorum?
-- **anahtar (key)** — başkaları beni nasıl bulsun?
-- **değer (value)** — seçilirsem ne teslim ederim?
+## 4. Katmanlar: bilgi nerede yaşıyor
 
-YouTube'u düşünün: yazdığınız metin sorgu, her videonun başlığı anahtar,
-videoların kendisi değer. Attention bu aramayı her token için aynı anda
-çalıştırır. "O çok *yorgundu*" cümlesinde *o* sorar: "daha önce geçen, yorgun
-olabilecek bir şey?" *Hayvan*ın anahtarı güçlü eşleşir, *cadde*ninki zayıf;
-puanlar yüzdeye çevrilir ve *o*, vektörünü değerlerin ağırlıklı karışımı
-olarak yeniden kurar — diyelim %85 *hayvan*, %10 *cadde*. Hiçbir şey olduğu
-gibi kopyalanmaz; her şey, ilgiyle ağırlıklanmış bir karışımdır. *Yorgun*u
-*geniş* yapın, ağırlıklar tersine döner.
+Bunu onlarca-yüzü aşkın kez üst üste koyun. Her katmanda attention bağlamı
+karıştırır (kütüphaneci), **ileri beslemeli ağ** ise "Paris, Fransa ile
+eşleşir" gibi öğrenilmiş örüntüleri depolar (ambar — **parametrelerin** çoğu
+burada yaşar). GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
+modeller bugün trilyonlara varıyor. En tepede **softmax**, puanları toplamı
+yüzde yüz olan olasılıklara çevirir — modelin bütün çıktısı, bildiği her
+token için bir olasılıktır. "Bir varmış bir"den sonra kütle "yokmuş"a
+yığılır; "En sevdiğim şehir"den sonra yüzlerce şehre dağılır. İkisi de
+modelin cevapladığı tek sorunun doğru cevabıdır: *sırada ne gelmesi
+muhtemel?*
 
-Resmi iki ayrıntı tamamlar ve ikisinin de karşılığı ileride ödenecek:
+## 5. Eğitim ve ölçek
 
-- **Roller asimetriktir.** Sorgu bir kez ateşlenir — token'ının etrafına
-  bakındığı anda. Anahtar ve değer ise geriye bakan her sonraki token için
-  geçerli kalır. KV cache'in var olma sebebi bu asimetridir — üretim
-  bölümünde gerçek para.
-- **Aynı anda birçok kez olur.** Her katman birçok attention "kafası"
-  çalıştırır ve her kafa izleyeceği ilişkiyi kendisi öğrenir — dil bilgisi,
-  göndermeler, hangi sıfatın hangi isme ait olduğu. Rolleri kimse atamaz;
-  kendiliğinden belirir.
+**Ön eğitim**: modele trilyonlarca token gösterin, sıradakini gizleyin,
+tahmin ettirin. **Kayıp fonksiyonu** şaşkınlığını puanlar; **gradyan inişi**
+her parametreyi daha az şaşırma yönünde minicik bir adım kaydırır; bunu
+trilyonlarca kez tekrarlayın. İçine kural yazılmaz — polisiye romanın son
+bölümünü tahmin etmek kimin cinayet sebebi olduğunu izlemeyi gerektirir, o
+yüzden izlemek öğrenilir. Sonuç, eğitim verisinin JPEG gibi
+sıkıştırılmışıdır: resim kalır, pikseller kalmaz.
 
-## Katmanlar: bilgi nerede yaşıyor
+Ölçek, **ölçek yasalarını** izler: hesaplamayı ona katlayın, kayıp
+öngörülebilir miktarda düşer — dokuz haneli eğitim bütçelerini kumardan plana
+çeviren şey budur; GPT-4'ün nihai kaybı 10.000 kat küçük denemelerden
+önceden tahmin edildi. DeepMind'ın **Chinchilla** çalışması denge kuralını
+ekledi: parametre ve veri birlikte büyümeli (parametre başına ~20 token);
+70 milyarlık modelleri, sırf bu aritmetikle 280 milyarlık rakibini geçti.
+Dürüst bir şerh: eğri pürüzsüzdür ama beceriler aniden gelebilir — **beliren
+yetenekler**.
 
-Bu mekanizmayı onlarca, yüzü aşkın kez üst üste koyun; elinizde bir
-transformer var. Her katmanda, iş bölümü net iki blok:
+## 6. Otomatik tamamlamadan asistana
 
-- **Attention**, diğer token'lardan bağlamı karıştırır — kütüphaneci.
-- **İleri beslemeli ağ** — her token'a tek tek uygulanan küçük bir ağ —
-  öğrenilmiş örüntüleri depolar: "Paris, Fransa ile eşleşir", "`def`ten
-  sonraki kod bir fonksiyon adıdır". Ambar. Parametrelerin çoğu burada yaşar.
+Ön eğitimin ürünü **taban modeldir**: metni sürdüren bir makine, başka hiçbir
+şey değil. "Fransa'nın başkenti neresi?" deyin; "Paris." alabilirsiniz — ya
+da dokuz quiz sorusu daha, çünkü internette quizler sürü halinde gezer. Onu
+asistan yapan iki ucuz aşama var. **Talimat eğitimi**: on binlerce yazılı
+soru → ideal cevap örneğiyle eğitime devam edin; "yardımcı biçimde cevapla"
+en olası devam haline gelsin. **RLHF** (insan geri bildirimiyle pekiştirmeli
+öğrenme): insanlar aday cevapları karşılaştırır, bir ödül modeli bu zevki
+öğrenir, LLM ona doğru ayarlanır — karşılaştırmak, kusursuz yazmaktan çok
+daha kolaydır. Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim
+daha büyük ağ değil, bu aşamalardı.
 
-İlk katmanlar yazımı ve dil bilgisini kapar; derin katmanlar olguları ve
-mantığı. *Büyük* dil modelindeki "büyük", bütün bunlardaki öğrenilmiş
-sayıları — **parametreleri** — sayar. GPT-2, 2019'da 1,5 milyarla manşetlere
-çıkmıştı; bugünün öncü modelleri trilyonlara varıyor.
+## 7. Üretim: plan değil, döngü
 
-En tepede son bir adım: sözlükteki her token bir puan alır ve **softmax**,
-puanları toplamı yüzde yüz olan olasılıklara çevirir. Modelin bütün çıktısı
-budur — cümle değil, fikir değil; bildiği her token için bir olasılık. "Bir
-varmış bir"den sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra
-yüzlerce şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru
-cevabıdır: *sırada ne gelmesi muhtemel?*
+Model olasılıkları hesaplar, bir token **örnekler** (ağırlıklı çekiliş),
+ekler, tekrarlar. Çekilişi üç düğme yönetir. "Gökyüzü"nden sonra: *maviydi*
+%60, *karanlıktı* %10, … *patatesti* %0,0001. **Temperature** listeyi
+sivriltir ya da düzleştirir (SQL için düşük, beyin fırtınası için yüksek);
+**top-k** yalnızca en olası k token'ı tutar; **top-p**, toplamı örneğin
+%90'ı bulan en küçük kümeyi tutar — model eminken iki, kararsızken seksen
+token'a uyarlanır. Önce kes, sonra çek: cevapların günden güne değişmesi ve
+gökyüzünün asla patates olmaması bundandır.
 
-## Eğitim: bilgi nereden geliyor
+Döngünün iki sonucu: "adım adım düşün" işe yarar, çünkü modelin tek karalama
+defteri sayfadır — "17 × 24 = 340 + 68" yazmak her sonraki tahmini
+kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve **KV cache**,
+3. bölümdeki asimetriyi paraya çevirir: geçmiş anahtarlar ve değerler hiç
+değişmez, bir kez hesaplanıp saklanır — uzun bir istemde ilk kelimeden
+önceki duraklama, o önbelleği kuran **prefill**'dir; "önbelleklenmiş
+girdinin" ucuz olması, bedelinin çoktan ödenmiş olmasındandır.
 
-Parametreler değerlerini nereden alır? **Ön eğitimden (pretraining)**. Modele
-trilyonlarca token gösterin — açık internetin büyük bölümü, kitaplar, kod —
-sıradaki token'ı gizleyin, tahmin ettirin. **Kayıp fonksiyonu (loss)**, doğru
-cevaba ne kadar şaşırdığını ölçer; **gradyan inişi**, her parametreyi daha az
-şaşırma yönünde minicik bir adım kaydırır. Bunu trilyonlarca kez tekrarlayın.
+## 8. Sizi hatırlamaz
 
-İçine tek bir kural yazılmaz. Dil bilgisi, coğrafya, kimya, Python — hepsi
-tek oyunun yan etkisi olarak özümsenir; çünkü polisiye romanın son bölümünü
-tahmin etmek, kimin cinayet sebebi olduğunu takip etmiş olmayı gerektirir;
-fizik kitabının sonraki satırı, biraz fiziği. Sonuç, eğitim verisinin bir
-JPEG'in fotoğrafı sıkıştırdığı gibi sıkıştırılmışıdır: resim kalır,
-pikseller kalmaz.
+Eğitimden sonra parametreler **donar**. Her mesajda konuşmanın tamamı ağdan
+yeniden geçer — her sabah bütün dava dosyasını isteyen, uzun süreli hafızası
+olmayan parlak bir danışman gibi. Hafıza sanılan şey bağlam penceresidir.
+Madalyonun öbür yüzü **in-context learning**: "deniz → sea, ev → house,
+kedi → ?" gösterin; model *cat* der — görevi yalnızca istemden öğrenmiştir,
+tek parametre değişmeden.
 
-## Ölçek yasaları: büyüğün neden hep daha iyi çıktığı
+## 9. Neden uyduruyor
 
-2010'lar boyunca "daha büyüğünü yap" bir sezgiydi. 2020'de OpenAI'daki
-araştırmacılar bunu ölçtü ve daha güçlü bir şey buldu: ölçek ile performans
-arasındaki ilişki bir **kuvvet yasasını (power law)** izliyor — pürüzsüz ve
-şaşırtıcı derecede düzenli. Hesaplama bütçesini ona katlayın; kayıp — modelin
-ortalama şaşkınlığı — öngörülebilir bir miktar düşer. Bu, büyüğün her bakımdan
-daha akıllı olduğu garantisi değil; ama birçok büyüklük mertebesinde geçerli,
-ölçülmüş ve tekrarlanabilir bir eğri.
+2023'te *Mata v. Avianca* davasında avukatlar, ChatGPT'nin uydurduğu altı
+içtihadı mahkemeye sundu — "gerçek mi?" diye sorduklarında da "evet" almıştı.
+5.000 dolarlık ceza, "yapay zekâ halüsinasyonunu" meşhur etti. Mekanizma sır
+değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin ince
+olduğu yerde bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
+çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir:
+retrieval (RAG), araçlar ve kaynakları kendiniz kontrol etmek — avukatların
+atladığı adım.
 
-Bu düzenlilik alanın ekonomisini değiştirdi. Bir modelin ne kadar iyi
-olacağını parayı harcamadan önce öngörebiliyorsanız, yüz milyon dolarlık bir
-eğitim kumar olmaktan çıkar, mühendislik planına dönüşür. OpenAI sonradan
-GPT-4'ün nihai kaybını, hesaplamanın 1/10.000'inden azıyla eğitilmiş deneme
-modellerinden önceden tahmin ettiğini bildirdi — eğri uzatıldı ve dediği yere
-indi.
+## Bütün hikâye beş satırda
 
-İkinci bir bulgu tarifi inceltti. 2022'de DeepMind'ın **Chinchilla** çalışması
-alanın dengeyi yanlış kurduğunu gösterdi: modeller, eğitildikleri veri
-miktarına göre fazla büyümüştü. Parametrelerle eğitim token'ları birlikte
-büyümeli — kaba bir kuralla, parametre başına yaklaşık yirmi token metin.
-Kanıt doğrudandı: çok daha fazla veriyle eğitilmiş 70 milyar parametrelik
-modelleri, 280 milyar parametrelik rakibini geçti. O günden beri "ne kadar
-büyük?" sorusu hep "ne kadar veriyle eğitildi?" sorusuyla birlikte soruluyor.
+1. Metin → **token** → **embedding** (anlamın koordinatları, konum dahil).
+2. **Attention** (sorgu·anahtar·değer) her token'ın vektörünü bağlamıyla
+   karıştırır; bilgiyi ileri beslemeli katmanlar depolar.
+3. **Ön eğitim** = ölçekli sıradaki-token tahmini; ölçek yasaları kazancı
+   öngörülebilir kılar; talimat eğitimi + RLHF taban modeli asistana çevirir.
+4. Üretim = örnekle, ekle, tekrarla — temperature, top-k, top-p çekilişi
+   ayarlar; KV cache bunu ödenebilir kılar.
+5. Donmuş ağırlıklar; hafıza bağlam penceresidir; akıcıdır çünkü *makul*ü
+   optimize eder — uydurmasının sebebi de aynıdır.
 
-Hikâyeyi dürüst tutan bir şerh var. Kayıp pürüzsüz düşer, ama tekil beceriler
-her zaman pürüzsüz belirmez. Bir model üç basamaklı aritmetikte art arda
-birkaç boyutta sıfıra yakın kalıp bir sonraki sıçrayışta bunu güvenilir
-biçimde yapabilir — **beliren yetenek (emergent ability)**. Araştırmacılar bu
-sıçramaların gerçekten ani mi, yoksa kısmen becerilerin notlandırılma
-biçiminin bir yanılsaması mı olduğunu hâlâ tartışıyor; pratikteki ders şu:
-tahmin kalitesinin pürüzsüz eğrisi, yeteneklerin ani gelişlerini
-gizleyebilir. Ham madde de sonsuz değil: yüksek kaliteli açık metin tükenmek
-üzere — sınırın sentetik eğitim verisine ve hesaplamayı cevap anında
-harcamaya, yani bu yazının ilerisinde karşılaşacağınız akıl yürüten modellere
-kaymasının sebebi bu.
-
-## Otomatik tamamlamadan asistana
-
-Ön eğitimin ürettiği şeye **taban model (base model)** denir ve ne olduğu
-konusunda net olmakta fayda var: metni sürdüren bir makine — başka hiçbir şey
-değil. Bir görev tanımı yoktur; kendisine yöneltilen bir sorunun kendisi
-tarafından cevaplanması gerektiği fikri bile yoktur. Sadece interneti
-okumuştur ve internette metin, metni izler.
-
-Taban modele "Fransa'nın başkenti neresi?" diye sorun; "Paris." alabilirsiniz.
-Aynı ihtimalle "Almanya'nın başkenti neresi? İspanya'nın başkenti neresi?" de
-alabilirsiniz — internette quiz soruları sürü halinde gezer — ya da "diye
-sordu öğretmen, kimse parmak kaldırmadı" diye sahneyi kurgu gibi sürdürmesi de
-mümkündür. Üçü de sadık birer devamdır. Taban model çağında cevap koparmak,
-"Soru: ... Cevap:" kalıbı yazmak gibi numaralar gerektirirdi — cevabı en
-olası devam haline getirmek için. Prompt mühendisliği orada doğdu.
-
-Bu ham malzemeyi asistana çevirmek iki aşama daha ister. İkisi de mimariyi
-değiştirmez; ikisi de özenle seçilmiş metin üzerinde aynı sıradaki-token
-eğitiminin devamıdır.
-
-**Birinci aşama: talimat eğitimi (instruction tuning).** İnsanlar — giderek
-artan ölçüde modellerin de yardımıyla — on binlerce örnek diyalog yazar: bir
-talimat ve ideal cevabı.
-
-> **Kullanıcı:** Bu e-postayı iki cümlede özetle.
-> **Asistan:** (gerçekten iyi, iki cümlelik bir özet)
-
-Bunlardan yeterince eğitin; "ben bir asistanım, soru cevaplanmak içindir,
-yardımcı olmak böyle görünür" en olası devam haline gelir. Yardımcı olmanın
-biçimi de her şey gibi öğrenilir — örneklerden.
-
-**İkinci aşama: insan tercihlerinden öğrenme** — **RLHF** (insan geri
-bildirimiyle pekiştirmeli öğrenme). Modele aynı isteme birden çok cevap
-ürettirin. Çiftleri insan değerlendiricilere gösterin: *hangisi daha iyi?* Bu
-yargıları tahmin etmeyi öğrenen ikinci bir model — **ödül modeli** — eğitin;
-sonra LLM'i, ödül modelinin yüksek puan verdiği cevaplara doğru ayarlayın. Bu
-dolambaç niye? Çünkü insanlar iki cevabı *karşılaştırmakta*, kusursuz cevap
-yazmaktan çok daha iyidir; ve karşılaştırmalar, örneklerle anlatması zor
-şeyleri yakalar: ton, emin olmadığında dürüstlük, zararlı istekleri geri
-çevirmek.
-
-İki yarının maliyeti orantısızdır: ön eğitim binlerce GPU üzerinde aylar
-sürer; asistan aşamaları bunun küçük bir kesridir. Aradaki fark da bizzat
-hissettiğiniz farktır. Taban model GPT-3, ChatGPT'den iki yıldan fazla önce
-vardı. Bir araştırma merakını tarihin en hızlı büyüyen ürününe çeviren şey
-daha büyük bir ağ değildi — aynı sıradaki-token makinesine eklenen bu iki
-aşamaydı.
-
-## Üretim: plan değil, döngü
-
-Bir istem (prompt) gönderdiğinizde model önce cevabı planlayıp sonra yazmaz. Olası her
-sonraki token'ın olasılığını hesaplar, birini **örnekler** — yani olasılığıyla orantılı biçimde rastgele çeker — metne ekler ve
-tekrar eder — her yeni token, bir sonraki tahminin girdisine anında dahil
-olur — ta ki "bitirdim" anlamına gelen özel bir durdurma token'ı üretene kadar.
-
-Bu döngü bir mühendislik sorunu saklıyor. 1.000'inci token üretilirken,
-sorgusunun ondan önceki 999 token'ın anahtarlarıyla karşılaştırılması
-gerekir — ki bu, ilk bakışta her adımda bütün metni yeniden işlemek gerekiyor
-gibi görünür. Gerekmez; sebebi de attention bölümünde işaret ettiğimiz
-asimetridir: geçmiş token'ların anahtarları ve değerleri bir kez
-hesaplandıktan sonra asla değişmez. Model de onları bir kez hesaplayıp
-bellekte tutar — **KV cache** (anahtar-değer önbelleği). Böylece her yeni
-token yalnızca kendi küçük payını öder: taze sorgusunu saklanmış anahtarlarla
-karşılaştırır, saklanmış değerleri karıştırır ve kendi anahtarıyla değerini,
-henüz gelmemiş token'lar için önbelleğe ekler.
-
-Bu önbelleği adını bilmeden hissettiniz. Uzun bir istem gönderin; ilk kelime
-görünmeden önce bir duraklama olur — buna **prefill** denir: model, girdinizin
-tamamı için önbelleği kurmaktadır. Sonrasında kelimeler hızla akar, çünkü her
-biri yalnızca kendi bedelini öder. Uzun sohbetlerin ciddi bellek tüketmesinin
-sebebi de bu önbellektir — her token'la, her katmanda büyür — API
-sağlayıcılarının "önbelleklenmiş" girdiye daha az ücret almasının sebebi de:
-isteminizin başı değişmediyse, o kısmın anahtarları ve değerleri çoktan
-orada, bedeli ödenmiş olarak durmaktadır.
-
-Her zaman en olası token'ı seçmez — hep birinci tercihi almak tekrarlı,
-kasılmış metin üretir — bu yüzden seçim, adını bilmeye değer üç düğmenin
-yönettiği kontrollü bir çekiliştir. Somutlaştıralım: "Gökyüzü" girdisinden
-sonra modelin listesi şöyle olabilir: *maviydi* %60, *açıktı* %20,
-*karanlıktı* %10, *griydi* %5 ve binlerce token'lık minicik olasılıklı bir
-kuyruk — çok aşağılarda bir yerde, %0,0001 ile *patatesti* de dahil.
-
-- **Temperature**, çekilişten önce listeyi yeniden biçimlendirir. Düşük
-  sıcaklık lideri abartır: *maviydi* neredeyse her seferinde kazanır — veri
-  çıkarırken ya da SQL yazdırırken istediğiniz budur. Yüksek sıcaklık listeyi
-  düzleştirir: *karanlıktı* ve *griydi* gerçek şans kazanır, arada bir de
-  *limanın üzerinde çürük moruna çalıyordu* çıkar — beyin fırtınasında
-  istediğiniz budur.
-- **Top-k**, listeyi çekilişten önce sabit uzunlukta keser. k = 50 ise
-  çekilişte yalnızca en olası 50 token kalır; kuyruk — *patatesti* dahil —
-  düpedüz silinir.
-- **Top-p**, listeyi sayıyla değil olasılık toplamıyla keser: yüzdeleri
-  toplamı p'ye — diyelim %90'a — ulaşan en küçük token kümesini tut, gerisini
-  at. İncelik şu ki bu küme kendini duruma göre ayarlar. Model eminse ("Bir
-  varmış bir") %90'lık küme iki token olabilir; gerçekten kararsızsa ("En
-  sevdiğim şehir") seksen token. Top-p'nin daha yaygın tercih olmasının sebebi
-  bu uyarlanabilirliktir.
-
-Önce kes, sonra kalanlar arasından çek. Aynı sorunun farklı günlerde farklı
-cevaplar almasının sebebi budur — gökyüzünün asla bir patatesle
-tamamlanmamasının sebebi de.
-
-Bu döngü, "adım adım düşün" komutunun neden gerçekten işe yaradığını da
-açıklar. Modelden 17 × 24'ü tek hamlede isteyin; cevabı tek bir
-sıradaki-token tahminiyle tutturmak zorundadır. "17 × 24 = 17 × 20 + 17 × 4 =
-340 + 68 = ..." diye yazmasına izin verin; her ara adım bağlama girer ve
-sonraki tahminleri keskinleştirir — modelin kafasında karalama defteri yoktur,
-o yüzden sayfayı defter olarak kullanır. Akıl yürüten (reasoning) modeller tam
-olarak bunu endüstrileştirir: cevaba bağlanmadan önce sesli düşünmeye bolca
-token harcamak üzere eğitilirler.
-
-## Model sizi hatırlamaz
-
-Resmi tamamlayan son parça: eğitim bittikten sonra parametreler **donar**.
-Sohbetiniz modeli yeniden eğitmez. Uzun süreli hafızası olmayan parlak bir
-danışmanla çalışmak gibidir — her sabah bütün dava dosyasını ona yeniden
-vermeniz gerekir. Olan tam olarak budur: her mesaj gönderdiğinizde konuşmanın
-*tamamı* ağdan yeniden geçirilir ve cevap oradan tahmin edilir. Hafıza gibi
-hissettiren şey yalnızca bağlam penceresidir — çok uzun sohbetlerin
-yavaşlamasının, sınıra dayanmasının ya da başını unutmasının sebebi de bu.
-
-Madalyonun öbür yüzü, **in-context learning** denen gerçek bir süper güçtür.
-Şunu bir isteme koyun:
-
-> deniz → sea, ev → house, kedi → ?
-
-Model *cat* der — görevi iki örnekten çıkarmıştır, tek bir parametre
-değişmeden. Ona *acil* ya da *rutin* diye etiketlenmiş üç destek talebi
-gösterin; dördüncüyü etiketler. Pratik prompt mühendisliğinin büyük kısmı tam
-olarak budur: bağlamı, istenen devamı en olası devam haline getirecek şekilde
-düzenlemek.
-
-## Modeller neden uyduruyor
-
-Parçalar artık en meşhur hata türünü açıklıyor. 2023'te New York'lu iki
-avukat, *Mata v. Avianca* davasında altı havayolu içtihadına atıf yapan bir
-dilekçe sundu — dava adları, dosya numaraları ve alıntılanabilir gerekçelerle
-birlikte. Hiçbiri yoktu. Altısını da ChatGPT uydurmuştu; avukatlar davaların
-gerçek olup olmadığını sorduklarında da onları gerçek olduklarına temin
-etmişti. Mahkeme avukatlara 5.000 dolar ceza kesti ve "yapay zekâ
-halüsinasyonu" ana akım sözlüğe girdi.
-
-Yukarıdaki mekanizma bunu açıklıyor. Model, arama tablosu olan bir veritabanı
-değil; metin üzerinde bir olasılık motorudur. Eğitim verisinde iyi temsil
-edilen bir şey sorduğunuzda, en olası devam genellikle doğrudur. Var olmayan
-bir içtihat istediğinizde ise bulunamayacak bir kayıt yoktur — makine yaptığı
-tek işi yapmaya devam eder ve doğru bir cevabın *biçimini* taşıyan bir devam
-üretir: makul isimler, makul atıflar, kendinden emin bir ton. **Halüsinasyon**
-sisteme sonradan bulaşmış bir hata değildir; sistemin varsayılan davranışıdır —
-yukarıdaki eğitim aşamalarıyla evcilleştirilmiş ama yok edilmemiştir.
-
-Pratik çözümler çoğunlukla modeli değil girdiyi değiştirir: retrieval (RAG diye de bilinir: gerçek belgeleri bağlama getirip modele oradan cevap verdirmek), araç kullanımı
-(arama motoru çağırtmak, kod çalıştırtmak) ve kendiniz kontrol edebileceğiniz
-kaynaklar istemek — avukatların atladığı adım.
-
-## Saklamaya değer iskelet
-
-1. Metin **token**'lara bölünür; her biri öğrenilmiş bir vektöre
-   (**embedding**) dönüşür — bir anlam haritasındaki koordinatlar — ve kelime
-   sırası kaybolmasın diye **konum** bilgisi işlenir.
-2. Üst üste dizilmiş **transformer** katmanları **attention** kullanır —
-   sorgular anahtarlarla eşleşir, değerler ilgiye göre karışır, birçok kafa paralel çalışır — böylece her
-   token'ın vektörü bağlamıyla beslenir ("çok yorgundu" ile "çok genişti");
-   bilginin çoğunu ileri beslemeli bloklar depolar.
-3. Devasa metin üzerinde sıradaki-token tahminiyle yapılan **ön eğitim**
-   bilginin kaynağıdır; **ölçek yasaları**, daha çok model, veri ve
-   hesaplamanın kazancını öngörülebilir kılar — yeter ki üçü dengeli büyüsün.
-   Ön eğitim tek başına ham bir
-   **taban model** verir — çıplak otomatik tamamlama; talimat eğitimi ve RLHF
-   onu asistana biçimlendirir.
-4. Üretim bir döngüdür: softmax her token'a bir olasılık verir, **örnekleme**
-   birini seçer, seçim bir sonraki adımı besler. Rastgeleliği **temperature**, **top-k** ve **top-p** kontrol eder; "adım adım düşünmek", modelin sayfayı karalama defteri olarak
-   kullanmasıdır; **KV cache**, geçmiş token'ların anahtar ve değerlerini
-   saklar, böylece her adım yalnızca en yeni token'ın bedelini öder.
-5. Eğitimden sonra parametreler **donmuştur** — hafıza sanılan şey bağlam
-   penceresidir; **in-context learning**, örüntünün yalnızca istemden
-   kapılmasıdır (*deniz → sea, kedi → cat*).
-6. Model *doğru* için değil *makul* için optimize edilmiştir — akıcılığının
-   sebebi de budur, altı sahte içtihadın bir federal mahkeme dilekçesine nasıl
-   girdiğinin açıklaması da.
-
-Adımların hiçbiri tek başına sihir değil; sürpriz, bu kadar basit bir şey
-yeterli ölçekte yapıldığında ortaya çıkanlarda. Ve bir dahaki sefere biri size
-bu modellerin nasıl çalıştığını sorduğunda — masanın karşısındaki bir
-mülakatçı, ders sonrası bir öğrenci ya da kendi içinizdeki meraklı ses — tam
-olarak modelin başladığı yerden başlayabilirsiniz: sıradaki token'dan.
+Ve bir dahaki sefere biri bu modellerin nasıl çalıştığını sorduğunda — bir
+mülakatçı, bir öğrenci ya da içinizdeki meraklı ses — modelin başladığı
+yerden başlayın: sıradaki token'dan.

@@ -6,13 +6,13 @@
       "slug": "llm-nasil-calisir",
       "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
       "date": "2026-08-29",
-      "summary": "Tüm makineyi tek fikir açıklıyor: sıradaki token'ı tahmin et. Token'lar, embedding'ler, attention, eğitim, ölçek yasaları, in-context learning ve modellerin neden uydurduğu — sade bir dille.",
+      "summary": "Tüm makine kısa bir okumada: token'lar, embedding'ler, attention, eğitim, ölçek yasaları, örnekleme, KV cache ve modellerin neden uydurduğu — her kavrama tek net sezgi.",
       "tags": [
         "llm",
         "temeller",
         "transformer"
       ],
-      "readingMinutes": 14,
+      "readingMinutes": 6,
       "translationSlug": "how-llms-work",
       "draft": false
     },

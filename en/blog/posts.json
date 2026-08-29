@@ -6,13 +6,13 @@
       "slug": "how-llms-work",
       "title": "How LLMs actually work, in plain language",
       "date": "2026-08-29",
-      "summary": "One idea explains the whole machine: predict the next token. Tokens, embeddings, attention, training, scaling laws, in-context learning, and why models hallucinate — in plain language.",
+      "summary": "The whole machine in a short read: tokens, embeddings, attention, training, scaling laws, sampling, the KV cache, and why models hallucinate — one clear intuition per concept.",
       "tags": [
         "llm",
         "fundamentals",
         "transformers"
       ],
-      "readingMinutes": 14,
+      "readingMinutes": 6,
       "translationSlug": "llm-nasil-calisir",
       "draft": false
     },
