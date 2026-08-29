@@ -104,6 +104,30 @@ Döngünün iki sonucu: "adım adım düşün" işe yarar, çünkü modelin tek 
 defteri sayfadır — "17 × 24 = 340 + 68" yazmak her sonraki tahmini
 kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve **KV cache**, 3. bölümdeki asimetriyi paraya çevirir. 1.000'inci token, sorgusunu önceki 999 anahtarla karşılaştırmak zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından.
 
+İşte bütün makine tek küçük izde. Girdi: **"Ben seni"** — model sıradaki
+token'ı üretecek.
+
+1. **Önbellek kontrolü.** "Ben" ve "seni" zaten işlendi; anahtarları ve
+   değerleri (K₁V₁, K₂V₂) KV cache'te duruyor.
+2. **Taze sorgu.** Yeni konum için model bir sorgu hesaplar: Q₃ — fiilen
+   "şu ana kadarki her şeye göre sırada ne olmalı?" sorusu.
+3. **Eşleştirme.** Q₃, önbellekteki anahtarlarla karşılaştırılır:
+
+   | karşılaştırma | dikkat ağırlığı |
+   |---|---|
+   | Q₃ · K₁ ("Ben") | %30 |
+   | Q₃ · K₂ ("seni") | %70 |
+
+4. **Karışım.** Çıktı, önbellekteki değerlerden kurulur:
+   0,30 × V₁ + 0,70 × V₂ — *bu bağlamı* temsil eden bir vektör.
+5. **Tahmin.** Bu vektör son katmanlardan ve softmax'tan geçer:
+   *seviyorum* %85, *gördüm* %7, *özledim* %5, … Çekiliş **"seviyorum"** der.
+6. **Önbelleği uzat.** "seviyorum" için K₃ ve V₃ hesaplanıp eklenir; döngü,
+   bağlam artık "Ben seni seviyorum" olarak yeniden başlar.
+
+Q hep taze hesaplanır; K ve V hep önbellekten gelir. Bu tek cümle, KV
+cache'in bütün hikâyesidir.
+
 ## 8. Sizi hatırlamaz
 
 Eğitimden sonra parametreler **donar**. Her mesajda konuşmanın tamamı ağdan

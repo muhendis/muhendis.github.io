@@ -102,6 +102,30 @@ Two consequences of the loop: "think step by step" works because the page is
 the model's only scratchpad — writing "17 × 24 = 340 + 68" makes each next
 prediction easier, which reasoning models industrialize. And the **KV cache** cashes in the asymmetry from section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for.
 
+Here is the whole machine in one tiny trace. Input: **"I love"** — the model
+must produce the next token.
+
+1. **Cache check.** "I" and "love" were already processed; their keys and
+   values (K₁V₁, K₂V₂) sit in the KV cache.
+2. **Fresh query.** For the new position the model computes a query, Q₃ — in
+   effect the question "given everything so far, what should come next?"
+3. **Match.** Q₃ is compared against the cached keys:
+
+   | comparison | attention weight |
+   |---|---|
+   | Q₃ · K₁ ("I") | 30% |
+   | Q₃ · K₂ ("love") | 70% |
+
+4. **Blend.** The output is built from the cached values:
+   0.30 × V₁ + 0.70 × V₂ — a vector representing *this context*.
+5. **Predict.** That vector runs through the final layers and softmax:
+   *you* 85%, *it* 7%, *her* 5%, … The draw picks **"you"**.
+6. **Extend the cache.** K₃ and V₃ are computed for "you" and appended, and
+   the loop restarts with "I love you" as the context.
+
+Q is always computed fresh; K and V are always fetched from the cache. That
+one sentence is the entire KV-cache story.
+
 ## 8. It does not remember you
 
 After training, parameters are **frozen**. Every message replays the whole
