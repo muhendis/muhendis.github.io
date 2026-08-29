@@ -7,10 +7,18 @@
     "i10Index": 3
   },
   "stats": {
-    "years": "7+",
-    "citations": "170",
-    "students": "20K+",
-    "award": "1st"
+    "en": {
+      "years": "7+",
+      "citations": "170",
+      "students": "20K+",
+      "award": "1st"
+    },
+    "tr": {
+      "years": "7+",
+      "citations": "170",
+      "students": "20K+",
+      "award": "1."
+    }
   },
   "publicationCitations": {
     "mitosis-domain-generalization": 85,

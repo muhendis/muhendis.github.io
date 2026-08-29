@@ -17,7 +17,9 @@
   fetch('/assets/data/profile.json', { cache: 'no-cache' })
     .then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); })
     .then(function (d) {
-      var stats = d.stats || {};
+      // stats are per-language ({en: {...}, tr: {...}}); a flat object
+      // (older data file) is used as-is for both languages.
+      var stats = (d.stats && (d.stats[LANG] || (d.stats.en ? {} : d.stats))) || {};
       document.querySelectorAll('[data-stat]').forEach(function (el) {
         var v = stats[el.dataset.stat];
         if (v != null) el.textContent = v;
@@ -69,7 +71,8 @@
           if (n == null) return;
           if (!n) { el.hidden = true; return; }
           el.hidden = false;
-          el.textContent = '★ ' + n + ' ' + el.dataset.starWord;
+          var word = LANG === 'tr' ? 'yıldız' : (n === 1 ? 'star' : 'stars');
+          el.textContent = '★ ' + n + ' ' + word;
         });
       })
       .catch(function () { /* baked values stand */ });
