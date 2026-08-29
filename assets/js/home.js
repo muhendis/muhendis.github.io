@@ -1,7 +1,7 @@
-/* Writing-led homepage, as progressive enhancement.
-   The static page is bio-led; when posts.json has at least one published post,
-   this inserts a featured-story hero and a "latest" row above the bio and
-   demotes it. No-JS, fetch failure and all-drafts states are the static page. */
+/* Featured writing on the homepage, as progressive enhancement.
+   The static page is the executive hero + About; when posts.json has at least
+   one published post, this inserts a featured-story section and a "latest" row
+   between them. No-JS, fetch failure and all-drafts states are the static page. */
 (function () {
   'use strict';
 
@@ -51,8 +51,8 @@
       if (!posts.length) return;                 // all drafts: bio hero stands
 
       var main = document.getElementById('main');
-      var hero = main.querySelector('.hero');
-      if (!main || !hero) return;
+      var anchor = main && document.getElementById('about');
+      if (!main || !anchor) return;
 
       // Featured story
       var feat = el('section', 'section featured');
@@ -68,7 +68,7 @@
       art.appendChild(byline(posts[0]));
       fc.appendChild(art);
       feat.appendChild(fc);
-      main.insertBefore(feat, hero);
+      main.insertBefore(feat, anchor);
 
       // Latest row (up to 3 more)
       var rest = posts.slice(1, 4);
@@ -91,10 +91,9 @@
         });
         lc.appendChild(grid);
         sec.appendChild(lc);
-        main.insertBefore(sec, hero);
+        main.insertBefore(sec, anchor);
       }
 
-      main.classList.add('has-featured');
     })
     .catch(function () { /* silent: the bio hero is the fallback */ });
 })();
