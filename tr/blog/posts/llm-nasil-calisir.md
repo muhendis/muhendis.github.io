@@ -42,13 +42,7 @@ ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
 Sonra her token bir **embedding**'e dönüşür: uzun bir sayı listesi —
 anlam haritasındaki koordinatları. Binlerce kadran düşünün: biri
 resmiyet, biri zaman, çoğu hiçbir insanın adlandırmadığı nitelikler
-için. Haritadan iki kare, sözle:
-
-- *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak durur;
-- *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü.
-
-Üçüncü kare bir çizimi hak ediyor. Dört kelimeyi yalnızca iki kadranlık
-bir haritaya, oyuncak koordinatlarla yerleştirelim:
+için. Bu haritada ilişkili kelimeler yan yana oturur: *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak düşer. Daha güzeli, *yönler* de anlam taşır. Görmek için dört kelimeyi yalnızca iki kadranlık bir haritaya, oyuncak koordinatlarla yerleştirelim:
 
 <svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe krallık yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -100,9 +94,9 @@ Okları üst üste koyun, ünlü denklem kendiliğinden çıkar:
 Bunu haritada yol tarifi gibi okuyun: *kral*dan başlayın, erkek adımını
 geri yürüyün, kadın adımını ileri yürüyün — *kraliçe*ye varırsınız. Dört
 nokta bir paralelkenara kapanır ve o kapanış, denklemin ta kendisidir.
-Gerçek embedding'ler aynı oyunu binlerce kadran üzerinde ve yalnızca
-yaklaşık oynar — toplam, kraliçenin tam üstüne değil *yakınına* düşer —
-ama mekanizma budur.
+Gerçek embedding'ler aynı oyunu binlerce kadran üzerinde ve yalnızca yaklaşık oynar — toplam, kraliçenin tam üstüne değil *yakınına* düşer — ama mekanizma budur.
+
+Cinsiyetin bir ayrıcalığı da yok: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü. Verinin öğretebildiği her ilişki, bu haritada bir yöne dönüşür.
 
 Haritayı kimse çizmedi — öğrenildi. Bir de her token'ın **konumu** işlenir, çünkü "köpek adamı
 ısırdı", "adam köpeği ısırdı"dan farklı kalmalıdır.

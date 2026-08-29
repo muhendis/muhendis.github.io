@@ -43,13 +43,7 @@ in "strawberry" was famously hard — like counting brushstrokes in a
 Each token then becomes an **embedding**: a long list of numbers, its
 coordinates on a map of meaning. Think of them as thousands of dials —
 one for formality, one for tense, most for qualities no human ever
-named. Two snapshots of the map, in words:
-
-- *king* sits near *queen*, far from *spreadsheet*;
-- the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction.
-
-The third snapshot deserves a drawing. Put just four words on a map of
-two dials, with toy coordinates:
+named. On this map, related words sit close: *king* lands near *queen* and far from *spreadsheet*. Better still, *directions* mean something. To see it, put four words on a map of just two dials, with toy coordinates:
 
 <svg viewBox="0 0 480 320" role="img" aria-label="Four words as points on two dials: man at 2,1; woman at 5,4; king at 3,6; queen at 6,9. Solid parallel arrows man to woman and king to queen show the gender direction plus 3 plus 3; dashed parallel arrows man to king and woman to queen show the royalty direction plus 1 plus 5" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -101,9 +95,9 @@ Stack the arrows and the famous equation falls out:
 Read it as directions on the map: start at *king*, walk back the
 man-step, walk forward the woman-step — you arrive at *queen*. The four
 points close into a parallelogram, and that closure *is* the equation.
-Real embeddings play the same game across thousands of dials, and only
-approximately — the sum lands *near* queen rather than exactly on it —
-but the mechanism is this one.
+Real embeddings play the same game across thousands of dials, and only approximately — the sum lands *near* queen rather than exactly on it — but the mechanism is this one.
+
+And gender is nothing special: the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction. Every relationship the data can teach becomes a direction on this map.
 
 Nobody drew the map — it is learned. One
 last stamp goes in, each token's **position**, because "dog bites man"
