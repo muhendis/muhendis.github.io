@@ -1,15 +1,21 @@
-Every answer a language model has ever given you was produced the same way:
-by predicting the next small piece of text, over and over. Your phone keyboard
-does a tiny version of this — type "see you" and it offers *tomorrow*. An LLM
-is that trick scaled up by billions, and the interesting part is what the game
-demands: to predict the next word in human text well, a model must absorb
-grammar, facts, style, and a working imitation of reasoning. Everything below
-is a footnote to that idea.
+Before you finish this sentence, your mind has already started guessing
+the next ___. See? "Once upon a ___." You could not stop it: the blank
+filled itself, without asking your permission.
+
+That reflex has a name — next-token prediction — and this article makes
+one claim: every sentence a language model has ever written to you, every
+essay, every code snippet, every apology for a mistake it just made, is
+that same reflex scaled up by a factor of billions. Your phone keyboard
+plays the pocket version when it offers *tomorrow* after "see you". How
+does a game this simple pass exams and write software? Because its demand
+is merciless: to predict the next word of human text *well*, you must
+absorb grammar, facts, style, and a working imitation of reasoning.
+Everything below is a footnote to that idea.
 
 ## 1. Text becomes numbers
 
 A **tokenizer** (the standard algorithm is **byte-pair encoding**, BPE) chops text into pieces called **tokens** — "the" is one piece,
-"unbelievable" may be "un + believ + able" — and gives each an ID number. Rule
+"unbelievable" may be "un + believ + able" — and gives each an ID number. Think LEGO: language is snapped apart into its most reusable bricks — common words stay whole, rare words are assembled from smaller pieces. Rule
 of thumb: 100 tokens ≈ 75 English words, so a "128K context window" holds
 roughly a novel. One consequence worth knowing: the model never sees letters,
 only token IDs — which is why counting the r's in "strawberry" was famously
@@ -18,7 +24,7 @@ hard. It is like counting brushstrokes in a *photo* of a painting.
 ## 2. Numbers with meaning
 
 Each token becomes an **embedding**: a long list of numbers that act as its
-coordinates on a map of meaning. *King* sits near *queen* and far from
+coordinates on a map of meaning. Think of the thousands of numbers as dials — one for formality, one for tense, one for sentiment, most for qualities no human ever named. *King* sits near *queen* and far from
 *spreadsheet*, and directions encode relationships: the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction — and *king − man + woman* lands near *queen*. Nobody drew this map; it is learned. Because a bag of
 coordinates has no order, each token's **position** is stamped in too: "dog
 bites man" must stay different from "man bites dog".
@@ -222,8 +228,7 @@ each layer *edits* the vectors rather than replacing them (implemented as **resi
 layer by layer. Inside every layer, attention gathers context (the
 librarian) while a **feed-forward network** — a small network applied to
 each token on its own — stores learned patterns like "Paris pairs with
-France" (the warehouse; most **parameters** live here). Early layers handle
-spelling and grammar; deeper layers, facts and long-range logic. GPT-2 made
+France" (the warehouse; most **parameters** live here). Early layers handle spelling and grammar; deeper layers, facts and long-range logic — like a photograph developing in the tray: outlines first, faces later. GPT-2 made
 news in 2019 with 1.5 billion parameters; frontier models now run to the
 trillions — and a modern twist, **mixture of experts (MoE)**, builds many
 warehouses and lets a router send each token to its best one or two: huge
@@ -245,8 +250,7 @@ it guess. A **loss function** scores its surprise at the truth:
 Had the model given the true next token a 90% chance, the loss is
 −log 0.9 ≈ 0.1 — barely surprised. Had it given 20%, the loss is
 −log 0.2 ≈ 1.6 — badly surprised. **Gradient descent** then nudges every
-parameter a tiny step in the direction that shrinks this number; repeat
-trillions of times. (The standard report card: **perplexity = e^(average loss)**. An average loss of 1.6 gives e^1.6 ≈ 5 — as
+parameter a tiny step in the direction that shrinks this number; repeat trillions of times. Picture it as descending a mountain in fog: you cannot see the valley, you only feel the slope under your feet — so you take one small step downhill, and then a trillion more. (The standard report card: **perplexity = e^(average loss)**. An average loss of 1.6 gives e^1.6 ≈ 5 — as
 unsure as picking among five equally likely words. Central to pretraining; a
 weak proxy for real tasks.)
 
@@ -386,8 +390,7 @@ In 2023, lawyers in *Mata v. Avianca* filed six precedents invented by
 ChatGPT — which, asked if they were real, said yes. A $5,000 fine made "AI
 hallucination" famous. The mechanics are no mystery: the model is a
 probability engine, not a database. Where training data is rich, the most probable continuation is usually the truth. Where it is thin, there is no
-entry to fail to find — it produces something *shaped* like an answer,
-because plausible, not true, is what it optimizes. The fixes change the input, and they form a decision ladder: **prompting** shapes behavior in context; **RAG** (retrieval) supplies knowledge that changes often, no weights touched; **fine-tuning** bakes in style or domain that must be permanent. Reach for them in that order — each step up costs more. Add tools, and check sources yourself: the step the lawyers skipped.
+entry to fail to find — it produces something *shaped* like an answer, because plausible, not true, is what it optimizes. This is not lying — lying requires knowing the truth. It is completing the sentence. The fixes change the input, and they form a decision ladder: **prompting** shapes behavior in context; **RAG** (retrieval) supplies knowledge that changes often, no weights touched; **fine-tuning** bakes in style or domain that must be permanent. Reach for them in that order — each step up costs more. Add tools, and check sources yourself: the step the lawyers skipped.
 
 ## The whole story in five lines
 
@@ -403,8 +406,11 @@ because plausible, not true, is what it optimizes. The fixes change the input, a
    *plausible* — hallucinating for the same reason.
 
 And the next time someone asks how these models work — an interviewer, a
-student, or the curious voice in your own head — start where the model
-starts: with the next token.
+student, or the curious voice in your own head — start where the model starts: with the next token.
+
+One last thing. In this article's first line, your mind wrote "time" into
+the blank — instantly, confidently, from pure pattern. Now you know
+exactly how a machine does the same. That is the whole story.
 
 ## Going deeper
 

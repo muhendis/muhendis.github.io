@@ -1,15 +1,21 @@
-Bir dil modelinin size verdiği her yanıt aynı yöntemle üretildi: bir sonraki
-küçük metin parçasını tahmin ederek, tekrar tekrar. Telefon klavyeniz bunun
-minik halini yapıyor — "görüşürüz" yazın, *yarın* önerir. LLM, aynı numaranın
-milyarlarca kat büyütülmüşüdür ve ilginç olan, oyunun talep ettiği şeydir:
-insan metninde sıradaki kelimeyi iyi tahmin etmek için model dil bilgisini,
-olguları, üslubu ve akıl yürütmenin işleyen bir taklidini özümsemek zorunda.
-Aşağıdaki her şey bu fikrin dipnotudur.
+Bu cümleyi bitirmeden zihniniz sıradaki kelimeyi tahmin etmeye başladı
+bile. Kanıt mı? "Bir varmış, bir ___." Durduramadınız: boşluk, sizden izin
+almadan kendini doldurdu.
+
+O refleksin bir adı var — sıradaki-token tahmini — ve bu yazının tek bir
+iddiası: bir dil modelinin size yazdığı her cümle, her deneme, her kod
+parçası, az önce yaptığı hata için her özür, aynı refleksin milyarlarca
+kat büyütülmüşüdür. Telefon klavyeniz "görüşürüz"den sonra *yarın*
+önerdiğinde bu oyunun cep boyunu oynuyor. Peki bu kadar basit bir oyun
+nasıl sınav geçer, nasıl yazılım yazar? Çünkü talebi acımasızdır: insan
+metninde sıradaki kelimeyi *iyi* tahmin etmek için dil bilgisini,
+olguları, üslubu ve akıl yürütmenin işleyen bir taklidini özümsemek
+zorundasınızdır. Aşağıdaki her şey bu fikrin dipnotudur.
 
 ## 1. Metin sayıya dönüşür
 
 **Tokenizer** (standart algoritmanın adı **byte-pair encoding**, BPE), metni **token** denen parçalara böler — "için" tek parça,
-"inanılmaz" belki "inan + ılmaz" — ve her birine bir kimlik numarası verir.
+"inanılmaz" belki "inan + ılmaz" — ve her birine bir kimlik numarası verir. LEGO gibi düşünün: dil, en çok yeniden kullanılan parçalarına ayrılır — yaygın kelimeler tek parça kalır, nadirler küçük parçalardan kurulur.
 Kaba kural: 100 token ≈ 75 kelime; yani "128K bağlam penceresi" aşağı yukarı
 bir roman tutar. Bilmeye değer bir sonuç: model harf görmez, yalnızca token
 kimlikleri görür — "strawberry"deki r'leri saymanın meşhur zorluğu bundandır.
@@ -17,7 +23,7 @@ Bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibidir.
 
 ## 2. Anlam taşıyan sayılar
 
-Her token bir **embedding**'e dönüşür: bir anlam haritasındaki koordinatları
+Her token bir **embedding**'e dönüşür: binlerce sayıyı kadran gibi düşünün — biri resmiyet, biri zaman, biri duygu, çoğuysa hiçbir insanın adlandırmadığı nitelikler için. Bu kadranlar, bir anlam haritasındaki koordinatları
 gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap
 tablosu*na uzaktır; yönler ilişkidir: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü — ve *kral − erkek + kadın*, *kraliçe*nin yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
 sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
@@ -218,8 +224,7 @@ Transformer, bu bloğun onlarca-yüzü aşkın kez üst üste konmuşudur — ve
 özne* olur, katman katman. Her katmanın içinde attention bağlamı toplar
 (kütüphaneci), **ileri beslemeli ağ** ise — her token'a tek tek uygulanan
 küçük bir ağ — "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri
-depolar (ambar; **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı ve dil
-bilgisini üstlenir; derin katmanlar olguları ve uzun menzilli mantığı.
+depolar (ambar; **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı ve dil bilgisini üstlenir; derin katmanlar olguları ve uzun menzilli mantığı — banyoda beliren bir fotoğraf gibi: önce hatlar, sonra yüzler.
 GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü modeller bugün
 trilyonlara varıyor — modern bir dokunuş olan **mixture of experts (MoE)**
 ise tek ambar yerine birçoğunu kurar ve bir yönlendirici her token'ı en iyi
@@ -242,8 +247,7 @@ tahmin ettirin. **Kayıp fonksiyonu**, modelin doğru cevap karşısındaki
 
 Model doğru token'a %90 olasılık vermişse kayıp −log 0,9 ≈ 0,1'dir —
 neredeyse hiç şaşırmamış. %20 vermişse kayıp −log 0,2 ≈ 1,6'dır — fena
-şaşırmış. **Gradyan inişi** de her parametreyi bu sayıyı küçültecek yönde
-minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. (Standart karne: **perplexity = e^(ortalama kayıp)**. Ortalama kayıp 1,6 ise e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
+şaşırmış. **Gradyan inişi** de her parametreyi bu sayıyı küçültecek yönde minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. Sisli bir dağdan inmek gibi düşünün: vadiyi göremezsiniz, yalnızca ayağınızın altındaki eğimi hissedersiniz — yokuş aşağı küçük bir adım atarsınız, sonra bir trilyon tane daha. (Standart karne: **perplexity = e^(ortalama kayıp)**. Ortalama kayıp 1,6 ise e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
 kararsız. Ön eğitimin merkezinde; gerçek görevler için zayıf bir vekil.)
 
 İçine kural yazılmaz — polisiye romanın son bölümünü tahmin etmek kimin
@@ -384,7 +388,7 @@ kedi → ?" gösterin; model *cat* der — görevi yalnızca istemden öğrenmi�
 2023'te *Mata v. Avianca* davasında avukatlar, ChatGPT'nin uydurduğu altı
 içtihadı mahkemeye sundu — "gerçek mi?" diye sorduklarında da "evet" almıştı.
 5.000 dolarlık ceza, "yapay zekâ halüsinasyonunu" meşhur etti. Mekanizma sır
-değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur. İnce olduğu yerde ise bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
+değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur. İnce olduğu yerde ise bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir — bu yalan değildir; yalan, doğruyu bilmeyi gerektirir. Bu, cümleyi tamamlamaktır;
 çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir ve bir karar merdiveni oluşturur: **prompting** davranışı bağlam içinde biçimlendirir; **RAG** (retrieval), sık değişen bilgiyi getirir — ağırlıklara dokunmadan; **fine-tuning**, kalıcı olması gereken üslubu ya da alanı içine işler. Bu sırayla deneyin — her basamak daha pahalıdır. Araçları ekleyin ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
 
 ## Bütün hikâye beş satırda
@@ -403,6 +407,10 @@ değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin ze
 Ve bir dahaki sefere biri bu modellerin nasıl çalıştığını sorduğunda — bir
 mülakatçı, bir öğrenci ya da içinizdeki meraklı ses — modelin başladığı
 yerden başlayın: sıradaki token'dan.
+
+Son bir şey. Bu yazının ilk satırında zihniniz boşluğa "yokmuş" yazdı —
+anında, emin, saf örüntüden. Artık bir makinenin aynısını nasıl yaptığını
+tam olarak biliyorsunuz. Bütün hikâye bu.
 
 ## Daha derine inmek için
 
