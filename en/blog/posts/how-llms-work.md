@@ -33,8 +33,18 @@ so far through one narrow running memory that faded with distance. Attention its
 those older networks as a helper, and that combination was the state of the
 art in 2017. The paper's radical move, and the literal meaning of its title
 *Attention Is All You Need*, was to throw the old machinery away and keep
-only attention: let every token look *directly* at every other token, all
-at once, and decide for itself what matters.
+only attention: let every token look *directly* at every other token, all at once, and decide for itself what matters.
+
+That 2017 design was built for translation, and it had two halves: an
+**encoder** stack that reads the source sentence, and a **decoder** stack
+that writes the translation while consulting the encoder's output — the
+**encoder-decoder** shape. The halves soon went their own ways. Keep only
+the encoder and you get the BERT family: readers, seeing a text in both
+directions at once, strong at understanding and classifying it. Keep only
+the decoder and you get the GPT family: writers, producing text token by
+token — the shape of virtually every modern LLM, including the ones this
+article is about. Hold the trio in mind; the one detail that separates them
+arrives shortly.
 
 Watch that decision, in the original paper's own example:
 
@@ -44,6 +54,15 @@ Watch that decision, in the original paper's own example:
 One word changes and "it" switches sides. You resolved that instantly;
 **attention** is how the model does. The whole trick reduces to one
 sentence: **a word's context is a weighted blend of the other words, and attention's entire job is choosing the weights.** A simpler recipe exists for numbers: when smoothing a time series, you also blend each point with its neighbors, and the weights come from *distance* — the nearest points count most. Language breaks that recipe: the word that settles "it" may sit twenty tokens back, and the next-door word may be noise. So the weights must be computed from *content* — and learned.
+
+The transformer's answer has a precise shape. Every layer of the stack
+holds exactly two sub-layers. The first is **self-attention** — "self"
+because the sentence attends to *itself*: each word looks at the other
+words of the same text and rewrites its own vector in their light. The
+second is a **feed-forward network**: a small neural network applied to
+each position on its own, no looking around — first gather context
+together, then digest it alone. This section unpacks the first sub-layer;
+the second takes over in section 4.
 
 ### Q, K, V — the mechanism, with numbers
 
@@ -160,17 +179,6 @@ into a block, so this one line runs the search for *all* tokens at once as
 pure matrix multiplication. No loops — exactly the shape of work GPUs
 devour.
 
-And so nothing is left dangling, the Q/K/V dossier in one table:
-
-| question | answer |
-|---|---|
-| **What?** | Three roles per token: query (what am I looking for), key (how am I found), value (what do I hand over) |
-| **How are they made?** | embedding × W_Q, W_K, W_V — three learned linear layers |
-| **Why three separate vectors?** | An embedding mixes every aspect of a word; each role extracts only the aspect its job needs |
-| **Why learned, not fixed?** | The right weights cannot come from word distance; they must be computed from content |
-| **Where and when?** | In every layer, in every head, for all tokens at once — one matrix multiplication |
-| **Who, and since when?** | Vaswani et al., 2017 — *Attention Is All You Need* |
-
 ### One direction only
 
 A detail with large consequences: during generation, each token may only
@@ -178,7 +186,7 @@ look *backward*. *Fox* sees *brown*; *brown* never sees *fox*. That mask is
 what makes the model a *next*-token predictor — and it is why a past
 token's key and value, once computed, never change: nothing that arrives later can touch them. File that away; it becomes the KV cache in section 7.
 
-The mask is also the field's dividing line: models built with it (GPT-style **decoders**) generate; models built without it (BERT-style **encoders**) read in both directions and classify rather than generate. Modern LLMs are almost all decoder-only.
+And this mask is precisely the detail that separates the trio from the introduction: the decoder family (GPT) is built with it, and therefore writes; the encoder family (BERT) is built without it, reads in both directions, and classifies instead. One architectural switch, the whole family tree.
 
 ### Many heads
 
@@ -186,14 +194,31 @@ One weighting per layer would be crude — a word needs grammar from one
 neighbor and a referent from another. So each layer runs many attention
 **heads** in parallel, each with its own Q/K/V lenses, each learning its
 own relationship to track: one follows syntax, one resolves "it", one binds
-adjectives to nouns. Nobody assigns these roles; they emerge, because each
-one helps predict what comes next.
+adjectives to nouns. Nobody assigns these roles; they emerge, because each one helps predict
+what comes next. Two concrete details complete the picture. Heads work in
+slices: in the original design, each head projects the 512-number embedding
+down to 64, so eight heads cost roughly the same as one full-width one. And
+the paper's own visualizations show the division of labor — encoding "it",
+one head locks onto *the animal* while another locks onto *tired*: the
+referent and the reason, tracked at the same time.
+
+All of section 3, on one card:
+
+| question | answer |
+|---|---|
+| What is self-attention? | The sentence attending to itself: every token rewrites its vector in the light of the others |
+| What are Q, K, V? | Three roles per token — query: *what am I looking for?* · key: *how am I found?* · value: *what do I hand over?* |
+| How are they made? | embedding × W_Q, W_K, W_V — three learned linear layers; same word, three outfits |
+| Why three separate vectors? | An embedding mixes every aspect of a word; each role extracts only the aspect its job needs |
+| Why are the weights learned? | The right weights cannot come from word distance; they are computed from content |
+| In what order does the math run? | score (Q·K) → scale (÷√dₖ) → softmax → blend (×V) |
+| What is the feed-forward network? | The small network that digests each token alone after context is gathered — the knowledge warehouse of section 4 |
+| Where, when, who? | Every layer, every head, all tokens at once — Vaswani et al., 2017 |
 
 ## 4. Layers: where knowledge lives
 
 A transformer is this block stacked dozens to a hundred-plus times — and
-each layer *edits* the vectors rather than replacing them, so meaning
-accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
+each layer *edits* the vectors rather than replacing them (implemented as **residual connections**: a layer's output is *added* to its input, never substituted), so meaning accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
 layer by layer. Inside every layer, attention gathers context (the
 librarian) while a **feed-forward network** — a small network applied to
 each token on its own — stores learned patterns like "Paris pairs with

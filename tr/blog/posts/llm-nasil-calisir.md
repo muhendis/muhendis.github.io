@@ -33,8 +33,17 @@ her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Attention'ın 
 yardımcı olarak eklendi ve 2017'de son teknoloji tam da bu birleşimdi.
 Makalenin radikal hamlesi ve başlığının — *Attention Is All You Need*,
 "ihtiyacınız olan tek şey attention" — gerçek anlamı, eski makineyi atıp
-yalnız attention'ı tutmaktı: her token, diğer her token'a *doğrudan* ve aynı
-anda baksın, neyin önemli olduğuna kendisi karar versin.
+yalnız attention'ı tutmaktı: her token, diğer her token'a *doğrudan* ve aynı anda baksın, neyin önemli olduğuna kendisi karar versin.
+
+O 2017 tasarımı çeviri için kurulmuştu ve iki yarımdan oluşuyordu: kaynak
+cümleyi okuyan bir **encoder** yığını ve encoder'ın çıktısına danışa danışa
+çeviriyi yazan bir **decoder** yığını — **encoder-decoder** biçimi.
+Yarımlar çok geçmeden kendi yollarına gitti. Yalnız encoder'ı tutarsanız
+BERT ailesini elde edersiniz: metni iki yönde birden gören, anlamakta ve
+sınıflandırmakta güçlü okurlar. Yalnız decoder'ı tutarsanız GPT ailesi
+çıkar: token token metin üreten yazarlar — bu yazının konusu olanlar dahil,
+neredeyse bütün modern LLM'lerin biçimi. Bu üçlüyü aklınızda tutun; onları
+ayıran tek ayrıntı birazdan gelecek.
 
 Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 
@@ -43,6 +52,14 @@ Bu kararı, orijinal makalenin kendi örneğinde izleyin:
 
 Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
 **attention**, modelin çözme biçimidir. Bütün numara tek cümleye iner: **bir kelimenin bağlamı, diğer kelimelerin ağırlıklı bir karışımıdır ve attention'ın bütün işi ağırlıkları seçmektir.** Sayılar için daha basit bir tarif vardır: bir zaman serisini yumuşatırken de her noktayı komşularıyla karıştırırsınız ve ağırlıklar *mesafeden* gelir — en yakın nokta en çok sayılır. Dil bu tarifi bozar: "o"yu çözen kelime yirmi token geride olabilir, bitişikteki kelime ise gürültü. Demek ki ağırlıklar *içerikten* hesaplanmalı — ve öğrenilmelidir.
+
+Transformer'ın cevabının belirgin bir biçimi var. Yığındaki her katman tam
+iki alt katman taşır. Birincisi **self-attention** — "self" (öz), çünkü
+cümle *kendine* dikkat eder: her kelime, aynı metnin diğer kelimelerine
+bakar ve kendi vektörünü onların ışığında yeniden yazar. İkincisi **ileri
+beslemeli ağ**: her konuma tek başına uygulanan, etrafına hiç bakmayan
+küçük bir sinir ağı — önce bağlamı birlikte topla, sonra tek başına sindir.
+Bu bölüm birinci alt katmanı açar; ikincisi sözü 4. bölümde alacak.
 
 ### Q, K, V — mekanizma, sayılarla
 
@@ -156,17 +173,6 @@ blokta üst üste — yani bu tek satır, aramayı *bütün* token'lar için ayn
 anda, saf matris çarpımı olarak yürütür. Döngü yok; tam da GPU'ların silip
 süpürdüğü iş biçimi.
 
-Ve havada hiçbir şey kalmasın diye, QKV'nin künyesi tek tabloda:
-
-| soru | cevap |
-|---|---|
-| **Ne?** | Token başına üç rol: sorgu (ne arıyorum), anahtar (nasıl bulunurum), değer (ne devrederim) |
-| **Nasıl oluşur?** | embedding × W_Q, W_K, W_V — üç öğrenilmiş lineer katman |
-| **Neden üç ayrı vektör?** | Embedding, kelimenin her yönünü karıştırır; her rol yalnızca kendi işinin gerektirdiği yönü çeker |
-| **Neden sabit değil, öğrenilmiş?** | Doğru ağırlıklar kelime mesafesinden çıkmaz; içerikten hesaplanmak zorundadır |
-| **Nerede ve ne zaman?** | Her katmanda, her kafada, bütün token'lar için aynı anda — tek matris çarpımı |
-| **Kim, ne zamandan beri?** | Vaswani vd., 2017 — *Attention Is All You Need* |
-
 ### Tek yön
 
 Sonuçları büyük bir ayrıntı: üretim sırasında her token yalnızca *geriye*
@@ -175,7 +181,7 @@ maske, modeli bir *sıradaki*-token tahmincisi yapan şeydir — ve geçmiş bir
 token'ın anahtarıyla değerinin, bir kez hesaplandıktan sonra asla
 değişmemesinin sebebi de budur: sonradan gelen hiçbir şey onlara dokunamaz. Bir kenara yazın; 7. bölümde KV cache olacak.
 
-Bu maske aynı zamanda alanın ayrım çizgisidir: maskeyle kurulan modeller (GPT tarzı **decoder**'lar) üretir; maskesiz kurulanlar (BERT tarzı **encoder**'lar) iki yöne birden bakar ve üretmek yerine sınıflandırır. Modern LLM'lerin neredeyse hepsi yalnız-decoder'dır.
+Ve bu maske, girişteki üçlüyü ayıran ayrıntının ta kendisidir: decoder ailesi (GPT) maskeyle kurulur, o yüzden yazar; encoder ailesi (BERT) maskesiz kurulur, iki yöne birden bakar ve yazmak yerine sınıflandırır. Tek mimari anahtar, bütün soy ağacı.
 
 ### Birçok kafa
 
@@ -185,12 +191,29 @@ her katman, her biri kendi Q/K/V mercekleriyle donanmış birçok attention
 **kafasını** paralel çalıştırır ve her kafa izleyeceği ilişkiyi kendisi
 öğrenir: biri söz dizimini izler, biri "o"yu çözer, biri sıfatı isme bağlar.
 Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini
-tahmine yarar.
+tahmine yarar. İki somut ayrıntı resmi tamamlar. Kafalar dilimler halinde
+çalışır: orijinal tasarımda her kafa, 512 sayılık embedding'i 64'e indirir;
+böylece sekiz kafa, tam genişlikte tek kafayla aşağı yukarı aynıya mal
+olur. Ve makalenin kendi görselleştirmeleri iş bölümünü gösterir — "o"
+kodlanırken bir kafa *hayvan*a, bir başkası *yorgun*a kilitlenir: gönderge
+ve gerekçe, aynı anda izlenir.
+
+Bütün 3. bölüm, tek kartta:
+
+| soru | cevap |
+|---|---|
+| Self-attention nedir? | Cümlenin kendine dikkat etmesi: her token, vektörünü diğerlerinin ışığında yeniden yazar |
+| Q, K, V nedir? | Token başına üç rol — sorgu: *ne arıyorum?* · anahtar: *nasıl bulunurum?* · değer: *ne devrederim?* |
+| Nasıl üretilirler? | embedding × W_Q, W_K, W_V — üç öğrenilmiş lineer katman; aynı kelime, üç kıyafet |
+| Neden üç ayrı vektör? | Embedding, kelimenin her yönünü karıştırır; her rol yalnızca kendi işinin yönünü çeker |
+| Ağırlıklar neden öğrenilir? | Doğru ağırlık kelime mesafesinden çıkmaz; içerikten hesaplanır |
+| Hesap hangi sırayla akar? | puanla (Q·K) → ölçekle (÷√dₖ) → softmax'la → karıştır (×V) |
+| İleri beslemeli ağ nedir? | Bağlam toplandıktan sonra her token'ı tek başına sindiren küçük ağ — 4. bölümün bilgi ambarı |
+| Nerede, ne zaman, kim? | Her katmanda, her kafada, tüm token'lar aynı anda — Vaswani vd., 2017 |
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Transformer, bu bloğun onlarca-yüzü aşkın kez üst üste konmuşudur — ve her
-katman vektörleri değiştirmek yerine *düzenler*; anlam böylece birikir:
+Transformer, bu bloğun onlarca-yüzü aşkın kez üst üste konmuşudur — ve her katman vektörleri değiştirmek yerine *düzenler* (bunun uygulanışı **residual bağlantılardır**: katmanın çıktısı girdisinin yerine geçmez, üstüne *eklenir*); anlam böylece birikir:
 *tilki* önce *kahverengi-hızlı-tilki*, sonra *harekete geçmek üzere olan
 özne* olur, katman katman. Her katmanın içinde attention bağlamı toplar
 (kütüphaneci), **ileri beslemeli ağ** ise — her token'a tek tek uygulanan
