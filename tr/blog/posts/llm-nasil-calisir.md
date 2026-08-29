@@ -1,25 +1,10 @@
-Bir dil modelinin size verdiği her yanıt aynı yöntemle üretildi: bir
-sonraki küçük metin parçasını tahmin ederek, tekrar tekrar. Telefon
-klavyeniz bunun minik halini yapıyor — "görüşürüz" yazın, *yarın* önerir.
-LLM, aynı numaranın milyarlarca kat büyütülmüşüdür; ilginç olan, oyunun
-talep ettiğidir: insan metninde sıradaki kelimeyi iyi tahmin etmek için
-model dil bilgisini, olguları, üslubu ve akıl yürütmenin işleyen bir
-taklidini özümsemek zorundadır.
-
-Bu yazı o tek fikri üç perdede açar. **Birinci perde makinedir**: eğitilmiş
-bir model tek bir sonraki token'ı adım adım nasıl hesaplar — token'lardan
-attention'a, oradan olasılıklara. **İkinci perde eğitimdir**: makinenin
-trilyonlarca sayısı değerini nereden buldu ve ham bir otomatik tamamlayıcı
-nasıl asistan olarak yetiştirildi. **Üçüncü perde sahadır**: siz yazarken
-gerçekte neler olur — örnekleme, önbellek, hafıza yanılsaması ve modellerin
-neden uydurduğu. Sonda hepsi beş satıra iner.
-
-## Perde I — Makine
-
-Masaya önce makineyi koyalım: eğitilmiş, donmuş bir model; bütün işi,
-verilen bir metnin olası her sonraki token'ına bir olasılık biçmek. Bu
-perdenin sonunda o olasılığın adım adım nasıl kurulduğunu izlemiş
-olacaksınız.
+Bir dil modelinin size verdiği her yanıt aynı yöntemle üretildi: bir sonraki
+küçük metin parçasını tahmin ederek, tekrar tekrar. Telefon klavyeniz bunun
+minik halini yapıyor — "görüşürüz" yazın, *yarın* önerir. LLM, aynı numaranın
+milyarlarca kat büyütülmüşüdür ve ilginç olan, oyunun talep ettiği şeydir:
+insan metninde sıradaki kelimeyi iyi tahmin etmek için model dil bilgisini,
+olguları, üslubu ve akıl yürütmenin işleyen bir taklidini özümsemek zorunda.
+Aşağıdaki her şey bu fikrin dipnotudur.
 
 ## 1. Metin sayıya dönüşür
 
@@ -35,11 +20,13 @@ Bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibidir.
 Her token bir **embedding**'e dönüşür: bir anlam haritasındaki koordinatları
 gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap
 tablosu*na uzaktır; yönler ilişkidir: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü — ve *kral − erkek + kadın*, *kraliçe*nin yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
-sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı", "adam köpeği ısırdı"dan farklı kalmalıdır. Koordinatlar ve sıra yerinde; ama "yüz"ün ne demek olduğu hâlâ havada. Sıradaki durak, makinenin kalbi.
+sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
+"adam köpeği ısırdı"dan farklı kalmalıdır.
 
 ## 3. Transformer: bir bağlam makinesi
 
-Surattaki yüz mü, sayı olan yüz mü? Embedding tek başına söyleyemez — anlam komşulara bağlıdır. **Transformer** — modern bütün
+Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü, sayı
+olan yüz mü? Anlam komşulara bağlıdır. **Transformer** — modern bütün
 modellerin arkasındaki tasarım, GPT'deki T — komşuları okumak için
 kurulmuştur. Önceki mimariler metni soldan sağa sindirir, o ana dek görülen
 her şeyi mesafeyle solan tek bir dar akan hafızadan geçirirdi. Attention'ın kendisi transformer'dan yaşlıdır — önce o eski ağların üstüne
@@ -126,7 +113,7 @@ dahil her kelimenin anahtarıyla iç çarpıma girer:
 | Q(tilki) · K(tilki) | 5,4 | kendisi — en çok |
 
 **2. Adım — Ölçekle: sayıları dizginle.** Yüzdelere geçmeden önce her puan,
-anahtar vektörünün uzunluğu olan **√dₖ**'ye bölünür:
+anahtar vektörünün boyutu olan **√dₖ**'ye bölünür:
 
 > ölçekliᵢ = puanᵢ ÷ √dₖ
 
@@ -245,12 +232,6 @@ varmış bir"den sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den s
 yüzlerce şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru
 cevabıdır: *sırada ne gelmesi muhtemel?*
 
-## Perde II — Eğitim
-
-Makine tamam — ama sayılarını kimse elle yazmadı. Bu perde, değerlerin
-nereden geldiğini ve ham bir tamamlayıcının nasıl asistan olarak
-yetiştirildiğini anlatır.
-
 ## 5. Eğitim ve ölçek
 
 **Ön eğitim**: modele trilyonlarca token gösterin, sıradakini gizleyin,
@@ -308,14 +289,8 @@ yakalar: ton, emin olmadığında dürüstlük, zararı geri çevirmek.
 mal olur — o bile fazla geldiğinde **LoRA**, modeli dondurup yanına minicik
 düşük ranklı adaptör matrisleri eğitir: parametrelerin kırıntısıyla
 fine-tuning'e yakın kalite, lens gibi takılıp çıkarılan adaptörlerle.
-Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim daha büyük ağ
+Vurucu gerçek: GPT-3, ChatGPT'den iki yıldan fazla bir süre önce vardı. Devrim daha büyük ağ
 değil, bu aşamalardı.
-
-## Perde III — Saha
-
-Artık sahnedesiniz: mesajı yazdınız, gönder'e bastınız. Bu perde, o andan
-cevabın son token'ına kadar gerçekte olanları izler — ve yol üstünde iki
-meşhur tuhaflığı açıklar: model sizi neden hatırlamaz ve neden uydurur.
 
 ## 7. Üretim: plan değil, döngü
 
@@ -412,7 +387,7 @@ içtihadı mahkemeye sundu — "gerçek mi?" diye sorduklarında da "evet" almı
 değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur. İnce olduğu yerde ise bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
 çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir ve bir karar merdiveni oluşturur: **prompting** davranışı bağlam içinde biçimlendirir; **RAG** (retrieval), sık değişen bilgiyi getirir — ağırlıklara dokunmadan; **fine-tuning**, kalıcı olması gereken üslubu ya da alanı içine işler. Bu sırayla deneyin — her basamak daha pahalıdır. Araçları ekleyin ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
 
-## Üç perde, beş satırda
+## Bütün hikâye beş satırda
 
 1. Metin → **token** → **embedding** (anlamın koordinatları, konum dahil).
 2. **Attention** (sorgu·anahtar·değer) her token'ın vektörünü bağlamıyla
