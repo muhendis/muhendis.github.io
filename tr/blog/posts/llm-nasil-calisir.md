@@ -222,91 +222,114 @@ Bütün 3. bölüm, tek kartta:
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Bir attention alt katmanı artı bir ileri beslemeli alt katman: bu ikili
-bir **katmandır** ve transformer, bu katmanın onlarca-yüzü aşkın kez üst
-üste konmuşudur. Neden üst üste? Çünkü tek geçiş, her kelimeye yalnızca
-bir tur bağlam toplama hakkı tanır. Üst üste geçişler anlamı biriktirir:
-ilk katmanlardan sonra *tilki*, *kahverengi-hızlı-tilki* olmuştur; derin
-katmanlardan sonra, *harekete geçmek üzere olan özne*.
+Bir attention alt katmanı artı bir ileri beslemeli alt katman, bir
+**katman** eder — transformer ise bunlardan örülü bir kuledir: aynı kat
+planı, onlarca-yüzü aşkın kez üst üste. Bir token'ın vektörü zemin
+kattan girer ve yukarı çıkar. Kulenin neden bu kadar yüksek olduğunu
+görmek için onu izleyin.
 
-Üst üste koymanın tek kuralı vardır: katman, vektörlerin yerine yenisini
-*koymaz* — onları *düzenler*. Bunun adı **residual bağlantıdır**: her
-katmanın çıktısı, girdisinin üstüne *eklenir*; kitabın kenar boşluğuna
-düşülen notlar gibi. Önceki katmanların kurduğu hiçbir şey silinmez;
-incelikler birikir.
+Her katta aynı iki adımlık rutin işler. Önce attention — kütüphaneci —
+diğer token'lardan bağlam getirir: *tilki*, *kahverengi* ve *hızlı*
+olduğunu, sıçramanın ortasında olduğunu öğrenir. Sonra **ileri beslemeli
+ağ** — ambar — toplanan malzemeyi tek başına, etrafına bakmadan sindirir
+ve eğitimin bıraktığı örüntülerle zenginleştirir: "Paris, Fransa ile
+eşleşir". Her katın çıktısını da **residual bağlantı** denen bir bina
+kuralı yönetir: çıktı, girenin *yerine geçmez*, üstüne *eklenir* —
+kitabın kenar boşluğuna düşülen notlar gibi. Alt katların yazdığı hiçbir
+şey silinmez; üst katlara varıldığında *tilki*, sözlükteki kelimeden
+önce *kahverengi-hızlı-tilki*ye, sonra *harekete geçmek üzere olan
+özne*ye büyümüştür.
 
-Her katmanın içinde iki alt katman işi paylaşır. **Attention**, bilgiyi
-kelimeler *arasında* taşır — kütüphaneci: her kelimeye ihtiyacı olan
-bağlamı getirir. **İleri beslemeli ağ** ise her kelimeyi *tek başına*
-sindirir, etrafına bakmadan — ambar: eğitimin örüntülerini bıraktığı
-yer, "Paris, Fransa ile eşleşir" gibi. Modelin **parametrelerinin** —
-öğrenilmiş sayılarının — kabaca üçte ikisi bu ambarlarda durur. Bölümün
-başlığı da böylece cevaplanmış olur: bir LLM'in bilgisi,
-gösterebileceğiniz bir cümlede yaşamaz; milyarlarca ileri-besleme
-ağırlığına yayılmıştır.
+Katlar uzmanlaşır da — üstelik görevleri kimse dağıtmadan: alt katlar
+yazımı ve dil bilgisini halleder, üst katlar olguları ve uzun menzilli
+mantığı — banyoda beliren fotoğraf gibi: önce hatlar, sonra yüzler. Bu
+iş bölümü eğitimden kendiliğinden doğar.
 
-Katmanlara görevlerini kimse dağıtmaz; iş bölümü eğitimden kendiliğinden
-doğar. İlk katmanlar yazımı ve dil bilgisini üstlenir; derin katmanlar
-olguları ve uzun menzilli mantığı — banyoda beliren bir fotoğraf gibi:
-önce hatlar, sonra yüzler.
+Peki bilgi bu kulenin neresinde yaşıyor? Çoğunlukla ambarlarda: modelin
+**parametrelerinin** — öğrenilmiş sayılarının — kabaca üçte ikisi ileri
+beslemeli katmanlardadır. Bölüm başlığının dürüst cevabı bu yüzden
+şudur: parmakla gösterebileceğiniz hiçbir yerde. Bir olgu, kayıtlı bir
+cümle değildir; milyarlarca ağırlığa yayılmıştır. Modeli büyütmek de
+çoğunlukla ambarı büyütmektir — GPT-2, 2019'da 1,5 milyar parametreyle
+manşet olmuştu; öncü modeller bugün trilyonlara varıyor. Modern bir
+dokunuş olan **mixture of experts (MoE)**, kat başına birçok ambar kurar
+ve küçük bir yönlendiriciyi her token'ı en iyi bir-iki tanesine
+gönderecek şekilde eğitir: devasa toplam kapasite, ama her token bunun
+yalnızca bir kesrini öder.
 
-Büyümek de bu yüzden çoğunlukla ambarı büyütmektir. GPT-2, 2019'da 1,5
-milyar parametreyle manşet olmuştu; öncü modeller bugün trilyonlara
-varıyor. Modern bir dokunuş olan **mixture of experts (MoE)**, katman
-başına birçok ambar kurar ve küçük bir yönlendiriciyi her token'ı en iyi
-bir-iki tanesine gönderecek şekilde eğitir: devasa toplam kapasite, ama
-her token bunun yalnızca bir kesrini öder.
-
-Makineyi tamamlayan tek soru kaldı: vektör düzenleyicilerden oluşan bir
-yığın, nasıl olup da bir *tahmin* üretir? En tepede model, **son**
-token'ın nihai vektörünü alır — onca katmandan sonra bu vektör artık tek
-bir kelimeyi değil, oraya varan bağlamın tamamını kodlar. Sonra bu tek
-vektör, modelin bildiği her token'la puanlanır; hamle, attention'ın
-kullandığının aynısıdır — bir iç çarpım. Üstelik birçok modelde puanlama,
-2. bölümdeki embedding tablosunun ta kendisiyle yapılır, bu kez
-tersinden:
+Bir durak kaldı: çatı. Kule, vektörleri hatırları için cilalamıyordu —
+bize bir *tahmin* borçlu. En tepede model, **son** token'ın nihai
+vektörünü alır — onca kattan sonra bu vektör tek bir kelimeyi değil,
+oraya varan bağlamın tamamını kodlar — ve onu bildiği her token'la
+puanlar; hamle, attention'ın kullandığının aynısıdır, bir iç çarpım.
+Üstelik birçok modelde puanlama, 2. bölümdeki embedding tablosunun ta
+kendisiyle yapılır, bu kez tersinden:
 
 > puan(aday) = son vektör · adayın embedding'i — modelin bildiği her token'a bir puan (GPT-2'de ~50.000 tane)
 
 **Softmax** — attention'daki yüzde çeviricinin aynısı (3. Adım) — bu
 puanları, toplamı %100 eden olasılıklara çevirir. "Bir varmış bir"den
-sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra yüzlerce
+sonra kütle "yokmuş"a yığılır; "En sevdiğim şehir"den sonra yüzlerce
 şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru cevabıdır:
 *sırada ne gelmesi muhtemel?*
 
 ## 5. Eğitim ve ölçek
 
-**Ön eğitim**: modele trilyonlarca token gösterin, sıradakini gizleyin,
-tahmin ettirin. **Kayıp fonksiyonu**, modelin doğru cevap karşısındaki
-şaşkınlığını puanlar:
+**Ön eğitim**, kulenin açık bıraktığı soruyu cevaplar: makinenin şu ana
+dek gördüğünüz her parçası — embedding haritası, Q/K/V tabloları,
+ambarlar — başlangıçta rastgele gürültüden ibaret bir sayı ızgarasıdır
+ve kimse onları elle ayarlamaz. Ayarlayan şey, dersi olmayan, yalnızca
+sınavı olan bir okul gibi çalışır. Trilyonlarca token gerçek metin alın
+— web sayfaları, kitaplar, kod. Modele bir parça gösterin, sıradaki
+token'ı gizleyin, bir tahmin isteyin. Cevap anahtarının maliyeti
+sıfırdır, çünkü cevap, metinde gerçekten sonra gelen token'ın ta
+kendisidir: veri kendi kendini notlandırır. Ham internet ölçeğinde
+metnin yetmesinin sebebi budur — insan etiketi gerekmez.
+
+Her tahmine bir not verilir: **kayıp** — doğru karşısındaki şaşkınlığın
+ölçüsü:
 
 > kayıp = −log p(doğru token)
 
-Model doğru token'a %90 olasılık vermişse kayıp −log 0,9 ≈ 0,1'dir —
-neredeyse hiç şaşırmamış. %20 vermişse kayıp −log 0,2 ≈ 1,6'dır — fena
-şaşırmış. **Gradyan inişi** de her parametreyi bu sayıyı küçültecek yönde minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. Sisli bir dağdan inmek gibi düşünün: vadiyi göremezsiniz, yalnızca ayağınızın altındaki eğimi hissedersiniz — yokuş aşağı küçük bir adım atarsınız, sonra bir trilyon tane daha. (Standart karne: **perplexity = e^(ortalama kayıp)**. Ortalama kayıp 1,6 ise e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
-kararsız. Ön eğitimin merkezinde; gerçek görevler için zayıf bir vekil.)
+Doğru token'a %90 olasılık verin, kayıp −log 0,9 ≈ 0,1'dir: neredeyse
+hiç şaşırmamış. %20 verin, kayıp −log 0,2 ≈ 1,6'dır: fena şaşırmış.
+Nottan sonra düzeltme gelir: **gradyan inişi**, her parametreyi kaybı
+küçültecek yönde minicik bir adım kaydırır — sisli bir dağdan iner gibi:
+vadiyi göremezsiniz, yalnızca ayağınızın altındaki eğimi hissedersiniz;
+yokuş aşağı küçük bir adım, sonra bir trilyon tane daha. (Çok tahminin
+karnesi **perplexity** = e^(ortalama kayıp)'tır. Ortalama kayıp 1,6 ise
+e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
+kararsız. Düşüğü iyidir; ama ölçtüğü tahmindir, işe yararlık değil.)
 
-İçine kural yazılmaz — polisiye romanın son bölümünü tahmin etmek kimin
-cinayet sebebi olduğunu izlemeyi gerektirir, o yüzden izlemek öğrenilir.
-Sonuç, eğitim verisinin JPEG gibi sıkıştırılmışıdır: resim kalır, pikseller
-kalmaz.
+Bu döngüyü yeterince uzun döndürün, dikkate değer bir şey olur: kimsenin
+programlamadığı beceriler belirir, çünkü işe yararlar. Polisiye romanın
+son bölümünü tahmin etmek, kimin cinayet sebebi olduğunu izlemeyi
+gerektirir — model izlemeyi öğrenir, çünkü izleyince kayıp düşer.
+Sonunda elde kalan, eğitim verisinin JPEG gibi sıkıştırılmışıdır: resim
+kalır, pikseller kalmaz.
 
-Ölçek, **ölçek yasalarını** izler: kayıp, hesaplamanın kuvvet yasası olarak
-düşer — kabaca kayıp ≈ a · C^(−α), log-log kâğıdında düz bir çizgi — yani
-hesaplamayı ona katlamak öngörülebilir bir düşüş satın alır. Dokuz haneli
-eğitim bütçelerini kumardan plana çeviren budur: GPT-4'ün nihai kaybı
-10.000 kat küçük denemelerden önceden tahmin edildi. DeepMind'ın
-**Chinchilla** çalışması denge kuralını ekledi: parametre ve veri birlikte
-büyümeli (parametre başına ~20 token); 70 milyarlık modelleri, sırf bu
-aritmetikle 280 milyarlık rakibini geçti.
+Peki neden herkes daha büyüğünü kurmak için yarıştı? Çünkü getirisi
+öngörülebilir. **Ölçek yasaları**, kaybın hesaplamayla birlikte
+pürüzsüzce düştüğünü söyler:
 
-Dürüst bir şerh: eğri pürüzsüzdür ama beceriler aniden gelebilir — bir
-model üç basamaklı aritmetikte boy boy başarısız olup bir sonraki
-sıçrayışta bunu güvenilir yapabilir: **beliren yetenek**. Ham madde de
-sonlu: kaliteli açık metin tükenmek üzere; sınır bu yüzden sentetik veriye
-ve hesaplamayı cevap anında harcamaya — aşağıdaki akıl yürüten modellere —
-kayıyor.
+> kayıp ≈ a · C^(−α) — C hesaplama; a ile α, küçük ve ucuz denemelerden ölçülen sabitler
+
+Log-log kâğıdında bu düz bir çizgidir — çizgiyi uzatın ve bin kat büyük
+bir modelin ne kadar iyi olacağını, *parasını ödemeden önce* okuyun. Yüz
+milyon dolarlık eğitim koşularını kumardan plana çeviren budur: OpenAI,
+GPT-4'ün nihai kaybını 10.000 kat küçük denemelerden önceden tahmin
+etti. DeepMind'ın **Chinchilla** çalışması tarife denge kuralını ekledi:
+parametre ve veri birlikte büyümeli, parametre başına yaklaşık 20 eğitim
+token'ı — bu aritmetikle beslenen 70 milyarlık modelleri, kendi 280
+milyarlık Gopher'larını geçti.
+
+Hikâyeyi iki dürüst şerh kapatır. Kayıp eğrisi pürüzsüzdür ama beceriler
+sıçramayla gelebilir: bir model üç basamaklı aritmetikte boy boy
+başarısız olur, sonra birden güvenilir biçimde yapar — **beliren
+yetenek**; eğri kaybı öngörür, yetenekleri değil. Yakıt da sonlu:
+kaliteli açık metin tükenmek üzere; sınır bu yüzden sentetik veriye ve
+hesaplamayı cevap anında harcamaya — 7. bölümün akıl yürüten
+modellerine — kayıyor.
 
 ## 6. Otomatik tamamlamadan asistana
 

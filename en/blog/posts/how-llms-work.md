@@ -224,88 +224,111 @@ All of section 3, on one card:
 
 ## 4. Layers: where knowledge lives
 
-One attention sub-layer plus one feed-forward sub-layer: that pair is a
-**layer**, and a transformer is this layer stacked dozens to a
-hundred-plus times. Why stack? Because a single pass gives each word only
-one round of context-gathering. Stacked passes let meaning build: after
-the early layers, *fox* has become *brown-quick-fox*; after the deep
-ones, *the subject about to act*.
+One attention sub-layer plus one feed-forward sub-layer make a
+**layer** — and a transformer is a tower of them, the same floor plan
+repeated dozens to a hundred-plus times. A token's vector enters at the
+ground floor and rides up. To see why the tower is tall, follow it.
 
-The stacking follows one rule: a layer never *replaces* the vectors — it
-*edits* them. This is the **residual connection**: each layer's output is
-*added* on top of its input, like notes in a book's margin. Nothing an
-earlier layer built gets erased, so refinements accumulate.
+On every floor, the same two-step routine runs. First attention — the
+librarian — fetches context from the other tokens: *fox* learns it is
+*brown*, *quick*, mid-leap. Then the **feed-forward network** — the
+warehouse — digests the gathered material alone, no looking around, and
+enriches it with patterns training left behind: "Paris pairs with
+France". A house rule called the **residual connection** governs each
+floor's output: it is *added* on top of what came in, never swapped for
+it — notes in a book's margin. Nothing a lower floor wrote gets erased,
+so by the upper floors *fox* has grown from a dictionary word into
+*brown-quick-fox*, then into *the subject about to act*.
 
-Inside every layer, the two sub-layers split the work. **Attention**
-moves information *between* words — the librarian, fetching each word the
-context it needs. The **feed-forward network** digests each word *alone*,
-no looking around — the warehouse, where training left its patterns:
-"Paris pairs with France". Roughly two-thirds of a model's
-**parameters** — its learned numbers — sit in these warehouses. That
-answers this section's title: an LLM's knowledge lives in no sentence you
-can point to; it is smeared across billions of feed-forward weights.
+The floors even specialize, though nobody assigns the jobs: lower floors
+settle spelling and grammar, upper floors handle facts and long-range
+logic — a photograph developing in the tray, outlines first, faces
+later. The division of labor emerges from training on its own.
 
-Nobody assigns the layers their jobs; a division of labor emerges from
-training on its own. Early layers handle spelling and grammar; deep
-layers, facts and long-range logic — like a photograph developing in the
-tray: outlines first, faces later.
+So where in this tower does knowledge live? Mostly in the warehouses:
+roughly two-thirds of a model's **parameters** — its learned numbers —
+sit in the feed-forward layers. The honest answer to this section's
+title is therefore: nowhere you can point to. A fact is not a stored
+sentence; it is smeared across billions of weights. Growing a model
+mostly means growing warehouse — GPT-2 made news in 2019 with 1.5
+billion parameters; frontier models run to the trillions. A modern
+twist, **mixture of experts (MoE)**, builds many warehouses per floor
+and trains a small router to send each token to the best one or two:
+huge total capacity, of which each token pays for only a fraction.
 
-Growth, then, mostly means more warehouse. GPT-2 made news in 2019 with
-1.5 billion parameters; frontier models now run to the trillions. A
-modern twist, **mixture of experts (MoE)**, builds many warehouses per
-layer and trains a small router to send each token to the best one or
-two of them: huge total capacity, of which each token pays for only a
-fraction.
-
-One question completes the machine: how does a stack of vector-editors
-produce a *prediction*? At the very top, the model takes the final
-vector of the **last** token — after all those layers, it encodes not
-one word but the whole context that led here. That single vector is then
-scored against every token the model knows, with the same move attention
-uses — a dot product. In many models the scoring even reuses the
-embedding table of section 2, run in reverse:
+One stop remains: the roof. The tower was never polishing vectors for
+their own sake — it owes us a *prediction*. At the top, the model takes
+the final vector of the **last** token, which after all those floors
+encodes not one word but the whole context that led here, and scores it
+against every token it knows — the same move attention uses, a dot
+product; in many models, against the very embedding table of section 2,
+run in reverse:
 
 > score(candidate) = final vector · candidate's embedding — one score per token in the vocabulary (~50,000 of them in GPT-2)
 
 **Softmax** — the same percentage converter as attention's Step 3 —
 turns those scores into probabilities that sum to 100%. After "Once upon
-a", the mass piles onto "time". After "My favorite city is", it spreads
+a", the mass piles onto "time"; after "My favorite city is", it spreads
 across hundreds of cities. Both are correct answers to the only question
 the model ever answers: *what likely comes next?*
 
 ## 5. Training and scale
 
-**Pretraining**: show the model trillions of tokens, hide the next one, let
-it guess. A **loss function** scores its surprise at the truth:
+**Pretraining** answers the question the tower leaves open: every piece
+of the machine so far — the embedding map, the Q/K/V tables, the
+warehouses — is a grid of numbers that started as random noise, and
+nobody sets them by hand. What sets them works like a school with no
+lessons, only exams. Take trillions of tokens of real text — web pages,
+books, code. Show the model a passage, hide the next token, demand a
+guess. The answer key costs nothing, because the answer is simply the
+token that actually came next in the text: the data grades itself. That
+is why raw internet-scale text is enough — no human labeling required.
+
+Each guess receives a grade, the **loss** — a measure of surprise at the
+truth:
 
 > loss = −log p(correct token)
 
-Had the model given the true next token a 90% chance, the loss is
-−log 0.9 ≈ 0.1 — barely surprised. Had it given 20%, the loss is
-−log 0.2 ≈ 1.6 — badly surprised. **Gradient descent** then nudges every
-parameter a tiny step in the direction that shrinks this number; repeat trillions of times. Picture it as descending a mountain in fog: you cannot see the valley, you only feel the slope under your feet — so you take one small step downhill, and then a trillion more. (The standard report card: **perplexity = e^(average loss)**. An average loss of 1.6 gives e^1.6 ≈ 5 — as
-unsure as picking among five equally likely words. Central to pretraining; a
-weak proxy for real tasks.)
+Give the true next token a 90% chance and the loss is −log 0.9 ≈ 0.1:
+barely surprised. Give it 20% and the loss is −log 0.2 ≈ 1.6: badly
+surprised. After the grade comes the correction: **gradient descent**
+nudges every parameter a tiny step in the direction that shrinks the
+loss — descending a mountain in fog, unable to see the valley, feeling
+only the slope under your feet: one small step downhill, then a trillion
+more. (The report card over many guesses is **perplexity** = e^(average
+loss). An average loss of 1.6 gives e^1.6 ≈ 5 — as unsure as choosing
+among five equally likely words. Lower is better; but it measures
+prediction, not usefulness.)
 
-Nobody writes rules in — predicting a detective novel's last chapter
-requires tracking who had a motive, so the tracking gets learned. The result
-is the training data compressed like a JPEG: the picture survives, the
-pixels do not.
+Run this loop long enough and something remarkable happens: skills
+nobody programmed appear, because they pay. Predicting the last chapter
+of a detective novel requires tracking who had a motive — so the model
+learns to track it, because the loss falls when it does. What remains at
+the end is the training data compressed like a JPEG: the picture
+survives, the pixels do not.
 
-Scale follows **scaling laws**: loss falls as a power law in compute —
-roughly loss ≈ a · C^(−α), a straight line on log-log paper — so multiplying
-compute by ten buys a predictable drop. That is what turned nine-figure
-training runs from gambles into plans: GPT-4's final loss was predicted from
-trials 10,000× smaller. DeepMind's **Chinchilla** added the balance rule:
-parameters and data must grow together (roughly 20 tokens per parameter);
-their 70B model beat a 280B rival on that arithmetic alone.
+Why, then, the race to build ever bigger? Because the payoff is
+predictable. **Scaling laws** say the loss falls smoothly as compute
+grows:
 
-One honest caveat: the curve is smooth, but skills can arrive abruptly — a
-model may fail three-digit arithmetic at size after size, then handle it
-reliably at the next jump: an **emergent ability**. And the raw material is
-finite: high-quality public text is nearly exhausted, which is pushing the
-frontier toward synthetic data and toward spending compute at answer time
-instead — the reasoning models below.
+> loss ≈ a · C^(−α) — C is compute; a and α are constants measured from small, cheap runs
+
+On log-log paper that is a straight line — extend it, and you can read
+off how good a thousand-times-larger model will be *before paying for
+it*. That is what turned $100-million training runs from gambles into
+plans: OpenAI predicted GPT-4's final loss from trial runs 10,000×
+smaller. DeepMind's **Chinchilla** added the recipe's balance rule:
+parameters and data must grow together, about 20 training tokens per
+parameter — their 70B model, fed by that arithmetic, beat their own 280B
+Gopher.
+
+Two honest caveats close the story. The loss curve is smooth, but skills
+can arrive in jumps: a model fails three-digit arithmetic at size after
+size, then suddenly does it reliably — an **emergent ability**; the
+curve predicts the loss, not the talents. And the fuel is finite:
+high-quality public text is nearly exhausted, pushing the frontier
+toward synthetic data and toward spending compute at answer time
+instead — the reasoning models of section 7.
 
 ## 6. From autocomplete to assistant
 
