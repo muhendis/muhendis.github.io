@@ -16,7 +16,10 @@ Everything below is a footnote to that idea.
 
 - [1. Text becomes numbers](#1-text-becomes-numbers)
 - [2. Numbers with meaning](#2-numbers-with-meaning)
-- [3. The transformer: a context machine](#3-the-transformer-a-context-machine) — [Q, K, V](#q-k-v-the-mechanism-with-numbers) · [One direction only](#one-direction-only) · [Many heads](#many-heads)
+- [3. The transformer: a context machine](#3-the-transformer-a-context-machine)
+  - [Q, K, V — the mechanism, with numbers](#q-k-v--the-mechanism-with-numbers)
+  - [One direction only](#one-direction-only)
+  - [Many heads](#many-heads)
 - [4. Layers: where knowledge lives](#4-layers-where-knowledge-lives)
 - [5. Training and scale](#5-training-and-scale)
 - [6. From autocomplete to assistant](#6-from-autocomplete-to-assistant)
@@ -40,10 +43,7 @@ in "strawberry" was famously hard — like counting brushstrokes in a
 
 ## 2. Numbers with meaning
 
-Each token then becomes an **embedding**: a long list of numbers, its
-coordinates on a map of meaning. Think of them as thousands of dials —
-one for formality, one for tense, most for qualities no human ever
-named. On this map, related words sit close: *king* lands near *queen* and far from *spreadsheet*. Better still, *directions* mean something. To see it, put four words on a map of just two dials, with toy coordinates:
+Each token then becomes an **embedding**: a long list of numbers, its coordinates on a map of meaning. Think of them as thousands of dials — one for formality, one for tense, most for qualities no human ever named. On this map, related words sit close: *king* lands near *queen* and far from *spreadsheet*. Better still, *directions* mean something. To see it, put four words on a map of just two dials, using the toy coordinates from the drawing below: ***man* at (2, 1)**, ***woman* at (5, 4)**, ***king* at (3, 6)**, and ***queen* at (6, 9)**:
 
 <svg viewBox="0 0 480 320" role="img" aria-label="Four words as points on two dials: man at 2,1; woman at 5,4; king at 3,6; queen at 6,9. Solid parallel arrows man to woman and king to queen show the gender direction plus 3 plus 3; dashed parallel arrows man to king and woman to queen show the royalty direction plus 1 plus 5" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>

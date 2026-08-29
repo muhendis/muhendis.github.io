@@ -16,7 +16,10 @@ zorundasınızdır. Aşağıdaki her şey bu fikrin dipnotudur.
 
 - [1. Metin sayıya dönüşür](#1-metin-sayıya-dönüşür)
 - [2. Anlam taşıyan sayılar](#2-anlam-taşıyan-sayılar)
-- [3. Transformer: bir bağlam makinesi](#3-transformer-bir-bağlam-makinesi) — [Q, K, V](#q-k-v-mekanizma-sayılarla) · [Tek yön](#tek-yön) · [Birçok kafa](#birçok-kafa)
+- [3. Transformer: bir bağlam makinesi](#3-transformer-bir-bağlam-makinesi)
+  - [Q, K, V — mekanizma, sayılarla](#q-k-v--mekanizma-sayılarla)
+  - [Tek yön](#tek-yön)
+  - [Birçok kafa](#birçok-kafa)
 - [4. Katmanlar: bilgi nerede yaşıyor](#4-katmanlar-bilgi-nerede-yaşıyor)
 - [5. Eğitim ve ölçek](#5-eğitim-ve-ölçek)
 - [6. Otomatik tamamlamadan asistana](#6-otomatik-tamamlamadan-asistana)
@@ -39,10 +42,7 @@ ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
 
 ## 2. Anlam taşıyan sayılar
 
-Sonra her token bir **embedding**'e dönüşür: uzun bir sayı listesi —
-anlam haritasındaki koordinatları. Binlerce kadran düşünün: biri
-resmiyet, biri zaman, çoğu hiçbir insanın adlandırmadığı nitelikler
-için. Bu haritada ilişkili kelimeler yan yana oturur: *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak düşer. Daha güzeli, *yönler* de anlam taşır. Görmek için dört kelimeyi yalnızca iki kadranlık bir haritaya, oyuncak koordinatlarla yerleştirelim:
+Her bir token daha sonra bir **gömüye (embedding)** dönüşür: uzun bir sayı listesi, yani bir anlam haritasındaki koordinatları. Bunları binlerce kadran olarak düşünün — biri resmiyet için, biri zaman kipi için, çoğu ise hiçbir insanın adlandırmadığı nitelikler için. Bu haritada birbiriyle ilişkili kelimeler birbirine yakın durur: *kral (king)*, *kraliçe (queen)* kelimesinin yakınına, *elektronik tablo (spreadsheet)* kelimesinin ise uzağına düşer. Daha da iyisi, *yönler* bir anlam ifade eder. Bunu görmek için, aşağıdaki çizimden alınan örnek koordinatları kullanarak sadece iki kadranlı bir haritaya dört kelime yerleştirelim: **(2, 1) konumunda *erkek (man)***, **(5, 4) konumunda *kadın (woman)***, **(3, 6) konumunda *kral (king)*** ve **(6, 9) konumunda *kraliçe (queen)***:
 
 <svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe krallık yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
