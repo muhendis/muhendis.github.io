@@ -74,13 +74,19 @@ No rule ever told the model that foxes are brown. The Q, K, V
 transformations were tuned, over trillions of guesses, until useful weights
 came out on their own.
 
+Two footnotes on this machinery. First, the raw scores are divided by
+√(key dimension) before softmax — hence "*scaled* dot-product attention":
+huge dot products would saturate the weights into all-or-nothing and stall
+learning. Second, since every token scores every other token, the work grows
+with the *square* of the length — O(n²). Double the context, quadruple the
+cost; million-token windows are an engineering feat, not a checkbox.
+
 ### One direction only
 
 A detail with large consequences: during generation, each token may only
 look *backward*. *Fox* sees *brown*; *brown* never sees *fox*. That mask is
 what makes the model a *next*-token predictor — and it is why a past
-token's key and value, once computed, never change: nothing that arrives
-later can touch them. File that away; it becomes the KV cache in section 7.
+token's key and value, once computed, never change: nothing that arrives later can touch them. File that away; it becomes the KV cache in section 7. The mask is also the field's dividing line: models built with it (GPT-style **decoders**) generate; models built without it (BERT-style **encoders**) read in both directions and classify rather than generate. Modern LLMs are almost all decoder-only.
 
 ### Many heads
 
@@ -99,7 +105,7 @@ accumulates: *fox* becomes *brown-quick-fox*, then *subject about to act*,
 layer by layer. Inside every layer, attention gathers context (the
 librarian) while a **feed-forward network** — a small network applied to
 each token on its own — stores learned patterns like "Paris pairs with
-France" (the warehouse; most **parameters** live here). Early layers handle
+France" (the warehouse; most **parameters** live here). A modern twist, **mixture of experts (MoE)**: build many warehouses and let a router send each token to its best one or two — huge total capacity, only a fraction of it paying compute per token. Early layers handle
 spelling and grammar; deeper layers, facts and long-range logic. GPT-2 made
 news in 2019 with 1.5 billion parameters; frontier models now run to the
 trillions.
@@ -114,8 +120,7 @@ only question the model ever answers: *what likely comes next?*
 
 **Pretraining**: show the model trillions of tokens, hide the next one, let
 it guess. A **loss function** scores its surprise; **gradient descent**
-nudges every parameter a tiny step toward less surprise; repeat trillions of
-times. Nobody writes rules in — predicting a detective novel's last chapter
+nudges every parameter a tiny step toward less surprise; repeat trillions of times. (The standard report card is **perplexity** — the exponential of the average surprise on held-out text. Central to pretraining; a weak proxy for real tasks.) Nobody writes rules in — predicting a detective novel's last chapter
 requires tracking who had a motive, so the tracking gets learned. The result
 is the training data compressed like a JPEG: the picture survives, the
 pixels do not.
@@ -136,15 +141,14 @@ stages make it an assistant. **Instruction tuning**: train further on tens of
 thousands of written examples of question → ideal answer, until "answer
 helpfully" becomes the most probable continuation. **RLHF** (reinforcement
 learning from human feedback): humans compare candidate answers, a reward
-model learns their taste, and the LLM is tuned toward it — comparing is far easier for people than authoring perfection, and comparisons capture what examples cannot spell out: tone, honesty about uncertainty, refusing harm. Both stages cost a small fraction of pretraining's months on thousands of GPUs. The punchline: GPT-3 existed
+model learns their taste, and the LLM is tuned toward it — comparing is far easier for people than authoring perfection, and comparisons capture what examples cannot spell out: tone, honesty about uncertainty, refusing harm. Both stages cost a small fraction of pretraining's months on thousands of GPUs — and when even that is too much, **LoRA** freezes the model and trains tiny low-rank adapter matrices alongside it: near fine-tuning quality for a sliver of the parameters, with adapters you can swap like lenses. The punchline: GPT-3 existed
 for two years before ChatGPT. The revolution was these stages, not a bigger
 network.
 
 ## 7. Generation: a loop, not a plan
 
 The model computes probabilities, **samples** one token (a weighted draw), appends it, and repeats — each new token instantly part of the next prediction's input — until a special stop token says "I'm done." Three dials govern the draw. After "The sky was":
-*blue* 60%, *dark* 10%, … *potato* 0.0001%. **Temperature** sharpens or
-flattens the list (low for SQL, high for brainstorming); **top-k** keeps only
+*blue* 60%, *dark* 10%, … *potato* 0.0001%. **Temperature** sharpens or flattens the list — low for SQL, high for brainstorming; temperature 0 is greedy decoding, nearly deterministic, though batching and floating-point order still leave tiny run-to-run drift; **top-k** keeps only
 the k most likely; **top-p** keeps the smallest set covering, say, 90% —
 adapting between two tokens when the model is sure and eighty when it is
 torn. Cut first, then draw: that is why answers vary day to day and the sky
@@ -157,7 +161,7 @@ documents and processes every token in parallel — that parallelism is what
 let transformers, unlike their predecessors, soak up GPUs and scale. In
 *inference* — chatting — text arrives one token at a time, and the **KV
 cache** exists to make that serial loop cheap, cashing in the asymmetry from
-section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for.
+section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for. The other big serving lever is **quantization**: store the weights in fewer bits (16 → 8 → 4). Inference is bound by moving bytes, not by arithmetic, so smaller weights mean faster, cheaper answers at a modest accuracy cost.
 
 Here is the whole machine in one tiny trace. Input: **"I love"** — the model
 must produce the next token.
@@ -197,46 +201,7 @@ ChatGPT — which, asked if they were real, said yes. A $5,000 fine made "AI
 hallucination" famous. The mechanics are no mystery: the model is a
 probability engine, not a database. Where training data is rich, the most probable continuation is usually the truth. Where it is thin, there is no
 entry to fail to find — it produces something *shaped* like an answer,
-because plausible, not true, is what it optimizes. The fixes change the
-input: retrieval (RAG), tools, and checking sources yourself — the step the
-lawyers skipped.
-
-## 10. The interviewer's checklist
-
-The sections above tell the story; interviews probe the edges. The questions
-that come up constantly, with the short answers:
-
-- **Why *scaled* dot-product attention — the divide-by-√d?** Long vectors
-  make dot products huge; huge scores saturate softmax into all-or-nothing
-  weights and learning stalls. Dividing by √(key dimension) keeps scores in
-  a range where gradients still flow.
-- **GPT vs BERT?** GPT is a *decoder*: causal mask, looks only backward,
-  generates. BERT is an *encoder*: sees both directions, cannot generate,
-  excels at understanding and classification. Modern LLMs are almost all
-  decoder-only.
-- **Why is long context expensive?** Attention is O(n²): every token scores
-  every other token, so doubling the context roughly quadruples the work —
-  and the KV cache grows with every token on top. Million-token windows are
-  an engineering feat, not a checkbox.
-- **Prompting vs RAG vs fine-tuning?** Prompting shapes *behavior*, in
-  context. RAG supplies *knowledge* that changes often — no weights touched.
-  Fine-tuning bakes in *style, format, or domain* that must become
-  permanent. Reach for them in that order; each step up costs more.
-- **What is LoRA?** Freeze the model and train tiny low-rank adapter
-  matrices next to the frozen weights — near fine-tuning quality for a
-  small fraction of the parameters, with adapters you can swap like lenses.
-- **What is quantization?** Storing weights in fewer bits (16 → 8 → 4).
-  Serving is bound by moving bytes, not arithmetic, so smaller weights mean
-  faster and cheaper inference at a modest accuracy cost.
-- **What is a mixture of experts (MoE)?** Replace the one feed-forward
-  warehouse with many, and let a router send each token to its top one or
-  two. Huge total capacity; only a fraction of it pays compute per token.
-- **Does temperature 0 give the same answer every time?** Nearly — it is
-  greedy decoding — but batching and floating-point ordering still introduce
-  tiny run-to-run drift in practice.
-- **What is perplexity?** The exponential of average surprise on held-out
-  text: pretraining's standard score, and a weak proxy for downstream
-  quality — evaluate on your actual task.
+because plausible, not true, is what it optimizes. The fixes change the input, and they form a decision ladder: **prompting** shapes behavior in context; **RAG** (retrieval) supplies knowledge that changes often, no weights touched; **fine-tuning** bakes in style or domain that must be permanent. Reach for them in that order — each step up costs more. Add tools, and check sources yourself: the step the lawyers skipped.
 
 ## The whole story in five lines
 

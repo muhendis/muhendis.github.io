@@ -73,14 +73,20 @@ Modele tilkilerin kahverengi olduğunu hiçbir kural söylemedi. Q, K, V
 dönüşümleri, trilyonlarca tahmin boyunca, işe yarar ağırlıklar kendiliğinden
 çıkana dek ayarlandı.
 
+Bu mekanizmaya iki dipnot. Birincisi, ham puanlar softmax'tan önce
+√(anahtar boyutu)'na bölünür — adındaki "*ölçekli* iç çarpım" budur: devasa
+iç çarpımlar ağırlıkları ya-hep-ya-hiç'e doyurur ve öğrenmeyi durdururdu.
+İkincisi, her token diğer her token'ı puanladığından iş, uzunluğun
+*karesiyle* büyür — O(n²). Bağlamı ikiye katlayın, maliyet dörde katlansın;
+milyon token'lık pencereler bir kutucuk değil, mühendislik başarısıdır.
+
 ### Tek yön
 
 Sonuçları büyük bir ayrıntı: üretim sırasında her token yalnızca *geriye*
 bakabilir. *Tilki*, *kahverengi*yi görür; *kahverengi*, *tilki*yi asla. Bu
 maske, modeli bir *sıradaki*-token tahmincisi yapan şeydir — ve geçmiş bir
 token'ın anahtarıyla değerinin, bir kez hesaplandıktan sonra asla
-değişmemesinin sebebi de budur: sonradan gelen hiçbir şey onlara dokunamaz.
-Bir kenara yazın; 7. bölümde KV cache olacak.
+değişmemesinin sebebi de budur: sonradan gelen hiçbir şey onlara dokunamaz. Bir kenara yazın; 7. bölümde KV cache olacak. Bu maske aynı zamanda alanın ayrım çizgisidir: maskeyle kurulan modeller (GPT tarzı **decoder**'lar) üretir; maskesiz kurulanlar (BERT tarzı **encoder**'lar) iki yöne birden bakar ve üretmek yerine sınıflandırır. Modern LLM'lerin neredeyse hepsi yalnız-decoder'dır.
 
 ### Birçok kafa
 
@@ -100,7 +106,7 @@ katman vektörleri değiştirmek yerine *düzenler*; anlam böylece birikir:
 özne* olur, katman katman. Her katmanın içinde attention bağlamı toplar
 (kütüphaneci), **ileri beslemeli ağ** ise — her token'a tek tek uygulanan
 küçük bir ağ — "Paris, Fransa ile eşleşir" gibi öğrenilmiş örüntüleri
-depolar (ambar; **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı
+depolar (ambar; **parametrelerin** çoğu burada yaşar). Modern bir dokunuş, **mixture of experts (MoE)**: tek ambar yerine birçoğunu kurun ve bir yönlendirici her token'ı en iyi bir-iki tanesine göndersin — devasa toplam kapasite, token başına bunun yalnızca bir kesri hesaplama öder. İlk katmanlar yazımı
 ve dil bilgisini üstlenir; derin katmanlar olguları ve uzun menzilli
 mantığı. GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
 modeller bugün trilyonlara varıyor.
@@ -115,8 +121,7 @@ cevabıdır: *sırada ne gelmesi muhtemel?*
 
 **Ön eğitim**: modele trilyonlarca token gösterin, sıradakini gizleyin,
 tahmin ettirin. **Kayıp fonksiyonu** şaşkınlığını puanlar; **gradyan inişi**
-her parametreyi daha az şaşırma yönünde minicik bir adım kaydırır; bunu
-trilyonlarca kez tekrarlayın. İçine kural yazılmaz — polisiye romanın son
+her parametreyi daha az şaşırma yönünde minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. (Buradaki standart karne **perplexity**'dir — tutulmuş metindeki ortalama şaşkınlığın üsteli. Ön eğitimin merkezinde; gerçek görevler için zayıf bir vekil.) İçine kural yazılmaz — polisiye romanın son
 bölümünü tahmin etmek kimin cinayet sebebi olduğunu izlemeyi gerektirir, o
 yüzden izlemek öğrenilir. Sonuç, eğitim verisinin JPEG gibi
 sıkıştırılmışıdır: resim kalır, pikseller kalmaz.
@@ -138,14 +143,13 @@ asistan yapan iki ucuz aşama var. **Talimat eğitimi**: on binlerce yazılı
 soru → ideal cevap örneğiyle eğitime devam edin; "yardımcı biçimde cevapla"
 en olası devam haline gelsin. **RLHF** (insan geri bildirimiyle pekiştirmeli
 öğrenme): insanlar aday cevapları karşılaştırır, bir ödül modeli bu zevki
-öğrenir, LLM ona doğru ayarlanır — karşılaştırmak, kusursuz yazmaktan çok daha kolaydır — ve karşılaştırmalar, örneklerin anlatamadığını yakalar: ton, emin olmadığında dürüstlük, zararı geri çevirmek. İki aşama da, ön eğitimin binlerce GPU'da geçen aylarının küçük bir kesrine mal olur. Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim
+öğrenir, LLM ona doğru ayarlanır — karşılaştırmak, kusursuz yazmaktan çok daha kolaydır — ve karşılaştırmalar, örneklerin anlatamadığını yakalar: ton, emin olmadığında dürüstlük, zararı geri çevirmek. İki aşama da, ön eğitimin binlerce GPU'da geçen aylarının küçük bir kesrine mal olur — o bile fazla geldiğinde **LoRA**, modeli dondurup yanına minicik düşük ranklı adaptör matrisleri eğitir: parametrelerin kırıntısıyla fine-tuning'e yakın kalite, lens gibi takılıp çıkarılan adaptörlerle. Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim
 daha büyük ağ değil, bu aşamalardı.
 
 ## 7. Üretim: plan değil, döngü
 
 Model olasılıkları hesaplar, bir token **örnekler** (ağırlıklı çekiliş), ekler ve tekrarlar — her yeni token anında bir sonraki tahminin girdisidir — ta ki "bitirdim" diyen özel bir durdurma token'ına kadar. Çekilişi üç düğme yönetir. "Gökyüzü"nden sonra: *maviydi*
-%60, *karanlıktı* %10, … *patatesti* %0,0001. **Temperature** listeyi
-sivriltir ya da düzleştirir (SQL için düşük, beyin fırtınası için yüksek);
+%60, *karanlıktı* %10, … *patatesti* %0,0001. **Temperature** listeyi sivriltir ya da düzleştirir — SQL için düşük, beyin fırtınası için yüksek; temperature 0 açgözlü (greedy) çözümlemedir, neredeyse deterministik, gerçi yığınlama ve kayan nokta sırası yine küçük koşudan-koşuya sapmalar bırakır;
 **top-k** yalnızca en olası k token'ı tutar; **top-p**, toplamı örneğin
 %90'ı bulan en küçük kümeyi tutar — model eminken iki, kararsızken seksen
 token'a uyarlanır. Önce kes, sonra çek: cevapların günden güne değişmesi ve
@@ -159,7 +163,7 @@ seleflerinden ayıran, GPU'ları doyurup ölçeklenmesini sağlayan şey bu
 paralelliktir. *Çıkarımda* — sohbette — metin token token gelir; **KV cache**
 işte bu seri döngüyü ucuzlatmak için vardır ve 3. bölümdeki asimetriyi paraya
 çevirir. 1.000'inci token, sorgusunu önceki 999 anahtarla karşılaştırmak
-zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından.
+zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından. Servisin öbür büyük kolu **kuantizasyondur**: ağırlıkları daha az bitle saklamak (16 → 8 → 4). Çıkarım aritmetiğe değil bayt taşımaya takılır; küçük ağırlıklar, mütevazı bir doğruluk bedeliyle daha hızlı ve ucuz cevap demektir.
 
 İşte bütün makine tek küçük izde. Girdi: **"Ben seni"** — model sıradaki
 token'ı üretecek.
@@ -199,47 +203,7 @@ kedi → ?" gösterin; model *cat* der — görevi yalnızca istemden öğrenmi�
 içtihadı mahkemeye sundu — "gerçek mi?" diye sorduklarında da "evet" almıştı.
 5.000 dolarlık ceza, "yapay zekâ halüsinasyonunu" meşhur etti. Mekanizma sır
 değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur. İnce olduğu yerde ise bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
-çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir:
-retrieval (RAG), araçlar ve kaynakları kendiniz kontrol etmek — avukatların
-atladığı adım.
-
-## 10. Mülakatçının kontrol listesi
-
-Yukarıdaki bölümler hikâyeyi anlatır; mülakatlar kenarları yoklar. Sürekli
-gelen sorular, kısa cevaplarıyla:
-
-- **Neden *ölçekli* iç çarpım — √d'ye bölme?** Uzun vektörler iç çarpımları
-  devasa yapar; devasa puanlar softmax'ı ya-hep-ya-hiç ağırlıklara doyurur
-  ve öğrenme durur. √(anahtar boyutu)'na bölmek, puanları gradyanların hâlâ
-  aktığı bir aralıkta tutar.
-- **GPT ile BERT farkı?** GPT bir *decoder*'dır: nedensel maske, yalnızca
-  geriye bakar, üretir. BERT bir *encoder*'dır: iki yöne de bakar, üretemez,
-  anlama ve sınıflandırmada güçlüdür. Modern LLM'lerin neredeyse hepsi
-  yalnız-decoder'dır.
-- **Uzun bağlam neden pahalı?** Attention O(n²)'dir: her token diğer her
-  token'ı puanlar; bağlamı ikiye katlamak işi kabaca dörde katlar — üstüne
-  KV cache de her token'la büyür. Milyon token'lık pencereler bir kutucuk
-  değil, mühendislik başarısıdır.
-- **Prompting mi, RAG mi, fine-tuning mi?** Prompting *davranışı*
-  biçimlendirir, bağlam içinde. RAG, sık değişen *bilgiyi* getirir —
-  ağırlıklara dokunmadan. Fine-tuning, kalıcı olması gereken *üslubu,
-  biçimi, alanı* içine işler. Bu sırayla deneyin; her basamak daha pahalıdır.
-- **LoRA nedir?** Modeli dondurup donmuş ağırlıkların yanına minicik düşük
-  ranklı adaptör matrisleri eğitmek — parametrelerin küçük bir kesriyle
-  fine-tuning'e yakın kalite; adaptörler lens gibi takılıp çıkarılır.
-- **Kuantizasyon nedir?** Ağırlıkları daha az bitle saklamak (16 → 8 → 4).
-  Servis, aritmetiğe değil bayt taşımaya takılır; küçük ağırlıklar, mütevazı
-  bir doğruluk bedeliyle daha hızlı ve ucuz çıkarım demektir.
-- **Mixture of experts (MoE) nedir?** Tek ileri beslemeli ambarın yerine
-  birçoğunu koyup bir yönlendiricinin her token'ı en iyi bir-iki uzmana
-  göndermesi. Devasa toplam kapasite; token başına bunun yalnızca bir kesri
-  hesaplama öder.
-- **Temperature 0 hep aynı cevabı mı verir?** Neredeyse — bu açgözlü
-  (greedy) çözümlemedir — ama pratikte yığınlama ve kayan nokta sırası yine
-  de küçük koşudan-koşuya sapmalar üretir.
-- **Perplexity nedir?** Tutulmuş metin üzerindeki ortalama şaşkınlığın
-  üsteli: ön eğitimin standart puanı ve alt görev kalitesi için zayıf bir
-  vekil — asıl görevinizde değerlendirin.
+çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir ve bir karar merdiveni oluşturur: **prompting** davranışı bağlam içinde biçimlendirir; **RAG** (retrieval), sık değişen bilgiyi getirir — ağırlıklara dokunmadan; **fine-tuning**, kalıcı olması gereken üslubu ya da alanı içine işler. Bu sırayla deneyin — her basamak daha pahalıdır. Araçları ekleyin ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
 
 ## Bütün hikâye beş satırda
 
