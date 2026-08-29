@@ -52,27 +52,51 @@ learned transformation of its vector:
 - **key** — how should others find me?
 - **value** — what do I hand over if picked?
 
-(Think YouTube: your search is the query, video titles are the keys, the
-videos are the values.) And only two math operations are involved: the
-**dot product** — multiply two vectors, get one similarity score — and the
-**weighted sum** — blend vectors by percentages.
+Where do these three come from? From the token's own vector. The model
+holds three learned tables of numbers; multiplying a token's vector by each
+table produces its query, its key, and its value. Same word, three outfits.
+(And think YouTube: your search text is the query, every video's title is a
+key, the videos themselves are the values.)
 
-Take "The quick brown fox", with the model working on *fox*:
+Only two mathematical operations do all the work:
 
-1. **Score.** *fox*'s query is dot-producted with every key, its own
-   included: Q·K(The) = 0.5, Q·K(quick) = 2.1, Q·K(brown) = 4.0,
-   Q·K(fox) = 5.4.
-2. **Percentages.** Softmax converts the scores into weights: 2%, 8%, 30%,
-   60%. The model has just *decided, in numbers*, that *brown* matters and
-   *The* barely does. Note that a token attends to itself — often most of
-   all.
-3. **Blend.** fox_new = 0.02 × V(The) + 0.08 × V(quick) + 0.30 × V(brown)
-   + 0.60 × V(fox). The result is no longer generic *fox*; it is
-   *this-quick-brown-fox*, and it is what the next layer receives.
+- **Dot product** — multiply two vectors position by position and add it
+  all up. Out comes a single number: large when the two vectors point the
+  same way, small when they do not. A similarity meter.
+- **Weighted sum** — mix several vectors according to percentages, like a
+  recipe: 60% of this, 30% of that.
 
-No rule ever told the model that foxes are brown. The Q, K, V
-transformations were tuned, over trillions of guesses, until useful weights
-came out on their own.
+Now trace "The quick brown fox" while the model works on *fox*.
+
+**Step 1 — Score: who matters to me?** *Fox*'s query is dot-producted with
+every word's key, its own included:
+
+| pair | dot product | reading |
+|---|---|---|
+| Q(fox) · K(The) | 0.5 | barely relevant |
+| Q(fox) · K(quick) | 2.1 | somewhat relevant |
+| Q(fox) · K(brown) | 4.0 | very relevant |
+| Q(fox) · K(fox) | 5.4 | itself — most of all |
+
+**Step 2 — Percentages: turn scores into a recipe.** Softmax converts the
+messy scores into clean weights that sum to 100%: **2%, 8%, 30%, 60%**. The
+model has just decided, in numbers, how much attention each word deserves.
+(Yes, a token attends to itself — usually most of all.)
+
+**Step 3 — Blend: cook the recipe.** The new *fox* vector is the weighted
+sum of the *values*:
+
+> fox_new = 0.02 × V(The) + 0.08 × V(quick) + 0.30 × V(brown) + 0.60 × V(fox)
+
+The result is no longer the dictionary word *fox*; it is
+*this-particular-quick-brown-fox*, and that enriched vector is what the
+next layer receives.
+
+One clarification worth holding on to: the *only* learned parts here are
+the three tables that produce Q, K, and V. The dot products, the softmax,
+the weighted sum — fixed arithmetic, no learning in them. And no rule ever
+told the model that foxes are brown: over trillions of guesses, the three
+tables were tuned until useful weights came out on their own.
 
 Two footnotes on this machinery. First, the raw scores are divided by
 √(key dimension) before softmax — hence "*scaled* dot-product attention":

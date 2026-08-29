@@ -52,26 +52,50 @@ bir dönüşümü olan üç rol verilir:
 - **anahtar (key)** — başkaları beni nasıl bulsun?
 - **değer (value)** — seçilirsem ne teslim ederim?
 
-(YouTube'u düşünün: aramanız sorgu, video başlıkları anahtar, videolar
-değer.) Ve işin içinde yalnızca iki matematik işlemi vardır: **iç çarpım** —
-iki vektörü çarp, tek bir benzerlik puanı al — ve **ağırlıklı toplam** —
-vektörleri yüzdelere göre karıştır.
+Bu üçü nereden geliyor? Token'ın kendi vektöründen. Model, üç öğrenilmiş
+sayı tablosu tutar; bir token'ın vektörünü her tabloyla çarpmak, onun
+sorgusunu, anahtarını ve değerini üretir. Aynı kelime, üç kıyafet. (Ve
+YouTube'u düşünün: arama metniniz sorgu, her videonun başlığı anahtar,
+videoların kendisi değer.)
 
-"Hızlı kahverengi tilki"yi alın; model *tilki* üzerinde çalışıyor:
+Bütün işi yalnızca iki matematik işlemi yapar:
 
-1. **Puanla.** *Tilki*nin sorgusu, kendisininki dahil her anahtarla iç
-   çarpıma girer: Q·K(Hızlı) = 2,1, Q·K(kahverengi) = 4,0,
-   Q·K(tilki) = 5,4.
-2. **Yüzdele.** Softmax puanları ağırlığa çevirir: %10, %30, %60. Model az
-   önce, *sayılarla*, *kahverengi*nin önemli olduğuna karar verdi. Dikkat:
-   token kendine de bakar — çoğu zaman en çok kendine.
-3. **Karıştır.** tilki_yeni = 0,10 × V(Hızlı) + 0,30 × V(kahverengi) +
-   0,60 × V(tilki). Sonuç artık genel *tilki* değildir; *bu-hızlı-kahverengi-
-   tilki*dir ve bir sonraki katmana giden budur.
+- **İç çarpım** — iki vektörü basamak basamak çarpıp hepsini topla. Tek bir
+  sayı çıkar: iki vektör aynı yönü gösteriyorsa büyük, göstermiyorsa küçük.
+  Bir benzerlik ölçer.
+- **Ağırlıklı toplam** — birkaç vektörü yüzdelere göre karıştır; bir tarif
+  gibi: şundan %60, bundan %30.
 
-Modele tilkilerin kahverengi olduğunu hiçbir kural söylemedi. Q, K, V
-dönüşümleri, trilyonlarca tahmin boyunca, işe yarar ağırlıklar kendiliğinden
-çıkana dek ayarlandı.
+Şimdi "Hızlı kahverengi tilki"yi, model *tilki* üzerinde çalışırken izleyin.
+
+**1. Adım — Puanla: bana kim önemli?** *Tilki*nin sorgusu, kendisininki
+dahil her kelimenin anahtarıyla iç çarpıma girer:
+
+| çift | iç çarpım | okunuşu |
+|---|---|---|
+| Q(tilki) · K(Hızlı) | 2,1 | biraz ilgili |
+| Q(tilki) · K(kahverengi) | 4,0 | çok ilgili |
+| Q(tilki) · K(tilki) | 5,4 | kendisi — en çok |
+
+**2. Adım — Yüzdele: puanları tarife çevir.** Softmax, dağınık puanları
+toplamı %100 eden temiz ağırlıklara çevirir: **%10, %30, %60**. Model az
+önce, sayılarla, her kelimenin ne kadar dikkati hak ettiğine karar verdi.
+(Evet, token kendine de dikkat eder — genellikle en çok.)
+
+**3. Adım — Karıştır: tarifi pişir.** Yeni *tilki* vektörü, *değerlerin*
+ağırlıklı toplamıdır:
+
+> tilki_yeni = 0,10 × V(Hızlı) + 0,30 × V(kahverengi) + 0,60 × V(tilki)
+
+Sonuç artık sözlükteki *tilki* kelimesi değildir; *bu-belirli-hızlı-
+kahverengi-tilki*dir ve bir sonraki katmana giden, bu zenginleşmiş
+vektördür.
+
+Elde tutmaya değer bir netlik: buradaki *öğrenilmiş* tek parça, Q, K ve
+V'yi üreten üç tablodur. İç çarpımlar, softmax, ağırlıklı toplam — sabit
+aritmetiktir, içlerinde öğrenme yoktur. Ve modele tilkilerin kahverengi
+olduğunu hiçbir kural söylemedi: üç tablo, trilyonlarca tahmin boyunca, işe
+yarar ağırlıklar kendiliğinden çıkana dek ayarlandı.
 
 Bu mekanizmaya iki dipnot. Birincisi, ham puanlar softmax'tan önce
 √(anahtar boyutu)'na bölünür — adındaki "*ölçekli* iç çarpım" budur: devasa
