@@ -19,14 +19,15 @@ Bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibidir.
 
 Her token bir **embedding**'e dönüşür: bir anlam haritasındaki koordinatları
 gibi davranan uzun bir sayı listesi. *Kral*, *kraliçe*ye yakın, *hesap
-tablosu*na uzaktır; yönler ilişkidir — *kral − erkek + kadın*, *kraliçe*nin
-yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
+tablosu*na uzaktır; yönler ilişkidir: *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü — ve *kral − erkek + kadın*, *kraliçe*nin yakınına düşer. Bu haritayı kimse çizmedi; öğrenildi. Bir torba koordinatta
 sıra olmadığından, her token'ın **konumu** da işlenir: "köpek adamı ısırdı",
 "adam köpeği ısırdı"dan farklı kalmalıdır.
 
 ## 3. Attention: bağlam içinde okumak
 
-Orijinal Transformer makalesinden karşılaştırın:
+Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü,
+sayı olan yüz mü? Anlam komşulara bağlıdır ve komşuları okumak attention'ın
+işidir. Orijinal Transformer makalesinden karşılaştırın:
 
 > Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
@@ -41,8 +42,7 @@ daha önce geçen ve yorgun olabilecek bir şey arar; *hayvan*ın anahtarı gü�
 eşleşir, *cadde*ninki zayıf; puanlar yüzdeye çevrilir ve *o*, vektörünü
 ağırlıklı bir karışım olarak yeniden kurar — diyelim %85 *hayvan*, %10
 *cadde*. Her katman, her biri kendi ilişkisini izlemeyi öğrenen birçok
-attention "kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi
-sıfat hangi ismin.
+attention "kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi sıfat hangi ismin. Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini tahmine yarar.
 
 Bir asimetriye dikkat: sorgu bir kez ateşlenir; ama bir token'ın anahtarı ve
 değeri, geriye bakan her sonraki token için geçerli kalır. Bunu aklınızda
@@ -52,8 +52,7 @@ tutun — birazdan paraya dönüşecek.
 
 Bunu onlarca-yüzü aşkın kez üst üste koyun. Her katmanda attention bağlamı
 karıştırır (kütüphaneci), **ileri beslemeli ağ** ise "Paris, Fransa ile
-eşleşir" gibi öğrenilmiş örüntüleri depolar (ambar — **parametrelerin** çoğu
-burada yaşar). GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
+eşleşir" gibi öğrenilmiş örüntüleri depolar (ambar — **parametrelerin** çoğu burada yaşar). İlk katmanlar yazımı ve dil bilgisini kapar; derin katmanlar olguları ve uzun menzilli mantığı. GPT-2, 2019'da 1,5 milyar parametreyle manşet olmuştu; öncü
 modeller bugün trilyonlara varıyor. En tepede **softmax**, puanları toplamı
 yüzde yüz olan olasılıklara çevirir — modelin bütün çıktısı, bildiği her
 token için bir olasılıktır. "Bir varmış bir"den sonra kütle "yokmuş"a
@@ -77,26 +76,23 @@ sıkıştırılmışıdır: resim kalır, pikseller kalmaz.
 önceden tahmin edildi. DeepMind'ın **Chinchilla** çalışması denge kuralını
 ekledi: parametre ve veri birlikte büyümeli (parametre başına ~20 token);
 70 milyarlık modelleri, sırf bu aritmetikle 280 milyarlık rakibini geçti.
-Dürüst bir şerh: eğri pürüzsüzdür ama beceriler aniden gelebilir — **beliren
-yetenekler**.
+Dürüst bir şerh: eğri pürüzsüzdür ama beceriler aniden gelebilir — bir model üç basamaklı aritmetikte boy boy başarısız olup bir sonraki sıçrayışta bunu güvenilir yapabilir: **beliren yetenek**. Ham madde de sonlu: kaliteli açık metin tükenmek üzere; sınır bu yüzden sentetik veriye ve hesaplamayı cevap anında harcamaya — aşağıdaki akıl yürüten modellere — kayıyor.
 
 ## 6. Otomatik tamamlamadan asistana
 
 Ön eğitimin ürünü **taban modeldir**: metni sürdüren bir makine, başka hiçbir
 şey değil. "Fransa'nın başkenti neresi?" deyin; "Paris." alabilirsiniz — ya
-da dokuz quiz sorusu daha, çünkü internette quizler sürü halinde gezer. Onu
+da dokuz quiz sorusu daha, çünkü internette quizler sürü halinde gezer — ya da bir kurgu sahnesi: "diye sordu öğretmen, kimse parmak kaldırmadı." Hepsi sadık birer devamdır. Bir zamanlar cevap koparmak "Soru: … Cevap:" kalıbı yazmayı gerektirirdi — cevabı en olası devam yapmak için; prompt mühendisliği orada doğdu. Onu
 asistan yapan iki ucuz aşama var. **Talimat eğitimi**: on binlerce yazılı
 soru → ideal cevap örneğiyle eğitime devam edin; "yardımcı biçimde cevapla"
 en olası devam haline gelsin. **RLHF** (insan geri bildirimiyle pekiştirmeli
 öğrenme): insanlar aday cevapları karşılaştırır, bir ödül modeli bu zevki
-öğrenir, LLM ona doğru ayarlanır — karşılaştırmak, kusursuz yazmaktan çok
-daha kolaydır. Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim
+öğrenir, LLM ona doğru ayarlanır — karşılaştırmak, kusursuz yazmaktan çok daha kolaydır — ve karşılaştırmalar, örneklerin anlatamadığını yakalar: ton, emin olmadığında dürüstlük, zararı geri çevirmek. İki aşama da, ön eğitimin binlerce GPU'da geçen aylarının küçük bir kesrine mal olur. Vurucu gerçek: GPT-3, ChatGPT'den iki yıl önce vardı. Devrim
 daha büyük ağ değil, bu aşamalardı.
 
 ## 7. Üretim: plan değil, döngü
 
-Model olasılıkları hesaplar, bir token **örnekler** (ağırlıklı çekiliş),
-ekler, tekrarlar. Çekilişi üç düğme yönetir. "Gökyüzü"nden sonra: *maviydi*
+Model olasılıkları hesaplar, bir token **örnekler** (ağırlıklı çekiliş), ekler ve tekrarlar — her yeni token anında bir sonraki tahminin girdisidir — ta ki "bitirdim" diyen özel bir durdurma token'ına kadar. Çekilişi üç düğme yönetir. "Gökyüzü"nden sonra: *maviydi*
 %60, *karanlıktı* %10, … *patatesti* %0,0001. **Temperature** listeyi
 sivriltir ya da düzleştirir (SQL için düşük, beyin fırtınası için yüksek);
 **top-k** yalnızca en olası k token'ı tutar; **top-p**, toplamı örneğin
@@ -106,28 +102,22 @@ gökyüzünün asla patates olmaması bundandır.
 
 Döngünün iki sonucu: "adım adım düşün" işe yarar, çünkü modelin tek karalama
 defteri sayfadır — "17 × 24 = 340 + 68" yazmak her sonraki tahmini
-kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve **KV cache**,
-3. bölümdeki asimetriyi paraya çevirir: geçmiş anahtarlar ve değerler hiç
-değişmez, bir kez hesaplanıp saklanır — uzun bir istemde ilk kelimeden
-önceki duraklama, o önbelleği kuran **prefill**'dir; "önbelleklenmiş
-girdinin" ucuz olması, bedelinin çoktan ödenmiş olmasındandır.
+kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve **KV cache**, 3. bölümdeki asimetriyi paraya çevirir. 1.000'inci token, sorgusunu önceki 999 anahtarla karşılaştırmak zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından.
 
 ## 8. Sizi hatırlamaz
 
 Eğitimden sonra parametreler **donar**. Her mesajda konuşmanın tamamı ağdan
 yeniden geçer — her sabah bütün dava dosyasını isteyen, uzun süreli hafızası
-olmayan parlak bir danışman gibi. Hafıza sanılan şey bağlam penceresidir.
+olmayan parlak bir danışman gibi. Hafıza sanılan şey bağlam penceresidir — çok uzun sohbetlerin yavaşlaması ve başını unutması bundandır.
 Madalyonun öbür yüzü **in-context learning**: "deniz → sea, ev → house,
-kedi → ?" gösterin; model *cat* der — görevi yalnızca istemden öğrenmiştir,
-tek parametre değişmeden.
+kedi → ?" gösterin; model *cat* der — görevi yalnızca istemden öğrenmiştir, tek parametre değişmeden. Pratik prompt mühendisliğinin çoğu tam olarak budur: bağlamı, istenen devamı en olası devam yapacak şekilde düzenlemek.
 
 ## 9. Neden uyduruyor
 
 2023'te *Mata v. Avianca* davasında avukatlar, ChatGPT'nin uydurduğu altı
 içtihadı mahkemeye sundu — "gerçek mi?" diye sorduklarında da "evet" almıştı.
 5.000 dolarlık ceza, "yapay zekâ halüsinasyonunu" meşhur etti. Mekanizma sır
-değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin ince
-olduğu yerde bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
+değil: model bir olasılık motorudur, veritabanı değil. Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur. İnce olduğu yerde ise bulunamayacak kayıt yoktur — cevap *biçiminde* bir şey üretir;
 çünkü optimize ettiği şey doğru değil, makuldür. Çözümler girdiyi değiştirir:
 retrieval (RAG), araçlar ve kaynakları kendiniz kontrol etmek — avukatların
 atladığı adım.
