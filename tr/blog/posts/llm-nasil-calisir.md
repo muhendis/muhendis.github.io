@@ -136,8 +136,23 @@ Yukarıdaki her şey tek ünlü satırdır:
 1. Adım QKᵀ, 2. Adım bölme, 3. Adım softmax, 4. Adım V ile çarpım.
 Öğrenilen *tek* parça üç tablodur; gerisi sabit aritmetik — ve tüm
 token'lar matris olarak üst üste konduğundan bu tek satır bütün
-aramaları aynı anda koşturur: GPU'ların bayıldığı iş. Bedeli **O(n²)**:
-herkes herkesi puanlar — bağlamı ikiye katla, maliyeti dörtle.
+aramaları aynı anda koşturur: GPU'ların bayıldığı iş. Bedeli **O(n²)**: herkes herkesi puanlar — bağlamı ikiye katla, maliyeti dörtle.
+
+Bütün mekanizma, tek resimde:
+
+```mermaid
+flowchart TD
+    E["tilki'nin embedding'i"] -->|"× W_Q"| Q["Q — ne arıyorum?"]
+    E -->|"× W_K"| K["K — nasıl bulunurum?"]
+    E -->|"× W_V"| V["V — ne devrederim?"]
+    Q --> S1["1. Adım · puan = Q · K"]
+    K --> S1
+    S1 --> S2["2. Adım · ölçek ÷ √dₖ"]
+    S2 --> S3["3. Adım · softmax → yüzdeler"]
+    S3 --> S4["4. Adım · karışım = Σ ağırlık × V"]
+    V --> S4
+    S4 --> OUT["yeni tilki — bu-belirli-hızlı-kahverengi-tilki"]
+```
 
 ### Tek yön
 
@@ -194,8 +209,19 @@ girer (GPT-2'de ~50.000):
 
 **Softmax** puanları olasılığa çevirir. "Bir varmış bir"den sonra kütle
 "yokmuş"a yığılır; "En sevdiğim şehir"den sonra yüzlerce şehre dağılır.
-İki durumda da model tek sorusunu cevaplar: *sırada ne gelmesi
-muhtemel?*
+İki durumda da model tek sorusunu cevaplar: *sırada ne gelmesi muhtemel?* Kule, zeminden çatıya:
+
+```mermaid
+flowchart BT
+    T["token'lar + konumlar"] --> L1["Kat 1 · attention → ileri beslemeli ağ, residual ile eklenir"]
+    L1 --> L2["Kat 2 · aynı rutin"]
+    L2 --> LD["… onlarca kat daha …"]
+    LD --> LN["Kat N"]
+    LN --> F["son token'ın nihai vektörü — bağlamın tamamı"]
+    F --> SC["bilinen her token'la iç çarpım — ~50.000 puan"]
+    SC --> SM["softmax → olasılıklar"]
+    SM --> A["Bir varmış bir ___ → yokmuş"]
+```
 
 ## 5. Eğitim ve ölçek
 
@@ -206,9 +232,16 @@ gerçekten sonra gelen token'dır; veri kendi kendini notlandırır. Her
 tahmini **kayıp** puanlar: kayıp = −log p(doğru token) — doğruya %90
 vermek ≈ 0,1'e, %20 vermek ≈ 1,6'ya mal olur (karne: **perplexity** =
 e^(ortalama kayıp)). **Gradyan inişi** her parametreyi yokuş aşağı
-minicik bir adım kaydırır — sisli bir iniş, trilyonlarca kez — ta ki
-model, eğitim verisinin JPEG gibi sıkıştırılmışı olana dek: resim
-kalır, pikseller kalmaz.
+minicik bir adım kaydırır — sisli bir iniş, trilyonlarca kez — ta ki model, eğitim verisinin JPEG gibi sıkıştırılmışı olana dek: resim kalır, pikseller kalmaz.
+
+```mermaid
+flowchart LR
+    A["gerçek metni göster"] --> B["sıradaki token'ı gizle"]
+    B --> C["model tahmin eder"]
+    C --> D["kayıp = doğrunun −log p'si"]
+    D --> E["gradyan inişi — minicik bir adım"]
+    E -->|"trilyonlarca kez tekrar"| A
+```
 
 Ölçeğin getirisi öngörülebilirdir. **Ölçek yasaları** — kayıp ≈
 a · C^(−α), log-log kâğıdında düz çizgi — OpenAI'ın GPT-4'ün nihai
@@ -248,8 +281,18 @@ sonra: *mavi* %60, *karanlık* %10, …, *patates* %0,0001.
 - **Top-p**, olasılığın örneğin %90'ını örten en küçük kümeyi tutar —
   model eminse iki token, kararsızsa seksen.
 
-Önce buda, sonra çek: cevaplar bu yüzden günden güne değişir ve gökyüzü
-bu yüzden asla patates olmaz.
+Önce buda, sonra çek: cevaplar bu yüzden günden güne değişir ve gökyüzü bu yüzden asla patates olmaz.
+
+```mermaid
+flowchart LR
+    CTX["bağlam"] --> P["olasılıklar"]
+    P --> CUT["buda — top-k / top-p"]
+    CUT --> DR["çek — temperature T"]
+    DR --> AP["token'ı ekle"]
+    AP --> ST{"durdurma token'ı mı?"}
+    ST -->|"hayır — döngü"| CTX
+    ST -->|"evet"| DONE["cevap tamam"]
+```
 
 Döngü, "adım adım düşün"ün sırrını da açıklar — sayfa, modelin tek
 karalama defteridir. 17 × 24 tek hamlede istenirse cevabı tek tahminde

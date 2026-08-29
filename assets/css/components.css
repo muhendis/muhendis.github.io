@@ -86,6 +86,12 @@ a.tag:hover { border-color: var(--c-accent); }
 .post-body li + li { margin-top: var(--sp-2); }
 .post-body img { border-radius: var(--radius); border: 1px solid var(--c-border); }
 .post-body pre { margin-block: var(--sp-5); }
+/* Mermaid diagrams: rendered figures, not code boxes. */
+.post-body pre.mermaid {
+  background: transparent; border: 0; padding: 0;
+  display: flex; justify-content: center; overflow-x: auto;
+}
+.post-body pre.mermaid svg { max-width: 100%; height: auto; }
 
 .notice {
   padding: var(--sp-3) var(--sp-4); border-radius: var(--radius);

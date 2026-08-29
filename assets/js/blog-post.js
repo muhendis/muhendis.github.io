@@ -168,6 +168,31 @@
                 .replace(/\s+/g, '-');
             });
 
+            /* Mermaid diagrams: lazy-load the renderer only when a post uses them. */
+            var mermaidBlocks = document.querySelectorAll('#post-body code.language-mermaid');
+            if (mermaidBlocks.length) {
+              mermaidBlocks.forEach(function (code) {
+                var holder = document.createElement('pre');
+                holder.className = 'mermaid';
+                holder.textContent = code.textContent;
+                code.parentElement.replaceWith(holder);
+              });
+              var mjs = document.createElement('script');
+              mjs.src = '../../assets/js/vendor/mermaid.min.js';
+              mjs.onload = function () {
+                var root = document.documentElement;
+                var dark = root.getAttribute('data-theme') === 'dark' ||
+                  (root.getAttribute('data-theme') !== 'light' &&
+                   window.matchMedia('(prefers-color-scheme: dark)').matches);
+                try {
+                  window.mermaid.initialize({ startOnLoad: false, theme: dark ? 'dark' : 'neutral', fontFamily: 'inherit' });
+                  var run = window.mermaid.run({ querySelector: '#post-body pre.mermaid' });
+                  if (run && run.catch) run.catch(function () {});
+                } catch (e) { /* diagram source stays readable as text */ }
+              };
+              document.head.appendChild(mjs);
+            }
+
             var url = ORIGIN + '/' + LANG + '/blog/post.html?slug=' + slug;
             document.title = meta.title + ' — Engin Bozaba';
             setMeta('name', 'description', meta.summary || '');

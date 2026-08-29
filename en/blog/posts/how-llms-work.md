@@ -131,6 +131,22 @@ Everything above is one famous line:
 
 Step 1 is QKᵀ, Step 2 the division, Step 3 the softmax, Step 4 the multiplication by V. The *only* learned parts are the three tables; the rest is fixed arithmetic — and with all tokens stacked as matrices, this one line runs every search at once: exactly the work GPUs devour. The price is **O(n²)** — everyone scores everyone, so double the context, quadruple the cost.
 
+The whole mechanism, one picture:
+
+```mermaid
+flowchart TD
+    E["embedding of fox"] -->|"× W_Q"| Q["Q — what am I looking for?"]
+    E -->|"× W_K"| K["K — how am I found?"]
+    E -->|"× W_V"| V["V — what do I hand over?"]
+    Q --> S1["Step 1 · score = Q · K"]
+    K --> S1
+    S1 --> S2["Step 2 · scale ÷ √dₖ"]
+    S2 --> S3["Step 3 · softmax → percentages"]
+    S3 --> S4["Step 4 · blend = Σ weight × V"]
+    V --> S4
+    S4 --> OUT["new fox — this-particular-quick-brown-fox"]
+```
+
 ### One direction only
 
 During generation, a token may only look *backward*: *fox* sees
@@ -187,8 +203,19 @@ the model knows (~50,000 in GPT-2):
 
 **Softmax** turns the scores into probabilities. After "Once upon a",
 the mass piles onto "time"; after "My favorite city is", it spreads
-across hundreds of cities. Either way the model answers its only
-question: *what likely comes next?*
+across hundreds of cities. Either way the model answers its only question: *what likely comes next?* The tower, ground floor to roof:
+
+```mermaid
+flowchart BT
+    T["tokens + positions"] --> L1["Floor 1 · attention → feed-forward, added via residual"]
+    L1 --> L2["Floor 2 · same routine"]
+    L2 --> LD["… dozens more floors …"]
+    LD --> LN["Floor N"]
+    LN --> F["last token's final vector — the whole context"]
+    F --> SC["dot product with every known token — ~50,000 scores"]
+    SC --> SM["softmax → probabilities"]
+    SM --> A["Once upon a ___ → time"]
+```
 
 ## 5. Training and scale
 
@@ -200,8 +227,16 @@ actually came next; the data grades itself. Each guess is scored by the
 costs ≈ 0.1, a 20% chance ≈ 1.6 (report card: **perplexity** =
 e^(average loss)). **Gradient descent** then nudges every parameter one
 tiny downhill step — a descent in fog, repeated trillions of times —
-until the model is the training data compressed like a JPEG: picture
-kept, pixels gone.
+until the model is the training data compressed like a JPEG: picture kept, pixels gone.
+
+```mermaid
+flowchart LR
+    A["show real text"] --> B["hide the next token"]
+    B --> C["model guesses"]
+    C --> D["loss = −log p of the truth"]
+    D --> E["gradient descent — one tiny nudge"]
+    E -->|"repeat, trillions of times"| A
+```
 
 Scale pays predictably. **Scaling laws** — loss ≈ a · C^(−α), a
 straight line on log-log paper — let OpenAI forecast GPT-4's final loss
@@ -237,8 +272,18 @@ sky was": *blue* 60%, *dark* 10%, …, *potato* 0.0001%.
 - **Top-k** keeps the k likeliest tokens — *potato* deleted.
 - **Top-p** keeps the smallest set covering, say, 90% of the probability — two tokens when sure, eighty when torn.
 
-Cut first, then draw: that is why answers vary day to day, and why the
-sky is never a potato.
+Cut first, then draw: that is why answers vary day to day, and why the sky is never a potato.
+
+```mermaid
+flowchart LR
+    CTX["context"] --> P["probabilities"]
+    P --> CUT["cut — top-k / top-p"]
+    CUT --> DR["draw — temperature T"]
+    DR --> AP["append the token"]
+    AP --> ST{"stop token?"}
+    ST -->|"no — loop"| CTX
+    ST -->|"yes"| DONE["answer complete"]
+```
 
 The loop also explains "think step by step" — the page is the model's
 only scratchpad. Asked for 17 × 24 in one leap, it must land the answer
