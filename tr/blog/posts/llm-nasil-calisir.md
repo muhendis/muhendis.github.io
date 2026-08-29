@@ -48,91 +48,81 @@ atlatır.
 
 ## Attention: bağlam içinde okumak
 
-Koordinatlar tek başına "yüz" kelimesinin ne demek olduğunu söyleyemez —
-surattaki yüz mü, sayı olan yüz mü? Kelimenin anlamı komşularına bağlıdır.
-Bu sorunu **Transformer** çözer — modern bütün dil modellerinin arkasındaki sinir ağı tasarımı, GPT'deki T harfi. Temel aracı da **attention** (dikkat) mekanizmasıdır.
+Koordinatlar tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü,
+sayı olan yüz mü? Anlam, komşulara bağlıdır. Bunu çözmek **Transformer**'ın
+işidir — modern bütün dil modellerinin arkasındaki sinir ağı tasarımı,
+GPT'deki T — ve temel aracı **attention**'ın.
 
-En temiz gösterim, orijinal Transformer makalesinin kendi örneğinden gelir.
-Karşılaştırın:
+Orijinal Transformer makalesinin kendi örneği sorunu tek hamlede gösterir:
 
 > Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
-Sondaki tek kelimeyi değiştirin, "o" anlam değiştirsin — *yorgun* hayvanı
-gösterir, *geniş* caddeyi. Siz bunu anında ve farkında olmadan çözdünüz.
-Attention, modelin aynısını yapmasını sağlayan mekanizmadır.
+Tek kelime değişir ve "o" taraf değiştirir — *yorgun* hayvanı gösterir,
+*geniş* caddeyi. Siz bunu anında çözdünüz. Attention, modelin çözme biçimidir.
 
-Peki nasıl? Modelin içinde her token, her biri vektörünün farklı küçük bir
-dönüşümü olan üç şapka takar:
+Her token üç rol oynar; her biri vektörünün küçük bir dönüşümüdür:
 
-- bir **sorgu (query)**: "ben ne arıyorum?"
-- bir **anahtar (key)**: "başkaları beni nasıl bulsun?"
-- bir **değer (value)**: "seçilirsem ne teslim ederim?"
+- **sorgu (query)** — ne arıyorum?
+- **anahtar (key)** — başkaları beni nasıl bulsun?
+- **değer (value)** — seçilirsem ne teslim ederim?
 
-Günlük hayattaki en yakın makine bir arama motorudur. YouTube'a yazdığınız
-metin sorgudur. Her videonun başlığı ve açıklaması birer anahtardır. Videoların
-kendisi ise değerdir. Motor, sorgunuzu bütün anahtarlarla karşılaştırır,
-eşleşmeleri puanlar ve en iyi eşleşenlerin arkasındaki içeriği önünüze koyar.
+YouTube'u düşünün: yazdığınız metin sorgu, her videonun başlığı anahtar,
+videoların kendisi değer. Attention bu aramayı her token için aynı anda
+çalıştırır. "O çok *yorgundu*" cümlesinde *o* sorar: "daha önce geçen, yorgun
+olabilecek bir şey?" *Hayvan*ın anahtarı güçlü eşleşir, *cadde*ninki zayıf;
+puanlar yüzdeye çevrilir ve *o*, vektörünü değerlerin ağırlıklı karışımı
+olarak yeniden kurar — diyelim %85 *hayvan*, %10 *cadde*. Hiçbir şey olduğu
+gibi kopyalanmaz; her şey, ilgiyle ağırlıklanmış bir karışımdır. *Yorgun*u
+*geniş* yapın, ağırlıklar tersine döner.
 
-Attention bu aramayı her token için aynı anda çalıştırır. "O çok *yorgundu*"
-cümlesinde *o* token'ı kabaca şöyle bir sorgu yayınlar: "daha önce geçen ve
-yorgun olabilecek bir şey arıyorum." *Hayvan*ın anahtarı bu sorguyla güçlü
-eşleşir; *cadde*nin anahtarı zayıf. Eşleşme puanları, toplamı yüzde yüz olan
-ağırlıklara çevrilir ve *o*, vektörünü değerlerin bu ağırlıklarla karışımıyla
-günceller — diyelim %85'i *hayvan*dan, %10'u *cadde*den, birazı da geri
-kalandan. Hiçbir şey olduğu gibi kopyalanmaz: her güncelleme, ilgiye göre
-ağırlıklanmış bir karışımdır. *Yorgun*u *geniş*le değiştirin; aynı mekanizma
-ağırlıkları *cadde*ye çevirir.
+Resmi iki ayrıntı tamamlar ve ikisinin de karşılığı ileride ödenecek:
 
-Üç roldeki asimetriye dikkat edin. Bir token'ın sorgusu tam bir kez
-kullanılır — o token'ın etrafına bakındığı anda. Anahtarı ve değeri ise metnin
-geri kalanı boyunca geçerli kalır: sonradan gelip geriye bakan her token bu
-anahtarla karşılaştırma yapmak zorundadır ve gerektiğinde bu değerden
-beslenir. Bu düşünceyi aklınızda tutun; üretim bölümünde gerçek paraya
-dönüşecek.
-
-Ve bu bir kez olmaz. Her katman, paralel çalışan birçok attention "kafası"
-(head) barındırır ve her kafa farklı türden bir ilişkiyi izlemeyi öğrenir —
-biri dil bilgisini takip eder, biri yukarıdaki gibi göndermeleri çözer, bir
-başkası hangi sıfatın hangi ismi nitelediğini fark eder. Bu rolleri kimse
-atamaz; kendiliğinden ortaya çıkarlar, çünkü her biri sıradaki token'ı tahmin
-etmeye yarar.
+- **Roller asimetriktir.** Sorgu bir kez ateşlenir — token'ının etrafına
+  bakındığı anda. Anahtar ve değer ise geriye bakan her sonraki token için
+  geçerli kalır. KV cache'in var olma sebebi bu asimetridir — üretim
+  bölümünde gerçek para.
+- **Aynı anda birçok kez olur.** Her katman birçok attention "kafası"
+  çalıştırır ve her kafa izleyeceği ilişkiyi kendisi öğrenir — dil bilgisi,
+  göndermeler, hangi sıfatın hangi isme ait olduğu. Rolleri kimse atamaz;
+  kendiliğinden belirir.
 
 ## Katmanlar: bilgi nerede yaşıyor
 
-Transformer bu mekanizmayı **katmanlar** halinde üst üste diziyor — onlarcadan
-yüzü aşkına kadar. Her katmanda iki blok var: attention (diğer token'lardan
-bağlamı karıştır) ve **ileri beslemeli ağ** — her token'ın vektörüne tek tek uygulanan küçük bir sinir ağı. Kullanışlı bir zihinsel model: ileri beslemeli bloklar,
-öğrenilmiş örüntülerin depolandığı ambardır — "Paris, Fransa ile eşleşir",
-"`def`ten sonra gelen kod bir fonksiyon adıdır" — attention ise eldeki cümlenin
-hangi rafa ihtiyacı olduğuna karar veren kütüphanecidir.
+Bu mekanizmayı onlarca, yüzü aşkın kez üst üste koyun; elinizde bir
+transformer var. Her katmanda, iş bölümü net iki blok:
 
-İlk katmanlar yazımı ve dil bilgisini, derin katmanlar olguları, ilişkileri ve
-daha uzun menzilli mantığı yakalar. *Büyük* dil modelindeki "büyük", bütün bu
-katmanlardaki öğrenilmiş sayıları — **parametreleri** — sayar. GPT-2, 2019'da
-1,5 milyar parametreyle manşetlere çıkmıştı; bugünün öncü modelleri yüz
-milyarlarla ve trilyonlarla ölçülüyor.
+- **Attention**, diğer token'lardan bağlamı karıştırır — kütüphaneci.
+- **İleri beslemeli ağ** — her token'a tek tek uygulanan küçük bir ağ —
+  öğrenilmiş örüntüleri depolar: "Paris, Fransa ile eşleşir", "`def`ten
+  sonraki kod bir fonksiyon adıdır". Ambar. Parametrelerin çoğu burada yaşar.
 
-En tepede model, son vektörü sözlüğündeki her token için bir puana dönüştürür, sonra puanları toplamı yüzde yüz eden olasılıklara çevirir — **softmax** adımı; attention'ın içeride kullandığı puanı-yüzdeye-çevirme hamlesinin aynısı. Her adımda modelin bütün
-çıktısı budur: bir cümle değil, bir fikir değil — bildiği her token için bir
-olasılık. "Bir varmış bir" dedikten sonra olasılığın neredeyse tamamı
-"yokmuş"un üzerine yığılır. "En sevdiğim şehir" dedikten sonra yüzlerce makul
-şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru cevabıdır: sırada ne gelmesi muhtemel?
+İlk katmanlar yazımı ve dil bilgisini kapar; derin katmanlar olguları ve
+mantığı. *Büyük* dil modelindeki "büyük", bütün bunlardaki öğrenilmiş
+sayıları — **parametreleri** — sayar. GPT-2, 2019'da 1,5 milyarla manşetlere
+çıkmıştı; bugünün öncü modelleri trilyonlara varıyor.
+
+En tepede son bir adım: sözlükteki her token bir puan alır ve **softmax**,
+puanları toplamı yüzde yüz olan olasılıklara çevirir. Modelin bütün çıktısı
+budur — cümle değil, fikir değil; bildiği her token için bir olasılık. "Bir
+varmış bir"den sonra kütle "yokmuş"a yığılır. "En sevdiğim şehir"den sonra
+yüzlerce şehre dağılır. İkisi de modelin cevapladığı tek sorunun doğru
+cevabıdır: *sırada ne gelmesi muhtemel?*
 
 ## Eğitim: bilgi nereden geliyor
 
-Parametreler değerlerini nasıl alıyor? **Ön eğitimle (pretraining)**: modele
-devasa miktarda metin gösterilir — açık internetin büyük bölümü, kitaplar,
-kod; trilyonlarca token, bir insanın on bin ömürde okuyabileceğinden fazlası —
-sıradaki token gizlenir ve model tahmin eder. **Kayıp fonksiyonu (loss)**
-modelin doğru cevaba ne kadar şaşırdığını ölçer; **gradyan inişi** denen algoritma da her parametreyi, modeli daha az şaşırtacak yönde minicik bir adım kaydırır. Bunu
-trilyonlarca kez tekrarlayın.
+Parametreler değerlerini nereden alır? **Ön eğitimden (pretraining)**. Modele
+trilyonlarca token gösterin — açık internetin büyük bölümü, kitaplar, kod —
+sıradaki token'ı gizleyin, tahmin ettirin. **Kayıp fonksiyonu (loss)**, doğru
+cevaba ne kadar şaşırdığını ölçer; **gradyan inişi**, her parametreyi daha az
+şaşırma yönünde minicik bir adım kaydırır. Bunu trilyonlarca kez tekrarlayın.
 
-Modelin içine kimse kural yazmaz. Dil bilgisi, coğrafya, kimya, Python — hepsi
-tek bir oyunda ustalaşmanın yan etkisi olarak özümsenir: sıradaki token'ı bil.
-Bir polisiye romanın son bölümünde sıradaki kelimeyi tahmin etmek için kimin
-cinayet sebebi olduğunu takip etmiş olmak gerekir; bir fizik ders kitabının
-sonraki satırı için biraz fizik içselleştirmiş olmak. Sonucu, eğitim verisinin sıkıştırılmış bir kopyası gibi düşünebilirsiniz — bir JPEG'in fotoğrafı sıkıştırdığı gibi: resmin bütünü kalır, piksellerin birebir aynısı kalmaz.
+İçine tek bir kural yazılmaz. Dil bilgisi, coğrafya, kimya, Python — hepsi
+tek oyunun yan etkisi olarak özümsenir; çünkü polisiye romanın son bölümünü
+tahmin etmek, kimin cinayet sebebi olduğunu takip etmiş olmayı gerektirir;
+fizik kitabının sonraki satırı, biraz fiziği. Sonuç, eğitim verisinin bir
+JPEG'in fotoğrafı sıkıştırdığı gibi sıkıştırılmışıdır: resim kalır,
+pikseller kalmaz.
 
 ## Ölçek yasaları: büyüğün neden hep daha iyi çıktığı
 

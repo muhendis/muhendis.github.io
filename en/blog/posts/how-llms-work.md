@@ -47,88 +47,83 @@ order survives the trip into math.
 
 ## Attention: reading in context
 
-Coordinates alone cannot say what "bank" means — river bank or the one with
-the money? The word's meaning depends on its neighbors. This is the problem the **transformer** solves — the neural-network design behind every modern language model, and the T in GPT. Its central tool is **attention**.
+Coordinates alone cannot say what "bank" means — river bank, or the one with
+the money? Meaning depends on neighbors. Solving this is the job of the
+**transformer** — the neural-network design behind every modern language
+model, the T in GPT — and of its central tool, **attention**.
 
-The cleanest demonstration comes from the original Transformer paper's own
-example. Compare:
+The original Transformer paper's own example shows the problem in one stroke:
 
 > The animal didn't cross the street because **it** was too *tired*.
 > The animal didn't cross the street because **it** was too *wide*.
 
-Swap one word at the end, and "it" flips its meaning — tired points at the
-animal, wide points at the street. You resolved that instantly and
-unconsciously. Attention is the machinery that lets a model do the same.
+One word changes, and "it" switches sides — *tired* points at the animal,
+*wide* at the street. You resolved that instantly. Attention is how a model
+does.
 
-How? Inside the model, every token wears three hats — each one a different
-small transformation of its vector:
+Every token plays three roles, each a small transformation of its vector:
 
-- a **query**: "what am I looking for?"
-- a **key**: "how should others find me?"
-- a **value**: "what do I hand over if I'm picked?"
+- **query** — what am I looking for?
+- **key** — how should others find me?
+- **value** — what do I hand over if picked?
 
-The closest everyday machine is a search engine. What you type into YouTube is
-a query. Every video's title and description is a key. The videos themselves
-are the values. The engine compares your query against all the keys, scores
-the matches, and serves you the content behind the best ones.
+Think YouTube: your search text is a query, every video's title is a key, the
+videos themselves are the values. Attention runs that search for every token
+at once. In "it was too *tired*", *it* asks: "something earlier that could be
+tired?" The key of *animal* matches strongly, the key of *street* weakly; the
+scores become percentages, and *it* rebuilds its vector as a weighted blend
+of the values — say 85% *animal*, 10% *street*. Nothing is copied whole;
+everything is a mixture, weighted by relevance. Swap *tired* for *wide*, and
+the weights flip.
 
-Attention runs that search for every token at once. In "it was too *tired*",
-the token *it* issues a query that says, roughly, "I need a thing mentioned
-earlier that could be tired." The key of *animal* matches that query strongly;
-the key of *street* matches it weakly. The match scores are turned into
-percentages that sum to 100, and *it* updates its vector with a blend of the
-values weighted by those percentages — say 85% of *animal*'s, 10% of
-*street*'s, a little from the rest. Nothing is ever copied whole: every update
-is a mixture, weighted by relevance. Swap *tired* for *wide*, and the very
-same machinery flips the weights toward *street*.
+Two details complete the picture, and both pay off later:
 
-Notice the asymmetry in the three roles. A token's query is used exactly
-once — at the moment that token looks around. Its key and value, though, stay
-relevant for the rest of the text: every later token that looks back must
-compare against this key, and may draw on this value. Hold that thought; in
-the generation section it turns into real money.
-
-And it does not happen once. Each layer runs many attention "heads" in
-parallel, and each head learns to track a different kind of relationship — one
-follows grammar, another resolves references like the example above, another
-notices which adjective modifies which noun. Nobody assigns these roles; they
-emerge, because each one helps predict what comes next.
+- **The roles are asymmetric.** A query fires once, the moment its token
+  looks around. A key and value stay relevant for every later token that
+  looks back. This asymmetry is why the KV cache exists — real money, in the
+  generation section.
+- **It happens many times in parallel.** Each layer runs many attention
+  "heads", and each head learns its own relationship to track — grammar,
+  references, which adjective belongs to which noun. Nobody assigns the
+  roles; they emerge.
 
 ## Layers: where the knowledge lives
 
-A transformer stacks this machinery in **layers** — dozens to over a hundred.
-Each layer has two blocks: attention (mix in context from other tokens) and a **feed-forward network** — a small neural network applied to each token's vector on its own. A useful
-mental model: the feed-forward blocks are the warehouse where learned patterns
-are stored — "Paris pairs with France", "code after `def` is a function
-name" — and attention is the librarian deciding which shelf the current
-sentence needs.
+Stack this machinery dozens to over a hundred times and you have a
+transformer. Each layer holds two blocks with a clean division of labor:
 
-Early layers capture spelling and grammar; deeper layers capture facts,
-relationships, and longer-range logic. The "large" in *large language model*
-counts the learned numbers in all these layers — the **parameters**. GPT-2
-made headlines in 2019 with 1.5 billion of them; today's frontier models are
-measured in the hundreds of billions to trillions.
+- **Attention** mixes in context from the other tokens — the librarian.
+- The **feed-forward network** — a small network applied to each token on its
+  own — stores the learned patterns: "Paris pairs with France", "code after
+  `def` is a function name". The warehouse. Most of the parameters live here.
 
-At the very top, the model turns the final vector into a score for every token in its vocabulary, then converts the scores into percentages that add up to 100% — the **softmax** step, the same scores-to-percentages move attention used internally. That is the model's entire output at each step: not a
-sentence, not an idea — a probability for every token it knows. After "Once
-upon a", nearly all of the probability piles onto "time". After "My favorite
-city is", it spreads across hundreds of plausible cities. Both are correct answers to the only question the model ever answers: what is likely to come next?
+Early layers pick up spelling and grammar; deeper layers, facts and logic.
+The "large" in *large language model* counts the learned numbers across all
+of it — the **parameters**. GPT-2 made headlines in 2019 with 1.5 billion;
+today's frontier models run to the trillions.
+
+At the very top, one last step: every token in the vocabulary gets a score,
+and **softmax** turns the scores into percentages that sum to 100. That is
+the model's entire output — not a sentence, not an idea; a probability for
+every token it knows. After "Once upon a", the mass piles onto "time". After
+"My favorite city is", it spreads across hundreds of cities. Both are correct
+answers to the only question the model ever answers: *what is likely to come
+next?*
 
 ## Training: where the knowledge comes from
 
-How do the parameters get their values? **Pretraining**: show the model
-enormous amounts of text — much of the public internet, books, code; trillions
-of tokens, more than a human could read in ten thousand lifetimes — hide the
-next token, and let it guess. The **loss function** measures how surprised the
-model was by the true answer; an algorithm called **gradient descent** then nudges every parameter
-a tiny amount in the direction that would have made it less surprised. Repeat,
-trillions of times.
+Where do the parameters get their values? **Pretraining**. Show the model
+trillions of tokens — much of the public internet, books, code — hide the
+next token, and let it guess. A **loss function** measures how surprised it
+was by the truth; **gradient descent** nudges every parameter a tiny step
+toward less surprise. Repeat, trillions of times.
 
-Nobody writes rules into the model. Grammar, geography, chemistry, Python — all
-of it is absorbed as a side effect of getting better at one game: guess the
-next token. To predict the next word of a detective novel's final chapter, it
-helps to have tracked who had a motive; to predict the next line of a physics
-textbook, it helps to have internalized some physics. You can think of the result as a compressed copy of the training data — compressed the way a JPEG compresses a photo: the overall picture is kept, the exact pixels are not.
+Nobody writes a single rule into it. Grammar, geography, chemistry, Python —
+all absorbed as side effects of one game, because predicting the final
+chapter of a detective novel requires having tracked who had a motive, and
+predicting the next line of a physics textbook requires some physics. The
+result is the training data compressed the way a JPEG compresses a photo:
+the picture survives, the pixels do not.
 
 ## Scaling laws: why bigger kept getting better
 
