@@ -3,11 +3,29 @@
   "updated": "2026-08-29",
   "posts": [
     {
+      "slug": "llm-nasil-calisir",
+      "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
+      "date": "2026-08-29",
+      "summary": "Tüm makineyi tek fikir açıklıyor: sıradaki token'ı tahmin et. Token'lar, embedding'ler, attention, eğitim ve modellerin neden uydurduğu — öğrenciler, mülakata hazırlananlar ve meraklılar için.",
+      "tags": [
+        "llm",
+        "temeller",
+        "transformer"
+      ],
+      "readingMinutes": 7,
+      "translationSlug": "how-llms-work",
+      "draft": false
+    },
+    {
       "slug": "langgraph-llm-uygulamalari",
       "title": "LangGraph ile LLM uygulamalarında akış tasarımı",
       "date": "2026-08-29",
       "summary": "Zincirden çizgeye geçmek ne kazandırıyor: durumu açık tutmak, dallanma ve ajan tasarımında ölçü.",
-      "tags": ["llm", "langgraph", "langchain"],
+      "tags": [
+        "llm",
+        "langgraph",
+        "langchain"
+      ],
       "readingMinutes": 4,
       "translationSlug": null,
       "draft": true
