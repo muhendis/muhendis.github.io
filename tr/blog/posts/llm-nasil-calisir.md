@@ -197,34 +197,24 @@ muhtemel?*
 ## 5. Eğitim ve ölçek
 
 Makinedeki her sayı rastgele gürültü olarak başlar. Onları **ön
-eğitim** ayarlar — dersi olmayan, yalnızca sınavı olan bir okul gibi:
-modele trilyonlarca token gerçek metin gösterin, sıradakini gizleyin,
-tahmin isteyin. Cevap anahtarı bedavadır — metinde gerçekten sonra
-gelen token'dır; veri kendi kendini notlandırır. Her tahmini **kayıp**
-puanlar:
-
-> kayıp = −log p(doğru token)
-
-Doğruya %90 vermek −log 0,9 ≈ 0,1'e mal olur — hiç şaşırmamış; %20
-vermek −log 0,2 ≈ 1,6'ya — fena şaşırmış. **Gradyan inişi** her
-parametreyi kaybı küçültecek yönde minicik bir adım kaydırır — siste,
-yalnızca ayak altındaki eğimi hissederek iniş — trilyonlarca kez.
-(Karne: **perplexity** = e^(ortalama kayıp); e^1,6 ≈ 5 — beş kelime
-arasında seçim yapıyormuş gibi.) Kimsenin programlamadığı beceriler,
-kaybı düşürdükleri için belirir — polisiyenin sonunu tahmin etmek
-cinayet sebebini izlemeyi gerektirir, izlemek öğrenilir — ta ki model,
-eğitim verisinin JPEG gibi sıkıştırılmışı olana dek: resim kalır,
-pikseller kalmaz.
+eğitim** ayarlar: modele trilyonlarca token gerçek metin gösterin,
+sıradakini gizleyin, tahmin ettirin. Cevap anahtarı bedavadır — metinde
+gerçekten sonra gelen token'dır; veri kendi kendini notlandırır. Her
+tahmini **kayıp** puanlar: kayıp = −log p(doğru token) — doğruya %90
+vermek ≈ 0,1'e, %20 vermek ≈ 1,6'ya mal olur (karne: **perplexity** =
+e^(ortalama kayıp)). **Gradyan inişi** her parametreyi yokuş aşağı
+minicik bir adım kaydırır — sisli bir iniş, trilyonlarca kez — ta ki
+model, eğitim verisinin JPEG gibi sıkıştırılmışı olana dek: resim
+kalır, pikseller kalmaz.
 
 Ölçeğin getirisi öngörülebilirdir. **Ölçek yasaları** — kayıp ≈
-a · C^(−α), log-log kâğıdında düz çizgi — dev bir modelin kalitesini
-ucuz denemelerden okutur: OpenAI, GPT-4'ün nihai kaybını 10.000 kat
-küçük koşulardan önceden tahmin etti; DeepMind'ın **Chinchilla**sı,
-parametre ile verinin birlikte büyümesi gerektiğini gösterdi
-(parametre başına ~20 token) — 70 milyarlığı, 280 milyarlık Gopher'ı
-geçti. İki şerh: beceriler yine de sıçramayla gelebilir (**beliren
-yetenekler**) ve kaliteli açık metin tükeniyor — hesap, cevap anına
-kayıyor: 7. bölümün akıl yürüten modelleri.
+a · C^(−α), log-log kâğıdında düz çizgi — OpenAI'ın GPT-4'ün nihai
+kaybını 10.000 kat küçük denemelerden öngörmesini sağladı; DeepMind'ın
+**Chinchilla**sı tarifi parametre başına ~20 token'a sabitledi — 70
+milyarlığı, 280 milyarlık Gopher'ı geçti. İki şerh: beceriler yine de
+sıçramayla gelebilir (**beliren yetenekler**) ve kaliteli açık metin
+tükeniyor — hesap, cevap anına kayıyor: 7. bölümün akıl yürüten
+modelleri.
 
 ## 6. Otomatik tamamlamadan asistana
 

@@ -190,32 +190,23 @@ question: *what likely comes next?*
 ## 5. Training and scale
 
 Every number in the machine starts as random noise. **Pretraining**
-sets them, like a school with no lessons, only exams: show the model
-trillions of tokens of real text, hide the next one, demand a guess.
-The answer key is free — it is simply the token that actually came
-next; the data grades itself. Each guess is scored by the **loss**:
-
-> loss = −log p(correct token)
-
-A 90% chance on the truth costs −log 0.9 ≈ 0.1 — barely surprised; 20%
-costs −log 0.2 ≈ 1.6 — badly surprised. **Gradient descent** then
-nudges every parameter a tiny step downhill — a descent in fog, feeling
-only the slope underfoot — trillions of times over. (Report card:
-**perplexity** = e^(average loss); e^1.6 ≈ 5, like choosing among five
-words.) Skills nobody programmed appear because they lower the loss —
-predicting a detective novel's ending requires tracking motives, so
-tracking is learned — until the model is the training data compressed
-like a JPEG: picture kept, pixels gone.
+tunes them: show the model trillions of tokens of real text, hide the
+next one, let it guess. The answer key is free — it is the token that
+actually came next; the data grades itself. Each guess is scored by the
+**loss**: loss = −log p(correct token) — a 90% chance on the truth
+costs ≈ 0.1, a 20% chance ≈ 1.6 (report card: **perplexity** =
+e^(average loss)). **Gradient descent** then nudges every parameter one
+tiny downhill step — a descent in fog, repeated trillions of times —
+until the model is the training data compressed like a JPEG: picture
+kept, pixels gone.
 
 Scale pays predictably. **Scaling laws** — loss ≈ a · C^(−α), a
-straight line on log-log paper — let you read a giant model's quality
-off cheap trial runs: OpenAI predicted GPT-4's final loss from trials
-10,000× smaller, and DeepMind's **Chinchilla** showed parameters and
-data must grow together, ~20 tokens per parameter — its 70B beat a
-280B Gopher. Two caveats: skills can still jump out abruptly
-(**emergent abilities**), and high-quality public text is running
-out — pushing compute toward answer time instead: the reasoning models
-of section 7.
+straight line on log-log paper — let OpenAI forecast GPT-4's final loss
+from trials 10,000× smaller; DeepMind's **Chinchilla** fixed the recipe
+at ~20 tokens per parameter — its 70B beat a 280B Gopher. Two caveats:
+skills can still arrive in jumps (**emergent abilities**), and quality
+public text is running out — pushing compute toward answer time:
+section 7's reasoning models.
 
 ## 6. From autocomplete to assistant
 
