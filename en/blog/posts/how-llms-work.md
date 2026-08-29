@@ -40,8 +40,17 @@ me?"), a **value** ("what do I hand over if picked?"). Think YouTube: your
 search is a query, video titles are keys, the videos are values. In "it was
 too tired", *it* asks for something earlier that could be tired; *animal*'s
 key matches strongly, *street*'s weakly; the scores become percentages and
-*it* rebuilds its vector as a weighted blend — say 85% *animal*, 10%
-*street*. Every layer runs many attention "heads" in parallel, each learning its own relationship to track: grammar, references, which adjective belongs to which noun. Nobody assigns these roles; they emerge, because each one helps predict what comes next.
+*it* rebuilds its vector as a weighted blend — say 85% *animal*, 10% *street*.
+
+Strip the vocabulary away and the math is only two moves: a **dot product** —
+multiply two vectors, get a single similarity score — and a **weighted sum** —
+blend vectors according to percentages. Q·K dot products produce the scores,
+softmax turns the scores into percentages, and the percentages weight the
+blend of values. Context, in other words, is nothing more than a weighted
+blend of the other words; attention's entire job is choosing the weights. (A
+token attends to itself too — often with the largest weight of all.)
+
+Every layer runs many attention "heads" in parallel, each learning its own relationship to track: grammar, references, which adjective belongs to which noun. Nobody assigns these roles; they emerge, because each one helps predict what comes next.
 
 Note one asymmetry: a query fires once, but a token's key and value stay
 relevant to every later token that looks back. Remember that — it becomes
@@ -100,7 +109,12 @@ is never a potato.
 
 Two consequences of the loop: "think step by step" works because the page is
 the model's only scratchpad — writing "17 × 24 = 340 + 68" makes each next
-prediction easier, which reasoning models industrialize. And the **KV cache** cashes in the asymmetry from section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for.
+prediction easier, which reasoning models industrialize. And a contrast sharpens the last piece. In *training*, the model sees whole
+documents and processes every token in parallel — that parallelism is what
+let transformers, unlike their predecessors, soak up GPUs and scale. In
+*inference* — chatting — text arrives one token at a time, and the **KV
+cache** exists to make that serial loop cheap, cashing in the asymmetry from
+section 3. Token number 1,000 must compare its query against 999 earlier keys — which looks like re-reading everything at every step. It is not: past keys and values never change, so they are computed once and stored. The pause before a long prompt's first word is **prefill**, building that cache; afterwards words stream quickly because each pays only for itself; long chats eat memory because the cache grows with every token; and "cached input" is cheaper because it is already paid for.
 
 Here is the whole machine in one tiny trace. Input: **"I love"** — the model
 must produce the next token.

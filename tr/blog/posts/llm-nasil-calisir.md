@@ -39,10 +39,19 @@ tasarım, GPT'deki T — aynısını yapma biçimidir. Her token üç rol oynar:
 **değer** ("seçilirsem ne teslim ederim?"). YouTube'u düşünün: aramanız
 sorgu, video başlıkları anahtar, videolar değer. "O çok yorgundu"da *o*,
 daha önce geçen ve yorgun olabilecek bir şey arar; *hayvan*ın anahtarı güçlü
-eşleşir, *cadde*ninki zayıf; puanlar yüzdeye çevrilir ve *o*, vektörünü
-ağırlıklı bir karışım olarak yeniden kurar — diyelim %85 *hayvan*, %10
-*cadde*. Her katman, her biri kendi ilişkisini izlemeyi öğrenen birçok
-attention "kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi sıfat hangi ismin. Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini tahmine yarar.
+eşleşir, *cadde*ninki zayıf; puanlar yüzdeye çevrilir ve *o*, vektörünü ağırlıklı bir karışım olarak yeniden kurar — diyelim %85
+*hayvan*, %10 *cadde*.
+
+Kelimeleri soyarsanız matematik yalnızca iki hamledir: **iç çarpım (dot
+product)** — iki vektörü çarpıp tek bir benzerlik puanı almak — ve
+**ağırlıklı toplam** — vektörleri yüzdelere göre karıştırmak. Q·K iç
+çarpımları puanları üretir, softmax puanları yüzdeye çevirir, yüzdeler de
+değerlerin karışımını ağırlıklar. Başka bir deyişle bağlam, diğer kelimelerin
+ağırlıklı bir karışımından ibarettir; attention'ın bütün işi ağırlıkları
+seçmektir. (Token kendine de dikkat eder — çoğu zaman en büyük ağırlıkla.)
+
+Her katman, her biri kendi ilişkisini izlemeyi öğrenen birçok attention
+"kafasını" paralel çalıştırır: dil bilgisi, göndermeler, hangi sıfat hangi ismin. Bu rolleri kimse atamaz; kendiliğinden belirir — çünkü her biri sıradakini tahmine yarar.
 
 Bir asimetriye dikkat: sorgu bir kez ateşlenir; ama bir token'ın anahtarı ve
 değeri, geriye bakan her sonraki token için geçerli kalır. Bunu aklınızda
@@ -102,7 +111,13 @@ gökyüzünün asla patates olmaması bundandır.
 
 Döngünün iki sonucu: "adım adım düşün" işe yarar, çünkü modelin tek karalama
 defteri sayfadır — "17 × 24 = 340 + 68" yazmak her sonraki tahmini
-kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve **KV cache**, 3. bölümdeki asimetriyi paraya çevirir. 1.000'inci token, sorgusunu önceki 999 anahtarla karşılaştırmak zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından.
+kolaylaştırır; akıl yürüten modeller bunu endüstrileştirir. Ve son parçayı bir karşıtlık keskinleştirir. *Eğitimde* model, belgeleri
+bütün halinde görür ve her token'ı paralel işler — transformer'ı
+seleflerinden ayıran, GPU'ları doyurup ölçeklenmesini sağlayan şey bu
+paralelliktir. *Çıkarımda* — sohbette — metin token token gelir; **KV cache**
+işte bu seri döngüyü ucuzlatmak için vardır ve 3. bölümdeki asimetriyi paraya
+çevirir. 1.000'inci token, sorgusunu önceki 999 anahtarla karşılaştırmak
+zorundadır — bu, her adımda her şeyi yeniden okumak gibi görünür. Değildir: geçmiş anahtarlar ve değerler hiç değişmez; bir kez hesaplanıp saklanır. Uzun bir istemde ilk kelimeden önceki duraklama, o önbelleği kuran **prefill**'dir; sonrasında kelimeler hızla akar, çünkü her biri yalnızca kendi bedelini öder; uzun sohbetlerin bellek yemesi önbelleğin her token'la büyümesindendir; "önbelleklenmiş girdinin" ucuzluğu da bedelinin çoktan ödenmiş olmasından.
 
 İşte bütün makine tek küçük izde. Girdi: **"Ben seni"** — model sıradaki
 token'ı üretecek.
