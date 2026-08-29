@@ -3,12 +3,12 @@
   "updated": "2026-08-29",
   "posts": [
     {
-      "slug": "retinanet-nuclei-detection",
-      "title": "Detecting nuclei in histopathology with RetinaNet",
+      "slug": "post-training-quantization-llm-inference",
+      "title": "Post-training quantization for LLM inference",
       "date": "2026-08-29",
-      "summary": "Notes on one-stage detection for breast cancer histopathology: why focal loss fits the problem, and what mattered more than the architecture.",
-      "tags": ["computer-vision", "medical-imaging", "pytorch"],
-      "readingMinutes": 4,
+      "summary": "Serving an LLM is a memory-bandwidth problem. Notes on why activation outliers break naive quantization, and what actually moves latency on modern GPUs.",
+      "tags": ["llm", "quantization", "gpu", "inference"],
+      "readingMinutes": 5,
       "translationSlug": null,
       "draft": true
     }

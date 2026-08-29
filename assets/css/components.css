@@ -126,3 +126,36 @@ a.tag:hover { border-color: var(--c-accent); }
 .landing__name { font-size: var(--fs-2xl); margin-top: var(--sp-5); }
 .landing__headline { color: var(--c-text-mute); margin-top: var(--sp-2); }
 .landing__choices { display: flex; gap: var(--sp-4); justify-content: center; margin-top: var(--sp-8); flex-wrap: wrap; }
+
+/* ---- Credentials ---- */
+.cert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3);
+             grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
+.cert { display: flex; flex-direction: column; gap: var(--sp-1);
+        padding: var(--sp-4); background: var(--c-surface);
+        border: 1px solid var(--c-border); border-radius: var(--radius); }
+.cert__name { font-weight: 600; }
+.cert__meta { font-size: var(--fs-sm); color: var(--c-text-mute); }
+
+/* ---- Scholar summary ---- */
+.scholar-stats {
+  display: inline-flex; flex-wrap: wrap; gap: var(--sp-2);
+  align-items: baseline; font-size: var(--fs-sm); color: var(--c-text-mute);
+  background: var(--c-surface-2); border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill); padding: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+.scholar-stats strong { color: var(--c-accent); font-size: var(--fs-md); }
+
+.pub__meta { margin-top: var(--sp-2); }
+.pub__cites {
+  font-size: var(--fs-xs); color: var(--c-text-mute);
+  background: var(--c-surface-2); border: 1px solid var(--c-border);
+  border-radius: var(--radius-pill); padding: var(--sp-1) var(--sp-3);
+}
+
+/* ---- Award badge ---- */
+.card__badge {
+  font-size: var(--fs-xs); font-weight: 650; color: var(--c-accent);
+  background: var(--c-accent-subtle); border-radius: var(--radius-sm);
+  padding: var(--sp-1) var(--sp-3); align-self: flex-start;
+}
