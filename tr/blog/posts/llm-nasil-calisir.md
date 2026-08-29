@@ -42,45 +42,67 @@ ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
 Sonra her token bir **embedding**'e dönüşür: uzun bir sayı listesi —
 anlam haritasındaki koordinatları. Binlerce kadran düşünün: biri
 resmiyet, biri zaman, çoğu hiçbir insanın adlandırmadığı nitelikler
-için. Haritadan üç kare:
+için. Haritadan iki kare, sözle:
 
 - *kral*, *kraliçe*ye yakın, *hesap tablosu*na uzak durur;
-- *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü;
-- *kral − erkek + kadın*, *kraliçe*nin yakınına düşer.
+- *Paris*ten *Fransa*ya giden ok, *Roma*dan *İtalya*ya giden okla paraleldir — bir "başkenti-olmak" yönü.
 
-Binlerce kadrandan ikisi, çizimle:
+Üçüncü kare bir çizimi hak ediyor. Dört kelimeyi yalnızca iki kadranlık
+bir haritaya, oyuncak koordinatlarla yerleştirelim:
 
-<svg viewBox="0 0 480 310" role="img" aria-label="Kelimeler iki boyutlu anlam haritasında noktalar olarak: erkek-kadın ile kral-kraliçe okları paralel; Paris-Fransa ile Roma-İtalya okları da paralel; hesap tablosu uzakta" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<defs><marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker></defs>
-<line x1="40" y1="280" x2="470" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="40" y1="280" x2="40" y2="15" style="stroke:var(--c-border);stroke-width:1.5"/>
-<text x="465" y="298" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">kadran 1</text>
-<text x="20" y="160" transform="rotate(-90 20 160)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">kadran 2</text>
-<line x1="140" y1="215" x2="215" y2="155" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="170" y1="115" x2="245" y2="55" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="315" y1="130" x2="385" y2="95" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="320" y1="235" x2="390" y2="200" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<circle cx="140" cy="215" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="215" cy="155" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="170" cy="115" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="245" cy="55" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="315" cy="130" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="385" cy="95" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="320" cy="235" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="390" cy="200" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="428" cy="252" r="4.5" style="fill:var(--c-text-mute)"/>
-<text x="140" y="233" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">erkek</text>
-<text x="215" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">kadın</text>
-<text x="160" y="110" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">kral</text>
-<text x="245" y="43" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">kraliçe</text>
-<text x="309" y="147" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Paris</text>
-<text x="391" y="86" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">Fransa</text>
-<text x="318" y="253" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Roma</text>
-<text x="396" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">İtalya</text>
-<text x="428" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-style:italic">hesap tablosu</text>
-<text x="48" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">aynı yön</text>
-<text x="352" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">"başkenti-olmak" yönü</text>
+<svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe krallık yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
+<marker id="emb-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<line x1="40" y1="280" x2="460" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="40" y1="280" x2="40" y2="20" style="stroke:var(--c-border);stroke-width:1.5"/>
+<g style="stroke:var(--c-border);stroke-width:1">
+<line x1="120" y1="280" x2="120" y2="285"/><line x1="200" y1="280" x2="200" y2="285"/><line x1="280" y1="280" x2="280" y2="285"/><line x1="360" y1="280" x2="360" y2="285"/><line x1="440" y1="280" x2="440" y2="285"/>
+<line x1="35" y1="228" x2="40" y2="228"/><line x1="35" y1="176" x2="40" y2="176"/><line x1="35" y1="124" x2="40" y2="124"/><line x1="35" y1="72" x2="40" y2="72"/><line x1="35" y1="20" x2="40" y2="20"/>
+</g>
+<g style="fill:var(--c-text-mute);font-size:11px" text-anchor="middle">
+<text x="120" y="297">2</text><text x="200" y="297">4</text><text x="280" y="297">6</text><text x="360" y="297">8</text><text x="440" y="297">10</text>
+</g>
+<g style="fill:var(--c-text-mute);font-size:11px" text-anchor="end">
+<text x="30" y="232">2</text><text x="30" y="180">4</text><text x="30" y="128">6</text><text x="30" y="76">8</text><text x="30" y="24">10</text>
+</g>
+<text x="455" y="311" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">kadran 1</text>
+<text x="18" y="150" transform="rotate(-90 18 150)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">kadran 2</text>
+<line x1="120" y1="254" x2="160" y2="124" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<line x1="240" y1="176" x2="280" y2="46" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<line x1="120" y1="254" x2="240" y2="176" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:2"/>
+<line x1="160" y1="124" x2="280" y2="46" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:2"/>
+<circle cx="120" cy="254" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="240" cy="176" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="160" cy="124" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="280" cy="46" r="4.5" style="fill:var(--c-text)"/>
+<text x="120" y="272" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">erkek (2, 1)</text>
+<text x="252" y="182" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">kadın (5, 4)</text>
+<text x="148" y="118" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">kral (3, 6)</text>
+<text x="280" y="32" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">kraliçe (6, 9)</text>
+<line x1="300" y1="116" x2="318" y2="116" style="stroke:var(--c-accent);stroke-width:2"/>
+<text x="324" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">cinsiyet yönü (+3, +3)</text>
+<line x1="300" y1="226" x2="318" y2="226" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">krallık yönü (+1, +5)</text>
 </svg>
+
+Çizim hilesizdir — koordinatlarla sağlamasını yapın:
+
+> kadın − erkek = (5, 4) − (2, 1) = **(+3, +3)** — *cinsiyet* yönü
+> kraliçe − kral = (6, 9) − (3, 6) = **(+3, +3)** — aynı ok, haritanın yukarısında
+> kral − erkek = kraliçe − kadın = **(+1, +5)** — *krallık* yönü, iki kez
+
+Okları üst üste koyun, ünlü denklem kendiliğinden çıkar:
+
+> kral − erkek + kadın = (3, 6) − (2, 1) + (5, 4) = **(6, 9) = kraliçe**
+
+Bunu haritada yol tarifi gibi okuyun: *kral*dan başlayın, erkek adımını
+geri yürüyün, kadın adımını ileri yürüyün — *kraliçe*ye varırsınız. Dört
+nokta bir paralelkenara kapanır ve o kapanış, denklemin ta kendisidir.
+Gerçek embedding'ler aynı oyunu binlerce kadran üzerinde ve yalnızca
+yaklaşık oynar — toplam, kraliçenin tam üstüne değil *yakınına* düşer —
+ama mekanizma budur.
 
 Haritayı kimse çizmedi — öğrenildi. Bir de her token'ın **konumu** işlenir, çünkü "köpek adamı
 ısırdı", "adam köpeği ısırdı"dan farklı kalmalıdır.

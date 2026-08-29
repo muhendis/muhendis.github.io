@@ -43,45 +43,67 @@ in "strawberry" was famously hard — like counting brushstrokes in a
 Each token then becomes an **embedding**: a long list of numbers, its
 coordinates on a map of meaning. Think of them as thousands of dials —
 one for formality, one for tense, most for qualities no human ever
-named. Three snapshots of the map:
+named. Two snapshots of the map, in words:
 
 - *king* sits near *queen*, far from *spreadsheet*;
-- the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction;
-- *king − man + woman* lands near *queen*.
+- the arrow from *Paris* to *France* runs parallel to the arrow from *Rome* to *Italy* — a "capital-of" direction.
 
-Two of the thousands of dials, drawn:
+The third snapshot deserves a drawing. Put just four words on a map of
+two dials, with toy coordinates:
 
-<svg viewBox="0 0 480 310" role="img" aria-label="Words as points on a two-dimensional map of meaning: the arrows man to woman and king to queen are parallel, as are Paris to France and Rome to Italy; spreadsheet sits far away" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<defs><marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker></defs>
-<line x1="40" y1="280" x2="470" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="40" y1="280" x2="40" y2="15" style="stroke:var(--c-border);stroke-width:1.5"/>
-<text x="465" y="298" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">dial 1</text>
-<text x="20" y="160" transform="rotate(-90 20 160)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">dial 2</text>
-<line x1="140" y1="215" x2="215" y2="155" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="170" y1="115" x2="245" y2="55" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="315" y1="130" x2="385" y2="95" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<line x1="320" y1="235" x2="390" y2="200" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:1.8"/>
-<circle cx="140" cy="215" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="215" cy="155" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="170" cy="115" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="245" cy="55" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="315" cy="130" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="385" cy="95" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="320" cy="235" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="390" cy="200" r="4.5" style="fill:var(--c-text)"/>
-<circle cx="428" cy="252" r="4.5" style="fill:var(--c-text-mute)"/>
-<text x="140" y="233" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">man</text>
-<text x="215" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">woman</text>
-<text x="160" y="110" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">king</text>
-<text x="245" y="43" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">queen</text>
-<text x="309" y="147" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Paris</text>
-<text x="391" y="86" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">France</text>
-<text x="318" y="253" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">Rome</text>
-<text x="396" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">Italy</text>
-<text x="428" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-style:italic">spreadsheet</text>
-<text x="48" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">same direction</text>
-<text x="352" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">the "capital-of" direction</text>
+<svg viewBox="0 0 480 320" role="img" aria-label="Four words as points on two dials: man at 2,1; woman at 5,4; king at 3,6; queen at 6,9. Solid parallel arrows man to woman and king to queen show the gender direction plus 3 plus 3; dashed parallel arrows man to king and woman to queen show the royalty direction plus 1 plus 5" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
+<marker id="emb-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<line x1="40" y1="280" x2="460" y2="280" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="40" y1="280" x2="40" y2="20" style="stroke:var(--c-border);stroke-width:1.5"/>
+<g style="stroke:var(--c-border);stroke-width:1">
+<line x1="120" y1="280" x2="120" y2="285"/><line x1="200" y1="280" x2="200" y2="285"/><line x1="280" y1="280" x2="280" y2="285"/><line x1="360" y1="280" x2="360" y2="285"/><line x1="440" y1="280" x2="440" y2="285"/>
+<line x1="35" y1="228" x2="40" y2="228"/><line x1="35" y1="176" x2="40" y2="176"/><line x1="35" y1="124" x2="40" y2="124"/><line x1="35" y1="72" x2="40" y2="72"/><line x1="35" y1="20" x2="40" y2="20"/>
+</g>
+<g style="fill:var(--c-text-mute);font-size:11px" text-anchor="middle">
+<text x="120" y="297">2</text><text x="200" y="297">4</text><text x="280" y="297">6</text><text x="360" y="297">8</text><text x="440" y="297">10</text>
+</g>
+<g style="fill:var(--c-text-mute);font-size:11px" text-anchor="end">
+<text x="30" y="232">2</text><text x="30" y="180">4</text><text x="30" y="128">6</text><text x="30" y="76">8</text><text x="30" y="24">10</text>
+</g>
+<text x="455" y="311" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">dial 1</text>
+<text x="18" y="150" transform="rotate(-90 18 150)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">dial 2</text>
+<line x1="120" y1="254" x2="160" y2="124" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<line x1="240" y1="176" x2="280" y2="46" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<line x1="120" y1="254" x2="240" y2="176" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:2"/>
+<line x1="160" y1="124" x2="280" y2="46" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:2"/>
+<circle cx="120" cy="254" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="240" cy="176" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="160" cy="124" r="4.5" style="fill:var(--c-text)"/>
+<circle cx="280" cy="46" r="4.5" style="fill:var(--c-text)"/>
+<text x="120" y="272" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">man (2, 1)</text>
+<text x="252" y="182" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">woman (5, 4)</text>
+<text x="148" y="118" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">king (3, 6)</text>
+<text x="280" y="32" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">queen (6, 9)</text>
+<line x1="300" y1="116" x2="318" y2="116" style="stroke:var(--c-accent);stroke-width:2"/>
+<text x="324" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gender direction (+3, +3)</text>
+<line x1="300" y1="226" x2="318" y2="226" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
+<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">royalty direction (+1, +5)</text>
 </svg>
+
+The picture is exact — check it with the coordinates:
+
+> woman − man = (5, 4) − (2, 1) = **(+3, +3)** — the *gender* direction
+> queen − king = (6, 9) − (3, 6) = **(+3, +3)** — the same arrow, higher up the map
+> king − man = queen − woman = **(+1, +5)** — the *royalty* direction, twice
+
+Stack the arrows and the famous equation falls out:
+
+> king − man + woman = (3, 6) − (2, 1) + (5, 4) = **(6, 9) = queen**
+
+Read it as directions on the map: start at *king*, walk back the
+man-step, walk forward the woman-step — you arrive at *queen*. The four
+points close into a parallelogram, and that closure *is* the equation.
+Real embeddings play the same game across thousands of dials, and only
+approximately — the sum lands *near* queen rather than exactly on it —
+but the mechanism is this one.
 
 Nobody drew the map — it is learned. One
 last stamp goes in, each token's **position**, because "dog bites man"
