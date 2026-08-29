@@ -82,10 +82,12 @@ Only two mathematical operations do all the work:
 - **Weighted sum** — mix several vectors according to percentages, like a
   recipe: 60% of this, 30% of that.
 
-Now trace "The quick brown fox" while the model works on *fox*.
+Now trace "The quick brown fox" while the model works on *fox* — four steps, the same four you will meet in the official formula at the end.
 
 **Step 1 — Score: who matters to me?** *Fox*'s query is dot-producted with
 every word's key, its own included:
+
+> scoreᵢ = Q(fox) · K(wordᵢ)
 
 | pair | dot product | reading |
 |---|---|---|
@@ -94,7 +96,17 @@ every word's key, its own included:
 | Q(fox) · K(brown) | 4.0 | very relevant |
 | Q(fox) · K(fox) | 5.4 | itself — most of all |
 
-**Step 2 — Percentages: turn scores into a recipe.** This is **softmax**,
+**Step 2 — Scale: tame the numbers.** Before any percentages, every score
+is divided by **√dₖ**, the length of the key vector:
+
+> scaledᵢ = scoreᵢ ÷ √dₖ
+
+With big vectors, dot products grow huge; huge scores would saturate the
+softmax into all-or-nothing weights and stall learning. This division is
+the "scaled" in *scaled dot-product attention*. (To keep our toy numbers
+readable, read the table's scores as already scaled.)
+
+**Step 3 — Percentages: turn scores into a recipe.** This is **softmax**,
 and it is just two moves. First, raise *e* to each score — that makes every
 number positive and stretches the gaps between them. Then divide each result
 by the total — now they sum to exactly 100%:
@@ -114,9 +126,10 @@ four times 19% — softmax rewards the leaders and starves the laggards. The
 model has just decided, in numbers, how much attention each word deserves.
 (Yes, a token attends to itself — usually most of all.)
 
-**Step 3 — Blend: cook the recipe.** The new *fox* vector is the weighted
+**Step 4 — Blend: cook the recipe.** The new *fox* vector is the weighted
 sum of the *values*:
 
+> new vector = weight₁ × V(word₁) + weight₂ × V(word₂) + …
 > fox_new = 0.01 × V(The) + 0.03 × V(quick) + 0.19 × V(brown) + 0.77 × V(fox)
 
 The result is no longer the dictionary word *fox*; it is
@@ -129,11 +142,8 @@ the weighted sum — fixed arithmetic, no learning in them. And no rule ever
 told the model that foxes are brown: over trillions of guesses, the three
 tables were tuned until useful weights came out on their own.
 
-Two footnotes on this machinery. First, the raw scores are divided by
-√(key dimension) before softmax — hence "*scaled* dot-product attention":
-huge dot products would saturate the weights into all-or-nothing and stall
-learning. Second, since every token scores every other token, the work grows
-with the *square* of the length — O(n²). Double the context, quadruple the
+One footnote on cost: since every token scores every other token, the work
+grows with the *square* of the length — O(n²). Double the context, quadruple the
 cost; million-token windows are an engineering feat, not a checkbox.
 
 Put together, this whole subsection is one line — the formula printed in
@@ -141,9 +151,7 @@ every paper since 2017:
 
 > **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
 
-Read it left to right: dot-product every query with every key (QKᵀ), scale
-by √dₖ, softmax the scores into percentages, and blend the values with those
-percentages. Every symbol in it is now familiar. And notice the capital letters: Q, K,
+Read it left to right and it is the fox trace in symbols — Step 1 is QKᵀ, Step 2 is the division by √dₖ, Step 3 is the softmax, Step 4 is the multiplication by V. Same four moves, same order, every time. Every symbol in it is now familiar. And notice the capital letters: Q, K,
 and V here are matrices — every token's vectors stacked into one block — so
 this single line runs the search for *all* tokens simultaneously, as pure
 matrix multiplication. No loops; exactly the shape of work GPUs devour.
@@ -209,8 +217,7 @@ Had the model given the true next token a 90% chance, the loss is
 −log 0.9 ≈ 0.1 — barely surprised. Had it given 20%, the loss is
 −log 0.2 ≈ 1.6 — badly surprised. **Gradient descent** then nudges every
 parameter a tiny step in the direction that shrinks this number; repeat
-trillions of times. (The standard report card, **perplexity**, is the
-exponential of the average loss: an average of 1.6 gives e^1.6 ≈ 5 — as
+trillions of times. (The standard report card: **perplexity = e^(average loss)**. An average loss of 1.6 gives e^1.6 ≈ 5 — as
 unsure as picking among five equally likely words. Central to pretraining; a
 weak proxy for real tasks.)
 
@@ -269,7 +276,8 @@ prediction's input — until a special stop token says "I'm done."
 Three dials govern the draw. After "The sky was", the list might read
 *blue* 60%, *dark* 10%, …, *potato* 0.0001%:
 
-- **Temperature** divides every score by T before softmax. Below 1, the
+- **Temperature** divides every score by T before softmax — the draw uses
+  softmax(score ÷ T). Below 1, the
   gaps stretch and the leader takes almost everything — T = 0 is greedy
   decoding, nearly deterministic (batching and floating-point order still
   leave tiny drift). Above 1, the gaps shrink and *dark* and *grey* get to
@@ -318,14 +326,15 @@ must produce the next token.
    values (K₁V₁, K₂V₂) sit in the KV cache.
 2. **Fresh query.** For the new position the model computes a query, Q₃ — in
    effect the question "given everything so far, what should come next?"
-3. **Match.** Q₃ is compared against the cached keys:
+3. **Match, scale, softmax.** Q₃ is dot-producted with the cached keys,
+   divided by √dₖ, and softmaxed — Steps 1–3 of the fox trace — landing at:
 
    | comparison | attention weight |
    |---|---|
    | Q₃ · K₁ ("I") | 30% |
    | Q₃ · K₂ ("love") | 70% |
 
-4. **Blend.** The output is built from the cached values:
+4. **Blend.** Step 4 as before — the weighted sum of the cached values:
    0.30 × V₁ + 0.70 × V₂ — a vector representing *this context*.
 5. **Predict.** That vector runs through the final layers and softmax:
    *you* 85%, *it* 7%, *her* 5%, … The draw picks **"you"**.

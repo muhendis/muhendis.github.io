@@ -80,10 +80,12 @@ Bütün işi yalnızca iki matematik işlemi yapar:
 - **Ağırlıklı toplam** — birkaç vektörü yüzdelere göre karıştır; bir tarif
   gibi: şundan %60, bundan %30.
 
-Şimdi "Hızlı kahverengi tilki"yi, model *tilki* üzerinde çalışırken izleyin.
+Şimdi "Hızlı kahverengi tilki"yi, model *tilki* üzerinde çalışırken izleyin — dört adım; sonda karşılaşacağınız resmî formülün aynısı, aynı sırayla.
 
 **1. Adım — Puanla: bana kim önemli?** *Tilki*nin sorgusu, kendisininki
 dahil her kelimenin anahtarıyla iç çarpıma girer:
+
+> puanᵢ = Q(tilki) · K(kelimeᵢ)
 
 | çift | iç çarpım | okunuşu |
 |---|---|---|
@@ -91,7 +93,17 @@ dahil her kelimenin anahtarıyla iç çarpıma girer:
 | Q(tilki) · K(kahverengi) | 4,0 | çok ilgili |
 | Q(tilki) · K(tilki) | 5,4 | kendisi — en çok |
 
-**2. Adım — Yüzdele: puanları tarife çevir.** Bu, **softmax**'tır ve
+**2. Adım — Ölçekle: sayıları dizginle.** Yüzdelere geçmeden önce her puan,
+anahtar vektörünün uzunluğu olan **√dₖ**'ye bölünür:
+
+> ölçekliᵢ = puanᵢ ÷ √dₖ
+
+Büyük vektörlerde iç çarpımlar devasalaşır; devasa puanlar softmax'ı
+ya-hep-ya-hiç ağırlıklara doyurur ve öğrenmeyi durdururdu. *Ölçekli* iç
+çarpım attention'daki "ölçekli" bu bölmedir. (Oyuncak sayılarımız okunur
+kalsın diye tablodaki puanları ölçeklenmiş halleri sayın.)
+
+**3. Adım — Yüzdele: puanları tarife çevir.** Bu, **softmax**'tır ve
 yalnızca iki hamledir. Önce her puan için *e* üzeri puan alınır — bu, her
 sayıyı pozitif yapar ve aralarını açar. Sonra her sonuç toplama bölünür —
 artık toplamları tam %100'dür:
@@ -110,9 +122,10 @@ Son satırı formülle sınayın: 221,4 ÷ 284 ≈ 0,78 — %78. Üstelin yaptı
 Model az önce, sayılarla, her kelimenin ne kadar dikkati hak ettiğine karar
 verdi. (Evet, token kendine de dikkat eder — genellikle en çok.)
 
-**3. Adım — Karıştır: tarifi pişir.** Yeni *tilki* vektörü, *değerlerin*
+**4. Adım — Karıştır: tarifi pişir.** Yeni *tilki* vektörü, *değerlerin*
 ağırlıklı toplamıdır:
 
+> yeni vektör = ağırlık₁ × V(kelime₁) + ağırlık₂ × V(kelime₂) + …
 > tilki_yeni = 0,03 × V(Hızlı) + 0,19 × V(kahverengi) + 0,78 × V(tilki)
 
 Sonuç artık sözlükteki *tilki* kelimesi değildir; *bu-belirli-hızlı-
@@ -125,11 +138,8 @@ aritmetiktir, içlerinde öğrenme yoktur. Ve modele tilkilerin kahverengi
 olduğunu hiçbir kural söylemedi: üç tablo, trilyonlarca tahmin boyunca, işe
 yarar ağırlıklar kendiliğinden çıkana dek ayarlandı.
 
-Bu mekanizmaya iki dipnot. Birincisi, ham puanlar softmax'tan önce
-√(anahtar boyutu)'na bölünür — adındaki "*ölçekli* iç çarpım" budur: devasa
-iç çarpımlar ağırlıkları ya-hep-ya-hiç'e doyurur ve öğrenmeyi durdururdu.
-İkincisi, her token diğer her token'ı puanladığından iş, uzunluğun
-*karesiyle* büyür — O(n²). Bağlamı ikiye katlayın, maliyet dörde katlansın;
+Maliyete dair tek dipnot: her token diğer her token'ı puanladığından iş,
+uzunluğun *karesiyle* büyür — O(n²). Bağlamı ikiye katlayın, maliyet dörde katlansın;
 milyon token'lık pencereler bir kutucuk değil, mühendislik başarısıdır.
 
 Hepsini birleştirin; bu alt bölümün tamamı tek satırdır — 2017'den beri her
@@ -137,9 +147,7 @@ makalede basılan formül:
 
 > **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
 
-Soldan sağa okuyun: her sorguyu her anahtarla iç çarpıma sok (QKᵀ), √dₖ ile
-ölçekle, puanları softmax ile yüzdeye çevir, değerleri bu yüzdelerle
-karıştır. İçindeki her sembol artık tanıdık. Büyük harflere de dikkat: buradaki Q, K
+Soldan sağa okuyun; tilki izinin sembollere dökülmüşüdür — 1. Adım QKᵀ, 2. Adım √dₖ'ye bölme, 3. Adım softmax, 4. Adım V ile çarpma. Aynı dört hamle, aynı sıra, her seferinde. İçindeki her sembol artık tanıdık. Büyük harflere de dikkat: buradaki Q, K
 ve V birer matristir — bütün token'ların vektörleri tek blokta üst üste —
 yani bu tek satır, aramayı *bütün* token'lar için aynı anda, saf matris
 çarpımı olarak yürütür. Döngü yok; tam da GPU'ların silip süpürdüğü iş
@@ -209,9 +217,7 @@ tahmin ettirin. **Kayıp fonksiyonu**, modelin doğru cevap karşısındaki
 Model doğru token'a %90 olasılık vermişse kayıp −log 0,9 ≈ 0,1'dir —
 neredeyse hiç şaşırmamış. %20 vermişse kayıp −log 0,2 ≈ 1,6'dır — fena
 şaşırmış. **Gradyan inişi** de her parametreyi bu sayıyı küçültecek yönde
-minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. (Standart
-karne olan **perplexity**, ortalama kaybın üstelinden ibarettir: ortalama
-1,6 ise e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
+minicik bir adım kaydırır; bunu trilyonlarca kez tekrarlayın. (Standart karne: **perplexity = e^(ortalama kayıp)**. Ortalama kayıp 1,6 ise e^1,6 ≈ 5 — beş eşit olası kelime arasında seçim yapıyormuş kadar
 kararsız. Ön eğitimin merkezinde; gerçek görevler için zayıf bir vekil.)
 
 İçine kural yazılmaz — polisiye romanın son bölümünü tahmin etmek kimin
@@ -269,7 +275,8 @@ girdisidir — ta ki "bitirdim" diyen özel bir durdurma token'ına kadar.
 Çekilişi üç düğme yönetir. "Gökyüzü"nden sonra liste şöyle olabilir:
 *maviydi* %60, *karanlıktı* %10, …, *patatesti* %0,0001:
 
-- **Temperature**, softmax'tan önce her puanı T'ye böler. T 1'in altındaysa
+- **Temperature**, softmax'tan önce her puanı T'ye böler — çekiliş
+  softmax(puan ÷ T) kullanır. T 1'in altındaysa
   aralar açılır, lider neredeyse her şeyi alır — T = 0 açgözlü çözümlemedir,
   neredeyse deterministik (yığınlama ve kayan nokta sırası yine küçük
   sapmalar bırakır). T 1'in üstündeyse aralar daralır; *karanlıktı* ve
@@ -319,14 +326,16 @@ token'ı üretecek.
    değerleri (K₁V₁, K₂V₂) KV cache'te duruyor.
 2. **Taze sorgu.** Yeni konum için model bir sorgu hesaplar: Q₃ — fiilen
    "şu ana kadarki her şeye göre sırada ne olmalı?" sorusu.
-3. **Eşleştirme.** Q₃, önbellekteki anahtarlarla karşılaştırılır:
+3. **Eşle, ölçekle, softmax'la.** Q₃ önbellekteki anahtarlarla iç çarpıma
+   girer, √dₖ ile ölçeklenir ve softmax'lanır — tilki izindeki 1–3.
+   adımların aynısı — ve şuraya varır:
 
    | karşılaştırma | dikkat ağırlığı |
    |---|---|
    | Q₃ · K₁ ("Ben") | %30 |
    | Q₃ · K₂ ("seni") | %70 |
 
-4. **Karışım.** Çıktı, önbellekteki değerlerden kurulur:
+4. **Karışım.** 4. Adım'ın aynısı — saklı değerlerin ağırlıklı toplamı:
    0,30 × V₁ + 0,70 × V₂ — *bu bağlamı* temsil eden bir vektör.
 5. **Tahmin.** Bu vektör son katmanlardan ve softmax'tan geçer:
    *seviyorum* %85, *gördüm* %7, *özledim* %5, … Çekiliş **"seviyorum"** der.
