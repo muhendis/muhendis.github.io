@@ -1,7 +1,22 @@
 {
   "lang": "en",
-  "updated": "2026-08-29",
+  "updated": "2026-09-01",
   "posts": [
+    {
+      "slug": "which-rag-pattern-do-you-need",
+      "title": "Which RAG pattern do you actually need?",
+      "date": "2026-09-01",
+      "summary": "RAG failures look infinite; there are only four families. A symptom-first decision guide: HyDE, small-to-big, hybrid search and reranking, reordering, routing, self-reflection — what each one fixes, and what it costs.",
+      "tags": [
+        "llm",
+        "rag",
+        "retrieval",
+        "architecture"
+      ],
+      "readingMinutes": 8,
+      "translationSlug": "hangi-rag-deseni",
+      "draft": false
+    },
     {
       "slug": "how-llms-work",
       "title": "How LLMs actually work, in plain language",

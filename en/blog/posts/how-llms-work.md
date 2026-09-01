@@ -17,7 +17,7 @@ Everything below is a footnote to that idea.
 - [1. Text becomes numbers](#1-text-becomes-numbers)
 - [2. Numbers with meaning](#2-numbers-with-meaning)
 - [3. The transformer: a context machine](#3-the-transformer-a-context-machine)
-  - [Q, K, V — the mechanism, with numbers](#q-k-v--the-mechanism-with-numbers)
+  - [Q, K, V — the mechanism, with numbers](#q-k-v-the-mechanism-with-numbers)
   - [One direction only](#one-direction-only)
   - [Many heads](#many-heads)
 - [4. Layers: where knowledge lives](#4-layers-where-knowledge-lives)

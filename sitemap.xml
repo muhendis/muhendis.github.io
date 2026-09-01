@@ -105,4 +105,20 @@
     <lastmod>2026-08-29</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=which-rag-pattern-do-you-need</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=which-rag-pattern-do-you-need"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=hangi-rag-deseni"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=which-rag-pattern-do-you-need"/>
+    <lastmod>2026-09-01</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=hangi-rag-deseni</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=which-rag-pattern-do-you-need"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=hangi-rag-deseni"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=which-rag-pattern-do-you-need"/>
+    <lastmod>2026-09-01</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>

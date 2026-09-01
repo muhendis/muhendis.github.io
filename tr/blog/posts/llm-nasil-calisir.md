@@ -17,7 +17,7 @@ zorundasınızdır. Aşağıdaki her şey bu fikrin dipnotudur.
 - [1. Metin sayıya dönüşür](#1-metin-sayıya-dönüşür)
 - [2. Anlam taşıyan sayılar](#2-anlam-taşıyan-sayılar)
 - [3. Transformer: bir bağlam makinesi](#3-transformer-bir-bağlam-makinesi)
-  - [Q, K, V — mekanizma, sayılarla](#q-k-v--mekanizma-sayılarla)
+  - [Q, K, V — mekanizma, sayılarla](#q-k-v-mekanizma-sayılarla)
   - [Tek yön](#tek-yön)
   - [Birçok kafa](#birçok-kafa)
 - [4. Katmanlar: bilgi nerede yaşıyor](#4-katmanlar-bilgi-nerede-yaşıyor)

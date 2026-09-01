@@ -1,7 +1,22 @@
 {
   "lang": "tr",
-  "updated": "2026-08-29",
+  "updated": "2026-09-01",
   "posts": [
+    {
+      "slug": "hangi-rag-deseni",
+      "title": "Hangi RAG desenine gerçekten ihtiyacınız var?",
+      "date": "2026-09-01",
+      "summary": "RAG hataları sonsuz görünür; aslında dört aile vardır. Belirtiden yola çıkan bir karar rehberi: HyDE, small-to-big, hybrid arama ve reranking, reordering, routing, self-reflection — her biri neyi düzeltir, bedeli nedir.",
+      "tags": [
+        "llm",
+        "rag",
+        "erişim",
+        "mimari"
+      ],
+      "readingMinutes": 8,
+      "translationSlug": "which-rag-pattern-do-you-need",
+      "draft": false
+    },
     {
       "slug": "llm-nasil-calisir",
       "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
