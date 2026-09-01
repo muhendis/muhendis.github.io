@@ -6,8 +6,9 @@ Yanlış sayfa, yanlış parça; üstelik kaynak göstererek.
 O anda her çözüm eşit derecede makul görünür: daha büyük parçalar mı?
 Bir reranker mı? Bir agent mı? Bu yazının tek iddiası: **RAG hataları
 sonsuz görünür, ama yalnızca dört aile vardır — aileyi adlandırdığınız
-anda çözüm kendini seçer.** Her aile için: gözlediğiniz belirti, kök
-neden, tedavi ve etiketteki fiyat.
+anda çözüm kendini seçer.** Her aile için sırasıyla gözlediğiniz
+belirtiyi, arkasındaki kök nedeni, tedaviyi ve etiketteki fiyatı
+göreceksiniz.
 
 **Bu yazıda**
 
@@ -52,14 +53,15 @@ Tedaviden önce tek bir sayı ölçün:
 > top-k içinde bulunan başarısız sorular ÷ tüm başarısız sorular
 
 Yanlış cevaplanan yirmi soru toplayın, her birinin doğru pasajını elle
-bulun, erişilenlerin arasında mıydı diye bakın. **Yoksa → arama sorunu
-(2–3. bölümler). Varsa ve cevap yine yanlışsa → okuma sorunu (4–5.
-bölümler).** Bu tek test, daha hiçbir şeye dokunmadan kataloğun
-yarısını eler.
+bulun, erişilenlerin arasında mıydı diye bakın. **Pasaj orada yoksa
+bir arama sorununuz var (2–3. bölümler); oradaysa ve cevap yine de
+yanlışsa bir okuma sorununuz var (4–5. bölümler).** Bu tek test, daha
+hiçbir şeye dokunmadan kataloğun yarısını eler.
 
 ## 2. Soru, belgelerle aynı dili konuşmuyor
 
-**Belirti:** isabet oranı düşük; ama pasajı elle bulabiliyorsunuz.
+**Belirti:** isabet oranı düşük — ama aynı pasajı elle arayınca
+kolayca bulabiliyorsunuz.
 
 **Kök neden:** kullanıcı gündelik belirti yazar ("alttan su
 sızdırıyor"); kılavuz resmî çözüm yazar ("tahliye hortumu kaplinini
@@ -89,7 +91,8 @@ anında; her yeniden dizinlemede tekrar.
 > bir cevap taslağı yazdırıp sahteyi gömmek ve aramayı onunla yapmak —
 > yanına düşen gerçek paragraflar geri gelir.
 
-Ayna görüntüsü. Sahte cevap kılavuzun kendi sesiyle yazılır —
+Bu desen, öncekinin ayna görüntüsüdür. Sahte cevap kılavuzun kendi
+sesiyle yazılır —
 "Cihazın altında su birikiyorsa tahliye hortumu kaplini gevşemiş
 olabilir…" — olguları yanlış olabilir ama *biçimi* doğrudur ve
 embedding'in gördüğü tek şey biçimdir. Polis robot resmi gibi: kimse
@@ -100,7 +103,7 @@ yeter.
 
 **Bedeli:** *her* sorguda +1 LLM çağrısı ve gecikmesi — dar bir alanda
 sahte cevap, kendinden emin biçimde yanlış paragrafları da getirebilir.
-İkilinin karar kuralı:
+Bu ikili arasındaki karar kuralı şudur:
 
 > HyDE sorgu başına öder, sonsuza dek. Hypothetical questions korpus
 > başına öder, bir kez. Yoğun trafik, durağan korpus → belgeleri
@@ -114,8 +117,9 @@ sahte cevap, kendinden emin biçimde yanlış paragrafları da getirebilir.
 > bırakmak.
 
 **Belirti:** "eko programla yoğun programı karşılaştır" — o
-karşılaştırmayı içeren parça yoktur; eko 41. sayfada, yoğun 57.
-sayfadadır. Bölün, parça parça erişin, karşılaştırmayı model yapsın.
+karşılaştırmayı içeren parça yoktur; eko programın özellikleri 41.
+sayfada, yoğun programınki 57. sayfadadır. Soruyu bölün, her parça
+için ayrı erişin, karşılaştırmayı model yapsın.
 
 ![Sub-queries: özgün sorgu sub-query 1 ve sub-query 2'ye ayrıştırılır; her biri vektör deposundan kendi top-k parçalarını getirir ve LLM birleşik sonuçlardan cevabı kurar](../../assets/img/rag/sub_query.png)
 
@@ -140,8 +144,8 @@ yanlış gelen sonuçların ortak bir *dokusu* var: bağlamsız kırpıntılar,
 benzerler, yanlış yılın sayfası.
 
 **Kök neden:** metnin nasıl kesildiği ve yanına nelerin yazıldığı,
-neyin bulunabileceğine çoktan karar verdi. Doku, hangi kararı gözden
-geçireceğinizi söyler.
+neyin bulunabileceğine çoktan karar verdi. Bu doku, hangi kararı
+gözden geçirmeniz gerektiğini söyler.
 
 ### Küçük bul, büyük oku
 
@@ -173,8 +177,8 @@ ebeveynini bilmeli), büyüyen prompt'lar ve belge başına bir üretilmiş
 bakış* bölümünü getiriyor — yoğun (dense) embedding'ler nadir birebir
 token'ları (kod, parça numarası, ad) bulanıklaştırır; sözcüksel (lexical)
 **BM25** ise birebir token'ı asla kaçırmaz, başka sözcüklerle
-söyleneni asla tanımaz. Kör noktalar birbirini tamamlar → ikisini
-birden koşturun.
+söyleneni asla tanımaz. Kör noktaları birbirini tamamladığına göre,
+ikisini birden koşturun.
 
 > **Hybrid retrieval (hibrit erişim)** = yoğun (embedding) arayıcıyla
 > seyrek (sparse), sözcüksel arayıcıyı (**BM25** ya da **SPLADE**) yan yana
@@ -292,8 +296,8 @@ ikincisi bedava:
 
 Yirmi parça ≈ 6.000 token; belki 600'ü soruyla ilgili — gerisi para
 ödediğiniz ve modelin dikkatini dağıtan gürültü. Ayıklayın: 6.000
-girer, 900 çıkar, girdi maliyetinin ~%85'i gider. Eşyayı alın, kutuyu
-bırakın.
+girer, 900 çıkar, girdi maliyetinin ~%85'i gider. Bavul toplar gibi:
+eşyayı alın, kutusunu bırakın.
 
 ![Context compression: erişilen top-k parçalar, LLM'e verilmeden önce yalnızca sorguyla ilgili bilgiye sıkıştırılır](../../assets/img/rag/compress_prompt.png)
 
@@ -306,20 +310,22 @@ korusun.
 
 Yapıştırma sırası sizin elinizde, modelin de kenar yanlılığı var — ve
 reranker adayları zaten güven sırasına dizmişti; sıralama kullanılmayı
-bekliyor. **Bedeli: hiç.** Ender bedava öğle yemeği — pratikte önce
-onu yapın.
+bekliyor. **Bedeli: hiç.** Bu, yazıdaki ender bedava öğle yemeğidir —
+pratikte ilk işiniz o olsun.
 
 ![Prompt'ta parça sıralamasını ayarlama: top-k parçalar 1, 2, 3 sırasıyla gelir ve en güvenilir parçalar bağlamın iki ucunda duracak şekilde 1, 3, 2 olarak yeniden dizilir](../../assets/img/rag/adjust_order.png)
 
 ## 5. Boru hattı her soruya aynı emeği harcıyor
 
-**Belirti çifti:** "teşekkürler, düzeldi!" mesajı koca bir
+**Belirti çifti:** "teşekkürler, düzeldi!" mesajı bile koca bir
 göm-ara-yapıştır turu başlatıyor; erişim sessizce çöktüğünde ise model
-yine de cevap veriyor — *kaynak gösteren* halüsinasyon.
+yine de cevap veriyor — ortaya çıkan şey, *kaynak gösteren*
+halüsinasyondur.
 
-**Kök neden:** sabit boru. Kimse erişime gerek var mıydı diye sormuyor,
-kimse işe yaradı mı diye bakmıyor. Son iki desen boruya muhakeme
-kazandırır — biri çıkışta, biri girişte.
+**Kök neden:** boru hattı sabit; her mesaj aynı yoldan geçiyor. Kimse
+"erişime gerçekten gerek var mıydı?" diye sormuyor, kimse de "erişim
+işe yaradı mı?" diye kontrol etmiyor. Son iki desen bu boruya muhakeme
+kazandırıyor — biri çıkışına, biri girişine.
 
 ### Kaynakları kontrol eden editör: self-reflection
 
@@ -529,10 +535,11 @@ bir sonraki deseni yalnızca isabet oranı "yetmedi" dediğinde ekleyin.**
 6. Maliyet merdivenini bedava basamaktan tırmanın; ne zaman duracağınızı
    broşür değil, isabet oranı söylesin.
 
-Sızdıran bulaşık makinesine dönün: pasaj top-k'da yoktu, üslup boşluğu
-duyuluyor ("alttan su sızdırıyor" ↔ "hortum kaplini"), reçete 2.
-bölümden — hypothetical questions — ve fatura bir dizinleme geçişi. Dört
-aile vardı ve artık adlarını biliyorsunuz.
+Şimdi sızdıran bulaşık makinesine dönün: pasaj top-k'da yoktu; üslup
+boşluğu ortada ("alttan su sızdırıyor" ↔ "hortum kaplini"); reçete 2.
+bölümden geliyor — hypothetical questions — ve fatura, bir kez ödenen
+bir dizinleme geçişinden ibaret. Hatalar hiçbir zaman sonsuz değildi:
+yalnızca dört aile vardı ve artık adlarını biliyorsunuz.
 
 ## Terimler sözlüğü
 

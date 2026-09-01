@@ -6,7 +6,7 @@
       "slug": "hangi-rag-deseni",
       "title": "Hangi RAG desenine gerçekten ihtiyacınız var?",
       "date": "2026-09-01",
-      "summary": "RAG hataları sonsuz görünür; aslında dört aile vardır. Belirtiden yola çıkan bir karar rehberi: HyDE, small-to-big, hybrid arama ve reranking, reordering, routing, self-reflection — her biri neyi düzeltir, bedeli nedir.",
+      "summary": "RAG hataları sonsuz görünür; aslında yalnızca dört hata ailesi vardır. Bu yazı, belirtiden yola çıkarak doğru deseni seçtiren bir karar rehberi: HyDE'den hybrid arama ve reranking'e, reordering'den routing ve self-reflection'a, her desenin neyi düzelttiğini ve bedelinin ne olduğunu anlatıyor.",
       "tags": [
         "llm",
         "rag",
