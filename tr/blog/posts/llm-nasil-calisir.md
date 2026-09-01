@@ -42,9 +42,9 @@ ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
 
 ## 2. Anlam taşıyan sayılar
 
-Her bir token daha sonra bir **gömüye (embedding)** dönüşür: uzun bir sayı listesi, yani bir anlam haritasındaki koordinatları. Bunları binlerce kadran olarak düşünün — biri resmiyet için, biri zaman kipi için, çoğu ise hiçbir insanın adlandırmadığı nitelikler için. Bu haritada birbiriyle ilişkili kelimeler birbirine yakın durur: *kral (king)*, *kraliçe (queen)* kelimesinin yakınına, *elektronik tablo (spreadsheet)* kelimesinin ise uzağına düşer. Daha da iyisi, *yönler* bir anlam ifade eder. Bunu görmek için, sadece iki kadranlı bir haritaya aşağıdaki çizimden alınan **örnek koordinatları** kullanarak dört kelime yerleştirelim: **(2, 1) konumunda *erkek (man)***, **(5, 4) konumunda *kadın (woman)***, **(3, 6) konumunda *kral (king)*** ve **(6, 9) konumunda *kraliçe (queen)***:
+Her bir token daha sonra bir **gömmeye (embedding)** dönüşür: uzun bir sayı listesi, yani bir anlam haritasındaki koordinatları. Bunları binlerce kadran olarak düşünün — biri resmiyet için, biri zaman kipi için, çoğu ise hiçbir insanın adlandırmadığı nitelikler için. Bu haritada birbiriyle ilişkili kelimeler birbirine yakın durur: *kral (king)*, *kraliçe (queen)* kelimesinin yakınına, *elektronik tablo (spreadsheet)* kelimesinin ise uzağına düşer. Daha da iyisi, *yönler* bir anlam ifade eder. Bunu görmek için, sadece iki kadranlı bir haritaya aşağıdaki çizimden alınan **örnek koordinatları** kullanarak dört kelime yerleştirelim: **(2, 1) konumunda *erkek (man)***, **(5, 4) konumunda *kadın (woman)***, **(3, 6) konumunda *kral (king)*** ve **(6, 9) konumunda *kraliçe (queen)***:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe krallık yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe kraliyet yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 <marker id="emb-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
@@ -78,14 +78,14 @@ Her bir token daha sonra bir **gömüye (embedding)** dönüşür: uzun bir say�
 <line x1="300" y1="116" x2="318" y2="116" style="stroke:var(--c-accent);stroke-width:2"/>
 <text x="324" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">cinsiyet yönü (+3, +3)</text>
 <line x1="300" y1="226" x2="318" y2="226" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
-<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">krallık yönü (+1, +5)</text>
+<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kraliyet yönü (+1, +5)</text>
 </svg>
 
 Çizim hilesizdir — koordinatlarla sağlamasını yapın:
 
 > kadın − erkek = (5, 4) − (2, 1) = **(+3, +3)** — *cinsiyet* yönü
 > kraliçe − kral = (6, 9) − (3, 6) = **(+3, +3)** — aynı ok, haritanın yukarısında
-> kral − erkek = kraliçe − kadın = **(+1, +5)** — *krallık* yönü, iki kez
+> kral − erkek = kraliçe − kadın = **(+1, +5)** — *kraliyet* yönü, iki kez
 
 Okları üst üste koyun, ünlü denklem kendiliğinden çıkar:
 
@@ -271,7 +271,7 @@ flowchart LR
     E -->|"trilyonlarca kez tekrar"| A
 ```
 
-Ölçeğin getirisi öngörülebilirdir. **Ölçek yasaları** (scaling laws) — kayıp ≈
+Ölçeğin getirisi öngörülebilirdir. **Ölçekleme yasaları** (scaling laws) — kayıp ≈
 a · C^(−α), log-log kâğıdında düz çizgi — OpenAI'ın GPT-4'ün nihai
 kaybını 10.000 kat küçük denemelerden öngörmesini sağladı; DeepMind'ın
 **Chinchilla**sı tarifi parametre başına ~20 token'a sabitledi — 70
@@ -289,7 +289,7 @@ kaldırmadı." Hepsi sadık devamlardır; cevabı çekip çıkarmak bir
 zamanlar başına kendiniz "S: … C:" yazmayı gerektirirdi — prompt
 mühendisliği orada doğdu. İki ucuz aşama asistan yapar:
 
-- **Talimat eğitimi** (instruction tuning) — on binlerce soru → ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı cevap en olası devam olana dek.
+- **Talimatla ince ayar** (instruction tuning) — on binlerce soru → ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı cevap en olası devam olana dek.
 - **RLHF** — insanlar aday cevapları karşılaştırır, bir ödül modeli (reward model) zevklerini öğrenir, LLM ona doğru ayarlanır: ton, dürüstlük, ret — örneklerin yazamadığı. (Daha da ucuzu **LoRA**: modeli dondurup yanına minik adaptör matrisleri eğitir.)
 
 Vurucu son: GPT-3, ChatGPT'den iki yılı aşkın süre önce
@@ -316,9 +316,9 @@ her ara adım bağlama katılır ve sonraki tahmini keskinleştirir. Akıl
 yürüten modeller tam bunu sanayileştirir.
 
 Tabloyu ekonomik bir gerçek tamamlar. Eğitim, belgeleri paralel işler;
-sohbet, token'ları teker teker üretir — ve **KV cache**, 3. bölümün
-sözünü bozdurur: geçmiş anahtarlarla değerler hiç değişmez, bir kez
-hesaplanır ve saklanır. "Ben seni" bağlamıyla tek tur:
+sohbet, token'ları teker teker üretir — ve bu seri döngüyü ucuz tutan
+**KV cache**, 3. bölümün verdiği sözü tahsil eder: geçmiş anahtarlarla
+değerler hiç değişmez, bir kez hesaplanır ve saklanır. "Ben seni" bağlamıyla tek tur:
 
 1. "Ben" ile "seni"nin önbellekteki K, V'leri taze sorgu Q₃ ile buluşur — ağırlıklar %30 / %70 düşer.
 2. Karışım kulede yükselir; softmax *seviyorum* der (%85); çekiliş onu seçer.
@@ -367,8 +367,8 @@ Ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
 2. **Attention** (sorgu·anahtar·değer) her token'ın vektörünü bağlamıyla
    karıştırır — yalnızca geriye bakarak; bilgiyi ileri beslemeli katmanlar
    depolar.
-3. **Ön eğitim** = ölçekli sıradaki-token tahmini; ölçek yasaları kazancı
-   öngörülebilir kılar; talimat eğitimi + RLHF taban modeli asistana çevirir.
+3. **Ön eğitim** = ölçekli sıradaki-token tahmini; ölçekleme yasaları kazancı
+   öngörülebilir kılar; talimatla ince ayar + RLHF taban modeli asistana çevirir.
 4. Üretim = örnekle, ekle, tekrarla — temperature, top-k, top-p çekilişi
    ayarlar; KV cache bunu ödenebilir kılar.
 5. Donmuş ağırlıklar; hafıza bağlam penceresidir; akıcıdır çünkü *makul*ü
