@@ -1,7 +1,37 @@
 {
   "lang": "tr",
-  "updated": "2026-09-01",
+  "updated": "2026-09-03",
   "posts": [
+    {
+      "slug": "ajan-promptunun-anatomisi",
+      "title": "Ajan prompt'unun anatomisi: ajanı güvenilir yapan sekiz bölüm",
+      "date": "2026-09-03",
+      "summary": "Bir talimatı tutup diğerinde haddini aşan ajan çoğu zaman sözleşme değil, dilek taşıyordur. Bu yazı sistem prompt'unu dört kata dizilmiş sekiz bölüm olarak kuruyor: rol, kapsam, ilkeler, iş akışı, araçlar, çıktı formatı, belirsizlik ve örnekler — her bölümün kötü ve iyi sürümü, sonda baştan sona tam bir prompt ve ajanları sessizce bozan hatalarla birlikte.",
+      "tags": [
+        "llm",
+        "ajanlar",
+        "prompt",
+        "temeller"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "anatomy-of-an-agent-prompt",
+      "draft": false
+    },
+    {
+      "slug": "embeddingler-derinlemesine",
+      "title": "Embedding'ler derinlemesine: anlamın geometrisi",
+      "date": "2026-09-01",
+      "summary": "Her RAG boru hattı, üzerinde 'embed' yazan bir kutuya güvenir. Bu yazı o kutuyu açıyor: bir cümle anlam haritasında nasıl tek noktaya dönüşür, haritayı contrastive eğitim nasıl çizer, kosinüs puanı gerçekte ne söyler, HNSW komşuları milisaniyede nasıl bulur, hangi düğme belleği kaliteyle takas eder — ve geometri nerede kör kalır.",
+      "tags": [
+        "llm",
+        "embedding",
+        "erişim",
+        "temeller"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "how-embeddings-work",
+      "draft": false
+    },
     {
       "slug": "hangi-rag-deseni",
       "title": "Hangi RAG desenine gerçekten ihtiyacınız var?",

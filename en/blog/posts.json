@@ -1,7 +1,37 @@
 {
   "lang": "en",
-  "updated": "2026-09-01",
+  "updated": "2026-09-03",
   "posts": [
+    {
+      "slug": "anatomy-of-an-agent-prompt",
+      "title": "Anatomy of an agent prompt: the eight sections that make agents reliable",
+      "date": "2026-09-03",
+      "summary": "An agent that ignores one instruction and overreaches another is usually carrying a wish, not a contract. This article structures the system prompt as eight sections on four floors — role, scope, principles, workflow, tools, output format, uncertainty, examples — with a bad and a good version of each, one complete prompt at the end, and the mistakes that quietly break agents.",
+      "tags": [
+        "llm",
+        "agents",
+        "prompts",
+        "foundations"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "ajan-promptunun-anatomisi",
+      "draft": false
+    },
+    {
+      "slug": "how-embeddings-work",
+      "title": "How embeddings work: the geometry of meaning",
+      "date": "2026-09-01",
+      "summary": "Every RAG pipeline trusts a box labeled 'embed'. This article opens it: how a sentence becomes a point on a map of meaning, how contrastive training draws the map, what a cosine score really tells you, how HNSW finds neighbors in milliseconds, which dials trade memory for quality — and where the geometry goes blind.",
+      "tags": [
+        "llm",
+        "embeddings",
+        "retrieval",
+        "foundations"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "embeddingler-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "which-rag-pattern-do-you-need",
       "title": "Which RAG pattern do you actually need?",

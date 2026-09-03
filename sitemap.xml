@@ -121,4 +121,36 @@
     <lastmod>2026-09-01</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=how-embeddings-work</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-embeddings-work"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=embeddingler-derinlemesine"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-embeddings-work"/>
+    <lastmod>2026-09-01</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=embeddingler-derinlemesine</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-embeddings-work"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=embeddingler-derinlemesine"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-embeddings-work"/>
+    <lastmod>2026-09-01</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=anatomy-of-an-agent-prompt</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=anatomy-of-an-agent-prompt"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=ajan-promptunun-anatomisi"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=anatomy-of-an-agent-prompt"/>
+    <lastmod>2026-09-03</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=ajan-promptunun-anatomisi</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=anatomy-of-an-agent-prompt"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=ajan-promptunun-anatomisi"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=anatomy-of-an-agent-prompt"/>
+    <lastmod>2026-09-03</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>
