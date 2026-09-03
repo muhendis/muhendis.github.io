@@ -3,6 +3,36 @@
   "updated": "2026-09-03",
   "posts": [
     {
+      "slug": "prompting-teknikleri",
+      "title": "Prompting teknikleri: chain-of-thought'tan akıl yürüten modellere",
+      "date": "2026-09-03",
+      "summary": "Alanın en ünlü prompt tavsiyesi tek cümledir: 'adım adım düşün' ekleyin. 2022'de benchmark puanlarını dörde katlıyordu; bugünün modelleri siz istemeden düşünüyor ve aynı tavsiye 'yedek yöntem' rafında. Bu yazı bilinmeye değer tekniklerin — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — kompakt bir turu: akıl yürüten modellerin hangilerini yuttuğu, prompt'unuzda hâlâ ne olması gerektiği ve belirtiden çözüme götüren üç soruluk teşhis.",
+      "tags": [
+        "llm",
+        "prompt",
+        "akıl-yürütme",
+        "temeller"
+      ],
+      "readingMinutes": 6,
+      "translationSlug": "prompting-techniques",
+      "draft": false
+    },
+    {
+      "slug": "vektor-veritabani-derinlemesine",
+      "title": "Vektör veritabanı derinlemesine: vektör yığınından milisaniyede top-k'ye",
+      "date": "2026-09-03",
+      "summary": "FAISS demosu milisaniyede kusursuz cevap verir — sonra üretim bir silme talebi, bir müşteri filtresi ve dünkü yüklemeyle gelir ve demo dağılır. Bu yazı dizinin etrafındaki binayı geziyor: tek bir sorgunun hayatı, hangi dizin ailesinin hangi bedeli ödediği, filtrelerin top-k'yi neden sessizce aç bıraktığı, canlı verinin ne istediği, ölçeğin neye benzediği — ve bir vektör veritabanına gerçekten ihtiyacınız olup olmadığını söyleyen dört basamaklı merdiven.",
+      "tags": [
+        "llm",
+        "vektör-veritabanı",
+        "erişim",
+        "altyapı"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "what-a-vector-database-actually-does",
+      "draft": false
+    },
+    {
       "slug": "ajan-promptunun-anatomisi",
       "title": "Ajan prompt'unun anatomisi: ajanı güvenilir yapan sekiz bölüm",
       "date": "2026-09-03",

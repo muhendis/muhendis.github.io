@@ -298,6 +298,11 @@ en yakın noktaya koyun. Üçüncüsü ve en affetmeyeni: tek bir zayıf
 bıraktığınızı ayırt edemez. Cevap olarak yayınlamayacağınız şeyi
 örnek olarak da yayınlamayın.
 
+Örnekler biçimden fazlasını taşıyabilir: içlerine *akıl yürütmeyi* de
+koyun; model yalnızca nasıl yazdığınızı değil, nasıl düşündüğünüzü de
+taklit eder. Bu numaranın — chain-of-thought — ve akrabalarının
+[kendi yazısı var](post.html?slug=prompting-teknikleri).
+
 ## 6. Baştan sona bir örnek
 
 İşte binanın tamamı bir arada — sekiz bölümüyle, tek sayfada bir
@@ -435,5 +440,8 @@ ve hangi sırayla çalışır (kararlar), neye uzanır ve elinden ne çıkar
 
 Bu blogda: modelin prompt'unuzu neden öyle okuduğunu anlamak için
 [LLM'ler gerçekte nasıl çalışır?](post.html?slug=llm-nasil-calisir),
+chain-of-thought ve diğer prompting tekniklerinin bu bölümlere nasıl
+oturduğu için
+[Prompting teknikleri](post.html?slug=prompting-teknikleri),
 sorun talimatlar değil de erişim katmanındaysa
 [Hangi RAG desenine gerçekten ihtiyacınız var?](post.html?slug=hangi-rag-deseni).

@@ -296,6 +296,11 @@ degrades all of them, because the model cannot tell your aspirational
 examples from your accidental ones. If you would not ship it as an
 answer, do not ship it as an example.
 
+Examples can carry more than format: put the *reasoning* inside them
+too, and the model imitates how you think, not just how you write.
+That trick — chain-of-thought — and its relatives have [an article of
+their own](post.html?slug=prompting-techniques).
+
 ## 6. One prompt, end to end
 
 Here is the whole building assembled — a support triage agent, eight
@@ -432,6 +437,10 @@ with one worked example, the most representative one, sitting last.
   on: clarity, examples, structured output.
 
 On this blog: why the model reads your prompt the way it does —
-[How LLMs actually work](post.html?slug=how-llms-work) — and what to
-do when the failing component is retrieval, not instructions —
+[How LLMs actually work](post.html?slug=how-llms-work) — how
+chain-of-thought and the other prompting techniques fit into these
+sections —
+[Prompting techniques](post.html?slug=prompting-techniques) —
+and what to do when the failing component is retrieval, not
+instructions —
 [Which RAG pattern do you actually need?](post.html?slug=which-rag-pattern-do-you-need).

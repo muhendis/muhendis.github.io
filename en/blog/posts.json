@@ -3,6 +3,36 @@
   "updated": "2026-09-03",
   "posts": [
     {
+      "slug": "prompting-techniques",
+      "title": "Prompting techniques: from chain-of-thought to reasoning models",
+      "date": "2026-09-03",
+      "summary": "The most famous prompt advice is one sentence: add 'think step by step'. In 2022 it quadrupled benchmark scores; today's models think before you ask, and the advice is filed under 'fallback'. A compact tour of the techniques worth knowing — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — which of them reasoning models absorbed, what still belongs in your prompt, and a three-question diagnosis from symptom to fix.",
+      "tags": [
+        "llm",
+        "prompts",
+        "reasoning",
+        "foundations"
+      ],
+      "readingMinutes": 6,
+      "translationSlug": "prompting-teknikleri",
+      "draft": false
+    },
+    {
+      "slug": "what-a-vector-database-actually-does",
+      "title": "What a vector database actually does: from a pile of vectors to a top-k in milliseconds",
+      "date": "2026-09-03",
+      "summary": "A FAISS demo answers perfectly in milliseconds — then production asks for a deletion, a tenant filter, and yesterday's upload, and the demo falls apart. This article walks through the building around the index: the life of one query, which index families pay which costs, why filters silently starve your top-k, what living data demands, what scale looks like — and a four-rung ladder for deciding whether you need a vector database at all.",
+      "tags": [
+        "llm",
+        "vector-database",
+        "retrieval",
+        "infrastructure"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "vektor-veritabani-derinlemesine",
+      "draft": false
+    },
+    {
       "slug": "anatomy-of-an-agent-prompt",
       "title": "Anatomy of an agent prompt: the eight sections that make agents reliable",
       "date": "2026-09-03",
