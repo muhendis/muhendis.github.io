@@ -3,6 +3,21 @@
   "updated": "2026-09-04",
   "posts": [
     {
+      "slug": "vllm-derinlemesine",
+      "title": "vLLM derinlemesine: motorun içi, önemli ayar kolları ve sizi önceden uyaran metrikler",
+      "date": "2026-09-04",
+      "summary": "GPU %92 dolu görünüyor ama işlem hacmi benchmark'ın üçte biri; üstelik hiç alarm kurmadığınız bir sayaç — num_preemptions_total — salıdan beri tırmanıyor. Bu yazı vLLM'in etrafından değil içinden geçiyor: blok tablosu ve prefix cache hash'leri, V1 scheduler'ının tek token bütçesi, bir kapasite sinyali olarak preemption, TTFT ile token arası gecikme ve işlem hacmi arasındaki ayar üçgeni, kapasite planlaması için KV cache aritmetiği ve SGLang ya da TensorRT-LLM'in ne zaman kazandığının dürüst haritası.",
+      "tags": [
+        "llm",
+        "çıkarım",
+        "vllm",
+        "mimari"
+      ],
+      "readingMinutes": 14,
+      "translationSlug": "vllm-from-paper-to-production",
+      "draft": false
+    },
+    {
       "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
       "title": "LLM maliyet ve gecikme optimizasyonu: para ve milisaniyeler gerçekte nereye gidiyor",
       "date": "2026-09-04",

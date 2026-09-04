@@ -3,6 +3,21 @@
   "updated": "2026-09-04",
   "posts": [
     {
+      "slug": "vllm-from-paper-to-production",
+      "title": "vLLM from paper to production: inside the engine, the knobs that matter, and the metrics that warn you",
+      "date": "2026-09-04",
+      "summary": "The GPU reads 92% allocated yet throughput is a third of the benchmark, and a counter you never alerted on — num_preemptions_total — has been climbing since Tuesday. This article goes inside vLLM instead of around it: the block table and prefix-cache hashes, the V1 scheduler's single token budget, preemption as a capacity signal, the tuning triangle between TTFT, inter-token latency, and throughput, KV-cache arithmetic for capacity planning, and an honest map of when SGLang or TensorRT-LLM wins instead.",
+      "tags": [
+        "llm",
+        "inference",
+        "vllm",
+        "architecture"
+      ],
+      "readingMinutes": 14,
+      "translationSlug": "vllm-derinlemesine",
+      "draft": false
+    },
+    {
       "slug": "optimizing-llm-cost-and-latency",
       "title": "Optimizing LLM cost and latency: where the money and the milliseconds actually go",
       "date": "2026-09-04",
