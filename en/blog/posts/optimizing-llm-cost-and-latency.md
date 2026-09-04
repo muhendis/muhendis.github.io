@@ -172,9 +172,9 @@ resume from it. The numbers are dramatic because prefill on a long
 prefix is genuinely expensive. Anthropic reports up to 90% cost
 reduction and up to 85% latency reduction on long prompts; their
 worked example — chatting with a cached 100,000-token book — drops
-time-to-first-token from 11.5 seconds to 2.4. The pricing mechanics:
-writing to the cache costs 1.25x the base input rate, reading from
-it costs 0.1x. OpenAI's caching is automatic above a minimum prefix
+time-to-first-token from 11.5 seconds to 2.4. The pricing mechanics
+(as retrieved September 4, 2026): writing to the cache costs 1.25x
+the base input rate, reading from it costs 0.1x. OpenAI's caching is automatic above a minimum prefix
 length (1,024 tokens on recent models), with cache reads discounted
 up to 90% on its newest models. Google and AWS offer the same idea
 under their own names.
@@ -287,10 +287,10 @@ limousine to pick up groceries.
 
 ### The price gap in numbers
 
-To make the gap concrete, here is the landscape as of this writing
-(September 2026, rounded, per million tokens — prices age quickly,
-so verify against official pricing pages before any production
-decision):
+To make the gap concrete, here is the landscape — figures retrieved
+from the providers' official pricing pages on **September 4, 2026**
+(rounded, per million tokens; prices age quickly, so re-verify
+before any production decision):
 
 | Tier | Example | Input $/M | Output $/M |
 |---|---|---|---|

@@ -178,8 +178,8 @@ prefix üzerinde prefill gerçekten pahalıdır. Anthropic uzun
 prompt'larda %90'a varan maliyet ve %85'e varan gecikme düşüşü
 bildirir; işlenmiş örnekleri — cache'lenmiş 100.000 token'lık bir
 kitapla sohbet — ilk token süresini 11,5 saniyeden 2,4 saniyeye
-indirir. Fiyat mekaniği: cache'e yazmak taban input fiyatının
-1,25 katı, cache'ten okumak 0,1 katıdır. OpenAI'nin caching'i belli
+indirir. Fiyat mekaniği (4 Eylül 2026 itibarıyla): cache'e yazmak
+taban input fiyatının 1,25 katı, cache'ten okumak 0,1 katıdır. OpenAI'nin caching'i belli
 bir prefix uzunluğunun üzerinde otomatiktir (güncel modellerde
 1.024 token) ve en yeni modellerinde cache okumalarında %90'a varan
 indirim uygular. Google ve AWS aynı fikri kendi adlarıyla sunar.
@@ -295,10 +295,10 @@ için limuzin çağırmazsınız.
 
 ### Rakamlarla fiyat uçurumu
 
-Uçurumu somutlaştırmak için, bu yazının yazıldığı andaki manzara
-(Eylül 2026, yuvarlanmış, milyon token başına — fiyatlar hızla
-eskir; production kararından önce resmî fiyat sayfalarından
-doğrulayın):
+Uçurumu somutlaştırmak için manzara — rakamlar **4 Eylül 2026**'da
+sağlayıcıların resmî fiyat sayfalarından alındı (milyon token
+başına, yuvarlanmış; fiyatlar hızla eskir, production kararından
+önce yeniden doğrulayın):
 
 | Katman | Örnek | Input $/M | Output $/M |
 |---|---|---|---|
