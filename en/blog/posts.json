@@ -1,7 +1,22 @@
 {
   "lang": "en",
-  "updated": "2026-09-03",
+  "updated": "2026-09-04",
   "posts": [
+    {
+      "slug": "optimizing-llm-cost-and-latency",
+      "title": "Optimizing LLM cost and latency: where the money and the milliseconds actually go",
+      "date": "2026-09-04",
+      "summary": "The demo cost cents and answered in a second; production brought a bill you didn't budget for and a p95 chart users feel. The culprit is almost always the same: output tokens, written one by one while the meter runs. This article walks the whole stack in order of risk — the two-phase anatomy of a call, the lossless wins (prompt caching, batch APIs, thinking budgets), routing between model tiers, the serving room, the compressions that can hurt accuracy, and why agents multiply everything — ending with the one decision table worth memorizing.",
+      "tags": [
+        "llm",
+        "inference",
+        "cost",
+        "architecture"
+      ],
+      "readingMinutes": 15,
+      "translationSlug": "llm-maliyet-ve-gecikme-optimizasyonu",
+      "draft": false
+    },
     {
       "slug": "prompting-techniques",
       "title": "Prompting techniques: from chain-of-thought to reasoning models",

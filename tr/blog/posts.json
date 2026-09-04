@@ -1,7 +1,22 @@
 {
   "lang": "tr",
-  "updated": "2026-09-03",
+  "updated": "2026-09-04",
   "posts": [
+    {
+      "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
+      "title": "LLM maliyet ve gecikme optimizasyonu: para ve milisaniyeler gerçekte nereye gidiyor",
+      "date": "2026-09-04",
+      "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Suçlu neredeyse her zaman aynı: taksimetre işlerken tek tek yazılan output token'ları. Bu yazı bütün yığını risk sırasıyla geziyor — bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler, thinking bütçeleri), model katmanları arasında routing, serving odası, doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı — ve ezberlenmeye değer tek karar tablosuyla bitiyor.",
+      "tags": [
+        "llm",
+        "çıkarım",
+        "maliyet",
+        "mimari"
+      ],
+      "readingMinutes": 15,
+      "translationSlug": "optimizing-llm-cost-and-latency",
+      "draft": false
+    },
     {
       "slug": "prompting-teknikleri",
       "title": "Prompting teknikleri: chain-of-thought'tan akıl yürüten modellere",

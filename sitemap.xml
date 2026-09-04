@@ -185,4 +185,20 @@
     <lastmod>2026-09-03</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=optimizing-llm-cost-and-latency</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=optimizing-llm-cost-and-latency"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=optimizing-llm-cost-and-latency"/>
+    <lastmod>2026-09-04</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=optimizing-llm-cost-and-latency"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=optimizing-llm-cost-and-latency"/>
+    <lastmod>2026-09-04</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>
