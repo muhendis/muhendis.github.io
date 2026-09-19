@@ -202,6 +202,22 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=tokenizasyon-nasil-calisir"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works"/>
+    <lastmod>2026-09-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=tokenizasyon-nasil-calisir</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=tokenizasyon-nasil-calisir"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works"/>
+    <lastmod>2026-09-19</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://muhendis.github.io/en/blog/post.html?slug=vllm-from-paper-to-production</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=vllm-from-paper-to-production"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=vllm-derinlemesine"/>

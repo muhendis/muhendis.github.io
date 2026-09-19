@@ -1,7 +1,22 @@
 {
   "lang": "tr",
-  "updated": "2026-09-04",
+  "updated": "2026-09-19",
   "posts": [
+    {
+      "slug": "tokenizasyon-nasil-calisir",
+      "title": "Tokenizasyon nasıl çalışır: her prompt'un modelden önce uğradığı masa",
+      "date": "2026-09-19",
+      "summary": "En güçlü model hâlâ \"strawberry\" kelimesindeki r'leri yanlış sayıyor ve sebebi akıl yürütme değil: kelime ilk katmana ulaştığında çoktan üç tamsayıya dönüşmüştü ve girdide hiç bulunmayan bir şeyi sayamazsınız. Bu yazı tokenizer masasının içinden geçiyor — sabit bir vocabulary neden zorunlu, BPE onu sık çiftleri birleştirerek nasıl kuruyor, WordPiece ve Unigram nerede farklı karar veriyor, vocabulary boyutu parametre olarak ne götürüp dizi uzunluğu olarak ne kazandırıyor, tiktoken ile ölçülmüş Türkçe fertility rakamları, prompt'un düzeltemediği arızalar (glitch token'lar ve tokenizer.json kurcalaması dâhil) ve bir token ID'sinin sonunda nasıl vektöre dönüştüğü.",
+      "tags": [
+        "llm",
+        "tokenizasyon",
+        "nlp",
+        "temeller"
+      ],
+      "readingMinutes": 12,
+      "translationSlug": "how-tokenization-works",
+      "draft": false
+    },
     {
       "slug": "vllm-derinlemesine",
       "title": "vLLM derinlemesine: motorun içi, önemli ayar kolları ve sizi önceden uyaran metrikler",

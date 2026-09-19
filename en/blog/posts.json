@@ -1,7 +1,22 @@
 {
   "lang": "en",
-  "updated": "2026-09-04",
+  "updated": "2026-09-19",
   "posts": [
+    {
+      "slug": "how-tokenization-works",
+      "title": "How tokenization works: the desk every prompt passes before the model sees it",
+      "date": "2026-09-19",
+      "summary": "A frontier model still miscounts the r's in \"strawberry\", and the reason is not reasoning: by the time the word reached the first layer it had become three integers, and you cannot count what was never in the input. This article works through the tokenizer desk — why a fixed vocabulary must exist, how BPE builds it by merging frequent pairs, where WordPiece and Unigram decide differently, what vocabulary size costs in parameters and buys in sequence length, measured Turkish fertility numbers from tiktoken, the failure modes prompting cannot fix including glitch tokens and tokenizer.json tampering, and how a token ID finally becomes a vector.",
+      "tags": [
+        "llm",
+        "tokenization",
+        "nlp",
+        "foundations"
+      ],
+      "readingMinutes": 12,
+      "translationSlug": "tokenizasyon-nasil-calisir",
+      "draft": false
+    },
     {
       "slug": "vllm-from-paper-to-production",
       "title": "vLLM from paper to production: inside the engine, the knobs that matter, and the metrics that warn you",
