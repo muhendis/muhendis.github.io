@@ -1,7 +1,22 @@
 {
   "lang": "tr",
-  "updated": "2026-09-19",
+  "updated": "2026-09-20",
   "posts": [
+    {
+      "slug": "embedding-katmani-derinlemesine",
+      "title": "LLM'de embedding katmanı: Gemma 3 üzerinden mimari ve dinamikler",
+      "date": "2026-09-20",
+      "summary": "Ne: embed_tokens, ayrık token ID'lerini bir transformer'ın işleyebileceği sürekli vektörlere çeviren katman ve lm_head, onları geri izdüşüren bağlı matris. Neden önemli: 1B modelin parametrelerinin ~%30'udur, hiç çarpma yapmaz ve forward'ının içinde saklanan sqrt(d_model) ölçeklemesini iki kez uygulamak çok kolaydır. Nasıl: lookup table mekaniği ve tensör boyutları, ölçekleme ve PyTorch tuzağı, konumsal kodlamanın RoPE'a kadarki üç kuşağı, loss spike'lar ve WeSaR, eğitim ile servis arasındaki maliyet ayrımı. Nerede: Gemma 3 üzerinden inceleme; sayılar model config'inden. Kim için: model servis eden, ince ayar yapan ya da checkpoint taşıyan mühendisler. Ne zaman: VRAM bütçesi tutmadığında, sadakatle taşınan ağırlıklar yine de saçma çıktı verdiğinde ya da ön eğitimde kayıp fırladığında.",
+      "tags": [
+        "llm",
+        "mimari",
+        "embedding",
+        "pytorch"
+      ],
+      "readingMinutes": 16,
+      "translationSlug": "inside-the-embedding-layer",
+      "draft": false
+    },
     {
       "slug": "tokenizasyon-nasil-calisir",
       "title": "Tokenizasyon nasıl çalışır: her prompt'un modelden önce uğradığı masa",
@@ -147,7 +162,22 @@
         "langchain"
       ],
       "readingMinutes": 4,
-      "translationSlug": null,
+      "translationSlug": "langgraph-flow-design-llm-applications",
+      "draft": true
+    },
+    {
+      "slug": "post-training-quantization-llm-cikarim",
+      "title": "LLM çıkarımında post-training quantization (eğitim sonrası nicemleme)",
+      "date": "2026-08-29",
+      "summary": "Büyük bir dil modelini sunmak bellek bant genişliği darboğazına çarpar. Aktivasyon aykırı değerlerinin (outliers) naif nicemlemeyi neden bozduğuna ve modern GPU'larda gecikmeyi gerçekte neyin düşürdüğüne dair notlar.",
+      "tags": [
+        "llm",
+        "nicemleme",
+        "gpu",
+        "çıkarım"
+      ],
+      "readingMinutes": 5,
+      "translationSlug": "post-training-quantization-llm-inference",
       "draft": true
     }
   ]

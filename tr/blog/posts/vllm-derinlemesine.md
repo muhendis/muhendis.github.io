@@ -699,10 +699,12 @@ Döngüyü motorun kendisi gibi kapatalım — önce belirti:
   [aleksagordic.com/blog/vllm](https://www.aleksagordic.com/blog/vllm)
 - Bu blogda: [LLM maliyet ve gecikme
   optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu)
-  — bu yazının içini açtığı serving odası —
+  — bu yazının içini açtığı serving odası —,
+  [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine)
+  — VocabParallelEmbedding ve çıkarımda lm_head maliyeti —,
   [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) —
-  prefill, decode ve KV cache'in sakladığı şey —
+  prefill, decode ve KV cache'in sakladığı şey —,
   [Ajan prompt'unun anatomisi](post.html?slug=ajan-promptunun-anatomisi)
-  — prefix caching'in ödüllendirdiği sabit-prefix trafiği —
+  — prefix caching'in ödüllendirdiği sabit-prefix trafiği — ve
   [Hangi RAG desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni)
   — uzun ortak context'lerin geldiği yer.

@@ -35,7 +35,7 @@ göreceksiniz.
 generation)**, donmuş bir LLM'in yanına kütüphane monte eder (çıplak
 LLM'in neden uydurduğu: [halüsinasyon
 hikâyesi](post.html?slug=llm-nasil-calisir)). Belgeler **parçalara
-(chunk)** bölünür, her parça bir **gömme (embedding)** olarak **vektör
+(chunk)** bölünür, her parça bir **embedding** olarak **vektör
 veritabanına (vector database)** yazılır; sorgu aynı haritaya gömülür,
 en yakın **top-k** parça prompt'a yapıştırılır ve model cevabı
 onlardan kurar.
@@ -305,8 +305,8 @@ eşyayı alın, kutusunu bırakın.
 sıkıştırmayı reranking'den *sonra* yapın, güven sıralaması finalistleri
 korusun.
 
-> **Reordering (yeniden dizme)** = en güvenilir parçaları bağlamın
-> başına ve sonuna, en zayıfları ortaya koymak.
+> **Reordering (bağlam içi yeniden dizilim)** = en güvenilir parçaları
+> bağlamın başına ve sonuna, en zayıfları ortaya koymak.
 
 Yapıştırma sırası sizin elinizde, modelin de kenar yanlılığı var — ve
 reranker adayları zaten güven sırasına dizmişti; sıralama kullanılmayı
@@ -570,6 +570,7 @@ Yazının temel sözcük dağarcığı, her biri tek satırda:
 - Yan vd., [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) (2024).
 - Formal vd., [SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking](https://arxiv.org/abs/2107.05720) (2021).
 - Cormack, Clarke & Büttcher, [Reciprocal Rank Fusion outperforms Condorcet and individual rank learning methods](https://dl.acm.org/doi/10.1145/1571941.1572114) (SIGIR 2009) — k = 60'ın geldiği yer.
+- Bu blogda: [Vektör veritabanı derinlemesine](post.html?slug=vektor-veritabani-derinlemesine) — raftan kütüphaneye: ANN, filtreler ve operasyon —, [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — anlamın geometrisi ve benzerlik puanları —, [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine) — model katmanındaki lookup mekaniği — ve [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu) — boru hattının faturayı ve milisaniyeleri şişirmesini önleme.
 
 ---
 

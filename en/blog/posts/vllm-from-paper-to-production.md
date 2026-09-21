@@ -671,10 +671,12 @@ Close the loop the way the engine itself would — symptom first:
   [aleksagordic.com/blog/vllm](https://www.aleksagordic.com/blog/vllm)
 - On this blog: [Optimizing LLM cost and
   latency](post.html?slug=optimizing-llm-cost-and-latency) — the
-  serving room this article unpacks —
+  serving room this article unpacks —,
+  [Inside the embedding layer](post.html?slug=inside-the-embedding-layer)
+  — VocabParallelEmbedding and the cost of lm_head in inference —,
   [How LLMs work](post.html?slug=how-llms-work) — prefill, decode,
-  and what the KV cache stores —
+  and what the KV cache stores —,
   [Anatomy of an agent prompt](post.html?slug=anatomy-of-an-agent-prompt)
-  — the stable-prefix traffic that prefix caching rewards —
+  — the stable-prefix traffic that prefix caching rewards — and
   [Which RAG pattern do you need](post.html?slug=which-rag-pattern-do-you-need)
   — where long shared contexts come from.

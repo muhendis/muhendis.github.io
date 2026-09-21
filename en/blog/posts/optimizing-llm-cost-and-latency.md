@@ -891,10 +891,11 @@ The base vocabulary of the article, one line each:
   system](https://www.anthropic.com/engineering/built-multi-agent-research-system)
   — the caching mechanics and the 4x/15x agent token measurements.
 - On this blog: [How LLMs work](post.html?slug=how-llms-work) — why
-  decode is sequential and what the KV cache stores — [Prompting
+  decode is sequential and what the KV cache stores —, [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) —
+  the computational cost of the tied projection matrix in inference —, [Prompting
   techniques](post.html?slug=prompting-techniques) — thinking
-  budgets and what reasoning models absorbed — [Which RAG pattern do
+  budgets and what reasoning models absorbed —, [Which RAG pattern do
   you need](post.html?slug=which-rag-pattern-do-you-need) — routing
-  as a reflex and why stuffed context hurts — [Anatomy of an agent
+  as a reflex and why stuffed context hurts — and [Anatomy of an agent
   prompt](post.html?slug=anatomy-of-an-agent-prompt) — the tool-use
   and output discipline that keeps agent loops affordable.

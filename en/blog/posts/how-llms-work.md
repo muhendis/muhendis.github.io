@@ -392,3 +392,4 @@ exactly how a machine does the same. That is the whole story.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — the classic visual walkthrough.
 - Ebrahim Pichka, [What are Query, Key, and Value in the Transformer Architecture?](https://medium.com/data-science/what-are-query-key-and-value-in-the-transformer-architecture-and-why-are-they-used-acbe73f731f2) — a careful unpacking of the QKV intuition, including the soft-dictionary view.
 - Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — the whole machine, written in code before your eyes.
+- On this blog: [How tokenization works](post.html?slug=how-tokenization-works) — the step before the model —, [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) — discrete tokens to continuous geometry —, and [How embeddings work](post.html?slug=how-embeddings-work) — semantic search and vector spaces.

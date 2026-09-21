@@ -93,6 +93,18 @@ a.tag:hover { border-color: var(--c-accent); }
 }
 .post-body pre.mermaid svg { max-width: 100%; height: auto; }
 
+/* KaTeX math. Display formulas scroll rather than overflow on phones;
+   before the renderer loads these hold the LaTeX source as plain text. */
+.post-body .math-block {
+  margin-block: var(--sp-5);
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+.post-body .math-inline { white-space: nowrap; }
+.post-body .katex { font-size: 1.05em; }
+.post-body .math-block .katex-display { margin: 0; }
+
 .notice {
   padding: var(--sp-3) var(--sp-4); border-radius: var(--radius);
   background: var(--c-surface-2); border: 1px solid var(--c-border);

@@ -3,7 +3,7 @@ yükleyin, bir milyon embedding ekleyin, sorgulayın — birkaç
 milisaniyede kusursuz komşular gelir ve problemin çözüldüğüne inanmak
 işten değildir. Sonra üretim ortamı, üç gayet sıradan istekle kapıyı
 çalar: bir müşteri verilerinin silinmesini talep eder, ürün ekibi
-"arama olsun ama yalnızca bu müşterinin dökümanlarında" der ve biri,
+"arama olsun ama yalnızca bu müşterinin dokümanlarında" der ve biri,
 dün yüklenen dosyanın bugün hâlâ bulunamadığını fark eder. Bunların
 hiçbiri arama problemi değildir. Üçü birden demoyu dağıtır.
 
@@ -52,10 +52,10 @@ Fark, en kolay, rafın yapmadıklarının listesinde görünür:
 | Veri yönetimi | tek vektörü, gerisine dokunmadan ekle, güncelle, sil |
 | Metadata | her vektör kaynağını, müşterisini, tarihini, izinlerini taşır |
 | Filtreleme | "buna benzer ama yalnızca B müşterisi, yalnızca 2025 sonrası" |
-| Canlı güncelleme | yeni döküman, baştan inşa olmadan aranabilir hâle gelir |
+| Canlı güncelleme | yeni doküman, baştan inşa olmadan aranabilir hâle gelir |
 | Ölçekleme | veri makinelere yayılır; kapasite kesintisiz büyür |
 | Yedekleme | kötü bir deploy'dan sonra dönebileceğiniz anlık görüntüler |
-| Multitenancy | A müşterisi B müşterisinin dökümanını asla getiremez |
+| Multitenancy | A müşterisi B müşterisinin dokümanını asla getiremez |
 
 Geleneksel veritabanı da cevap değildir; problemin ayna görüntüsüdür.
 Postgres, tam eşleşmede ve yapısal filtrelerde (`WHERE tenant_id =
@@ -164,7 +164,7 @@ Demo, her ürün yöneticisinin eninde sonunda kuracağı cümlede ölür:
 > sırasında öğret.
 
 Çoğu sistemin varsayılanı post-filtering'dir ve aritmetik olarak
-başarısız olur. Sayılar pgvector'ün kendi dökümantasyonundan: HNSW
+başarısız olur. Sayılar pgvector'ün kendi dokümantasyonundan: HNSW
 varsayılan olarak `ef_search = 40` aday döndürür; filtreniz
 satırların yalnızca %10'unu geçiriyorsa hayatta kalan kabaca **4
 sonuçtur** — on istediniz, dört geldi ve hiçbir yerde hata
@@ -200,7 +200,7 @@ edilemezdir.
 Veritabanları tam bu iş için üç mekanizma taşır:
 
 - **Tombstone (mezar taşı kaydı).** Silme, vektörü çizgeden sökmek
-  yerine ölü işaretler; aramalar cesetleri atlar ve arka plandaki
+  yerine ölü işaretler; aramalar silinmiş kayıtları atlar ve arka plandaki
   birleştirme, etkilenen parçaları kendi takvimince yeniden kurar.
   Silme, çağıran için anlıktır; bedeli taksitle ödenir.
 - **Freshness layer (tazelik katmanı).** Yeni vektörler,
@@ -208,8 +208,8 @@ Veritabanları tam bu iş için üç mekanizma taşır:
   her sorgu hem tampona hem ana dizine gider, tamponun içeriği arka
   planda dizine katılır. Dünkü yüklemenin, hiçbir yeniden inşadan
   önce bugün bulunabilmesi böyle olur.
-- **Upsert.** Kaynak döküman değiştiğinde vektörü çoğaltmak değil,
-  değiştirmek gerekir — kendi döküman kimliğinize bağlı bir upsert,
+- **Upsert.** Kaynak doküman değiştiğinde vektörü çoğaltmak değil,
+  değiştirmek gerekir — kendi doküman kimliğinize bağlı bir upsert,
   bilgiyi güncellemekle, tazesinin önüne geçen bayat kopyalar
   biriktirmek arasındaki farktır.
 
@@ -249,7 +249,7 @@ dayatır:
 | Strong (güçlü) | tam olarak son yazılan | her okuma replikaları bekler |
 
 Erişim yükleri için doğru cevap çoğunlukla eventual consistency'dir —
-bir dökümanın birkaç saniye geç görünmesi görünmezdir, ikiye katlanan
+bir dokümanın birkaç saniye geç görünmesi görünmezdir, ikiye katlanan
 p99 gecikmesi değildir. **Multitenancy (çok kiracılılık)** aynı
 mekanizmanın üstünde gider: namespace'ler kiracıları koleksiyon
 içinde yalıtır; yönetilen platformlar sıcak kiracıları hızlı donanıma
@@ -336,7 +336,7 @@ Yazının temel sözcük dağarcığı, birer satırla:
 - **pre- / post-filtering** — filtreyi aramadan önce uygulamak (çizgeyi bozar) ya da sonra (top-k'yi aç bırakır).
 - **filtre-farkındalı arama** — metadata koşullarını dizin yürüyüşü sırasında değerlendirmek; alanların baştan bildirilmesini ister.
 - **payload index** — filtreyi vektör araması sırasında ucuzlatan metadata dizini (müşteri, tarih, kategori).
-- **upsert** — kendi döküman kimliğinize bağlı ekle-ya-da-değiştir; değişen dökümanın çoğalmak yerine güncellenme yolu.
+- **upsert** — kendi doküman kimliğinize bağlı ekle-ya-da-değiştir; değişen dokümanın çoğalmak yerine güncellenme yolu.
 - **tombstone** — silme işareti; aramalar vektörü hemen atlar, birleştirme onu sonra kaldırır.
 - **freshness layer** — yeni vektörler için ana dizinle birlikte aranan küçük kaba kuvvet tamponu; içerik sonradan dizine katılır.
 - **sharding** — koleksiyonu düğümlere bölmek; sorgu bütün parçalara dağılır, birleşik top-k toplanır.
@@ -354,4 +354,4 @@ Yazının temel sözcük dağarcığı, birer satırla:
 - Qdrant, [Filtering](https://qdrant.tech/documentation/concepts/filtering/) — payload index'ler ve must/should/must_not filtre cebiri.
 - [ANN Benchmarks](https://ann-benchmarks.com) — ANN algoritmalarının recall–hız eğrilerinin ayakta duran kamusal karşılaştırması.
 - Microsoft, [DiskANN](https://github.com/microsoft/DiskANN) — milyar ölçekli sayıların arkasındaki SSD'de oturan çizge dizini.
-- Bu blogda: [embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — bu veritabanlarının hizmet ettiği geometri, HNSW katman katman dahil — ve [hangi RAG desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni) — iyi erişim yine de yanlış şeyi getirdiğinde ne ekleyeceğiniz.
+- Bu blogda: [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — bu veritabanlarının hizmet ettiği geometri, HNSW katman katman dahil —, [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — model katmanındaki lookup mekaniği — ve [Hangi RAG desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni) — iyi erişim yine de yanlış şeyi getirdiğinde ne ekleyeceğiniz.

@@ -1,7 +1,22 @@
 {
   "lang": "en",
-  "updated": "2026-09-19",
+  "updated": "2026-09-20",
   "posts": [
+    {
+      "slug": "inside-the-embedding-layer",
+      "title": "The embedding layer in an LLM: architecture and dynamics on Gemma 3",
+      "date": "2026-09-20",
+      "summary": "What: embed_tokens, the layer that turns discrete token IDs into the continuous vectors a transformer can process, and lm_head, the tied matrix that projects them back. Why it matters: it is ~30% of a 1B model's parameters, performs no multiplication, and the sqrt(d_model) scaling hidden inside its forward is easy to apply twice. How: lookup table mechanics and tensor shapes, the scaling and its PyTorch trap, the three generations of positional encoding up to RoPE, loss spikes and WeSaR, and the cost split between training and serving. Where: a Gemma 3 walkthrough with every number from the model config. Who for: engineers serving models, fine-tuning them, or porting checkpoints. When: when the VRAM budget does not add up, when a faithful weight port still produces garbage, or when loss spikes during pre-training.",
+      "tags": [
+        "llm",
+        "architecture",
+        "embeddings",
+        "pytorch"
+      ],
+      "readingMinutes": 16,
+      "translationSlug": "embedding-katmani-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "how-tokenization-works",
       "title": "How tokenization works: the desk every prompt passes before the model sees it",
@@ -148,7 +163,21 @@
         "inference"
       ],
       "readingMinutes": 5,
-      "translationSlug": null,
+      "translationSlug": "post-training-quantization-llm-cikarim",
+      "draft": true
+    },
+    {
+      "slug": "langgraph-flow-design-llm-applications",
+      "title": "Flow design in LLM applications with LangGraph",
+      "date": "2026-08-29",
+      "summary": "What moving from chains to graphs buys you: explicit state management, conditional branching, and discipline in agent architecture.",
+      "tags": [
+        "llm",
+        "langgraph",
+        "langchain"
+      ],
+      "readingMinutes": 4,
+      "translationSlug": "langgraph-llm-uygulamalari",
       "draft": true
     }
   ]

@@ -763,7 +763,7 @@ ilerlemeyin.*
 
 **Aşama 1 — Kayıpsız kazanımlar (2-4. hafta).** Prompt caching'i
 açın ve prompt'ları cache-önce yapılandırın (statik yukarıda,
-dinamik sonda). Output uzunluğuna tavan koyun (max_tokens, format
+dinamik en altta). Output uzunluğuna tavan koyun (max_tokens, format
 talimatları). Thinking bütçesini platoda, API eliyle sınırlayın.
 İnteraktif olmayan işleri batch API'ye taşıyın. Self-host
 yığınlarda modern serving (vLLM ya da SGLang). *Eşik: cache isabet
@@ -924,10 +924,11 @@ Makalenin temel sözlüğü, her biri birer satır:
   — caching mekaniği ve 4x/15x ajan token ölçümleri.
 - Bu blogda: [LLM'ler nasıl
   çalışır](post.html?slug=llm-nasil-calisir) — decode neden sıralı
-  ve KV cache ne saklar — [Prompting
+  ve KV cache ne saklar —, [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine) —
+  çıkarımda bağlı projeksiyon matrisinin işlem maliyeti —, [Prompting
   teknikleri](post.html?slug=prompting-teknikleri) — thinking
-  bütçeleri ve reasoning modellerinin içine çektikleri — [Hangi RAG
+  bütçeleri ve reasoning modellerinin içine çektikleri —, [Hangi RAG
   desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni) —
-  refleks olarak routing ve tıka basa context'in zararı — [Ajan
-  promptunun anatomisi](post.html?slug=ajan-promptunun-anatomisi) —
+  refleks olarak routing ve tıka basa context'in zararı — ve [Ajan
+  prompt'unun anatomisi](post.html?slug=ajan-promptunun-anatomisi) —
   ajan döngülerini ödenebilir tutan tool ve çıktı disiplini.

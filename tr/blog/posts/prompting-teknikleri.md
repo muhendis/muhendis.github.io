@@ -110,7 +110,7 @@ demektir; bugün çoğunlukla eval'lerde — çevrimdışı test
 koşularında — yaşamasının nedeni bu.
 
 **Prompt chaining (prompt zincirleme)** — görevi ardışık çağrılara
-bölün: önce "soruyla ilgili alıntıları çıkar", sonra "döküman ve
+bölün: önce "soruyla ilgili alıntıları çıkar", sonra "doküman ve
 alıntılardan cevabı yaz". İki API çağrısı; aradaki ek yerini
 kodunuz denetler. İlk çağrı alıntı bulamazsa durup "bulunamadı"
 deyin — ikinci çağrının uydurmasına izin vermeyin. Ek yerinin amacı
@@ -339,4 +339,4 @@ Yazının temel sözcük dağarcığı, birer satırla:
 - OpenAI, [Reasoning guide](https://developers.openai.com/api/docs/guides/reasoning) — `reasoning.effort` parametresi ve düzeyleri.
 - [The Prompting Guide](https://www.promptingguide.ai/techniques) — buradaki çözülmüş örneklerin arkasındaki güncel teknik kataloğu.
 - Salesforce, [Prompt engineering techniques](https://www.salesforce.com/artificial-intelligence/prompt-engineering/techniques/) ve IBM, [Prompt engineering techniques](https://www.ibm.com/think/topics/prompt-engineering-techniques) — pratisyen bakışı: role prompting, dörtlü kontrol listesi, model başına test.
-- Bu blogda: [Ajan prompt'unun anatomisi](post.html?slug=ajan-promptunun-anatomisi) — bu tekniklerin tam bir sistem prompt'undaki yeri — [LLM'ler gerçekte nasıl çalışır?](post.html?slug=llm-nasil-calisir) — CoT'nin neden işlediği — ve [Hangi RAG desenine gerçekten ihtiyacınız var?](post.html?slug=hangi-rag-deseni) — düşünmenin düzeltemeyeceği hatalar.
+- Bu blogda: [Ajan prompt'unun anatomisi](post.html?slug=ajan-promptunun-anatomisi) — bu tekniklerin tam bir sistem prompt'undaki yeri —, [LLM'ler gerçekte nasıl çalışır?](post.html?slug=llm-nasil-calisir) — CoT'nin neden işlediği —, [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine) — token ID'lerinden vektör uzayına geçiş — ve [Hangi RAG desenine gerçekten ihtiyacınız var?](post.html?slug=hangi-rag-deseni) — düşünmenin düzeltemeyeceği hatalar.

@@ -41,22 +41,22 @@ sabit olmalıdır.
 > ve sonlu metin parçaları listesi. Her girdinin bir satır numarası
 > vardır. Bu parçalardan kurulamayan metin modele giremez.
 
-Akla ilk gelen liste *bütün kelimeler* olmaktır. İki yerden çöker.
-Tek başına İngilizce bile çekimleri, özel isimleri, kod tanımlayıcılarını
-ve yazım hatalarını sayınca yüz binlerce forma çıkar ve her biri
-embedding matrisinde kendi satırını ister. Daha kötüsü, liste eğitim
-anında kapanır: kullanıcılarınızın yazdığı listede olmayan ilk kelime
-— yeni bir ürün adı, bir yazım hatası — tek bir `[UNK]` token'ına
-düşer ve anlamı kaybolur.
+Akla ilk gelen seçenek *bütün kelimeleri* listelemektir. İki açıdan
+çöker. Tek başına İngilizce bile çekimleri, özel isimleri, kod
+tanımlayıcılarını ve yazım hatalarını sayınca yüz binlerce forma çıkar
+ve her biri embedding matrisinde kendi satırını ister. Daha kötüsü, liste
+eğitim anında kapanır: kullanıcılarınızın yazdığı listede bulunmayan
+ilk kelime — yeni bir ürün adı ya da bir yazım hatası — tek bir `[UNK]`
+token'ına düşer ve anlamı tamamen kaybolur.
 
-Karşı uçtaki liste *bütün karakterler* olmaktır. Vocabulary birkaç
-yüze iner ve hiçbir şey bilinmez kalmaz. Ama bu kez "tokenizasyon"
+Karşı uçtaki seçenek ise *bütün karakterleri* listelemektir. Vocabulary
+birkaç yüze iner ve hiçbir şey bilinmez kalmaz. Ama bu kez "tokenizasyon"
 iki yerine on iki yuva harcar ve attention maliyeti kabaca dizi
 uzunluğunun karesiyle büyür. Tek başına neredeyse hiç anlam taşımayan
 parçalar için karesel bir bedel ödersiniz.
 
-Subword (alt kelime) tokenizasyonu ortayı tutar. Sık kelimeler bütün
-kalır; seyrek olanlar hâlâ anlamlı parçalara ayrılır.
+Alt kelime (subword) tokenizasyonu ise orta yolu tutar. Sık kelimeler
+bütün kalır; seyrek olanlar ise yine anlamlı parçalara ayrılır.
 
 ```text
 "tokenization"   →  ["token", "ization"]     2 parça, ikisi de anlamlı
@@ -196,8 +196,9 @@ sayılar. ID bir tablodaki satır numarasıdır, fazlası değil. 24912,
 15339'dan "daha büyük" ya da "daha sonra" ya da "daha olumlu" değildir
 ve model onun üzerinde hiç aritmetik yapmaz.
 
-İki hassasiyet insanları şaşırtır ve ikisi de doğrudan vocabulary'nin
-*tam dizgileri* saklamasından gelir:
+Gözden kaçan iki ayrıntı kafa karıştırabilir; ikisi de doğrudan
+vocabulary'nin *tam karakter dizilerini* (exact strings) saklamasından
+kaynaklanır:
 
 ```python
 gpt4.encode("hello")   # [15339]          tek token
@@ -208,16 +209,17 @@ gpt4.encode(" egg")    # [19151]          tek token — boşluk dâhil
 gpt4.encode("egg")     # [29468]          tamamen başka bir token
 ```
 
-Büyük harf dizgiyi değiştirir, dolayısıyla token'ı da değiştirir.
-Bağırmak fazladan tutar, çünkü `HELLO` tek bir satır harcanacak kadar
-sık değildir. Baştaki boşluk da *token'ın parçasıdır* — `" egg"` ve
-`"egg"` farklı satırlardır. Byte-level BPE o boşluğu `Ġ`, SentencePiece
-`▁` diye yazar; ikisi de vocabulary dosyasında görünmez kalacak bir
-karakterin görünür vekilidir.
+Büyük harf karakter dizisini değiştirir, dolayısıyla seçilen token da
+değişir. Büyük harfle yazmak fazladan ücrete mal olur; çünkü `HELLO`
+tek bir satır ayrılacak kadar sık geçmez. Baştaki boşluk da *token'ın
+bir parçasıdır* — `" egg"` ve `"egg"` iki farklı satırdır. Byte-level
+BPE o boşluğu `Ġ`, SentencePiece ise `▁` sembolüyle gösterir; ikisi de
+vocabulary dosyasında görünmez kalacak bir karakterin görünür
+temsilcisidir.
 
-Prompt'unuzun sonundaki bir boşluğun modelin çıktısını değiştirebilmesinin
-mekanik nedeni budur. Siz boşluk eklemediniz; başka bir satır kümesi
-seçtiniz.
+Prompt'unuzun sonundaki tek bir boşluğun modelin çıktısını kökten
+değiştirebilmesinin mekanik nedeni budur. Siz sadece boşluk eklemediniz;
+tamamen başka bir satır kümesi seçtiniz.
 
 ## 5. Vocabulary boyutu ne kazandırır ne götürür
 
@@ -230,7 +232,7 @@ Küçük V (32.000)                     Büyük V (256.000)
 ├─ küçük embedding matrisi           ├─ büyük embedding + çıktı matrisi
 ├─ ucuz çıktı softmax'ı              ├─ pahalı çıktı softmax'ı
 └─ DAHA UZUN diziler                 └─ DAHA KISA diziler
-   (cümle başına daha çok token)        (context'e daha çok metin)
+   (cümle başına daha çok token)        (bağlam penceresine daha çok metin)
 ```
 
 Embedding matrisinin `V × d` parametresi vardır ve sonraki token'ı
@@ -240,10 +242,11 @@ milyon parametre ekler — tek bir attention katmanı çalışmadan önce
 harcanan gerçek bellek.
 
 Karşılığında aldığınız şey daha kısa dizilerdir. Attention maliyeti
-dizi uzunluğunun karesiyle büyüdüğü ve context pencereniz token
-cinsinden ölçüldüğü için, cümle başına daha az token daha çok metnin
-sığması ve her ileri geçişin ucuzlaması demektir. Sektör bu yüzden
-istikrarlı biçimde daha büyük vocabulary'lere doğru yürüdü:
+dizi uzunluğunun karesiyle büyüdüğü ve bağlam pencereniz (context
+window) token cinsinden ölçüldüğü için, cümle başına daha az token
+harcamak, aynı pencereye daha çok metin sığması ve her ileri geçişin
+ucuzlaması demektir. Sektör bu yüzden istikrarlı biçimde daha büyük
+vocabulary'lere doğru yürüdü:
 
 | Kuşak | Vocabulary | Not |
 | :--- | :--- | :--- |
@@ -267,9 +270,9 @@ zaman İngilizcenin bir öbeğe yaydığını taşır. Ağırlıklı olarak
 token'a mal olur.
 
 > **Fertility (bereket oranı)** = bir tokenizer'ın kelime başına
-> harcadığı ortalama token sayısı. Yüksek fertility aynı cümlenin daha
-> çok paraya, daha çok gecikmeye ve context pencerenizden daha çok
-> yere mal olması demektir.
+> harcadığı ortalama token sayısı. Yüksek fertility, aynı cümlenin
+> daha yüksek maliyete, daha fazla gecikmeye ve bağlam pencerenizden
+> daha çok yer harcanmasına yol açması demektir.
 
 Bunu folkloru tekrarlamak yerine ölçtüm. Aynı cümle çifti, iki GPT
 tokenizer'ından geçirildiğinde:
@@ -306,11 +309,12 @@ kıyasla *daha çok, daha küçük* ama doğru parçalara bölünmesi. Bu bir
 yetkinlik sorunu değil, bütçe sorunu.
 
 Pratik sonuçlar somut. Bir API çağrısını token başına fiyatlıyorsanız,
-Türkçe metin birim anlam başına daha pahalıdır. Bir context penceresi
-boyutlandırıyorsanız, içine daha az Türkçe sığar. Türkçe bir iş yükü
+Türkçe metin birim anlam başına daha pahalıdır. Bir bağlam penceresi
+boyutlandırıyorsanız, içine daha az Türkçe metin sığar. Türkçe bir iş yükü
 için modeller arasında seçim yapıyorsanız, tokenizer fertility'si
 gerçek bir seçim ölçütüdür — karar vermeden önce gecikmeyi nasıl
-ölçüyorsanız onu da kendi metninizde `tiktoken` ile ölçün.
+ölçüyorsanız, fertility'yi de kendi metninizde `tiktoken` ile mutlaka
+ölçün.
 
 ## 7. Masanın kırdıkları
 
@@ -378,18 +382,21 @@ kullanılır:
 token ID k  →  E'nin k. satırı  →  d sayıdan oluşan bir vektör
 ```
 
-Bütün işlem bu: bir arama, bir hesap değil. Ama satırlar *öğrenilir*;
-eğitim, benzer davranan token'ların satırlarını birbirine yaklaştırır
-ve keyfî tamsayı anlamlı bir uzaydaki konuma dönüşür. O uzay,
-[embedding yazısının](post.html?slug=embeddingler-derinlemesine) konusu
-ve hikâyeyi tam buradan devralıyor.
+Bütün işlem bundan ibaret: bir bellek araması (lookup), hesaplama
+değil. Ama satırlar *öğrenilir*; eğitim, benzer davranan token'ların
+satırlarını birbirine yaklaştırır ve keyfî tamsayı anlamlı bir uzaydaki
+konuma dönüşür. O uzay,
+[Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine)
+yazısının konusu ve hikâyeyi tam buradan devralıyor. Ayrık token'ların
+ilk katmandaki ağırlıklar üzerinden nasıl sürekli bir geometriye
+dönüştüğünü ise [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine)
+incelemesinde bulabilirsiniz.
 
 Transformer katmanlarına geçmeden önce iki şey olur. Konum bilgisi
 eklenir — arama sıraya kördür, yoksa "köpek adamı ısırdı" ile "adam
 köpeği ısırdı" aynı satır torbası olurdu — ve sonuç attention'a girer.
-Oradan sonrası
-[LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) yazısının
-hikâyesi.
+Oradan sonrası [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir)
+yazısının hikâyesi.
 
 Tam turu kodda görmekte fayda var, çünkü padding (dolgu) ve attention
 mask'i genellikle hattın ısırdığı yerlerdir:
@@ -480,4 +487,4 @@ Yazının temel kelime dağarcığı, birer satır:
 - OpenAI, [tiktoken](https://github.com/openai/tiktoken) — 4. ve 6. bölümdeki bütün ölçümlerde kullanılan kütüphane; kendi metninizde çalıştırın.
 - Rumbelow & Watkins, [SolidGoldMagikarp](https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation) (2023) — glitch token keşfi ve sebebi.
 - HiddenLayer, [Tokenizer tampering](https://www.hiddenlayer.com/research/tokenizer-tampering) ve NVIDIA AI Red Team, [Secure LLM tokenizers](https://developer.nvidia.com/blog/secure-llm-tokenizers-to-maintain-application-integrity/) — `tokenizer.json` üzerindeki saldırı yüzeyi.
-- Bu blogda: [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — tamsayıya aramadan sonra ne olduğu — [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) — o vektörleri tüketen katmanlar — ve [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu) — faturanızın neden token cinsinden yazıldığı.
+- Bu blogda: [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — ayrık token'lardan sürekli geometriye —, [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — tamsayıya aramadan sonra ne olduğu —, [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) — o vektörleri tüketen katmanlar — ve [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu) — faturanızın neden token cinsinden yazıldığı.

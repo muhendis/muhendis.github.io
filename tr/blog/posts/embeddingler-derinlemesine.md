@@ -34,25 +34,25 @@ sayıdır — kırmızı (255, 0, 0), biraz daha sıcak bir kırmızı
 (250, 20, 10) — ve *yakın sayılar benzer renkler demektir*; boya
 dükkânı bu sayede numunenizi hiçbir insan bakmadan eşleyebilir.
 
-> **Gömme (embedding)** = aynı numaranın anlama uygulanması: metin,
-> bir sayı listesine — haritadaki koordinatlarına — dönüşür ve sayılar
-> öyle yerleştirilir ki yakın sayılar benzer anlam taşır.
+> **Embedding** = aynı mantığın anlama uygulanması: metin, bir sayı
+> listesine — anlam haritasındaki koordinatlarına — dönüşür ve bu
+> koordinatlar öyle yerleştirilir ki yakın sayılar benzer anlamlar taşır.
 
 Renge üç sayı yetiyor; anlam daha fazlasını istiyor. Tipik modeller
 384 ile 3.072 arasında boyut kullanır; bu yazının örnekleri **1.024**
 boyutla çalışacak. [LLM yazısı](post.html?slug=llm-nasil-calisir) bu
 haritayı tek kelimeler için göstermişti — *kral*, *kraliçe* ve
-aralarındaki oklar. Erişimin ihtiyacı bir sonraki sıçrama: bütün bir
-*cümleye* ya da paragrafa tek nokta vermek; soru ile onu cevaplayan
-pasaj ancak o zaman komşu olabilir.
+aralarındaki oklar. Erişimin (retrieval) ihtiyacı olan ise bir sonraki
+sıçramadır: bütün bir *cümleye* ya da paragrafa tek bir nokta atamak;
+bir soru ile onu yanıtlayan pasaj ancak bu sayede komşu olabilir.
 
 O sıçramayı bir **encoder** yapar — metnin tamamını attention'la
 okuyan küçük bir transformer; "sızdırıyor" kelimesi böylece "bulaşık
-makinesi" ve "alttan" ışığında okunur. İş, iki gösterişsiz adımla
-biter: **pooling (havuzlama)**, token başına üretilen vektörleri tek
-vektöre indirger (çoğunlukla ortalamalarını alır); normalize etme de o
-vektörü uzunluğu 1 olacak şekilde ölçekler — korpustaki her metin
-artık aynı kürenin yüzeyinde yaşar:
+makinesi" ve "alttan" ışığında okunur. İşlem iki gösterişsiz adımla
+tamamlanır: **pooling (havuzlama)**, token başına üretilen vektörleri
+tek bir vektöre indirger (çoğunlukla ortalamalarını alır — mean pooling);
+normalizasyon ise bu vektörü uzunluğu 1 olacak şekilde birim küreye
+ölçekler — derlemdeki her metin artık aynı kürenin yüzeyinde yaşar:
 
 ```mermaid
 flowchart LR
@@ -111,7 +111,7 @@ Bu tarifin ürettiği arayıcı **bi-encoder**'dır — sorgu ile belge ayrı
 ayrı gömülür, yalnızca nokta olarak buluşurlar. İsabetli ama yavaş
 kardeşi **cross-encoder** iki metni birlikte okur; [RAG
 yazısı](post.html?slug=hangi-rag-deseni) onu finalistleri yeniden
-notlayan hakem olarak kullanıyordu.
+sıralayan (reranker) bir hakem olarak kullanıyordu.
 
 ## 3. Yakınlığı ölçmek
 
@@ -432,7 +432,7 @@ geometri — artık hangi yarısına güveneceğinizi biliyorsunuz.
 
 Yazının temel sözcük dağarcığı, her biri tek satırda:
 
-- **gömme (embedding)** — bir metnin anlamını haritada bir noktaya yerleştiren sayı listesi; yakın noktalar, benzer anlam.
+- **embedding** — bir metnin anlamını haritada bir noktaya yerleştiren sayı listesi (vektör); yakın noktalar benzer anlama karşılık gelir.
 - **encoder** — metni okuyup embedding'ini üreten transformer.
 - **pooling (havuzlama)** — encoder'ın token başına ürettiği vektörleri, metnin tamamı için tek vektöre indirgemek.
 - **normalize etme (normalization)** — vektörü uzunluğu 1 olacak şekilde ölçeklemek; bilgiyi yalnızca yön taşır.
@@ -465,4 +465,4 @@ Yazının temel sözcük dağarcığı, her biri tek satırda:
 - Anthropic, [Embeddings](https://platform.claude.com/docs/en/build-with-claude/embeddings) — neden Voyage AI'ı işaret ettikleri; `input_type` ve nicemleme örnekleriyle.
 - Inkeep, [Embeddings](https://inkeep.com/glossary/embeddings) — uygulayıcı gözüyle bir sözlük maddesi: üretimdeki anlamsal aramada boyut aralıkları ve maliyet takasları.
 - [sentence-transformers](https://sbert.net) — bu yazıdaki kod parçasının ve yukarıdaki modellerin çoğunun arkasındaki kütüphane.
-- Bu blogda: [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) — bu yazının uzaklaştığı token düzeyindeki harita — ve [hangi RAG desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni) — geometri kör kaldığında yapılacaklar.
+- Bu blogda: [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — ayrık token'lardan sürekli geometriye —, [Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir) — masanın bir önceki adımı —, [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) — bu yazının uzaklaştığı token düzeyindeki harita — ve [Hangi RAG desenine ihtiyacınız var](post.html?slug=hangi-rag-deseni) — geometri kör kaldığında yapılacaklar.

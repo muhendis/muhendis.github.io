@@ -351,4 +351,4 @@ The base vocabulary of the article, one line each:
 - Qdrant, [Filtering](https://qdrant.tech/documentation/concepts/filtering/) — payload indexes and the must/should/must_not filter algebra.
 - [ANN Benchmarks](https://ann-benchmarks.com) — the standing public comparison of ANN algorithms' recall–speed curves.
 - Microsoft, [DiskANN](https://github.com/microsoft/DiskANN) — the SSD-resident graph index behind the billion-scale numbers.
-- On this blog: [how embeddings work](post.html?slug=how-embeddings-work) — the geometry these databases serve, including HNSW layer by layer — and [which RAG pattern do you need](post.html?slug=which-rag-pattern-do-you-need) — what to bolt on when good retrieval still returns the wrong thing.
+- On this blog: [How embeddings work](post.html?slug=how-embeddings-work) — the geometry these databases serve, including HNSW layer by layer —, [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) — the lookup mechanics inside the model —, and [Which RAG pattern do you need](post.html?slug=which-rag-pattern-do-you-need) — what to bolt on when good retrieval still returns the wrong thing.

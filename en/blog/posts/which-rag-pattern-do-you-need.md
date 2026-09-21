@@ -552,6 +552,7 @@ The base vocabulary of the article, one line each:
 - Yan et al., [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) (2024).
 - Formal et al., [SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking](https://arxiv.org/abs/2107.05720) (2021).
 - Cormack, Clarke & Büttcher, [Reciprocal Rank Fusion outperforms Condorcet and individual rank learning methods](https://dl.acm.org/doi/10.1145/1571941.1572114) (SIGIR 2009) — where k = 60 comes from.
+- On this blog: [What a vector database actually does](post.html?slug=what-a-vector-database-actually-does) — from shelf to library: ANN, filtering, and operations —, [How embeddings work](post.html?slug=how-embeddings-work) — the geometry of meaning and similarity scores —, [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) — the lookup mechanics at the model level — and [Optimizing LLM cost and latency](post.html?slug=optimizing-llm-cost-and-latency) — keeping the pipeline from blowing up budgets and latency.
 
 ---
 

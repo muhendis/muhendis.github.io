@@ -38,6 +38,12 @@
     document.title = msg + ' — Engin Bozaba';
   }
 
+  /* Math source goes into the DOM as text, not markup: KaTeX reads it back
+     from textContent, so anything that looks like a tag must stay inert. */
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   function fmtDate(iso) {
     return new Date(iso + 'T00:00:00').toLocaleDateString(
       LANG === 'tr' ? 'tr-TR' : 'en-GB',
@@ -158,6 +164,38 @@
             });
 
             marked.setOptions({ gfm: true, breaks: false });
+
+            /* Math must be claimed before the inline lexer runs: otherwise the
+               underscores in \mathbf{x}_{scaled} are parsed as emphasis and the
+               LaTeX reaches KaTeX already broken. These tokens emit the source
+               verbatim inside a marker element for KaTeX to render in place. */
+            marked.use({
+              extensions: [
+                {
+                  name: 'mathBlock', level: 'block',
+                  start: function (src) { return src.indexOf('$$'); },
+                  tokenizer: function (src) {
+                    var m = /^\$\$([\s\S]+?)\$\$(?:\n|$)/.exec(src);
+                    if (m) return { type: 'mathBlock', raw: m[0], text: m[1].trim() };
+                  },
+                  renderer: function (token) {
+                    return '<div class="math-block">' + escapeHtml(token.text) + '</div>';
+                  }
+                },
+                {
+                  name: 'mathInline', level: 'inline',
+                  start: function (src) { return src.indexOf('$'); },
+                  tokenizer: function (src) {
+                    var m = /^\$([^\s$][^$\n]*?)\$(?!\d)/.exec(src);
+                    if (m) return { type: 'mathInline', raw: m[0], text: m[1].trim() };
+                  },
+                  renderer: function (token) {
+                    return '<span class="math-inline">' + escapeHtml(token.text) + '</span>';
+                  }
+                }
+              ]
+            });
+
             document.getElementById('post-body').innerHTML = marked.parse(md);
 
             /* marked v5+ dropped headerIds; in-page ToC links need them. */
@@ -167,6 +205,31 @@
                 .trim()
                 .replace(/\s+/g, '-');
             });
+
+            /* KaTeX: lazy-load stylesheet and renderer only when a post has math. */
+            var mathNodes = document.querySelectorAll('#post-body .math-block, #post-body .math-inline');
+            if (mathNodes.length) {
+              var kcss = document.createElement('link');
+              kcss.rel = 'stylesheet';
+              kcss.href = '../../assets/js/vendor/katex/katex.min.css';
+              document.head.appendChild(kcss);
+
+              var kjs = document.createElement('script');
+              kjs.src = '../../assets/js/vendor/katex/katex.min.js';
+              kjs.onload = function () {
+                mathNodes.forEach(function (node) {
+                  var display = node.classList.contains('math-block');
+                  try {
+                    window.katex.render(node.textContent, node, {
+                      displayMode: display,
+                      throwOnError: false,
+                      output: 'html'
+                    });
+                  } catch (e) { /* leave the LaTeX source visible as text */ }
+                });
+              };
+              document.head.appendChild(kjs);
+            }
 
             /* Mermaid diagrams: lazy-load the renderer only when a post uses them. */
             var mermaidBlocks = document.querySelectorAll('#post-body code.language-mermaid');

@@ -202,6 +202,22 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=inside-the-embedding-layer</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=inside-the-embedding-layer"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=embedding-katmani-derinlemesine"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=inside-the-embedding-layer"/>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=embedding-katmani-derinlemesine</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=inside-the-embedding-layer"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=embedding-katmani-derinlemesine"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=inside-the-embedding-layer"/>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-tokenization-works"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=tokenizasyon-nasil-calisir"/>
