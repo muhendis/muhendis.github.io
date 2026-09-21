@@ -25,6 +25,9 @@ start calling taxis of their own.
 
 - [1. The meter runs on output](#1-the-meter-runs-on-output)
   - [Prefill and decode](#prefill-and-decode)
+  - [Anatomy of latency: TTFT, TPOT, ITL, and E2EL](#anatomy-of-latency-ttft-tpot-itl-and-e2el)
+  - [Throughput and Goodput: When numbers mislead](#throughput-and-goodput-when-numbers-mislead)
+  - [The latency versus throughput tradeoff](#the-latency-versus-throughput-tradeoff)
   - [The price asymmetry](#the-price-asymmetry)
   - [Streaming buys perceived speed](#streaming-buys-perceived-speed)
 - [2. Lossless wins first: caching, batching, budgets](#2-lossless-wins-first-caching-batching-budgets)
@@ -41,6 +44,7 @@ start calling taxis of their own.
 - [4. The serving room: where self-hosters win](#4-the-serving-room-where-self-hosters-win)
   - [Continuous batching and PagedAttention](#continuous-batching-and-pagedattention)
   - [Speculative decoding](#speculative-decoding)
+  - [Prefill-decode disaggregation and parallelism knobs](#prefill-decode-disaggregation-and-parallelism-knobs)
   - [Choosing a serving stack](#choosing-a-serving-stack)
 - [5. Compression: the first techniques that can hurt accuracy](#5-compression-the-first-techniques-that-can-hurt-accuracy)
   - [Quantization](#quantization)
@@ -73,28 +77,134 @@ Every LLM call has two phases, and they behave nothing alike.
 
 Prefill is the taxi driving to your door: it happens once, it
 processes thousands of tokens in a single sweep, and modern GPUs are
-extremely good at it. Decode is the ride itself, and it is stubbornly
-sequential — token 500 cannot be written before token 499, because
-each new token depends on all the ones before it. (Why generation
-must be one-token-at-a-time, and what the KV cache saves you from
-recomputing, is the subject of
-[the LLM article](post.html?slug=how-llms-work) on this blog.)
+extremely good at it (compute-bound, saturating Tensor Cores). Decode is
+the ride itself, and it is stubbornly sequential — token 500 cannot be
+written before token 499, because each new token depends on all the ones
+before it. On hardware, decode is bound by memory bandwidth: the GPU must
+sweep all model parameters and the growing KV cache from HBM for every
+single token. (Why generation must proceed token-by-token and what the
+KV cache saves you from recomputing is covered in depth in
+[How LLMs work](post.html?slug=how-llms-work).)
 
-Two metrics fall straight out of the two phases:
+### Anatomy of latency: TTFT, TPOT, ITL, and E2EL
 
-> **TTFT (time to first token)** = how long until the first output
-> token arrives. Dominated by queueing plus prefill.
+To optimize user experience, you must first identify precisely which
+metric is degrading it. Latency in production breaks down into four core
+measurements:
 
-> **TPOT (time per output token)**, also called inter-token latency
-> = the pace of the tokens after the first one. Dominated by decode.
+- **TTFT (Time to First Token):** The duration between dispatching a
+  request and receiving the very first output token. It comprises network
+  transit, server queue wait time, and prompt prefill.
+- **E2EL (End-to-End Latency / Total Latency):** The total elapsed time
+  from sending the prompt until receiving the final end-of-sequence token.
+- **Token Generation Time:** The duration spent streaming tokens after
+  the first one arrives. TTFT is excluded, isolating steady-state decode:
 
-Now do the arithmetic that explains most latency complaints. Say
-TTFT is 200 milliseconds and TPOT is 80 milliseconds — respectable
-numbers. A 500-token answer then spends 0.2 seconds in prefill and
-**40 seconds** in decode. The wait for the taxi was rounding error;
-the ride was the whole trip. Any optimization that shortens the
-answer attacks the dominant term. Any optimization that only
-polishes prefill attacks the rounding error.
+  $$\text{Token Generation Time} = \text{E2EL} - \text{TTFT}$$
+
+- **TPOT (Time per Output Token):** The average time gap between
+  generating each subsequent token:
+
+  $$\text{TPOT} = \frac{\text{E2EL} - \text{TTFT}}{\text{Total Output Tokens} - 1}$$
+
+- **ITL (Inter-Token Latency):** The discrete pause between two
+  consecutive emitted tokens.
+
+For a single request, the average ITL is mathematically identical to
+TPOT, which is why the terms are often used interchangeably. However,
+**when averaging across multiple requests**, their mathematical behaviors
+diverge sharply:
+
+$$\text{Average TPOT} = \frac{\text{TPOT}_1 + \text{TPOT}_2 + \dots + \text{TPOT}_N}{N}$$
+
+$$\text{Average ITL} = \frac{\sum \text{All ITLs across requests}}{\sum \text{All output tokens across requests}}$$
+
+The distinction is critical:
+- **Average TPOT is request-weighted.** It treats every request equally,
+  whether it produces 5 tokens or 1,000 tokens. It is the proper metric
+  when evaluating per-request latency across models or configurations.
+- **Average ITL is token-weighted.** Longer responses contribute more
+  tokens and carry proportionally greater weight. It is the best metric
+  for measuring aggregate system throughput and hardware streaming
+  stability.
+
+> [!WARNING]
+> **Beware the deception of averages (P50 vs. P95/P99):**
+> A benchmark reporting "Average TTFT of 300 ms" can be deeply
+> misleading, as means are easily distorted by outliers. The **Median
+> (P50)** captures what a typical user experiences. But what destroys
+> user retention or violates enterprise SLAs is **tail latency: P95 and
+> P99**. If your P99 TTFT reaches 15 seconds, one out of every hundred
+> users believes your service has crashed and closes the tab.
+
+Now do the arithmetic that explains most latency complaints. Say TTFT is
+200 milliseconds and TPOT is 80 milliseconds — respectable numbers. A
+500-token answer then spends 0.2 seconds in prefill and **40 seconds** in
+decode:
+
+$$\text{E2EL} = 200\text{ ms} + (500 - 1) \times 80\text{ ms} = 40.12\text{ seconds}$$
+
+The wait for the taxi was rounding error; the ride was the whole trip.
+Any optimization that shortens the answer attacks the dominant term. Any
+optimization that only polishes prefill attacks the rounding error.
+
+### Throughput and Goodput: When numbers mislead
+
+Throughput measures how much total work an inference system completes
+per unit time. However, viewing throughput naively can distort real
+performance:
+
+- **RPS (Requests per Second):** $\text{RPS} = \text{Completed Requests} / \Delta T$.
+  A 5-token greeting requires orders of magnitude less computation and
+  memory bandwidth than a 2,000-token document synthesis. Comparing RPS
+  across workloads with different sequence lengths is meaningless.
+- **TPS (Tokens per Second):**
+  - **Input TPS:** How many prompt tokens the model ingests per second
+    (prefill throughput). Crucial for document summarization and RAG.
+  - **Output TPS:** How many generated tokens the engine emits per
+    second (decode throughput). Crucial for code generation and chat.
+
+> [!NOTE]
+> **How TPS can be gamed in benchmarks:**
+> An inference engine can artificially inflate aggregate TPS by packing
+> massive batches onto a GPU. But under such congestion, individual requests
+> wait in queues, TTFT balloons, and TPOT degrades. Artificially truncating
+> prompts also lowers prefill overhead, making TPS look higher than it
+> actually is in production.
+
+This tension is resolved by **Goodput**:
+
+> **Goodput** = The number of requests completed per second that
+> successfully satisfy your defined **Service-Level Objectives (SLOs)**
+> (for example: *"95% of requests must achieve TTFT < 200 ms and TPOT <
+> 50 ms"*).
+
+If a cluster generates 1,000 tokens per second but 40% of requests violate
+latency thresholds and are abandoned by users, that raw throughput is
+wasted spend. Real-world capacity planning must optimize for Goodput under
+strict SLO boundaries, not raw TPS.
+
+### The latency versus throughput tradeoff
+
+In LLM serving systems, there is an inherent, structural tradeoff
+between minimizing latency and maximizing throughput:
+
+| Goal | Architectural Approach | Operational Consequence |
+|---|---|---|
+| **Maximize Throughput** (TPS / Watt) | Large batch sizes, shared GPU compute pools | GPU compute units are fully saturated; however, individual user latency (TTFT and TPOT) increases. |
+| **Minimize Latency** (Low TTFT / TPOT) | Small batch sizes, dedicated compute allocations | Users receive near-instant responses; however, GPU Tensor Cores sit underutilized and unit cost rises. |
+| **Dynamic Balance (Goodput-Driven)** | Adaptive batching tuned to workload priority and SLOs | The optimal equilibrium for production environments serving diverse traffic profiles. |
+
+The metric you should prioritize is dictated directly by your
+application architecture:
+
+| Use Case | Primary Metric | Rationale |
+|---|---|---|
+| **Interactive Chat** | TTFT, followed by TPOT / ITL | Users expect immediate response initiation followed by smooth streaming. |
+| **Long-form Streaming** | ITL / TPOT and E2EL | Streaming rhythm and total wait time govern user perception. |
+| **Agentic & Multi-step Pipelines** | E2EL (Total Latency) | Downstream tools block until generation completes; stream speed does not matter, total latency does. |
+| **High-volume Offline Processing** | TPS and Cost per Token | No human is waiting; aggregate throughput per dollar is the sole constraint. |
+| **Latency-constrained Online Services** | Goodput | Completed requests only count if they satisfy established latency SLOs. |
 
 ### The price asymmetry
 
@@ -126,9 +236,10 @@ the model.
 
 The caveat: this comfort applies to humans watching text arrive. In
 a pipeline or an agent loop, nothing "reads along" — each step waits
-for the *complete* answer before acting, so end-to-end time is what
+for the *complete* answer before acting, so end-to-end time (E2EL) is what
 matters, and long outputs hurt in full. Keep the two cases separate
 when someone quotes a tokens-per-second number at you.
+
 
 Here is the whole battlefield on one map — the life of a request,
 and where each family of optimizations attacks it:
@@ -485,6 +596,41 @@ the big attention matrix through GPU memory, which is the actual
 bottleneck. Successive versions keep re-tuning this for each new GPU
 generation. As a user you mostly just want it on — modern engines
 enable it by default.
+
+### Prefill-decode disaggregation and parallelism knobs
+
+In self-hosted environments, the primary engine behind tail latency
+spikes (P99 jitter) is the **collocation problem**: conventional serving
+engines run prefill and decode side-by-side on the same physical GPUs.
+
+Prefill is compute-bound and monopolizes the GPU's Tensor Cores. When a
+heavy prefill batch begins, active decode streams sharing that GPU are
+forced to stall, causing severe inter-token latency (ITL) spikes that
+users perceive as stuttering.
+
+Modern frontier serving systems resolve this tension through
+**prefill-decode disaggregation**:
+- **Prefill Workers:** Equipped with compute-dense accelerators (e.g.,
+  NVIDIA H100 SXM) to process input prompts at maximum FLOP efficiency and
+  materialize the initial KV cache.
+- **Decode Workers:** Equipped with high-memory-bandwidth instances to
+  stream tokens sequentially, fetching KV cache blocks streamed across
+  ultra-fast networks (RDMA / InfiniBand) from the prefill pool.
+
+When configuring your own serving infrastructure, the primary system
+tuning knobs include:
+- **Data Parallelism (DP):** Replicates the entire model across multiple
+  GPUs to scale throughput (RPS and aggregate TPS).
+- **Tensor Parallelism (TP):** Shards individual weight matrices across
+  multiple GPUs within a node. This is the primary lever for reducing
+  per-request latency (both TTFT and TPOT) and fitting massive models into
+  VRAM.
+- **Expert Parallelism (EP):** Distributes expert sub-networks in MoE
+  models across distinct hardware nodes.
+- **Precision:** Compressing weights and the KV cache from FP16 down to
+  FP8 or FP4 (detailed in
+  [Post-training quantization for LLM inference](post.html?slug=post-training-quantization-llm-inference)),
+  which relaxes memory bandwidth pressure by 2x to 4x.
 
 ### Choosing a serving stack
 

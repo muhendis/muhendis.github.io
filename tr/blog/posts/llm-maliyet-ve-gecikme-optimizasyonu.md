@@ -26,6 +26,9 @@ taksilerini çağırmaya başladığında olanlar.
 
 - [1. Taksimetre output'ta işler](#1-taksimetre-outputta-işler)
   - [Prefill ve decode](#prefill-ve-decode)
+  - [Gecikmenin anatomisi: TTFT, TPOT, ITL ve E2EL](#gecikmenin-anatomisi-ttft-tpot-itl-ve-e2el)
+  - [İşlem hacmi ve Goodput: Sayılar ne zaman yanıltır?](#işlem-hacmi-ve-goodput-sayılar-ne-zaman-yanıltır)
+  - [Gecikme ile işlem hacmi takası](#gecikme-ile-işlem-hacmi-takası)
   - [Fiyat asimetrisi](#fiyat-asimetrisi)
   - [Streaming algılanan hızı satın alır](#streaming-algılanan-hızı-satın-alır)
 - [2. Önce kayıpsız kazanımlar: caching, batching, bütçeler](#2-önce-kayıpsız-kazanımlar-caching-batching-bütçeler)
@@ -42,6 +45,7 @@ taksilerini çağırmaya başladığında olanlar.
 - [4. Serving odası: self-host edenlerin kazandığı yer](#4-serving-odası-self-host-edenlerin-kazandığı-yer)
   - [Continuous batching ve PagedAttention](#continuous-batching-ve-pagedattention)
   - [Speculative decoding](#speculative-decoding)
+  - [Prefill-decode disaggregation ve paralellik kolları](#prefill-decode-disaggregation-ve-paralellik-kolları)
   - [Serving yığını seçimi](#serving-yığını-seçimi)
 - [5. Sıkıştırma: doğruluğu ilk zedeleyebilecek teknikler](#5-sıkıştırma-doğruluğu-ilk-zedeleyebilecek-teknikler)
   - [Quantization](#quantization)
@@ -74,30 +78,141 @@ Her LLM çağrısının iki fazı vardır ve ikisi birbirine hiç benzemez.
 
 Prefill, taksinin kapınıza gelmesidir: bir kez olur, binlerce
 token'ı tek süpürüşte işler ve modern GPU'lar bu işte son derece
-iyidir. Decode ise yolculuğun kendisidir ve inatla sıralıdır —
-500'üncü token, 499'uncu yazılmadan yazılamaz, çünkü her yeni token
-kendinden öncekilerin hepsine bağlıdır. (Üretimin neden token token
-ilerlemek zorunda olduğu ve KV cache'in sizi hangi yeniden
-hesaplamadan kurtardığı, bu blogdaki
-[LLM makalesinin](post.html?slug=llm-nasil-calisir) konusu.)
+iyidir (compute-bound, tensör çekirdeklerini doyurur). Decode ise
+yolculuğun kendisidir ve inatla sıralıdır — 500'üncü token, 499'uncu
+yazılmadan yazılamaz; çünkü her yeni token kendinden öncekilerin
+hepsine bağlıdır. Donanım açısından decode, bellek bant genişliğine
+takılır (memory-bandwidth bound); GPU her token için tüm ağırlıkları
+ve büyüyen KV cache'i bellekten çekirdeğe taşımak zorundadır. (Üretimin
+neden token token ilerlemek zorunda olduğu ve KV cache mekaniği, bu
+blogdaki [LLM makalesinin](post.html?slug=llm-nasil-calisir) konusu.)
 
-İki fazdan iki metrik doğrudan düşer:
+### Gecikmenin anatomisi: TTFT, TPOT, ITL ve E2EL
 
-> **TTFT (time to first token — ilk token'a kadar geçen süre)** =
-> ilk output token'ının gelmesine kadar geçen zaman. Kuyruğa girme
-> artı prefill tarafından belirlenir.
+Optimizasyon yapabilmek için önce kullanıcı deneyimini hangi sayının
+bozduğunu adlandırmak gerekir. Üretimdeki bir LLM çağrısının gecikme
+anatomisi dört temel metrikten kurulur:
 
-> **TPOT (time per output token — token başına süre)**, diğer adıyla
-> inter-token latency = ilk token'dan sonraki token'ların temposu.
-> Decode tarafından belirlenir.
+- **TTFT (Time to First Token — İlk Token Süresi):** İsteğin
+  gönderildiği andan ilk output token'ının ekranda belirdiği ana kadar
+  geçen süre. Ağ gecikmesi, sunucu kuyruğunda bekleme süresi ve
+  prefill fazının toplamından oluşur.
+- **E2EL (End-to-End Latency — Uçtan Uca Gecikme):** İstek anından
+  son durdurma token'ının (stop token) teslimine kadar geçen toplam
+  zaman.
+- **Token Üretim Süresi (Token Generation Time):** İlk token'dan sonraki
+  akışın sürdüğü süre. TTFT hariç tutulur; yalnızca kararlı decode
+  aşamasını ölçer:
 
-Şimdi gecikme şikâyetlerinin çoğunu açıklayan aritmetiği yapalım.
+  $$\text{Token Üretim Süresi} = \text{E2EL} - \text{TTFT}$$
+
+- **TPOT (Time per Output Token — Output Token Başına Süre):** İlk
+  token'dan sonra her bir sonraki token'ın üretilmesi için geçen
+  ortalama süre:
+
+  $$\text{TPOT} = \frac{\text{E2EL} - \text{TTFT}}{\text{Toplam Output Token} - 1}$$
+
+- **ITL (Inter-Token Latency — Token Arası Gecikme):** Ardışık iki
+  token arasındaki anlık bekleme süresi.
+
+Tek bir istek için ortalama ITL doğrudan TPOT'a eşittir; bu nedenle
+literatürde bu iki terim sıkça birbirinin yerine kullanılır. Ancak
+**birden fazla istek üzerinden ortalama alındığında** aralarındaki
+matematiksel fark hayati önem kazanır:
+
+$$\text{Ortalama TPOT} = \frac{\text{TPOT}_1 + \text{TPOT}_2 + \dots + \text{TPOT}_N}{N}$$
+
+$$\text{Ortalama ITL} = \frac{\sum \text{Tüm İsteklerdeki ITL Toplamı}}{\sum \text{Tüm İsteklerdeki Output Token Sayısı}}$$
+
+Bu iki formülün söylediği şey şudur:
+- **Ortalama TPOT, istek-ağırlıklıdır (request-weighted).** Yanıtın
+  5 token mı yoksa 1000 token mı olduğuna bakmaksızın her isteğe eşit
+  ağırlık verir. Sistemler veya modeller arasında istek başına gecikmeyi
+  kıyaslarken doğru metriktir.
+- **Ortalama ITL ise token-ağırlıklıdır (token-weighted).** Çok token
+  üreten uzun yanıtlar toplama daha fazla ağırlık koyar. Donanımın
+  toplam akış verimini ve sürekli haldeki servis sağlığını izlerken
+  kullanılması gereken asıl metriktir.
+
+> [!WARNING]
+> **Ortalamanın yalanına kanmayın (P50 vs. P95/P99):**
+> Bir benchmark'ta "Ortalama TTFT 300 ms" görmek iç rahatlatıcı
+> olabilir; ancak ortalama (mean), aşırı uçlardan (outliers) kolayca
+> etkilenir. Kullanıcıların çoğunluğunun tipik deneyimini **Medyan (P50)**
+> yansıtır. Üretimde kullanıcı kaybettiren veya SLA/SLO cezası kesen şey
+> ise en yavaş %5 ve %1'lik dilimi gösteren **P95 ve P99 (tail latency —
+> kuyruk gecikmesi)** değerleridir. P99 TTFT'niz 15 saniyeyse, her yüz
+> kullanıcınızdan biri sisteminizin çöktüğünü düşünüp sekmeyi
+> kapatıyordur.
+
+Şimdi gecikme şikâyetlerinin çoğunu açıklayan basit aritmetiği yapalım:
 TTFT 200 milisaniye, TPOT 80 milisaniye olsun — gayet saygın
 rakamlar. 500 token'lık bir yanıt bu durumda prefill'de 0,2 saniye,
-decode'da **40 saniye** geçirir. Taksiyi beklemek yuvarlama
-hatasıydı; yolculuk, seyahatin tamamıydı. Yanıtı kısaltan her
-optimizasyon baskın terime saldırır. Yalnızca prefill'i parlatan her
-optimizasyon, yuvarlama hatasına saldırır.
+decode'da **40 saniye** geçirir:
+
+$$\text{E2EL} = 200\text{ ms} + (500 - 1) \times 80\text{ ms} = 40{,}12\text{ saniye}$$
+
+Taksiyi beklemek yuvarlama hatasıydı; yolculuk, seyahatin tamamıydı.
+Yanıtı kısaltan her optimizasyon baskın terime saldırır. Yalnızca
+prefill'i parlatan her optimizasyon, yuvarlama hatasına saldırır.
+
+### İşlem hacmi ve Goodput: Sayılar ne zaman yanıltır?
+
+İşlem hacmi (throughput), sistemin birim zamanda ne kadar iş
+çıkardığını ölçer. Ancak yanlış metrikle bakıldığında son derece
+aldatıcı olabilir:
+
+- **RPS (Requests per Second — Saniyedeki İstek Sayısı):**
+  $\text{RPS} = \text{Tamamlanan İstekler} / \Delta T$. Kısa bir "Merhaba"
+  yanıtı ile 2.000 token'lık bir finansal analiz aynı "1 istek" sayılır.
+  Farklı girdi/çıktı profillerine sahip iş yüklerinde RPS üzerinden
+  kıyaslama yapmak yanıltıcıdır.
+- **TPS (Tokens per Second — Saniyedeki Token Sayısı):**
+  - **Input TPS:** Modelin saniyede okuduğu prompt token sayısı
+    (prefill gücü). Uzun doküman özetleme ve RAG iş yükleri için kritiktir.
+  - **Output TPS:** Modelin saniyede ürettiği token sayısı (decode
+    gücü). Kod yazma ve sohbet için kritiktir.
+
+> [!NOTE]
+> **TPS nasıl çarpıtılabilir?**
+> Bir motor sağlayıcısı batch boyutunu aşırı büyüterek GPU'yu sonuna
+> kadar doldurabilir ve toplam agrega TPS'i devasa gösterebilir. Ancak bu
+> sırada her bir tekil kullanıcının isteği kuyrukta bekler, TTFT uzar ve
+> TPOT sürünür. Prompt'u yapay olarak kısaltmak da TTFT'yi düşürerek TPS'i
+> olduğundan yüksek gösterir.
+
+Bu çelişkiyi çözen kavram **Goodput**'tur:
+
+> **Goodput** = Tanımladığınız **SLO (Service-Level Objective — Hizmet
+> Seviyesi Hedefi)** sınırlarını (örneğin: *"İsteklerin %95'inde TTFT < 200 ms
+> ve TPOT < 50 ms"* şartını) **başarıyla karşılayarak** saniyede tamamlanan
+> istek sayısıdır.
+
+Eğer bir sunucu saniyede 500 token üretiyor ama gecikme fırladığı için
+isteklerin yarısı kullanıcılar tarafından iptal ediliyorsa, o yüksek TPS
+tamamen çöptür. Üretim sistemlerinde optimize edilecek asıl büyüklük ham
+TPS değil, SLO kısıtları altında ölçülen Goodput'tur.
+
+### Gecikme ile işlem hacmi takası
+
+LLM serving mimarisinde evrensel bir denge kuralı vardır: gecikmeyi
+düşürmek ile işlem hacmini artırmak birbirine zıt çalışır.
+
+| Hedef | Mimari Yaklaşım | Faturası |
+|---|---|---|
+| **İşlem Hacmini Maksimize Etmek** (TPS/Watt) | Büyük batch boyutları, paylaşımlı GPU havuzları | GPU donanımı %100 doyurulur; ancak bireysel kullanıcı gecikmesi (TTFT ve TPOT) yükselir. |
+| **Gecikmeyi Minimize Etmek** (Düşük TTFT/TPOT) | Küçük batch boyutları, izole donanım kaynakları | Bireysel kullanıcı ışık hızında yanıt alır; ancak GPU işlem birimleri boş yatar, birim maliyet tırmanır. |
+| **Dinamik Denge (Goodput Odaklı)** | İş yükü ve kullanıcı önceliğine göre adaptif batching | Farklı SLO'lara sahip çoklu üretim servisleri için en rasyonel denge. |
+
+Hangi metriğin optimize edileceği doğrudan kullanım senaryosuna bağlıdır:
+
+| Kullanım Senaryosu | Birincil Metrik | Neden Önemli? |
+|---|---|---|
+| **İnteraktif Sohbet** | TTFT, ardından TPOT / ITL | Kullanıcı yanıtın hemen başlamasını ve akıcı okunmasını bekler. |
+| **Uzun Metin Akışı** | ITL / TPOT ve E2EL | İlk kelimeden sonraki okuma temposu deneyimi belirler. |
+| **Ajan ve Çok Adımlı Pipeline** | E2EL (Uçtan uca süre) | Bir sonraki adım bir öncekinin çıktısı gelmeden başlayamaz; akış hızı değil, toplam süre kritiktir. |
+| **Yüksek Hacimli Çevrimdışı İşleme** | TPS ve Token Başına Maliyet | Bekleyen insan yoktur; birim saatteki agrega verim esastır. |
+| **Gecikme Kısıtlı Online Servis** | Goodput | Yalnızca SLO sınırlarını karşılayan istekler değer üretir. |
 
 ### Fiyat asimetrisi
 
@@ -131,9 +246,10 @@ olarak sıfırdır — darboğaz model değil, okuyucudur.
 Uyarı: bu rahatlık, metnin gelişini izleyen insanlar için geçerli.
 Bir pipeline'da ya da ajan döngüsünde hiçbir şey "birlikte okumaz" —
 her adım harekete geçmeden önce yanıtın *tamamını* bekler; önemli
-olan uçtan uca süredir ve uzun output'lar tam ağırlığıyla acıtır.
+olan uçtan uca süredir (E2EL) ve uzun output'lar tam ağırlığıyla acıtır.
 Birisi size saniyede token sayısı söylediğinde iki durumu ayrı
 tutun.
+
 
 İşte bütün muharebe alanı tek haritada — bir isteğin yaşamı ve her
 optimizasyon ailesinin ona nereden saldırdığı:
@@ -501,6 +617,45 @@ büyük attention matrisini taşımaktan kaçınacak biçimde yeniden
 düzenler. Ardışık sürümleri bunu her yeni GPU kuşağına yeniden
 ayarlar. Kullanıcı olarak çoğunlukla tek istediğiniz açık olması —
 modern motorlar varsayılan olarak açar.
+
+### Prefill-decode disaggregation ve paralellik kolları
+
+Self-host dünyasında tail latency'yi (P99 kuyruk gecikmesini) bozan en
+büyük gizli canavar **collocation (çakışma)** problemidir: geleneksel bir
+serving motorunda prefill ile decode aynı GPU üzerinde aynı anda
+çalıştırılır.
+
+Ancak prefill fazı ağır bir matris çarpımıdır ve GPU'nun tensör
+çekirdeklerini sonuna kadar kilitler. O sırada saniyede 30 token hızla
+akmakta olan başka bir kullanıcının decode isteği, araya giren bu prefill
+yüzünden onlarca milisaniye duraklar. Kullanıcı arayüzünde "kekeleme"
+(stuttering) ve ITL sıçraması olarak görülen arızanın kaynağı budur.
+
+Modern büyük serving mimarileri bu çatışmayı **prefill-decode
+disaggregation (ayrık mimari)** ile çözer:
+- **Prefill Düğümleri:** Yüksek FLOP kapasitesine sahip GPU'larla
+  donatılır (örneğin NVIDIA H100 SXM); gelen prompt'ları ışık hızında
+  işleyip KV cache'i oluşturur.
+- **Decode Düğümleri:** Yüksek bellek bant genişliğine sahip GPU'larla
+  donatılır; prefill düğümünden ultra hızlı ağlar (RDMA / InfiniBand)
+  üzerinden aktarılan KV cache bloklarını alarak kesintisiz otoregresif
+  üretim yapar.
+
+Sistemi kendi donanımınızda ayarlarken elinizin altındaki diğer temel
+paralellik kolları şunlardır:
+- **Data Parallelism (DP):** Modelin kopyalarını birden fazla GPU'ya
+  dağıtarak bağımsız istekleri paralel işlemek (RPS ve agrega TPS'i
+  artırır).
+- **Tensor Parallelism (TP):** Tek bir modelin ağırlık matrislerini
+  birden fazla GPU arasında enine dilimlemek. Tekil bir çağrının
+  gecikmesini (TTFT ve TPOT) düşürmenin ve tek GPU'ya sığmayan modelleri
+  çalıştırmanın birincil yoludur.
+- **Expert Parallelism (EP):** MoE (Mixture of Experts) modellerinde
+  farklı uzman katmanlarını farklı GPU'lara paylaştırmak.
+- **Hassasiyet (Precision):** Ağırlıkları ve KV cache'i FP16'dan FP8 veya
+  FP4 formatına indirmek (ayrıntılar için bkz:
+  [Post-training quantization](post.html?slug=post-training-quantization-llm-cikarim)).
+  Bellek bant genişliği darboğazını 2 ila 4 kat hafifletir.
 
 ### Serving yığını seçimi
 

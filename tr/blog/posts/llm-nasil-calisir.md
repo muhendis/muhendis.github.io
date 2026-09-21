@@ -19,43 +19,81 @@ Aşağıdaki her şey bu fikrin dipnotudur.
 - [2. Anlam taşıyan sayılar](#2-anlam-taşıyan-sayılar)
 - [3. Transformer: bir bağlam makinesi](#3-transformer-bir-bağlam-makinesi)
   - [Q, K, V — mekanizma, sayılarla](#q-k-v-mekanizma-sayılarla)
-  - [Tek yön](#tek-yön)
+  - [Tek yön ve causal mask](#tek-yön-ve-causal-mask)
   - [Birçok kafa](#birçok-kafa)
+  - [Model aileleri: Neden herkes decoder-only?](#model-aileleri-neden-herkes-decoder-only)
 - [4. Katmanlar: bilgi nerede yaşıyor](#4-katmanlar-bilgi-nerede-yaşıyor)
 - [5. Eğitim ve ölçek](#5-eğitim-ve-ölçek)
 - [6. Otomatik tamamlamadan asistana](#6-otomatik-tamamlamadan-asistana)
-- [7. Üretim: plan değil, döngü](#7-üretim-plan-değil-döngü)
-- [8. Sizi hatırlamaz](#8-sizi-hatırlamaz)
+- [7. Çıkarım ve üretim: iki aşamalı döngü](#7-çıkarım-ve-üretim-iki-aşamalı-döngü)
+  - [Prefill: paralel hesaplama ve TTFT](#prefill-paralel-hesaplama-ve-ttft)
+  - [Decode: seri döngü ve ITL](#decode-seri-döngü-ve-itl)
+  - [KV cache'in gerçek boyutu ve bellek duvarı](#kv-cachein-gerçek-boyutu-ve-bellek-duvarı)
+  - [Prefill ve decode'un çakışması: disaggregation](#prefill-ve-decodeun-çakışması-disaggregation)
+  - [Çekilişi yöneten üç kadran: temperature, top-k, top-p](#çekilişi-yöneten-üç-kadran-temperature-top-k-top-p)
+- [8. Sizi hatırlamaz: bağlam penceresi](#8-sizi-hatırlamaz-bağlam-penceresi)
 - [9. Neden uyduruyor](#9-neden-uyduruyor)
-- [Bütün hikâye beş satırda](#bütün-hikâye-beş-satırda)
+- [10. Otoregresyonun ötesi: Difüzyon LLM'leri (dLLM)](#10-otoregresyonun-ötesi-difüzyon-llmleri-dllm)
+- [Bütün hikâye altı satırda](#bütün-hikâye-altı-satırda)
 - [Daha derine inmek için](#daha-derine-inmek-için)
+
+---
 
 ## 1. Metin sayıya dönüşür
 
-**Tokenizer**, metni **token** denen parçalara böler ve her birine bir
-kimlik numarası (token ID) verir — "için" tek parça, "inanılmaz" belki
-"inan + ılmaz". LEGO gibi: dil, en çok yeniden kullanılan parçalarına
-ayrılır — yaygın kelimeler bütün kalır, nadirler parçalardan kurulur
-(standart algoritma: **byte-pair encoding**, BPE). Pratik kural:
-100 token ≈ 75 İngilizce kelime; "128K bağlam penceresi" (context window)
-kabaca bir roman eder. Model harfleri değil yalnızca token ID'lerini
-gördüğü için "strawberry"deki r'leri saymak meşhur biçimde zordu —
-bir tablonun *fotoğrafındaki* fırça darbelerini saymak gibi.
+Bir sinir ağı matris çarpar; harflerle veya kelimelerle doğrudan işlem
+yapamaz. Bu yüzden her girdi, ağa ulaşmadan önce **tokenizasyon**
+aşamasından geçer. Bir **token**, bir dil modelinin metni işlemek için
+kullandığı en küçük yapı taşıdır: yerine göre bir kelime, bir ek, bir hece
+ya da tek bir karakter olabilir.
+
+Her LLM'in eğitim öncesinde dondurulmuş sabit bir kelime dağarcığı
+(**vocabulary**) vardır. Bu sözlükteki her bir token, benzersiz bir
+tamsayıya (**token ID**) eşlenir. Metin modele girdiğinde harfler hemen
+bu tamsayı dizilerine dönüştürülür. Örneğin `The quick brown fox jumps
+over the lazy dog.` cümlesi modern bir tokenizer'dan geçtiğinde şu
+parçalara ve kimlik numaralarına ayrılır:
+
+- **Token'lar:** `"The"`, `" quick"`, `" brown"`, `" fox"`, `" jumps"`, `" over"`, `" the"`, `" lazy"`, `" dog"`, `"."`
+- **Token ID'leri:** `[976, 4853, 19705, 68347, 65613, 1072, 290, 29082, 6446, 13]`
+
+Bu parçalama işini standart olarak **Byte-Pair Encoding (BPE)** algoritması
+yapar. Tıpkı LEGO gibi: dil, en sık yeniden kullanılan tuğlalarına
+ayrılır; yaygın kelimeler tek parça kalırken, nadir kelimeler kök ve
+eklerine bölünür. Pratik kural: 100 token kabaca 75 İngilizce kelime
+eder.
+
+Model harfleri değil yalnızca bu tamsayı damgalarını gördüğü için
+"strawberry" kelimesindeki r'leri saymak meşhur biçimde zordu. Bir akıl
+yürütme kusuru gibi görünen bu durumun sebebi basittir: kelime modele
+ulaştığında çoktan üç bağımsız tamsayıya (`str`, `aw`, `berry`)
+dönüşmüştü ve model harfleri hiç görmedi. Sözlük boyutunun parametre
+sayısına ve dizi uzunluğuna etkisini daha ayrıntılı incelemek için
+[Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir)
+yazısına bakabilirsiniz.
 
 ## 2. Anlam taşıyan sayılar
 
-Her bir token daha sonra bir **embedding'e** dönüşür: uzun bir sayı
-listesi, yani anlam haritasındaki koordinatları. Bunları binlerce
-kadran olarak düşünün — biri resmiyet için, biri zaman kipi için,
-çoğu ise hiçbir insanın adlandırmadığı nitelikler için. Bu haritada
-birbiriyle ilişkili kelimeler birbirine yakın durur: *kral (king)*,
-*kraliçe (queen)* kelimesinin yakınına, *elektronik tablo (spreadsheet)*
-kelimesinin ise uzağına düşer. Daha da iyisi, *yönler* de bir anlam
-taşır. Bunu görmek için, sadece iki kadranlı bir haritaya aşağıdaki
-çizimden alınan **örnek koordinatları** kullanarak dört kelime
-yerleştirelim: **(2, 1) konumunda *erkek (man)***, **(5, 4) konumunda
-*kadın (woman)***, **(3, 6) konumunda *kral (king)*** ve **(6, 9)
-konumunda *kraliçe (queen)***:
+Tamsayılar da tek başına yeterli değildir; `4853` sayısının `68347` ile
+anlamsal bir benzerliği matematiksel olarak kurulamaz. Bu yüzden her token
+ID, modelin ilk katmanında devasa bir ağırlık tablosundan satır çekilerek
+bir **embedding** vektörüne dönüştürülür.
+
+Girdi anında bu işlem tek bir aritmetik çarpma bile gerektirmez; sadece
+bellekten satır okumaktır (sıfır FLOP). Detaylarını
+[Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine)
+yazısında ele aldığımız bu lookup mekanizması, ayrık sayıları binlerce
+boyutlu sürekli bir anlam uzayındaki geometrik koordinatlara yerleştirir.
+
+Bu uzayı binlerce kadran olarak düşünebilirsiniz: biri resmiyet derecesi,
+biri canlılık, biri zaman kipi için... Bu haritada benzer anlamdaki
+kelimeler birbirine yakın durur: *kral (king)*, *kraliçe (queen)*
+kelimesinin yakınına, *elektronik tablo (spreadsheet)* kelimesinin ise
+uzağına düşer. Daha da önemlisi, uzaydaki **yönler** anlamsal ilişkileri
+temsil eder. Bunu sadece iki kadranlı sembolik bir haritada dört kelimeyle
+görebiliriz: **(2, 1) konumunda *erkek (man)***, **(5, 4) konumunda *kadın
+(woman)***, **(3, 6) konumunda *kral (king)*** ve **(6, 9) konumunda
+*kraliçe (queen)***:
 
 <svg viewBox="0 0 480 320" role="img" aria-label="İki kadran üzerinde dört kelime: erkek 2,1; kadın 5,4; kral 3,6; kraliçe 6,9. Düz paralel oklar erkek-kadın ve kral-kraliçe cinsiyet yönünü (+3,+3), kesikli paralel oklar erkek-kral ve kadın-kraliçe kraliyet yönünü (+1,+5) gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -94,121 +132,114 @@ konumunda *kraliçe (queen)***:
 <text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kraliyet yönü (+1, +5)</text>
 </svg>
 
-Çizim hilesizdir — koordinatlarla sağlamasını yapın:
+Vektör aritmetiği bu paralelkenarda kendini kanıtlar:
 
-> kadın − erkek = (5, 4) − (2, 1) = **(+3, +3)** — *cinsiyet* yönü
-> kraliçe − kral = (6, 9) − (3, 6) = **(+3, +3)** — aynı ok, haritanın yukarısında
-> kral − erkek = kraliçe − kadın = **(+1, +5)** — *kraliyet* yönü, iki kez
+> kadın − erkek = (5, 4) − (2, 1) = **(+3, +3)** — *cinsiyet* yönü  
+> kraliçe − kral = (6, 9) − (3, 6) = **(+3, +3)** — aynı ok, haritanın yukarısında  
+> kral − erkek = kraliçe − kadın = **(+1, +5)** — *kraliyet* yönü, iki kez  
 
-Okları üst üste koyun, ünlü denklem kendiliğinden çıkar:
+Okları birleştirdiğinizde meşhur denklem ortaya çıkar:
 
 > kral − erkek + kadın = (3, 6) − (2, 1) + (5, 4) = **(6, 9) = kraliçe**
 
-Bunu haritada yol tarifi gibi okuyun: *kral*dan başlayın, erkek adımını
-geri yürüyün, kadın adımını ileri yürüyün — *kraliçe*ye varırsınız.
-Dört nokta bir paralelkenara kapanır ve o kapanış, denklemin ta
-kendisidir. Gerçek embedding'ler aynı oyunu binlerce kadran üzerinde
-ve yalnızca yaklaşık olarak oynar — toplam, kraliçenin tam üstüne değil
-*yakınına* düşer — ama temel mekanizma budur.
+Gerçek embedding uzayları binlerce boyutta bu anlamsal geometriyi inşa eder
+(anlamsal arama ve kosinüs benzerliği ayrıntıları için bkz:
+[Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine)).
 
-Cinsiyetin bir ayrıcalığı da yok: *Paris*'ten *Fransa*'ya giden ok,
-*Roma*'dan *İtalya*'ya giden okla paraleldir — bir "başkenti olma" yönü.
-Verinin öğretebildiği her ilişki, bu haritada bir yöne dönüşür.
-
-Haritayı kimse elle çizmedi — veriden öğrenildi. Son olarak her token'ın
-**konumu** da (positional encoding) vektöre işlenir; çünkü "köpek adamı
-ısırdı" ile "adam köpeği ısırdı" birbirinden farklı kalmalıdır.
+Ancak transformer mimarisinin temelinde önemli bir kör nokta vardır:
+kelime sırasından habersizdir. Vektörleri torbaya atılmış gibi algılar.
+"Köpek adamı ısırdı" ile "adam köpeği ısırdı" cümlelerinin aynı anlama
+gelmemesi için modele **konum bilgisi (positional encoding)** verilmek
+zorundadır. GPT-2 gibi eski modeller öğrenilmiş mutlak pozisyon vektörlerini
+kelime embedding'ine eklerken, günümüz modern LLM'leri (Llama 3, Gemma 3)
+**RoPE (Rotary Position Embedding)** kullanır; pozisyon bilgisini doğrudan
+attention iç çarpımında vektörleri karmaşık düzlemde döndürerek işler.
 
 ## 3. Transformer: bir bağlam makinesi
 
-Embedding tek başına "yüz"ün ne olduğunu söyleyemez — surattaki yüz mü,
-sayı olan yüz mü? Anlam bağlamda yaşar ve **transformer** — GPT'deki
-T — onu okumak için kurulmuş makinedir. Eski tasarımlar metni soldan
-sağa, mesafeyle solan tek bir dar hafızadan geçirirdi. 2017 tarihli
-*Attention Is All You Need* makalesi bunu atıp tek bir mekanizma tuttu:
-**attention** — her token, diğer her token'a *doğrudan* ve aynı anda
-bakar, neyin önemli olduğuna kendisi karar verir.
+Embedding tek başına "yüz" kelimesinin ne anlama geldiğini bilemez:
+çehre olan yüz mü, sayı olan yüz mü, yoksa yüzmek fiili mi? Anlam ancak
+bağlamda netleşir ve **transformer** — GPT'deki T — tam olarak bu bağlamı
+çözmek için inşa edilmiş bir makinedir.
 
-Bu kararı makalenin kendi örneğinde izleyin:
+Modern bir LLM omurgası üç ana parçadan oluşur:
+1. **Girdi temsili:** Token ID'lerinin embedding vektörlerine ve RoPE ile
+   konumsal koordinatlara dönüştürülmesi.
+2. **Transformer katmanları kulesi:** Bilgiyi token'lar arasında harmanlayan
+   self-attention mekanizması ile her token'ı tek başına dönüştüren ileri
+   beslemeli ağların (FFN) üst üste istiflenmesi.
+3. **Çıktı başlığı (`lm_head`):** Son katmandaki vektörlerin sözlük
+   boyutuna izdüşürülerek aday token puanlarına (logits) çevrilmesi.
 
-> Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.
+Eski dil modelleri metni soldan sağa, mesafeyle solan dar bir hafıza
+hücresinden (RNN/LSTM) geçirirdi. 2017 tarihli *Attention Is All You Need*
+makalesi bu kısıtı çöpe attı ve tek bir çekirdek ilkeye dayandı:
+**attention (dikkat)**. Her token, dizideki diğer her token'a doğrudan ve
+aynı anda bakar; kimin ne kadar önemli olduğuna kendisi karar verir.
+
+Makalenin ünlü örneğinde izleyin:
+
+> Hayvan caddeyi geçmedi, çünkü **o** çok *yorgundu*.  
 > Hayvan caddeyi geçmedi, çünkü **o** çok *genişti*.
 
-Tek kelime değişir, "o" taraf değiştirir. Siz bunu anında çözdünüz;
-attention, modelin çözme biçimidir. Bütün numara tek cümledir: **bir
-kelimenin yeni anlamı, diğer kelimelerin ağırlıklı karışımıdır — ve
-attention'ın bütün işi ağırlıkları seçmektir.** Doğru ağırlık mesafeden
-gelemez ("o"yu çözen kelime yirmi token geride olabilir); *içerikten*
-hesaplanır — ve öğrenilir.
-
-Makine, üst üste katmanlardan oluşur; her katmanda iki alt katman
-vardır: her kelimenin vektörünü diğerlerinin ışığında yeniden yazdığı
-**self-attention** ve sonra her kelimeyi tek başına sindiren küçük bir
-**ileri beslemeli ağ** (feed-forward network). Önce birlikte topla,
-sonra yalnız sindir. Bu bölüm birinciyi açar; ikincisi 4. bölümün
-konusu.
+Tek bir sıfat değişir ve "o" zamiri taraf değiştirir: birinde hayvandır,
+ötekinde cadde. Siz bunu anında çözersiniz; attention ise modelin bu kararı
+verme mekanizmasıdır: **bir kelimenin yeni anlamı, diğer kelimelerin
+ağırlıklı karışımıdır — ve attention'ın tek işi bu ağırlıkları seçmektir.**
 
 ### Q, K, V — mekanizma, sayılarla
 
-Ağırlıklarını seçmek için her token aynı anda üç rol oynar — kendi
-embedding'inin öğrenilmiş üç küçük kılığı:
+Her katmanda model, her token'ın embedding'inden öğrenilmiş üç ağırlık
+matrisi ($W_Q, W_K, W_V$) çarparak üç ayrı vektör üretir:
 
-- **sorgu (query, Q)** — ne arıyorum?
-- **anahtar (key, K)** — başkaları beni nasıl bulur?
-- **değer (value, V)** — seçilirsem ne devrederim?
+- **Sorgu (Query, Q):** "Ben ne tür bir bilgi arıyorum?"
+- **Anahtar (Key, K):** "Ben hangi bilgiyi sunuyorum, başkaları beni nasıl bulur?"
+- **Değer (Value, V):** "Bana dikkat edilirse, aktaracağım asıl içerik nedir?"
 
-YouTube aynı üçlüyle çalışır: yazdığınız metin sorgudur, her videonun
-başlığı anahtardır, videoların kendisi değerdir. Modelde üçü de
-token'ın embedding'inden gelir: üç öğrenilmiş matrisle çarpım —
-**W_Q, W_K, W_V** — aynı kelime, üç kıyafet, üçü de aynı anda üstünde.
-Ham embedding'ler yetmezdi: embedding kelimenin her şeyini karıştırır,
-oysa arama tek seferde tek yön ister — "f ile başlar" üzerinden değil,
-"yorgun olabilir" üzerinden eşleşen bir sorgu-anahtar çifti gibi.
-Sonuç bir **yumuşak sözlüktür** (soft dictionary): her anahtar *kısmen*
-eşleşir, her değerden orantılı bir pay alınır.
+YouTube aramasıyla düşünün: arama çubuğuna yazdığınız metin sorgudur (Q),
+videoların başlık ve etiketleri anahtardır (K), videonun asıl içeriği ise
+değerdir (V). Ham embedding'ler yetersiz kalırdı; çünkü arama tek bir
+özelliğe odaklanmak ister — "k ile başlar" üzerinden değil, "yorgun
+olabilir" üzerinden eşleşme gibi.
 
-Aritmetik iki hamleden ibarettir: **iç çarpım** (dot product: iki
-vektörü konum konum çarpıp toplamak — ne kadar hizalıysa sonuç o kadar
-büyük çıkar; bir benzerlik ölçer) ve **ağırlıklı toplam** (weighted sum:
-vektörleri yüzdelerle karıştırmak, tarif gibi). Bunları dört adım
-çalıştırır. "Hızlı kahverengi tilki"yi, model *tilki* üzerinde
-çalışırken izleyin:
+Attention mekanizması dört adımdan oluşur:
 
-**1. Adım — Puanla.** *Tilki*nin sorgusu her kelimenin anahtarıyla
-buluşur: puanᵢ = Q(tilki) · K(kelimeᵢ).
+**1. Adım — Puanla:** Hedef token'ın sorgusu ile diğer kelimelerin
+anahtarları iç çarpıma girer: $\text{puan}_i = Q \cdot K_i$.  
+**2. Adım — Ölçekle:** Puanlar anahtar vektörünün boyutu $\sqrt{d_k}$'ye
+bölünür. Bu bölme işlemi, büyük boyutlu vektörlerin iç çarpımlarının aşırı
+büyüyüp softmax gradyanlarını sıfırlamasını engeller:
+$\text{ölçekli}_i = \text{puan}_i \div \sqrt{d_k}$.  
+**3. Adım — Softmax:** Üstel fonksiyon alınarak puanlar toplamı 1 olan
+yüzdelere dönüştürülür.  
+**4. Adım — Karıştır:** Değer (V) vektörleri bu yüzdelerle çarpılıp
+toplanır.
 
-**2. Adım — Ölçekle.** Her puan, anahtar vektörünün boyutu **√dₖ**'ye
-bölünür; büyük vektörlerin softmax'ı ya-hep-ya-hiç ağırlıklara
-kilitlemesi böyle önlenir: ölçekliᵢ = puanᵢ ÷ √dₖ.
+> [!IMPORTANT]
+> **Değer (V) vektörleri puanlama aşamasında kesinlikle hiçbir rol oynamaz.**
+> Kimin kime ne kadar dikkat edeceği yalnızca Sorgu (Q) ve Anahtar (K)
+> vektörlerinin iç çarpımıyla belirlenir. Değer (V), ağırlıklar
+> kesinleştikten sonra taşınacak olan yükün ta kendisidir.
 
-**3. Adım — Softmax'la.** Her puan için *e* üssü alınır, toplama
-bölünür; puanlar yüzdeye dönüşür: ağırlıkᵢ = e^puanᵢ ÷ (e^puan₁ + …).
+Modelin "Hızlı kahverengi tilki" cümlesinde *tilki* kelimesi üzerindeki
+puanlamasını izleyin:
 
-| çift | puan | e^puan | pay |
+| çift | puan | e^puan | pay (ağırlık) |
 |---|---|---|---|
 | Q(tilki) · K(hızlı) | 2,1 | 8,2 | **%3** |
 | Q(tilki) · K(kahverengi) | 4,0 | 54,6 | **%19** |
 | Q(tilki) · K(tilki) | 5,4 | 221,4 | **%78** |
 
-Son satırı doğrulayın: 221,4 ÷ 284,2 ≈ %78. Üstel fonksiyonun yaptığına
-bakın: 5,4, 4,0'ın yalnızca biraz üstünde; ama %78, %19'un dört katı —
-softmax liderleri ödüllendirir.
+Softmax liderleri ödüllendirir: 5,4 puanı 4,0'dan çok büyük görünmez ama
+üstel büyüme sayesinde %78, %19'un dört katı ağırlık kapar. Sonuçta yeni
+vektör şudur:
 
-**4. Adım — Karıştır.** Yeni *tilki*, değerlerin ağırlıklı toplamıdır:
-tilki_yeni = 0,03·V(hızlı) + 0,19·V(kahverengi) + 0,78·V(tilki) —
-artık sözlükteki *tilki* değil, *bu-belirli-hızlı-kahverengi-tilki*.
+$$\text{tilki}_{\text{yeni}} = 0{,}03 \cdot V(\text{hızlı}) + 0{,}19 \cdot V(\text{kahverengi}) + 0{,}78 \cdot V(\text{tilki})$$
 
-Yukarıdaki her şey tek ünlü satırdır:
+Artık o sözlükteki soyut *tilki* değildir; *bu-belirli-hızlı-kahverengi-tilki*dir.
+Formülün meşhur tek satırlık özeti:
 
-> **Attention(Q, K, V) = softmax(QKᵀ / √dₖ) · V**
-
-1. Adım QKᵀ, 2. Adım bölme, 3. Adım softmax, 4. Adım V ile çarpım.
-Öğrenilen *tek* parça üç tablodur; gerisi sabit aritmetik — ve tüm
-token'lar matris olarak üst üste konduğundan bu tek satır bütün
-aramaları aynı anda koşturur: GPU'ların bayıldığı iş. Bedeli **O(n²)**:
-herkes herkesi puanlar — bağlamı ikiye katlayın, maliyet dörde katlanır.
-
-Bütün mekanizma, tek resimde:
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
 
 ```mermaid
 flowchart TD
@@ -224,80 +255,108 @@ flowchart TD
     S4 --> OUT["yeni tilki — bu-belirli-hızlı-kahverengi-tilki"]
 ```
 
-### Tek yön
+### Tek yön ve causal mask
 
-Üretim sırasında token yalnızca *geriye* bakar: *tilki*, *kahverengi*yi
-görür; *kahverengi*, *tilki*yi asla. Modeli *sıradaki*-token tahmincisi
-yapan bu maskedir (causal mask) — ve geçmiş bir token'ın anahtarıyla
-değeri, bir kez hesaplanınca bir daha değişmez. Bir kenara yazın;
-7. bölümde KV cache olacak. Maske aynı zamanda model ailelerinin
-anahtarıdır: maske*yle* kurulan model yazar — **decoder** ailesi: GPT
-ve neredeyse tüm modern LLM'ler; maske*siz* kurulan iki yönü görür ve
-sınıflandırır — **encoder** ailesi: BERT.
+Self-attention mimari olarak dizideki bütün token'lara aynı anda bakma
+yeteneğine sahiptir. Ancak otoregresif bir üretimde modelin sıradaki
+kelimeyi tahmin edebilmesi için **gelecekteki kelimeleri görmemesi şarttır**.
+Aksi takdirde sınavda cevabı önceden görmek gibi hile yapar ve üretim
+yeteneği kazanamaz.
+
+Bu sınır **causal mask (nedensel maske / look-ahead mask)** ile çizilir.
+Dizideki her $t$ pozisyonu için, kendisinden sonra gelen ($> t$) tüm
+pozisyonların attention puanları softmax öncesinde eksi sonsuza ($-\infty$)
+eşitlenir:
+
+$$e^{-\infty} = 0$$
+
+Böylece gelecekteki token'ların ağırlığı sıfıra kilitlenir; bilgi akışı
+sadece geçmişten bugüne doğru tek yönlü akar. Causal mask eğitimde ve
+çıkarımın ilk aşamasında (prefill) tüm token'lar paralel işlenirken hayati
+bir emniyet kemeridir. Tekil üretimde (decode) ise gelecek token'lar henüz
+ortada olmadığı için maske doğası gereği sağlanır. Maskeler aynı zamanda
+farklı uzunluktaki cümleleri gruplarken eklenen dolgu (padding) token'larını
+gizlemek için de kullanılır.
 
 ### Birçok kafa
 
-Katman başına tek ağırlıklama kaba kalırdı — kelimenin bir komşudan dil
-bilgisine, başkasından göndergeye ihtiyacı var. Bu yüzden her katman,
-her biri kendi Q/K/V mercekli, vektörün ince bir dilimiyle çalışan
-birçok **kafa** (attention head) koşturur (orijinal tasarımda 512 ÷ 8
-kafa = 64; sekiz kafa, kabaca tek kafa fiyatına). "O" kodlanırken bir
-kafa *hayvan*a, öteki *yorgun*a kilitlenir — gönderge ve gerekçe, aynı
-anda.
+Tek bir attention gözlüğü kaba kalırdı: bir kelimenin bir komşusundan dil
+bilgisi uyumunu, kilometrelerce ötedeki bir isimden ise zamir referansını
+aynı anda çekmesi gerekir.
 
-Bütün 3. bölüm, tek kartta:
+Bu nedenle her katmanda birden fazla **kafa (attention head)** paralel
+çalışır (Multi-Head Attention). Vektör boyutu kafa sayısına bölünür; örneğin
+4096 boyut 32 kafaya bölündüğünde her kafa 128 boyutluk bir alt uzayda
+uzmanlaşır. Biri özne-yüklem ilişkisini izlerken, diğeri zaman kipini, bir
+başkası sıfat tamlamasını takip eder.
 
-| soru | cevap |
-|---|---|
-| Self-attention nedir? | Cümlenin kendine dikkat etmesi: her token, vektörünü diğerlerinin ışığında yeniden yazar |
-| Q, K, V nedir? | Token başına üç rol — sorgu: *ne arıyorum?* · anahtar: *nasıl bulunurum?* · değer: *ne devrederim?* |
-| Neden üç ayrı vektör? | Embedding her yönü karıştırır; her rol yalnızca kendi işinin yönünü çeker |
-| Hesap hangi sırayla akar? | puanla (Q·K) → ölçekle (÷√dₖ) → softmax'la → karıştır (×V) |
-| İleri beslemeli ağ nedir? | Her token'ı tek başına sindiren ağ — 4. bölümün bilgi ambarı |
+### Model aileleri: Neden herkes decoder-only?
+
+Transformer mimarisi farklı görevler için üç ana çatallaşma yaşadı:
+
+| Mimari | Temsilciler | Prefill ve Decode Aşamaları | Temel Görev Alanı |
+|---|---|---|---|
+| **Encoder-only** | BERT, RoBERTa | Yok. Tek bir ileri geçişte tüm girdiyi çift yönlü işler; üretim yapmaz. | Sınıflandırma, arama, embedding modelleri |
+| **Encoder-decoder** | T5, FLAN-T5, BART | Kısmen. Encoder girdiyi çift yönlü okur; decoder otoregresif üretir. | Erken dönem çeviri ve özetleme |
+| **Decoder-only** | GPT, Llama, Qwen, DeepSeek, Claude | Var. Causal maskeli paralel prefill ve ardından token token otoregresif decode. | Modern üretken yapay zekânın mutlak standardı |
+
+Bugün LLM denildiğinde neredeyse istisnasız **decoder-only** modellerden
+bahsedilmesinin üç somut mühendislik nedeni vardır:
+1. **Tek bir hedef fonksiyonu:** Tüm veri tipleri (kod, sohbet, akıl yürütme)
+   sıradaki token tahminine dönüştürülebilir; mimari ayrımına gerek kalmaz.
+2. **Sıfır sürtünmeli KV cache:** Prefill'de hesaplanan tüm anahtar ve
+   değerler tek bir tensör bloğunda saklanır ve üretim boyunca kesintisiz
+   kullanılır.
+3. **Ölçekleme verimliliği:** Milyarlarca parametreye çıkıldığında donanım
+   üzerinde en kararlı ve en yüksek FLOPS verimini decoder-only yapılar
+   sağlamıştır.
 
 ## 4. Katmanlar: bilgi nerede yaşıyor
 
-Bir attention alt katmanıyla bir ileri beslemeli alt katman, birlikte
-bir **katman** oluşturur; transformer, bu katlardan örülü bir kuledir —
-onlarca, kimi zaman yüzü aşkın kat. Her katta aynı rutin işler:
+Bir attention katmanı ile bir ileri beslemeli ağ (FFN), birlikte bir
+**transformer bloğunu (layer)** oluşturur. Modern bir dil modeli bu
+bloklardan onlarcasının (32, 80, hatta 120 kat) üst üste konmasıyla
+kurulur:
 
-- **Attention** — kütüphaneci — diğer token'lardan bağlamı toplar.
-- **İleri beslemeli ağ** — ambar — onu tek başına sindirir; "Paris,
-  Fransa ile eşleşir" gibi öğrenilmiş örüntüleri taşır.
-- **Residual bağlantı** (residual connection) — bina kuralı — katın
-  çıktısını girdisinin üstüne *ekler*; alttaki hiçbir şey silinmez.
+- **Self-Attention (Kütüphaneci):** Diğer token'lardan bağlamı toplar,
+  vektörleri birbiriyle kaynaştırır.
+- **İleri Beslemeli Ağ / FFN (Ambar):** Toplanan bağlamı her token için tek
+  başına sindirir ve dönüştürür.
+- **Residual Bağlantı (Bina Kuralı):** Katmanın çıktısı girdisinin üstüne
+  eklenir ($x + \text{Katman}(x)$); böylece katmanlar derinleştikçe sinyalin
+  ve gradyanların sönümlenmesi engellenir.
+- **Normalizasyon (RMSNorm / LayerNorm):** Tensörlerin sayısal normunu
+  sabitleyerek katmanlar arası patlamaları önler.
 
-*Tilki* kat kat *kahverengi-hızlı-tilki*ye, sonra *harekete geçmek üzere
-olan özne*ye büyür; alt katlar yazım ve dil bilgisini, üst katlar
-olguları ve mantığı üstlenir. Bilgi de çoğunlukla ambarlarda yaşar —
-tüm **parametrelerin** kabaca üçte ikisi — cümle olarak değil, milyarlarca
-ağırlığa yayılmış halde. Modeli büyütmek çoğunlukla ambarı büyütmektir:
-GPT-2'nin meşhur 1,5 milyar parametresi (2019) bugün trilyonlara vardı;
-**mixture of experts (MoE)** ise her kata birçok ambar koyar, her token
-en iyi bir-iki tanesine yönlendirilir.
+Modelin öğrendiği olgusal bilgilerin (örneğin "Fransa'nın başkenti Paris'tir")
+neredeyse üçte ikisi bu **ileri beslemeli ağların (FFN)** ağırlıklarında
+depolanır. **Mixture of Experts (MoE)** mimarileri (örneğin Mixtral veya
+DeepSeek), her kata tek bir devasa ambar koymak yerine onlarca küçük ambar
+yerleştirir ve her token için en uygun 1-2 tanesini dinamik olarak seçer.
 
-Çatıda kule borcunu öder: bir *tahmin*. Son token'ın nihai vektörü — artık
-bağlamın tamamını kodlar — modelin bildiği her token'la iç çarpıma
-girer (GPT-2'de ~50.000):
+Kulenin en tepesinde borç ödenir: **Çıktı Başlığı (`lm_head`)**. Son
+katmandan çıkan gizli durum vektörü, kelime dağarcığındaki tüm token'larla
+çarpılarak her bir aday için ham logit puanı üretir:
 
-> puan(aday) = son vektör · adayın embedding'i
+$$\text{puan}(\text{aday}) = \text{son\_vektör} \cdot W_{\text{lm\_head}}(\text{aday})$$
 
-**Softmax** puanları olasılığa çevirir. "Bir varmış bir"den sonra kütle
-"yokmuş"a yığılır; "En sevdiğim şehir"den sonra yüzlerce şehre dağılır.
-İki durumda da model tek sorusunu cevaplar: *sırada ne gelmesi muhtemel?*
+Bu matris çoğu zaman girdi aşamasındaki `embed_tokens` tablosuyla aynı
+ağırlıkları paylaşır (weight tying).
 
 ## 5. Eğitim ve ölçek
 
-Makinedeki her sayı rastgele gürültü olarak başlar. Onları **ön eğitim**
-(pretraining) ayarlar: modele trilyonlarca token gerçek metin gösterin,
-sıradakini gizleyin, tahmin ettirin. Cevap anahtarı bedavadır — metinde
-gerçekten bir sonraki gelen token'dır; veri kendi kendini notlandırır.
-Her tahmini **kayıp** (loss) puanlar: kayıp = −log p(doğru token) —
-doğruya %90 vermek ≈ 0,1'e, %20 vermek ≈ 1,6'ya mal olur (karne:
-**perplexity** = e^(ortalama kayıp)). **Gradyan inişi** (gradient descent)
-her parametreyi yokuş aşağı minicik bir adım kaydırır — sisli bir iniş,
-trilyonlarca kez — ta ki model, eğitim verisinin JPEG gibi
-sıkıştırılmışı olana dek: resim kalır, pikseller kalmaz.
+Makinedeki tüm sayılar rastgele gürültü olarak başlar. Onları hizalayan
+süreç **ön eğitimdir (pretraining)**: modele internetten toplanan trilyonlarca
+token metin gösterilir, sıradaki kelime gizlenir ve tahmin etmesi istenir.
+Veri kendi kendini notlandırır; doğru token bellidir.
+
+Hata **çapraz entropi kaybı (cross-entropy loss)** ile ölçülür:
+
+$$\text{Loss} = -\log p(\text{doğru token})$$
+
+Doğru cevaba %90 olasılık vermek $\approx 0{,}10$ kayba, %20 olasılık
+vermek $\approx 1{,}60$ kayba yol açar. **Gradyan inişi (gradient descent)**
+her parametreyi yokuş aşağı minicik bir adım kaydırarak modeli eğitir.
 
 ```mermaid
 flowchart LR
@@ -308,144 +367,235 @@ flowchart LR
     E -->|"trilyonlarca kez tekrar"| A
 ```
 
-Ölçeğin getirisi öngörülebilirdir. **Ölçekleme yasaları** (scaling laws)
-— kayıp ≈ a · C^(−α), log-log kâğıdında düz çizgi — OpenAI'ın GPT-4'ün
-nihai kaybını 10.000 kat küçük denemelerden öngörmesini sağladı;
-DeepMind'ın **Chinchilla**sı tarifi parametre başına ~20 token'a
-sabitledi — 70 milyarlık model, 280 milyarlık Gopher'ı geçti. İki şerh:
-beceriler yine de sıçramayla gelebilir (**beliren yetenekler**,
-emergent abilities) ve kaliteli açık metin tükeniyor — hesap, cevap
-anına kayıyor: 7. bölümün akıl yürüten modelleri.
+Ölçeğin getirisi tahmin edilebilir yasalara tabidir. Kaplan ve Chinchilla
+**ölçekleme yasaları (scaling laws)**, model parametresi ile eğitim verisi
+arasındaki optimum dengeyi parametre başına kabaca **20 token** olarak
+sabitledi. 70 milyar parametreli Llama 2'nin 280 milyarlık Gopher'ı geride
+bırakabilmesinin sırrı budur.
 
 ## 6. Otomatik tamamlamadan asistana
 
-Ön eğitimin ürünü bir **taban modeldir** (base model): metni sürdüren
-bir makine, o kadar. "Fransa'nın başkenti nedir?" deyin; "Paris."
-alabilirsiniz — ya da dokuz quiz sorusu daha — ya da "diye sordu
-öğretmen; kimse parmak kaldırmadı." Hepsi sadık devamlardır; cevabı
-çekip çıkarmak bir zamanlar başına kendiniz "S: … C:" yazmayı
-gerektirirdi — prompt mühendisliği orada doğdu. İki ucuz aşama onu
-asistana dönüştürür:
+Ön eğitimin çıktısı bir **taban modeldir (base model)**: metin tamamlama
+makinesi, o kadar. "Fransa'nın başkenti nedir?" yazdığınızda "Paris" cevabını
+verebileceği gibi, arkasından dokuz farklı quiz sorusu da dizebilir; çünkü
+eğitim verisinde soru listeleri de vardır.
 
-- **Talimatla ince ayar** (instruction tuning) — on binlerce soru →
-  ideal cevap çiftiyle eğitime devam edilir; ta ki yardımcı olmak en
-  olası devam olana dek.
-- **RLHF** (insan geri bildirimiyle pekiştirmeli öğrenme, reinforcement
-  learning from human feedback) — insanlar aday cevapları karşılaştırır,
-  bir ödül modeli (reward model) onların tercihlerini öğrenir, LLM bu
-  modele göre optimize edilir: üslup, dürüstlük, sınır çizme — tek tek
-  örneklerle tarif edilemeyen incelikler. (Daha da ucuzu **LoRA**:
-  modeli dondurup yanına minik adaptör matrisleri eğitir.)
+Onu güvenilir bir asistana çevirmek iki aşamalı bir tornadan geçirir:
+1. **Talimatla İnce Ayar (SFT - Supervised Fine-Tuning):** Yüz binlerce
+   özenle yazılmış soru-cevap çiftiyle modele bir yardımcının nasıl
+   davranması gerektiği öğretilir.
+2. **İnsan Geri Bildirimiyle Pekiştirmeli Öğrenme (RLHF / DPO):** İnsanların
+   tercih ettiği cevaplar üzerinden modelin üslubu, güvenliği ve dürüstlüğü
+   pekiştirilir.
 
-Vurucu son: GPT-3, ChatGPT'den iki yılı aşkın süre önce vardı. Devrim
-bu aşamalardı, daha büyük ağ değil.
+Parametrelerin tamamını eğitmek yerine kenara küçük adaptör matrisleri
+ekleyen **LoRA**, bu ince ayar sürecini tek bir GPU'da bile yapılabilir kılar.
 
-## 7. Üretim: plan değil, döngü
+## 7. Çıkarım ve üretim: iki aşamalı döngü
 
-Model olasılıkları hesaplar, bir token **örnekler** (sampling), ekler
-ve özel bir durdurma token'ına (stop token) dek tekrarlar — her yeni
-token, anında bir sonraki tahminin girdisi olur. Çekilişi üç kadran
-yönetir. "Gökyüzü ...ydi"den sonra: *mavi* %60, *karanlık* %10, …,
-*patates* %0,0001.
+Bir model eğitildikten sonra kullanıcı isteklerine cevap verirken çalışan
+sürece **çıkarım (inference)** denir. Çıkarım, donanım kaynaklarını tüketim
+biçimi açısından birbirine zıt **iki ayrı aşamadan** oluşur.
 
-- **Temperature (sıcaklık)**, softmax'tan önce her puanı T'ye böler —
-  T = 0, açgözlü (greedy) ve neredeyse deterministik seçimdir; yüksek
-  T, *karanlık* ile *gri*yi yarıştırır. SQL veya kesin format için düşük,
-  beyin fırtınası için yüksek.
-- **Top-k**, en olası k token'ı tutar — *patates* elendi.
-- **Top-p**, olasılık kütlesinin örneğin %90'ını örten en küçük kümeyi
-  tutar — model eminse iki token, kararsızsa seksen.
+```mermaid
+flowchart LR
+    subgraph P["1. Prefill Aşaması (Compute-bound)"]
+        direction TB
+        PR["Prompt Token'ları"] --> PAR["Tüm token'lar paralel işlenir"]
+        PAR --> KVW["KV Cache doldurulur"]
+        KVW --> TTFT["İlk token üretilir (TTFT)"]
+    end
+    subgraph D["2. Decode Aşaması (Memory-bound)"]
+        direction TB
+        TTFT --> SEQ["Token t teker teker üretilir"]
+        SEQ --> KVR["Geçmiş KV Cache okunur"]
+        KVR --> ITL["Token arası gecikme (ITL)"]
+        ITL --> STOP{"Durdurma token'ı mı?"}
+        STOP -- Hayır --> SEQ
+        STOP -- Evet --> END["Metin tamamlandı"]
+    end
+```
 
-Önce buda, sonra çek: cevaplar bu yüzden günden güne değişir ve gökyüzü
-bu yüzden asla patates olmaz.
+### Prefill: paralel hesaplama ve TTFT
 
-Döngü, "adım adım düşün" (think step by step) tavsiyesinin sırrını da
-açıklar — sayfa, modelin tek karalama defteridir. 17 × 24 tek hamlede
-istenirse cevabı tek tahminde tutturmak zorundadır; 17 × 24 = 340 + 68
-= 408 yazmasına izin verilirse her ara adım bağlama katılır ve sonraki
-tahmini keskinleştirir. Akıl yürüten modeller (reasoning models) tam da
-bunu sanayileştirir.
+Kullanıcı uzun bir metin gönderdiğinde, girdinin tamamı modelin elindedir.
+Model bu token'ların tamamını devasa tensör matrisleriyle **aynı anda
+(paralel)** işler.
 
-Tabloyu ekonomik bir gerçek tamamlar. Eğitim, belgeleri paralel işler;
-sohbet ise token'ları teker teker, seri olarak üretir — ve bu seri
-döngüyü ucuz tutan **KV cache**, 3. bölümün verdiği sözü yerine getirir:
-geçmiş anahtarlar ve değerler hiç değişmez, bir kez hesaplanır ve
-saklanır. "Ben seni" bağlamıyla tek tur:
+- **Donanım karakteri:** Bu aşama **hesaplama-bağımlıdır (compute-bound)**.
+  GPU'nun tensör çekirdekleri (Tensor Cores) sonuna kadar zorlanır; işlemci
+  neredeyse hiç beklemez.
+- **Kritik metrik:** **Time to First Token (TTFT)** — Kullanıcının enter'a
+  bastığı andan ilk kelimenin ekranda belirdiği ana kadar geçen milisaniye.
+- **Hayati görevi:** Prefill, prompt'taki bütün token'ların Anahtar (K) ve
+  Değer (V) vektörlerini hesaplar ve bir sonraki aşama için **KV cache**
+  alanına kaydeder.
 
-1. "Ben" ile "seni"nin önbellekteki K, V'leri taze sorgu Q₃ ile
-   buluşur — ağırlıklar %30 / %70 dağılır.
-2. Karışım kulede yükselir; softmax *seviyorum* der (%85); çekiliş
-   onu seçer.
-3. "seviyorum" için K₃, V₃ hesaplanır ve önbelleğe eklenir; döngü
-   yeniden başlar. **Q hep taze hesaplanır; K ile V hep önbellekten
-   gelir** — bütün hikâye bu cümledir.
+### Decode: seri döngü ve ITL
 
-Bunu siz de hissettiniz: uzun bir prompt'un ilk kelimesinden önceki
-duraklama, önbelleği kuran **prefill** aşamasıdır; sonrası hızla akar.
-Faturası ise bellektir:
+İlk token ekrana düştükten sonra model **decode** aşamasına geçer. Burada
+artık paralel üretim imkânsızdır; çünkü 50. kelimenin ne olacağını bilmek
+için 49. kelimenin üretilmiş olması gerekir. Üretim otoregresif olarak,
+**teker teker ve seri** akar.
 
-> cache = 2 × katman × bağlam × genişlik × bayt ≈ 2 × 32 × 100.000 × 4.096 × 2 ≈ **52 GB** — tek bir uzun sohbet için
+- **Donanım karakteri:** Bu aşama **bellek-bant-genişliği bağımlıdır
+  (memory-bandwidth bound)**. Her tek bir token üretilirken, GPU'nun tüm
+  ağırlık matrisleri ve büyüyen KV cache belleği (HBM) baştan sona okunmak
+  zorundadır. GPU'nun devasa hesaplama birimleri çoğu zaman bellekten verinin
+  gelmesini bekleyerek boş yatar.
+- **Kritik metrik:** **Inter-Token Latency (ITL)** — Art arda gelen iki token
+  arasında geçen süre (kullanıcının hissettiği akış hızı).
 
-— önbelleğe alınmış girdinin (prompt caching) daha ucuz fiyatlandırılması
-bundandır; diğer büyük kaldıraç **quantization**'dır (nicemleme):
-ağırlıkları daha az bitle saklamak (16 → 8 → 4). Çıkarım matematikten
-çok bellek bant genişliğine takılır; küçük ağırlık, daha hızlı ve daha
-ucuz cevap demektir.
+### KV cache'in gerçek boyutu ve bellek duvarı
 
-## 8. Sizi hatırlamaz
+Attention mekanizmasında her yeni token geçmişteki tüm token'lara bakmak
+zorundadır. Eğer bir önbellek olmasaydı, 1000. token üretilirken önceki 999
+kelimenin K ve V vektörleri sıfırdan tekrar hesaplanacaktı ($O(n^2)$ işlem
+faturası).
 
-Eğitimden sonra parametreler **donar**. Her mesaj, tüm konuşmayı ağdan
-yeniden geçirir — uzun süreli hafızası olmayan, her sabah dosyanın
-tamamı eline verilen parlak bir danışman. Hafıza sandığınız, bağlam
-penceresidir. Öbür yüzü **bağlam içi öğrenmedir** (in-context learning):
-"deniz → mer, ev → maison, kedi → ?" gösterin; *chat* çıkar — görev
-yalnızca prompt'tan öğrenildi, tek parametre değişmedi. Pratik prompt
-mühendisliği tam budur: bağlamı, istenen devam en olası olacak şekilde
-dizmek.
+**KV Cache**, hesaplanan K ve V vektörlerini GPU belleğinde saklar. Yeni
+adımda yalnızca son token için Q, K, V hesaplanır; Q geçmişteki önbellek ile
+karşılaştırılır ve yeni K, V önbelleğe eklenir ($O(1)$ hesaplama).
+
+Ancak bu hızın bedeli çok ağırdır: **VRAM tüketimi**. KV cache boyutu şu
+formülle hesaplanır:
+
+$$\text{Boyut} = 2 \times \text{katman} \times \text{kafa}_{\text{kv}} \times d_{\text{kafa}} \times \text{bağlam} \times \text{bayt}$$
+
+Somut bir veri merkezi örneğiyle hesaplayalım: **Llama-3-8B (FP16)**:
+- Model ağırlıkları GPU'da $\approx 16\text{ GB}$ yer tutar.
+- 8.000 token'lık (8K) tek bir sohbetin KV cache'i $\approx 1\text{ GB}$
+  tüketir.
+- 80 GB'lık bir NVIDIA A100/H100 GPU'da ağırlıklar ve sistem çıktıktan sonra
+  geriye yaklaşık 64 GB KV cache alanı kalır.
+- **Sonuç:** 80 GB'lık dev bir GPU, 8K bağlam kullanan **en fazla ~60
+  eşzamanlı kullanıcıya** hizmet verebilir!
+
+Bir sunucunun kapasite tavanını belirleyen şey model ağırlıkları değil,
+**KV cache'in ta kendisidir**. Bu darboğazı aşmak için modern çıkarım
+sistemleri üç büyük teknik geliştirmiştir:
+1. [vLLM ve PagedAttention](post.html?slug=vllm-derinlemesine): Belleği
+   sanal sayfalar halinde yöneterek parçalanmayı (fragmentation) sıfırlar
+   ve eşzamanlılığı 2-4 katına çıkarır.
+2. **Prefix Caching:** Ortak sistem prompt'larının KV bloklarını hafızada
+   tutup yeniden hesaplamayı önler (ayrıntılar için bkz:
+   [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu)).
+3. [Quantization (Nicemleme)](post.html?slug=post-training-quantization-llm-cikarim):
+   Ağırlıkları ve KV cache'i FP8 veya INT4 formatına indirerek bellek
+   ihtiyacını yarıya böler.
+
+### Prefill ve decode'un çakışması: disaggregation
+
+Geleneksel sunucularda prefill ile decode aynı GPU üzerinde yan yana
+koşturulur. Ancak ağır bir prefill isteği geldiğinde GPU'nun işlem
+çekirdeklerini kilitler; bu sırada milisaniyelerle token yazmakta olan decode
+istekleri donar ve kullanıcı tarafında kekeleme (ITL sıçraması) yaşanır.
+
+Modern büyük sistemler bu sorunu **Prefill-Decode Disaggregation (Ayrık
+Mimari)** ile çözer: prefill istekleri işlemci gücü yüksek ayrı GPU'larda
+yapılır; oluşturulan KV cache blokları ultra hızlı ağlar üzerinden decode
+GPU'larına aktarılır. Böylece iki aşama birbirini ezmez.
+
+### Çekilişi yöneten üç kadran: temperature, top-k, top-p
+
+Model son katmanda sözlükteki her kelime için bir logit puanı üretir. Bu
+puanların gerçek bir kelimeye dönüşmesini üç parametre yönetir:
+
+- **Temperature (Sıcaklık):** Logit'leri softmax öncesinde $T$'ye böler
+  ($z_i \div T$). Düşük sıcaklık ($T \to 0$) dağılımı aşırı sivrileştirir; en
+  yüksek puanlı kelimeyi zorunlu kılar (deterministik / greedy — kod ve SQL
+  için ideal). Yüksek sıcaklık dağılımı yayvanlaştırır; sürpriz kelimelere şans
+  tanır (yaratıcı yazım).
+- **Top-k:** En olası $k$ kelimeyi tutar, geriye kalan tüm alternatifleri
+  kesip atar.
+- **Top-p (Nucleus Sampling):** Kümülatif olasılık toplamı $p$'ye (örneğin
+  %90) ulaşana kadar en olası token'ları sepete atar; model kendinden çok
+  eminse iki token, kararsızsa seksen token arasından seçim yapar.
+
+## 8. Sizi hatırlamaz: bağlam penceresi
+
+Eğitim bittiğinde modelin ağırlıkları **tamamen donar**. Bir model API'sine
+"Benim adım neydi?" diye sorduğunuzda model dünkü konuşmayı hatırlamaz;
+çünkü bir iç hafızası yoktur.
+
+Sohbetin sürmesini sağlayan şey, arayüzün her yeni mesajda geçmiş konuşma
+dökümünü prompt'un başına ekleyerek modele tekrar göndermesidir. Hafıza
+sandığınız şey, **bağlam penceresidir (context window)**. Modelin bir görevi
+tek satır kod değiştirmeden prompt içindeki örneklerden öğrenmesine ise
+**bağlam içi öğrenme (in-context learning)** denir.
 
 ## 9. Neden uyduruyor
 
-2023'te *Mata v. Avianca* davasının avukatları, ChatGPT'nin uydurduğu
-altı emsal kararı mahkemeye sundu — model, "bunlar gerçek mi?" sorusuna
-"evet" demişti. 5.000 dolarlık ceza, "yapay zekâ halüsinasyonu"nu
-meşhur etti. Sır yok: model bir olasılık motorudur, veritabanı değil.
-Eğitim verisinin zengin olduğu yerde en olası devam genellikle doğrudur;
-ince olduğu yerde model yine de cevap *biçiminde* bir şey üretir —
-optimize ettiği, doğru değil makuldür. Bu yalan söylemek değildir —
-yalan, doğruyu bilmeyi gerektirir. Bu, cümleyi tamamlamaktır. Çözümler
-bir merdivendir — sırayla tırmanın, her basamak daha pahalıdır:
+2023 yılında *Mata v. Avianca* davasının avukatları, ChatGPT'nin uydurduğu
+altı hayali mahkeme kararını yargıca sundular ve 5.000 dolar ceza aldılar.
 
-- **prompting** davranışı bağlamda biçimler;
-- **RAG** taze bilgiyi cevap anında getirir;
-- **fine-tuning** kalıcı olması gerekeni modele işler.
+Bu durum bir hata değil, mimarinin doğasıdır: **LLM bir arama motoru veya
+veritabanı değil, bir olasılık motorudur.** Model doğruluğu değil, eğitim
+verisine göre *en makul görünen* devamı optimize eder. Verinin bol olduğu
+yerde makul olan genellikle doğrudur; bilginin az olduğu yerde ise model
+doğruyu bilmediği için değil, cümleyi kurallara uygun tamamlamak zorunda
+olduğu için uydurur.
 
-Ve kaynakları kendiniz kontrol edin: avukatların atladığı adım.
+Çözüm adımları bir maliyet merdivenidir:
+1. **Prompt Mühendisliği:** Cevap sınırlarını bağlamda çizmek.
+2. **RAG (Retrieval-Augmented Generation):** Doğru bilgiyi harici bir
+   vektör veritabanından alıp prompt'a eklemek.
+3. **Fine-Tuning:** Özel alan terminolojisini modelin kalıcı ağırlıklarına
+   işlemek.
 
-## Bütün hikâye beş satırda
+## 10. Otoregresyonun ötesi: Difüzyon LLM'leri (dLLM)
 
-1. Metin → **token** → **embedding** (anlamın koordinatları, konum dahil).
-2. **Attention** (sorgu·anahtar·değer) her token'ın vektörünü bağlamıyla
-   karıştırır — yalnızca geriye bakarak; bilgiyi ileri beslemeli katmanlar
-   depolar.
-3. **Ön eğitim** = ölçekli sıradaki-token tahmini; ölçekleme yasaları kazancı
-   öngörülebilir kılar; talimatla ince ayar + RLHF taban modeli asistana çevirir.
-4. Üretim = örnekle, ekle, tekrarla — temperature, top-k, top-p çekilişi
-   ayarlar; KV cache bunu ödenebilir kılar.
-5. Donmuş ağırlıklar; hafıza bağlam penceresidir; akıcıdır çünkü *makul*ü
-   optimize eder — uydurmasının sebebi de aynıdır.
+Otoregresif decoder-only mimarinin temel bir tavanı vardır: token'ları
+teker teker üretmek, kaçınılmaz bir seri hesaplama ve bellek bant genişliği
+darboğazı yaratır.
+
+Bu kısıtı kırmak için ortaya çıkan en umut verici yeni paradigma **Difüzyon
+LLM'leridir (dLLM - Diffusion LLMs)**. Görsel üretimindeki (Stable
+Diffusion) gürültü giderme mantığını metne uyarlarlar:
+1. Model, hedef yanıt uzunluğunda rastgele bir gürültü tensörüyle başlar.
+2. Birkaç adımda bu gürültüyü paralel olarak rafine eder ve tutarlı metne
+   dönüştürür.
+3. Yanıt teker teker değil, sisin dağılması gibi **bütün halinde ve aynı anda**
+   ortaya çıkar.
+
+Bu paralel süreç token-başına gecikme duvarını yıkar ve modelin üretim
+sırasında geriye dönüp kendi kendini düzeltmesine (öz-düzeltme / global
+editing) olanak tanır. Inception AI'ın **Mercury** modeli ve Google
+DeepMind'ın **Gemini Diffusion** araştırması bu alandaki ilk güçlü
+adımlardır. Bugün üretim sistemlerinde otoregresif modeller hâlâ mutlak
+hâkimdir; ancak difüzyon mimarileri geleceğin çıkarım sistemleri için en
+büyük adaylardan biridir.
+
+## Bütün hikâye altı satırda
+
+1. Metin $\to$ **token** $\to$ **embedding** (ayrık sayılardan sürekli
+   geometriye; RoPE ile içe işlenen sıra).
+2. **Attention** (Q, K, V) bağlamı toplar (V puanlamaya girmez, sadece
+   taşınır); causal mask geleceğe bakışı kilitler; bilgiyi FFN katmanları
+   saklar.
+3. Mimari standart **decoder-only**'dir; **ön eğitim** ölçekli sıradaki-token
+   tahminidir; Chinchilla yasası parametre başına ~20 token önerir.
+4. Çıkarım iki fazlıdır: **Prefill** paralel ve hesaplama-bağımlıdır (TTFT);
+   **Decode** seri ve bellek-bağımlıdır (ITL).
+5. **KV cache** geçmiş K ve V'leri saklayarak çıkarımı mümkün kılar, ancak
+   VRAM'i tüketerek sunucunun eşzamanlılık tavanını belirler.
+6. Ağırlıklar donuktur, hafıza bağlam penceresidir; model doğruyu değil
+   *makul olanı* optimize ettiği için uydurur.
 
 Ve bir dahaki sefere biri bu modellerin nasıl çalıştığını sorduğunda — bir
 mülakatçı, bir öğrenci ya da içinizdeki meraklı ses — modelin başladığı
 yerden başlayın: sıradaki token'dan.
 
-Son bir şey. Bu yazının ilk satırında zihniniz boşluğa "yokmuş" yazdı —
-anında, emin, saf örüntüden. Artık bir makinenin aynısını nasıl yaptığını
-tam olarak biliyorsunuz. Bütün hikâye bu.
-
 ## Daha derine inmek için
 
-- Vaswani vd., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — orijinal Transformer makalesi; yorgundu/genişti örneği onlarındır.
+- Vaswani vd., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — orijinal Transformer makalesi.
+- Modular, [How does an LLM work?](https://handbook.modular.com/llms.txt) — çıkarım fazları ve sistem mimarisi el kitabı.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — klasikleşmiş görsel anlatım.
-- Ebrahim Pichka, [What are Query, Key, and Value in the Transformer Architecture?](https://medium.com/data-science/what-are-query-key-and-value-in-the-transformer-architecture-and-why-are-they-used-acbe73f731f2) — QKV sezgisinin, yumuşak sözlük bakışı dahil, özenli bir açılımı.
-- Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — bütün makinenin gözünüzün önünde kodla inşası.
-- Bu blogda: [Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir) — masanın bir önceki adımı: metinden token ID'sine —, [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — ayrık token'lardan sürekli geometriye — ve [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve vektör uzayları.
+- Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — bütün makinenin sıfırdan Python ile inşası.
+- Bu blogda birbiriyle konuşan diğer derinlemesine incelemeler:
+  - [Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir) — metinden token ID'sine uzanan BPE masası.
+  - [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — ayrık sayılardan sürekli geometriye ve $\sqrt{d_{\text{model}}}$ ölçeklemesine.
+  - [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve çok boyutlu vektör uzayları.
+  - [vLLM derinlemesine](post.html?slug=vllm-derinlemesine) — PagedAttention, blok tabloları ve KV cache yönetimi.
+  - [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu) — TTFT, ITL, bellek duvarı ve prefix caching.
+  - [Post-training quantization](post.html?slug=post-training-quantization-llm-cikarim) — FP16'dan INT4'e ağırlık ve KV cache sıkıştırması.

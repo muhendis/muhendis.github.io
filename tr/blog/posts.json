@@ -51,14 +51,14 @@
       "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
       "title": "LLM maliyet ve gecikme optimizasyonu: para ve milisaniyeler gerçekte nereye gidiyor",
       "date": "2026-09-04",
-      "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Suçlu neredeyse her zaman aynı: taksimetre işlerken tek tek yazılan output token'ları. Bu yazı bütün yığını risk sırasıyla geziyor — bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler, thinking bütçeleri), model katmanları arasında routing, serving odası, doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı — ve ezberlenmeye değer tek karar tablosuyla bitiyor.",
+      "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Bu yazı bütün yığını risk sırasıyla geziyor — TTFT, TPOT, Goodput ve bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler), model katmanları arasında routing, serving odası (disaggregation, PagedAttention), doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı.",
       "tags": [
         "llm",
         "çıkarım",
         "maliyet",
         "mimari"
       ],
-      "readingMinutes": 15,
+      "readingMinutes": 18,
       "translationSlug": "optimizing-llm-cost-and-latency",
       "draft": false
     },
@@ -141,13 +141,13 @@
       "slug": "llm-nasil-calisir",
       "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
       "date": "2026-08-29",
-      "summary": "Tüm makine kısa bir okumada: token'lar, embedding'ler, attention, eğitim, ölçek yasaları, örnekleme, KV cache ve modellerin neden uydurduğu — her kavrama tek net sezgi.",
+      "summary": "Tüm makine tek bir okumada: token'lar, embedding'ler, attention mekanizması, prefill ve decode fazları, KV cache matematiği, örnekleme stratejileri ve modellerin neden uydurduğu.",
       "tags": [
         "llm",
         "temeller",
         "transformer"
       ],
-      "readingMinutes": 10,
+      "readingMinutes": 16,
       "translationSlug": "how-llms-work",
       "draft": false
     },

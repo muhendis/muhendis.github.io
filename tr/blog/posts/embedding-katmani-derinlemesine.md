@@ -1,27 +1,25 @@
-Gemma 3 kontrol noktasını (checkpoint) özel bir PyTorch çalışma
-zamanına taşıdığınızı düşünün: ağırlıklar sıfır hatayla yüklenir,
-tensör boyutları kusursuz eşleşir, ileri geçiş (forward pass) tek bir
-uyarı vermeden tamamlanır — ancak modelin ürettiği her token tam bir
-saçmalıktan ibarettir. Tokenizer'ı kontrol edersiniz: temiz. Ağırlıkları
-karşılaştırırsınız: birebir aynı. Arızanın kaynağı görünmezdir: model
-omurgasında değil, gömme modülünün kendi `forward` metodu içine
-saklanmış olan $\sqrt{d_{\text{model}}}$ ölçek katsayısı ya sessizce
-kaybolmuş ya da iki kez uygulanmıştır.
+Bir dil modeline bir cümle verdiğinizde, tokenizer metni parçalar ve
+her birine bir tamsayı damgası vurur: `[1054, 492, 281]`. Ancak bir
+transformer tamsayılarla düşünemez; sinir ağlarının anlayabildiği tek
+dil, sürekli vektör uzayları ve matris çarpımlarıdır. İşte **gömme katmanı
+(embedding layer)** tam bu sınır çizgisinde durur: ayrık token numaralarını,
+modelin üzerinde işlem yapabileceği zengin geometrik koordinatlara
+dönüştüren ilk çevirmendir.
 
-Aynı sırada Gemma-3-1B modelinin VRAM bütçesini çıkardığınızda çarpıcı
-bir dengesizlikle karşılaşırsınız: modelin toplam parametrelerinin
-yaklaşık üçte biri (~%30) tek bir matriste toplanmıştır. Üstelik bu
-devasa matris girdi aşamasında tek bir matris çarpımı bile yapmaz;
-yalnızca bellekten satır okur. Ancak aynı tablo ön eğitimde tam yoğunluklu
-bir gradyan trafiği üretirken, çıkarım (inference) tarafında bağlı
-ikizi olan `lm_head` üretilen her token için 0,60 GFLOP hesaplama faturası
-keser.
+İlk bakışta bu katman şaşırtıcı derecede yalındır: prompt içeri girerken
+tek bir çarpma bile yapmaz, yalnızca bellekten satır okur (sıfır FLOP).
+Ancak bir transformer'ın en büyük ağırlık bloklarından biridir — kimi
+modellerde toplam parametrelerin üçte birini tek başına tutar. Üstelik
+sadece anlamı değil; kelimelerin cümle içindeki sırasını (pozisyonel
+kodlama), sayısal kararlılığı ($\sqrt{d_{\text{model}}}$ ölçeklemesi) ve
+çıkarım anındaki çıktı projeksiyonunu (`lm_head`) da bu mekanizma yönetir.
 
-Bu yazı o katmanın içine giriyor: arama mekaniği ve tensör boyutları,
-$\sqrt{d_{\text{model}}}$ ölçeklemesi ve PyTorch'taki iki kez çarpma
-tuzağı, pozisyonel kodlamanın RoPE'a kadarki evrimi, eğitimdeki kayıp
-sıçramaları (loss spikes) ile WeSaR çözümü — ve aynı ağırlık matrisinin
-eğitim ile sunum (serving) aşamalarındaki zıt maliyet profilleri.
+Bu yazı, tamsayıların geometriye dönüştüğü o ilk eşiğin anatomisini
+çıkarıyor: lookup table mekaniği ve tensör boyutları, sessizce hatalara
+yol açan $\sqrt{d_{\text{model}}}$ ölçekleme tuzağı, mutlak konumlardan
+RoPE'a uzanan pozisyonel kodlama evrimi, ön eğitimdeki kayıp sıçramaları
+(loss spikes) ve aynı ağırlık matrisinin eğitim ile çıkarım arasındaki
+zıt yüzü.
 
 **Bu yazıda**
 

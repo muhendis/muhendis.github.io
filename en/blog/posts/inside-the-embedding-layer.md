@@ -1,26 +1,26 @@
-Imagine porting a Gemma 3 checkpoint into a custom PyTorch serving
-runtime: the weights load cleanly with zero errors, tensor shapes align
-across every layer, and the forward pass finishes without throwing a single
-warning — yet every generated token is pure, unadulterated gibberish. You
-inspect the tokenizer: clean. You verify the weight values against the
-checkpoint: byte-for-byte faithful. The bug is invisible: an essential
-scaling factor — $\sqrt{d_{\text{model}}}$ — buried not inside the model
-backbone, but within the custom `forward` method of Gemma's embedding
-subclass, has either quietly vanished or been applied twice.
+When you feed a prompt to a language model, the tokenizer breaks the
+text into pieces and assigns each one an integer ID: `[1054, 492, 281]`.
+Yet a transformer cannot compute on discrete integers; the only language
+neural networks understand is continuous vector spaces and matrix
+multiplications. The **embedding layer** stands precisely at this boundary:
+it is the first translator in the architecture, turning discrete token
+indices into rich geometric coordinates that the model can reason over.
 
-At the same time, sizing the VRAM budget for Gemma-3-1B reveals a striking
-imbalance: roughly a third (~30%) of the model's entire parameter count
-is concentrated in this single table. Yet during input ingestion, this
-massive matrix performs zero arithmetic — it simply reads rows from memory.
-However, while this lookup costs zero FLOPs, during pre-training it
-materializes a dense gradient tensor across all 262,144 rows, and at serving
-time its tied twin `lm_head` burns 0.60 GFLOP per generated token.
+At first glance, this layer appears deceptively simple. As prompt tokens
+enter the model, it executes zero arithmetic operations — it merely
+gathers rows from memory into cache (zero FLOPs). Yet it is often one of the
+largest weight blocks in the entire network, sometimes accounting for nearly
+a third of all parameters. Furthermore, it does far more than map tokens to
+static vectors: it anchors positional order, enforces numerical stability
+via $\sqrt{d_{\text{model}}}$ scaling, and anchors the final token projection
+at generation time via weight tying (`lm_head`).
 
-This guide walks that layer from the inside: lookup table mechanics and
-tensor shapes, the $\sqrt{d_{\text{model}}}$ scaling and its double-application
-PyTorch trap, the three generations of positional encoding up to RoPE,
-loss spikes during pre-training and their WeSaR cure — and the contrasting
-cost profiles of the same weight matrix between training and serving.
+This guide walks through that entry threshold where integers become
+geometry: lookup table mechanics and tensor layouts, the silent
+$\sqrt{d_{\text{model}}}$ scaling trap, the evolution of positional
+encodings from absolute tables to RoPE, pre-training loss spikes and their
+remedies — and the starkly split economics of the same weight matrix
+between training and serving.
 
 **In this article**
 
