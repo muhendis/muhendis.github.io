@@ -206,198 +206,483 @@ Three distinct paradigms have been deployed:
 - **B. Sinusoidal** — Compute fixed trigonometric wave coordinates and add
   them element-wise to the token vector.
 - **C. RoPE** — Abandon addition entirely. Rotate the vector in 2D coordinate
-  planes by an angle proportional to its slot index.
+  planes by an angle proportional to its slot index and dimension-specific frequency.
 
 ```text
 A. Learned Absolute (GPT-2, BERT)   B. Sinusoidal (Vaswani 2017)   C. RoPE (Llama, Gemma 3)
    Vector Addition                     Trigonometric Addition         Vector Rotation
-   x_i = TokenEmbed + PosEmbed         x_i = TokenEmbed + PE_pos      x_i = R(θ, i) · TokenEmbed
-   (Hard limit: L_max)                 (Norm inflation / drift)       (Pure semantic isolation, norm = 1)
+   x_i = TokenEmbed + PosEmbed         x_i = TokenEmbed + PE_pos      x_i = R(Θ, i) · TokenEmbed
+   (Hard limit: L_max)                 (Norm inflation / drift)       (Exact norm preservation, ||x|| = const)
 ```
 
-To compare these mechanics cleanly, let us trace the **exact same word (`"the"`)**,
-represented by the **exact same 2D unit vector** ($1.00$), across **Slot 0**
-and **Slot 1**:
+To compare these mechanics cleanly across all three paradigms, we trace a
+concrete 6-token sentence across 4-dimensional representations ($d = 4$):
 
-$$\text{TokenEmbed}(\text{"the"}) = [0.80, \ 0.60] \quad \left(\text{Norm} = \sqrt{0.80^2 + 0.60^2} = 1.00\right)$$
+$$\text{Sequence: } [\text{"The"}, \ \text{"dog"}, \ \text{"chased"}, \ \text{"the"}, \ \text{"black"}, \ \text{"cat"}] \implies m \in \{0, 1, 2, 3, 4, 5\}$$
+
+Let their raw lexical embeddings gathered from the lookup table be:
+
+- **Slot 0 ("The"):** $\mathbf{x}_{(0)} = [0.80, \ 0.60, \ 0.50, \ 0.50]^T \implies \Vert{}\mathbf{x}_{(0)}\Vert{} = \sqrt{0.80^2 + 0.60^2 + 0.50^2 + 0.50^2} = \sqrt{1.50} \approx 1.2247$
+- **Slot 1 ("dog"):** $\mathbf{x}_{(1)} = [0.70, \ 0.10, \ 0.40, \ 0.80]^T \implies \Vert{}\mathbf{x}_{(1)}\Vert{} = \sqrt{0.70^2 + 0.10^2 + 0.40^2 + 0.80^2} = \sqrt{1.30} \approx 1.1402$
+- **Slot 2 ("chased"):** $\mathbf{x}_{(2)} = [0.50, \ 0.80, \ 0.30, \ 0.60]^T \implies \Vert{}\mathbf{x}_{(2)}\Vert{} = \sqrt{0.50^2 + 0.80^2 + 0.30^2 + 0.60^2} = \sqrt{1.34} \approx 1.1576$
+- **Slot 3 ("the"):** $\mathbf{x}_{(3)} = [0.80, \ 0.60, \ 0.50, \ 0.50]^T \implies \Vert{}\mathbf{x}_{(3)}\Vert{} = \sqrt{0.80^2 + 0.60^2 + 0.50^2 + 0.50^2} = \sqrt{1.50} \approx 1.2247$
+- **Slot 4 ("black"):** $\mathbf{x}_{(4)} = [0.60, \ 0.20, \ 0.70, \ 0.30]^T \implies \Vert{}\mathbf{x}_{(4)}\Vert{} = \sqrt{0.60^2 + 0.20^2 + 0.70^2 + 0.30^2} = \sqrt{0.98} \approx 0.9899$
+- **Slot 5 ("cat"):** $\mathbf{x}_{(5)} = [0.30, \ 0.90, \ 0.60, \ 0.20]^T \implies \Vert{}\mathbf{x}_{(5)}\Vert{} = \sqrt{0.30^2 + 0.90^2 + 0.60^2 + 0.20^2} = \sqrt{1.30} \approx 1.1402$
 
 ### A. Learned absolute (GPT-2, BERT)
 
-A second trainable matrix of shape $L_{\max} \times d_{\text{model}}$ is stored.
-Each token representation is the element-wise sum of its token vector and
-position vector:
+A second trainable matrix of shape $L_{\max} \times d_{\text{model}}$ is stored
+in parameter memory. Each token representation is the element-wise sum of its
+token vector and position vector:
 
 $$\mathbf{x}_i = \text{TokenEmbed}(w_i) + \text{PosEmbed}(i)$$
 
-- $\text{TokenEmbed}(w_i)$: The lexical vector for token $w_i$.
-- $\text{PosEmbed}(i)$: The learned vector for position index $i$.
-- $\mathbf{x}_i$: The combined input vector.
+Suppose training gradients have initialized or updated the learned position
+rows to:
+- $\text{PosEmbed}(0) = [0.00, \ 0.20, \ 0.10, \ 0.00]$
+- $\text{PosEmbed}(1) = [0.20, \ -0.10, \ 0.00, \ 0.10]$
+- $\text{PosEmbed}(2) = [-0.10, \ 0.10, \ 0.20, \ -0.10]$
+- $\text{PosEmbed}(3) = [0.10, \ 0.00, \ -0.10, \ 0.20]$
+- $\text{PosEmbed}(4) = [0.00, \ -0.10, \ 0.10, \ 0.10]$
+- $\text{PosEmbed}(5) = [-0.10, \ 0.20, \ -0.10, \ 0.00]$
 
-Suppose training gradients have shifted the learned position rows to:
-- $\text{PosEmbed}(0) = [0.00, \ 0.20]$ (learned via backpropagation)
-- $\text{PosEmbed}(1) = [0.20, \ -0.10]$ (learned via backpropagation)
+Summing token representations with position vectors:
 
 ```text
-Slot 0:
-  TokenEmbed("the") = [ 0.80   0.60 ]
-  PosEmbed(0)       = [ 0.00   0.20 ]   ← learned row 0
-  x_0 (sum)         = [ 0.80   0.80 ]   ──> Norm: 1.13
+Slot 0 ("The"):
+  TokenEmbed("The") = [ 0.80   0.60   0.50   0.50 ]
+  PosEmbed(0)       = [ 0.00   0.20   0.10   0.00 ]
+  x_0 (sum)         = [ 0.80   0.80   0.60   0.50 ]  ──> Norm: 1.37  (warped from 1.22)
 
-Slot 1:
-  TokenEmbed("the") = [ 0.80   0.60 ]
-  PosEmbed(1)       = [ 0.20  -0.10 ]   ← learned row 1
-  x_1 (sum)         = [ 1.00   0.50 ]   ──> Norm: 1.12
+Slot 1 ("dog"):
+  TokenEmbed("dog") = [ 0.70   0.10   0.40   0.80 ]
+  PosEmbed(1)       = [ 0.20  -0.10   0.00   0.10 ]
+  x_1 (sum)         = [ 0.90   0.00   0.40   0.90 ]  ──> Norm: 1.33  (warped from 1.14)
+
+Slot 2 ("chased"):
+  TokenEmbed("cha") = [ 0.50   0.80   0.30   0.60 ]
+  PosEmbed(2)       = [-0.10   0.10   0.20  -0.10 ]
+  x_2 (sum)         = [ 0.40   0.90   0.50   0.50 ]  ──> Norm: 1.21  (warped from 1.16)
+
+Slot 3 ("the"):
+  TokenEmbed("the") = [ 0.80   0.60   0.50   0.50 ]
+  PosEmbed(3)       = [ 0.10   0.00  -0.10   0.20 ]
+  x_3 (sum)         = [ 0.90   0.60   0.40   0.70 ]  ──> Norm: 1.35  (warped from 1.22)
+
+Slot 4 ("black"):
+  TokenEmbed("bla") = [ 0.60   0.20   0.70   0.30 ]
+  PosEmbed(4)       = [ 0.00  -0.10   0.10   0.10 ]
+  x_4 (sum)         = [ 0.60   0.10   0.80   0.40 ]  ──> Norm: 1.08  (warped from 0.99)
+
+Slot 5 ("cat"):
+  TokenEmbed("cat") = [ 0.30   0.90   0.60   0.20 ]
+  PosEmbed(5)       = [-0.10   0.20  -0.10   0.00 ]
+  x_5 (sum)         = [ 0.20   1.10   0.50   0.20 ]  ──> Norm: 1.24  (warped from 1.14)
 ```
 
 - **Drawback 1 (Hard context ceiling):** If trained on 2,048 slots, slot 2,049
-  has no entry in the table; the model cannot extrapolate to longer contexts.
-- **Drawback 2 (No structural relative awareness):** Slots 3 and 5 are learned
-  independently from slots 7 and 9; the model cannot structurally generalize
-  that "separated by 2 slots" represents the same relationship.
+  has no row in the weight matrix. The model cannot process sequences beyond
+  $L_{\max}$ without adding uninitialized parameters.
+- **Drawback 2 (No structural relative awareness):** The distance between
+  "dog" (Slot 1) and "cat" (Slot 5) ($5 - 1 = 4$) is learned completely
+  independently from the exact same 4-token separation occurring at Slots 101
+  and 105.
 
 ### B. Sinusoidal (Vaswani et al., 2017)
 
-Position coordinates are calculated deterministically using trigonometric waves:
+Position coordinates are calculated analytically using geometric frequency series:
 
-$$PE_{(pos, 2i)} = \sin\left(\frac{pos}{10000^{2i/d}}\right), \quad PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d}}\right)$$
+$$PE_{(pos, 2j)} = \sin\left(\frac{pos}{10000^{2j/d}}\right), \quad PE_{(pos, 2j+1)} = \cos\left(\frac{pos}{10000^{2j/d}}\right)$$
 
-- $pos$: Position index along the sequence ($0, 1, 2, \dots$).
-- $i$: Dimension index ($0 \le i < d/2$).
-- $d$: Model dimension ($d_{\text{model}}$).
+Where $pos \in \{0, 1, 2, 3, 4, 5\}$, dimension index $j \in \{0, 1\}$, and model dimension $d = 4$:
+- For $j = 0$ (channels 0 and 1): $\text{denom} = 10000^0 = 1.0 \implies \text{freq} = 1.0 \text{ rad/step}$
+- For $j = 1$ (channels 2 and 3): $\text{denom} = 10000^{2/4} = 100.0 \implies \text{freq} = 0.01 \text{ rad/step}$
 
-For our 2D vector ($d = 2$, $i = 0$):
+Evaluating wave coordinates for each slot:
 
 ```text
-denominator = 10000^(2×0 / 2) = 10000^0 = 1.00
-
 Slot 0 (pos = 0):
-  PE_0[0] = sin(0 / 1) = sin(0) = 0.00
-  PE_0[1] = cos(0 / 1) = cos(0) = 1.00
-  PE(0)   = [ 0.00   1.00 ]
+  PE_0 = [ sin(0.0), cos(0.0), sin(0.00), cos(0.00) ]
+       ≈ [ 0.0000,   1.0000,   0.0000,   1.0000   ]
 
 Slot 1 (pos = 1):
-  PE_1[0] = sin(1 / 1) = sin(1) ≈ 0.84
-  PE_1[1] = cos(1 / 1) = cos(1) ≈ 0.54
-  PE(1)   = [ 0.84   0.54 ]
+  PE_1 = [ sin(1.0), cos(1.0), sin(0.01), cos(0.01) ]
+       ≈ [ 0.8415,   0.5403,   0.0100,   1.0000   ]
+
+Slot 2 (pos = 2):
+  PE_2 = [ sin(2.0), cos(2.0), sin(0.02), cos(0.02) ]
+       ≈ [ 0.9093,  -0.4161,   0.0200,   0.9998   ]
+
+Slot 3 (pos = 3):
+  PE_3 = [ sin(3.0), cos(3.0), sin(0.03), cos(0.03) ]
+       ≈ [ 0.1411,  -0.9900,   0.0300,   0.9996   ]
+
+Slot 4 (pos = 4):
+  PE_4 = [ sin(4.0), cos(4.0), sin(0.04), cos(0.04) ]
+       ≈ [-0.7568,  -0.6536,   0.0400,   0.9992   ]
+
+Slot 5 (pos = 5):
+  PE_5 = [ sin(5.0), cos(5.0), sin(0.05), cos(0.05) ]
+       ≈ [-0.9589,   0.2837,   0.0500,   0.9988   ]
 ```
 
-Applying vector addition:
+Applying vector addition ($\mathbf{x}_m = \text{TokenEmbed}(w_m) + PE_m$):
 
 ```text
-Slot 0:
-  TokenEmbed("the") = [ 0.80   0.60 ]
-  PE(0)             = [ 0.00   1.00 ]   ← calculated wave
-  x_0 (sum)         = [ 0.80   1.60 ]   ──> Norm: 1.79  (inflated)
+Slot 0 ("The"):
+  x_0 (sum) = [ 0.80 + 0.0000, 0.60 + 1.0000, 0.50 + 0.0000, 0.50 + 1.0000 ]
+            = [ 0.8000,        1.6000,        0.5000,        1.5000 ]      ──> Norm: 2.39  (inflated +95%)
 
-Slot 1:
-  TokenEmbed("the") = [ 0.80   0.60 ]
-  PE(1)             = [ 0.84   0.54 ]   ← calculated wave
-  x_1 (sum)         = [ 1.64   1.14 ]   ──> Norm: 2.00  (inflated)
+Slot 1 ("dog"):
+  x_1 (sum) = [ 0.70 + 0.8415, 0.10 + 0.5403, 0.40 + 0.0100, 0.80 + 1.0000 ]
+            = [ 1.5415,        0.6403,        0.4100,        1.8000 ]      ──> Norm: 2.49  (inflated +118%)
+
+Slot 2 ("chased"):
+  x_2 (sum) = [ 0.50 + 0.9093, 0.80 - 0.4161, 0.30 + 0.0200, 0.60 + 0.9998 ]
+            = [ 1.4093,        0.3839,        0.3200,        1.5998 ]      ──> Norm: 2.19  (inflated +89%)
+
+Slot 3 ("the"):
+  x_3 (sum) = [ 0.80 + 0.1411, 0.60 - 0.9900, 0.50 + 0.0300, 0.50 + 0.9996 ]
+            = [ 0.9411,       -0.3900,        0.5300,        1.4996 ]      ──> Norm: 1.89  (inflated +54%)
+
+Slot 4 ("black"):
+  x_4 (sum) = [ 0.60 - 0.7568, 0.20 - 0.6536, 0.70 + 0.0400, 0.30 + 0.9992 ]
+            = [-0.1568,       -0.4536,        0.7400,        1.2992 ]      ──> Norm: 1.57  (inflated +59%)
+
+Slot 5 ("cat"):
+  x_5 (sum) = [ 0.30 - 0.9589, 0.90 + 0.2837, 0.60 + 0.0500, 0.20 + 0.9988 ]
+            = [-0.6589,        1.1837,        0.6500,        1.1988 ]      ──> Norm: 1.92  (inflated +69%)
 ```
 
-- **Drawback (Semantic Distortion):** Addition warps vector lengths. Starting
-  with a pristine norm of $1.00$, `"the"` arrives at $1.79$ in Slot 0 and
-  $2.00$ in Slot 1. Semantic magnitude shifts arbitrarily depending on sentence
-  position.
+- **Drawback (Severe semantic distortion & norm drift):** Addition drastically
+  deforms vector lengths. Identical vectors ("The" at Slot 0 and "the" at Slot 3)
+  end up with wildly different norms ($2.39$ vs $1.89$), distorting the base
+  lexical signal based purely on where they land in a sentence.
 
 ### C. RoPE: Rotary Position Embedding (Gemma 3, Llama)
 
-Do not add anything to the embedding vector. Instead, rotate the vector in 2D
-coordinate planes by an angle proportional to its sequence index:
+Learned absolute and sinusoidal encodings (Schemes A and B) inject position
+through vector addition ($\mathbf{x} + \mathbf{p}$). But as demonstrated above,
+adding two vectors distorts the original lexical vector's length (norm), inflating
+it from $1.22$ to $2.39$ and roughly quadrupling unscaled attention dot products.
+This destabilizes the softmax distribution and washes out gradients.
 
-$$\mathbf{x}_i = \mathbf{R}_{\theta, i} \cdot \text{TokenEmbed}(w_i)$$
+**RoPE's foundational insight:** Can we alter a vector's spatial orientation
+based on its sequence position *without changing its magnitude by a single fraction*?
+Yes: **by vector rotation!** If you hold a 10 cm pencil on a table and rotate it
+by any angle, its length remains strictly 10 cm. Instead of stretching or shrinking
+vectors, RoPE rotates them across geometric manifolds based on position.
 
-- $\mathbf{R}_{\theta, i}$: The 2D rotation matrix proportional to slot $i$.
-- $\text{TokenEmbed}(w_i)$: The lexical embedding vector.
-- $\mathbf{x}_i$: The rotated vector (Euclidean length is strictly preserved).
+$$\mathbf{x}_m = \mathbf{R}_{\Theta, m}^{d} \cdot \text{TokenEmbed}(w_m)$$
 
-Our vector $[0.80, 0.60]$ has an initial base angle $\arctan(0.60 / 0.80) \approx 36.87^\circ$.
-Assigning a rotation speed of $30^\circ$ per slot:
+Read it as: *The raw lexical vector retrieved from the embedding table is multiplied
+by an orthogonal block-diagonal rotation matrix computed from slot position $m$
+and subspace frequencies; its direction rotates while its Euclidean length remains
+strictly locked.*
 
-```text
-Slot 0 (0 × 30° = 0° rotation):
-  Angle             = 36.87°
-  x_0               = [ 0.80   0.60 ]   ──> Norm: 1.00  (preserved)
+Every symbol in this formulation has a concrete mathematical and architectural role:
+- **$\text{TokenEmbed}(w_m)$:** The raw $d$-dimensional lexical embedding vector
+  fetched from parameter memory. It contains zero sequential awareness; the token
+  "The" outputs the exact same numbers regardless of where it appears.
+- **$m$:** The token's slot index in the sequence ($m = 0, 1, 2, 3, \dots$). In
+  RoPE, this index functions as a discrete "time step".
+- **$\Theta = \{\theta_1, \theta_2, \dots, \theta_{d/2}\}$:** The fixed set of
+  base angular frequencies (rotation velocities) assigned across coordinate pairs.
+- **$\mathbf{R}_{\Theta, m}^{d}$:** The $d \times d$ orthogonal block-diagonal
+  rotation matrix assembled for token slot $m$.
+- **$\mathbf{x}_m$:** The rotated, position-aware $d$-dimensional output vector.
 
-Slot 1 (1 × 30° = 30° rotation):
-  Angle             = 36.87° + 30° = 66.87°
-  x_1               = [ cos(66.87°), sin(66.87°) ]
-  x_1               = [ 0.39   0.92 ]   ──> Norm: 1.00  (preserved)
+**Why slice $d$-dimensional space into $d/2$ two-dimensional (2D) subspaces?**
+Rotating a 128-dimensional vector as a monolithic rigid body in 128D space is
+computationally intractable—it requires complex rotation tensors with hundreds of
+coupled rotation planes. RoPE solves this with an elegant decomposition: it pairs
+consecutive or split channels into independent 2-element coordinates:
+$$(x_1, x_2), \ (x_3, x_4), \ \dots, \ (x_{d-1}, x_d)$$
+Each pair forms an independent point on a simple 2D plane (like a clock face or a
+compass dial). Rotating a point $(x, y)$ around the origin on a 2D plane is basic
+high school trigonometry:
+$$\tilde{x}_1 = x_1 \cos\phi - x_2 \sin\phi$$
+$$\tilde{x}_2 = x_1 \sin\phi + x_2 \cos\phi$$
+
+**Proof of exact norm preservation ($\cos^2\phi + \sin^2\phi = 1$):**
+Evaluating the sum of squares of the rotated components:
+$$\tilde{x}_1^2 + \tilde{x}_2^2 = (x_1 \cos\phi - x_2 \sin\phi)^2 + (x_1 \sin\phi + x_2 \cos\phi)^2 = (x_1^2 + x_2^2)(\cos^2\phi + \sin^2\phi) = x_1^2 + x_2^2$$
+Because $\cos^2\phi + \sin^2\phi = 1$ for any angle $\phi$, the Euclidean length
+never inflates or shrinks; norm drift is strictly 0%.
+
+**What "frequency" ($\theta_j$) actually means in RoPE.** In wave physics,
+frequency dictates how rapidly a wave oscillates per unit of time. In RoPE,
+**sequence position $m$ serves as discrete time**, and each 2D subspace $j$ is
+assigned an **angular velocity** $\theta_j$:
+
+$$\theta_j = \text{base}^{-\frac{2(j-1)}{d}} = \frac{1}{\text{base}^{\frac{2(j-1)}{d}}} \quad [\text{radians per token step}]$$
+
+Deconstructing the formula components:
+- **$\text{base}$:** Standardized at $10{,}000$ in original RoPE. It controls the
+  dynamic velocity range between the fastest and slowest rotating dimensions.
+- **$j$:** The 2D subspace index ($j = 1, 2, \dots, d/2$).
+- **$d$:** Hidden feature dimension ($d = 4$ in our toy walkthrough, $128$ per
+  head in modern LLMs).
+- As $j$ increases toward higher channel pairs, the exponent grows, driving the
+  denominator into massive values. Consequently, **low-index channels spin rapidly,
+  while high-index channels barely budge.**
+
+**Why multiple speeds? The clock hands analogy (Second, Minute, Hour):**
+If all dimensions rotated at the exact same angular velocity, language models
+would break:
+- If all rotated fast: They would complete a $360^\circ$ circle within a few words;
+  token 50 would align at the exact same angle as token 1, triggering **phase
+  wrapping** (loss of distinction).
+- If all rotated slow: Adjacent words ("dog" and "chased") would experience barely
+  any angular displacement, and the model could not determine word order.
+
+Picture an analog clock with three hands:
+- **Second Hand (Fast frequency, $\theta_1 = 1.0\text{ rad} \approx 57.3^\circ$):**
+  Takes large steps with every single tick. Architectural role: **Local syntax**;
+  sharply separates immediate neighbors ("The" $\to$ "dog").
+- **Minute Hand (Mid frequencies):** Tracks phrase- and sentence-level relationships.
+- **Hour Hand (Slow frequency, $\theta_2 = 0.01\text{ rad} \approx 0.57^\circ$):**
+  Creeps forward by barely half a degree per token. Architectural role: **Global
+  order**; maintains monotonic sequential progression across thousands of tokens
+  without wrapping around.
+
+**Rotation period (wavelength $T_j$):**
+The number of tokens required for a 2D pair to complete one full $360^\circ$
+($2\pi$ radian) revolution and return to its starting direction:
+$$T_j = \frac{2\pi}{\theta_j} = 2\pi \cdot \text{base}^{\frac{2(j-1)}{d}}$$
+
+For our 4-dimensional representation ($d = 4$, $j \in \{1, 2\}$) with base $10{,}000$:
+- **Pair 1 ($j=1$, channels 1–2):**
+  $$\theta_1 = 10000^{-\frac{2(0)}{4}} = 10000^0 = 1.0 \text{ rad/step} \quad (\approx 57.3^\circ/\text{step})$$
+  $$T_1 = \frac{2\pi}{1.0} \approx 6.28 \text{ tokens} \quad (\text{One full turn every } \approx 6 \text{ words})$$
+- **Pair 2 ($j=2$, channels 3–4):**
+  $$\theta_2 = 10000^{-\frac{2(1)}{4}} = 10000^{-0.5} = \frac{1}{\sqrt{10000}} = 0.01 \text{ rad/step} \quad (\approx 0.573^\circ/\text{step})$$
+  $$T_2 = \frac{2\pi}{0.01} \approx 628.3 \text{ tokens} \quad (\text{One full turn takes 628 words})$$
+
+| Subspace | Angular Velocity ($\theta_j$) | Turn per Token | Period ($T_j = 2\pi/\theta_j$) | Architectural Role ("What it does") |
+| :--- | :---: | :---: | :---: | :--- |
+| **Pair 1 ($j=1$, channels 1–2)** | $1.0\text{ rad}$ | $\approx 57.3^\circ$ | $T_1 \approx 6.28\text{ tokens}$ | **Microscope / Second Hand:** Rotates rapidly; sharply distinguishes adjacent tokens ("The" $\to$ "dog"). |
+| **Pair 2 ($j=2$, channels 3–4)** | $0.01\text{ rad}$ | $\approx 0.57^\circ$ | $T_2 \approx 628.3\text{ tokens}$ | **Telescope / Hour Hand:** Rotates slowly; preserves global sequence order across long contexts. |
+
+**Why `rope_theta` (the base) was scaled to 500,000 and 1,000,000:**
+LLaMA 1 and 2 operated on context windows of 2,048 to 4,096 tokens, where
+`base = 10000` was sufficient. When modern architectures (LLaMA 3, Gemma 3)
+expanded contexts to 131,072 (128k) tokens, `base = 10000` would cause even the
+slowest hour hands to complete dozens of full revolutions, triggering catastrophic
+**phase wrapping**. Scaling `rope_theta` to `1,000,000` stretches the slowest periods
+into millions of tokens, ensuring every token across a 128k window receives a
+globally unique angular signature.
+
+**How frequency is applied: the 4-step pipeline.** To transform a token vector
+$\mathbf{x} = [x_1, x_2, x_3, x_4]^T$ at position $m$:
+
+1. **Partition into 2D pairs:** Channels are grouped into independent coordinate planes:
+   - Pair 1: $(x_1, x_2)$
+   - Pair 2: $(x_3, x_4)$
+2. **Compute rotation angles ($\phi_j$) for slot $m$:**
+   Each coordinate pair rotates by the product of its angular velocity and position index:
+   $$\phi_1(m) = m \cdot \theta_1 = m \times 1.0 \text{ rad}, \quad \phi_2(m) = m \cdot \theta_2 = m \times 0.01 \text{ rad}$$
+3. **Rotate each 2D pair independently (2D rotation formula):**
+   $$\begin{pmatrix} \tilde{x}_1 \\ \tilde{x}_2 \end{pmatrix} = \begin{pmatrix} \cos(\phi_1) & -\sin(\phi_1) \\ \sin(\phi_1) & \cos(\phi_1) \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \end{pmatrix} = \begin{pmatrix} x_1 \cos(\phi_1) - x_2 \sin(\phi_1) \\ x_1 \sin(\phi_1) + x_2 \cos(\phi_1) \end{pmatrix}$$
+   $$\begin{pmatrix} \tilde{x}_3 \\ \tilde{x}_4 \end{pmatrix} = \begin{pmatrix} \cos(\phi_2) & -\sin(\phi_2) \\ \sin(\phi_2) & \cos(\phi_2) \end{pmatrix} \begin{pmatrix} x_3 \\ x_4 \end{pmatrix} = \begin{pmatrix} x_3 \cos(\phi_2) - x_4 \sin(\phi_2) \\ x_3 \sin(\phi_2) + x_4 \cos(\phi_2) \end{pmatrix}$$
+4. **Assemble the block-diagonal rotation matrix $\mathbf{R}_{\Theta, m}^{4}$:**
+   The transformations can be expressed as a single matrix multiplication:
+   $$\mathbf{R}_{\Theta, m}^{4} = \begin{bmatrix} \cos(m\theta_1) & -\sin(m\theta_1) & 0 & 0 \\ \sin(m\theta_1) & \cos(m\theta_1) & 0 & 0 \\ 0 & 0 & \cos(m\theta_2) & -\sin(m\theta_2) \\ 0 & 0 & \sin(m\theta_2) & \cos(m\theta_2) \end{bmatrix}$$
+   Two $2 \times 2$ rotation blocks lie along the diagonal; all other entries are zero.
+   When multiplied by $\mathbf{x}$, each channel pair rotates strictly in its own 2D
+   plane without inter-channel leakage.
+
+Applying this transformation across our 6-token sequence:
+
+**Slot 0 ($m = 0$): "The"**
+- Angles: $\phi_1 = 0 \times 1.0 = 0.0 \text{ rad}$ ($\cos = 1.0000, \sin = 0.0000$), $\phi_2 = 0 \times 0.01 = 0.00 \text{ rad}$ ($\cos = 1.00000, \sin = 0.0000$)
+- Transformation:
+  $$x_{0, 1} = 0.80(1.0000) - 0.60(0.0000) = 0.8000, \quad x_{0, 2} = 0.80(0.0000) + 0.60(1.0000) = 0.6000$$
+  $$x_{0, 3} = 0.50(1.00000) - 0.50(0.0000) = 0.5000, \quad x_{0, 4} = 0.50(0.0000) + 0.50(1.00000) = 0.5000$$
+  $$\mathbf{x}_{\text{rotated}(0)} = [0.8000, \ 0.6000, \ 0.5000, \ 0.5000]^T \implies \text{Norm} = \mathbf{1.2247} \quad (\text{Preserved})$$
+
+**Slot 1 ($m = 1$): "dog"**
+- Angles: $\phi_1 = 1 \times 1.0 = 1.0 \text{ rad}$ ($\cos \approx 0.5403, \sin \approx 0.8415$), $\phi_2 = 1 \times 0.01 = 0.01 \text{ rad}$ ($\cos \approx 0.99995, \sin \approx 0.0100$)
+- Transformation:
+  $$x_{1, 1} = 0.70(0.5403) - 0.10(0.8415) = 0.2941, \quad x_{1, 2} = 0.70(0.8415) + 0.10(0.5403) = 0.6431$$
+  $$x_{1, 3} = 0.40(0.99995) - 0.80(0.0100) = 0.3920, \quad x_{1, 4} = 0.40(0.0100) + 0.80(0.99995) = 0.8040$$
+  $$\mathbf{x}_{\text{rotated}(1)} = [0.2941, \ 0.6431, \ 0.3920, \ 0.8040]^T \implies \text{Norm} = \mathbf{1.1402} \quad (\text{Preserved})$$
+
+**Slot 2 ($m = 2$): "chased"**
+- Angles: $\phi_1 = 2 \times 1.0 = 2.0 \text{ rad}$ ($\cos \approx -0.4161, \sin \approx 0.9093$), $\phi_2 = 2 \times 0.01 = 0.02 \text{ rad}$ ($\cos \approx 0.99980, \sin \approx 0.0200$)
+- Transformation:
+  $$x_{2, 1} = 0.50(-0.4161) - 0.80(0.9093) = -0.9355, \quad x_{2, 2} = 0.50(0.9093) + 0.80(-0.4161) = 0.1217$$
+  $$x_{2, 3} = 0.30(0.99980) - 0.60(0.0200) = 0.2879, \quad x_{2, 4} = 0.30(0.0200) + 0.60(0.99980) = 0.6059$$
+  $$\mathbf{x}_{\text{rotated}(2)} = [-0.9355, \ 0.1217, \ 0.2879, \ 0.6059]^T \implies \text{Norm} = \mathbf{1.1576} \quad (\text{Preserved})$$
+
+**Slot 3 ($m = 3$): "the"**
+- Angles: $\phi_1 = 3 \times 1.0 = 3.0 \text{ rad}$ ($\cos \approx -0.9900, \sin \approx 0.1411$), $\phi_2 = 3 \times 0.01 = 0.03 \text{ rad}$ ($\cos \approx 0.99955, \sin \approx 0.0300$)
+- Transformation:
+  $$x_{3, 1} = 0.80(-0.9900) - 0.60(0.1411) = -0.8767, \quad x_{3, 2} = 0.80(0.1411) + 0.60(-0.9900) = -0.4811$$
+  $$x_{3, 3} = 0.50(0.99955) - 0.50(0.0300) = 0.4848, \quad x_{3, 4} = 0.50(0.0300) + 0.50(0.99955) = 0.5148$$
+  $$\mathbf{x}_{\text{rotated}(3)} = [-0.8767, \ -0.4811, \ 0.4848, \ 0.5148]^T \implies \text{Norm} = \mathbf{1.2247} \quad (\text{Preserved})$$
+
+**Slot 4 ($m = 4$): "black"**
+- Angles: $\phi_1 = 4 \times 1.0 = 4.0 \text{ rad}$ ($\cos \approx -0.6536, \sin \approx -0.7568$), $\phi_2 = 4 \times 0.01 = 0.04 \text{ rad}$ ($\cos \approx 0.99920, \sin \approx 0.0400$)
+- Transformation:
+  $$x_{4, 1} = 0.60(-0.6536) - 0.20(-0.7568) = -0.2408, \quad x_{4, 2} = 0.60(-0.7568) + 0.20(-0.6536) = -0.5848$$
+  $$x_{4, 3} = 0.70(0.99920) - 0.30(0.0400) = 0.6874, \quad x_{4, 4} = 0.70(0.0400) + 0.30(0.99920) = 0.3278$$
+  $$\mathbf{x}_{\text{rotated}(4)} = [-0.2408, \ -0.5848, \ 0.6874, \ 0.3278]^T \implies \text{Norm} = \mathbf{0.9899} \quad (\text{Preserved})$$
+
+**Slot 5 ($m = 5$): "cat"**
+- Angles: $\phi_1 = 5 \times 1.0 = 5.0 \text{ rad}$ ($\cos \approx 0.2837, \sin \approx -0.9589$), $\phi_2 = 5 \times 0.01 = 0.05 \text{ rad}$ ($\cos \approx 0.99875, \sin \approx 0.0500$)
+- Transformation:
+  $$x_{5, 1} = 0.30(0.2837) - 0.90(-0.9589) = 0.9481, \quad x_{5, 2} = 0.30(-0.9589) + 0.90(0.2837) = -0.0324$$
+  $$x_{5, 3} = 0.60(0.99875) - 0.20(0.0500) = 0.5893, \quad x_{5, 4} = 0.60(0.0500) + 0.20(0.99875) = 0.2297$$
+  $$\mathbf{x}_{\text{rotated}(5)} = [0.9481, \ -0.0324, \ 0.5893, \ 0.2297]^T \implies \text{Norm} = \mathbf{1.1402} \quad (\text{Preserved})$$
+
+**Reference PyTorch implementation: applying RoPE in $O(d)$.** In production
+LLMs (LLaMA, Gemma, Mistral), dense matrix multiplications with
+$\mathbf{R}_{\Theta, m}^{d}$ are never instantiated. Instead, the rotation is
+executed directly on Query ($Q$) and Key ($K$) tensors using element-wise vector
+operations in $O(d)$ time:
+
+```python
+import torch
+
+def get_rotary_position_encoding(
+    input: torch.Tensor,
+    base: float = 10000.0,
+    device: str = "cpu"
+) -> torch.Tensor:
+    """
+    Applies Rotary Position Embedding (RoPE) to a tensor of shape [context_length, dimension].
+    
+    Uses the split-half channel layout standard in LLaMA / Hugging Face:
+      - First half:  input[:, :dimension // 2]
+      - Second half: input[:, dimension // 2:]
+    """
+    context_length, dimension = input.shape
+    assert dimension % 2 == 0, "Feature dimension must be even"
+
+    half_dimension = dimension // 2
+
+    # Step 1: Base angular frequencies for each 2D subspace:
+    # theta_j = 1 / (base ** (2 * j / dimension))
+    freqs_indices = torch.arange(0, half_dimension, device=device, dtype=torch.float32)
+    freqs = 1.0 / (base ** (2.0 * freqs_indices / dimension))
+
+    # Step 2: Outer product creates angles grid: phi(m, j) = m * theta_j
+    # Shape: [context_length, 1] * [1, half_dimension] -> [context_length, half_dimension]
+    positions = torch.arange(0, context_length, device=device, dtype=torch.float32).unsqueeze(1)
+    angles = positions * freqs
+
+    sin_angles = torch.sin(angles)
+    cos_angles = torch.cos(angles)
+
+    # Step 3: Split into two halves (pairs dimension i with dimension i + d/2):
+    input_first = input[:, :half_dimension]
+    input_second = input[:, half_dimension:]
+
+    # Step 4: 2D rotation matrix formula:
+    # [x1']   [cos  -sin] [x1]   [x1 * cos - x2 * sin]
+    # [x2'] = [sin   cos] [x2] = [x1 * sin + x2 * cos]
+    input_first_rotated = input_first * cos_angles - input_second * sin_angles
+    input_second_rotated = input_first * sin_angles + input_second * cos_angles
+
+    # Step 5: Reassemble rotated channels
+    input_rotated = torch.empty_like(input)
+    input_rotated[:, :half_dimension] = input_first_rotated
+    input_rotated[:, half_dimension:] = input_second_rotated
+
+    return input_rotated
+
+# Demonstration: exact norm preservation across all 6 tokens
+torch.manual_seed(1)
+context_length = 6
+random_input = torch.randn(context_length, 4)
+
+pos_rotary_encodings = get_rotary_position_encoding(random_input)
+
+# Verification: norms are identical before and after rotation
+print("Original norms:", random_input.norm(dim=-1))
+print("Rotated norms: ", pos_rotary_encodings.norm(dim=-1))
+assert torch.allclose(random_input.norm(dim=-1), pos_rotary_encodings.norm(dim=-1))
 ```
 
-In modern architectures, this rotation is applied inside self-attention directly
-to Query ($Q$) and Key ($K$) representations:
-
-$$Q_m = \mathbf{R}_{\Theta, m} W_q x_m, \quad K_n = \mathbf{R}_{\Theta, n} W_k x_n$$
+> **Implementation Note (Interleaved vs. Split-Half):** The original RoFormer
+> paper (Su et al.) paired consecutive dimensions $(x_0, x_1), (x_2, x_3)$
+> using stride slices (`input[:, 0::2]` and `input[:, 1::2]`). Production engines
+> (LLaMA, Hugging Face `rotate_half`) split the tensor down the middle into
+> two contiguous halves (`[:dimension//2]` and `[dimension//2:]`). Both perform
+> $d/2$ independent 2D plane rotations with identical mathematical properties,
+> but split-half preserves GPU memory coalescing and executes significantly faster.
 
 ### Distance comes out for free
 
-When calculating the attention dot product between $Q$ at slot $m$ and $K$ at
-slot $n$, the orthogonal property of rotation matrices factors out:
+When calculating the attention dot product between a Query at slot $m$ and a
+Key at slot $n$, the orthogonal property of rotation matrices
+($\mathbf{R}_m^T \mathbf{R}_n = \mathbf{R}_{n-m}$) factors out:
 
-$$(R_m Q_m)^T (R_n K_n) = Q_m^T R_m^T R_n K_n = Q_m^T R_{n-m} K_n$$
+$$\langle \mathbf{R}_m Q_m, \ \mathbf{R}_n K_n \rangle = (\mathbf{R}_m Q_m)^T (\mathbf{R}_n K_n) = Q_m^T \mathbf{R}_m^T \mathbf{R}_n K_n = Q_m^T \mathbf{R}_{n-m} K_n$$
 
 Read it as: *The dot product of two rotated vectors depends strictly on their
-relative index separation $(n - m)$, completely independent of absolute positions.*
+relative index separation $(n - m)$, completely independent of their absolute
+positions in the context.*
 
-We can prove this arithmetically. Suppose two tokens sit 2 slots apart
-(a net angle difference of $2 \times 30^\circ = 60^\circ$):
+We can verify this directly using our sentence. Consider the query for "dog"
+($m = 1$) attending to the key for "cat" ($n = 5$):
+- Relative separation: $n - m = 5 - 1 = 4$ slots.
+- The relative rotation operator $\mathbf{R}_{5-1} = \mathbf{R}_4$ applies:
+  - Subspace 1 relative angle: $\Delta\phi_1 = 4 \times 1.0 = 4.0 \text{ rad}$
+  - Subspace 2 relative angle: $\Delta\phi_2 = 4 \times 0.01 = 0.04 \text{ rad}$
 
-```text
-Case 1: Tokens sit at Slot 1 and Slot 3 (m = 1, n = 3)
-  Net angle difference = (3 - 1) × 30° = 60°
-  Dot product score    = cos(60°) = 0.50
-
-Case 2: Tokens sit at Slot 4 and Slot 6 (m = 4, n = 6)
-  Net angle difference = (6 - 4) × 30° = 60°
-  Dot product score    = cos(60°) = 0.50
-```
-
-Compare this to Scheme B: there, vectors were pushed into distorted corners.
-Here, the absolute locations (1-3 versus 4-6) vanish entirely from the equation;
-only the 2-step gap survives. Relative distance is captured naturally with zero
-norm inflation.
+Whether this pair sits at indices $1 \to 5$ or at indices $10,001 \to 10,005$
+in a 128k sequence, $(n - m) = 4$ remains invariant. The absolute positions
+($m=1, n=5$) cancel out of the dot product entirely; only the exact 4-step
+relative relationship is computed. Furthermore, adjacent word pairs—such as
+"The" ($m=0$) attending to "dog" ($n=1$), and "the" ($m=3$) attending to
+"black" ($n=4$)—both share the exact same $(n - m) = 1$ step offset and receive
+identical positional rotation transformations.
 
 ### Direct comparison across schemes
 
 | Metric / Behavior | A. Learned Absolute | B. Sinusoidal | C. RoPE |
 | :--- | :---: | :---: | :---: |
-| **Slot 0 Output** | `[0.80, 0.80]` | `[0.80, 1.60]` | `[0.80, 0.60]` |
-| **Slot 0 Norm** | 1.13 | 1.79 | **1.00** |
-| **Slot 1 Output** | `[1.00, 0.50]` | `[1.64, 1.14]` | `[0.39, 0.92]` |
-| **Slot 1 Norm** | 1.12 | 2.00 | **1.00** |
-| **Vector Length Distorted?** | Yes | Yes (Severe) | **No (0% Distortion)** |
+| **Slot 0 ("The") Output** | `[0.80, 0.80, 0.60, 0.50]` | `[0.80, 1.60, 0.50, 1.50]` | `[0.80, 0.60, 0.50, 0.50]` |
+| **Slot 0 Norm** | 1.37 | 2.39 | **1.22 (0% drift)** |
+| **Slot 1 ("dog") Output** | `[0.90, 0.00, 0.40, 0.90]` | `[1.54, 0.64, 0.41, 1.80]` | `[0.29, 0.64, 0.39, 0.80]` |
+| **Slot 1 Norm** | 1.33 | 2.49 | **1.14 (0% drift)** |
+| **Slot 2 ("chased") Norm** | 1.21 | 2.19 | **1.16 (0% drift)** |
+| **Slot 3 ("the") Norm** | 1.35 | 1.89 | **1.22 (0% drift)** |
+| **Slot 4 ("black") Norm** | 1.08 | 1.57 | **0.99 (0% drift)** |
+| **Slot 5 ("cat") Norm** | 1.24 | 1.92 | **1.14 (0% drift)** |
+| **Vector Length Distorted?** | Yes | Yes (Severe) | **No (Strictly Preserved)** |
 | **Relative Distance Aware?** | No | Partial | **Yes (Exact $n-m$)** |
+| **Trainable Parameters** | $L_{\max} \times d_{\text{model}}$ | 0 | **0** |
 
-**Why vector length must not distort (norm preservation).** Attention
-scores scale with vector magnitudes: $\mathbf{u} \cdot \mathbf{v} = \|\mathbf{u}\| \|\mathbf{v}\| \cos(\theta)$.
-Inflating a vector from $1.00$ to $2.00$ doubles its dot products and drives
-softmax into saturation: one token hoards attention mass while other
-gradients vanish. It also corrupts semantics by varying a word's energy
-based on where it appears. RoPE rotates without stretching, locking the
-norm at $1.00$ and preserving pure semantic coordinates.
+**Why vector length must not distort (norm preservation).** Attention scores
+scale with vector magnitudes: $\mathbf{u} \cdot \mathbf{v} = \Vert{}\mathbf{u}\Vert{} \Vert{}\mathbf{v}\Vert{} \cos(\theta)$.
+Inflating a vector's norm from $1.22$ to $2.39$ as in Scheme B roughly quadruples
+its unscaled dot products, driving softmax into extreme saturation. One token
+hoards the attention distribution while other gradients vanish. RoPE rotates
+vectors across geometric manifolds without stretching them, locking the norm
+at its clean embedding magnitude.
 
 **Why natural relative distance matters (context generalization).** Syntax
-cares about relative spacing, not absolute rank: an adjective sits 1 step
-before its noun whether at token 10 or token 100,000. This pair difference
-($(n - m)$) is critical for three fundamental reasons:
+depends on relative displacement, not absolute rank: the relationship between
+subject ("dog") and verb ("chased") remains a 1-slot offset whether the phrase
+occurs on page 1 or page 500. This pair difference ($(n - m)$) provides three
+key capabilities:
 
-1. **Translation invariance:** Linguistic rules do not care where on the
-   page a phrase begins. The syntactic binding between "red" and "apple" is
-   identical on page 1 and page 500. Because $(n - m) = 1$ is invariant, the
-   model applies the exact same attention mechanics anywhere in the document.
-2. **Length extrapolation:** Learned absolute tables (GPT-2) learn slots
-   3–5 independently from 103–105 and hard-fail beyond their training context
-   ceiling (e.g., 2,048 tokens), having never allocated weights for slot 2,049.
-   In RoPE, the model never learns position 100,001 as an isolated entity;
-   it only evaluates the 2-step gap, an interval seen billions of times
-   during pre-training. This analytical invariance is what unlocks 128k+
-   context scaling.
-3. **Natural distance decay:** As the relative displacement $|n - m|$ grows,
-   the summation of sinusoidal components with differing frequencies naturally
-   decays on expectation. The model inherits an intrinsic locality bias —
-   attending sharply to adjacent tokens without letting distant noise
-   pollute the softmax distribution.
+1. **Translation invariance:** Linguistic structures are shift-invariant.
+   Because $(n - m) = 1$ produces the exact same rotation $\mathbf{R}_1$, the
+   model applies identical syntactic attention anywhere in a document.
+2. **Length extrapolation:** Learned absolute tables fail at slot 2,049
+   because index 2,049 was never allocated in weights. In RoPE, the model never
+   treats position 100,001 as an unknown entity; it evaluates the familiar
+   interval $(n - m) = 2$, a relationship observed billions of times during
+   pre-training.
+3. **Natural frequency decay:** Fast-rotating dimensions ($\theta_1 = 1.0$)
+   oscillate rapidly, isolating local syntax. Slow-rotating dimensions
+   ($\theta_2 = 0.01$) rotate barely $0.01$ radians per step, preserving
+   long-range semantic coherence across thousands of tokens without decaying
+   into noise.
 
 ---
 
