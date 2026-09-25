@@ -201,48 +201,46 @@ güvenir.
 
 ## 4. Pozisyonel kodlama nasıl evrildi?
 
-"Köpek adamı ısırdı" ve "Adam köpeği ısırdı" cümlelerini ele alalım.
-Bölüm 2'de gösterildiği gibi, arama işlemi her iki cümle için de tamamen
-aynı üç satırı döndürür; tablo sıra bilgisine sahip değildir. Dikkat
-mekanizması da bunu tek başına çözemez: Dikkat katmanı token çiftlerini
-iç çarpım (dot product) ile puanlar ve iç çarpım işlemi simetriktir
-($q \cdot k = k \cdot q$). Hangi kelimenin önce geldiğini ayırt edemez.
+"Köpek adamı ısırdı" ile "adam köpeği ısırdı" cümlelerini ele alalım. Bölüm
+2'de gördüğümüz gibi arama tablosu her iki cümle için de sözlükten tıpatıp aynı
+üç satır vektörünü çeker; arama tablosunun sıra farkındalığı kesinlikle sıfırdır.
+Öz-dikkat (self-attention) mekanizması da bunu tek başına çözemez: dikkat
+ağırlıkları iç çarpımlarla hesaplanır ve iç çarpım değişmelidir ($q \cdot k = k \cdot q$). Hangi kelimenin önce, hangisinin sonra geldiğini ayırt edemez.
 
-Bu nedenle sıra bilgisinin dikkat katmanından önce doğrudan sayıların içine
-yazılması gerekir. Buradaki asıl amaç bir token'a sadece "sen 4.517 numaralı
-yuvadasın" demek değil, **iki token'ın birbirine ne kadar uzak olduğunu**
-(göreli mesafeyi) kodlamaktır.
+Dolayısıyla dizi sırası, dikkat katmanı çalışmadan önce doğrudan sayısal
+vektörlerin içine enjekte edilmelidir. Amaç sadece token'a "sen 4.517. sıradasın"
+etiketi yapıştırmak değil, iki kelimenin birbirinden kaç adım uzakta olduğunu
+(göreli mesafeyi) doğal olarak hissettirmektir.
 
-Bu alanda üç ana yaklaşım geliştirilmiştir:
-
-- **A. Öğrenilmiş (Learned)** — Her pozisyon için ayrı bir satır içeren
-  ikinci bir eğitilebilir tablo tutulur ve kelime vektörüne eklenir.
-- **B. Sinüzoidal (Sinusoidal)** — Sabit trigonometrik dalga formülleriyle
-  pozisyon koordinatları hesaplanır ve kelime vektörüne eklenir.
-- **C. RoPE** — Vektör toplama işlemi tamamen terk edilir. Vektör, slot
-  indeksi ve boyuta özgü frekansla belirlenen bir açıyla 2D koordinat
-  düzlemlerinde döndürülür (rotasyon).
+Tarihsel olarak üç farklı paradigma kullanılmıştır:
+- **A. Öğrenilmiş mutlak:** Pozisyon başına ikinci bir eğitilebilir ağırlık
+  tablosu tutulur ve kelime vektörüyle eleman düzeyinde toplanır.
+- **B. Sinüzoidal:** Sabit trigonometrik dalga koordinatları hesaplanır ve
+  kelime vektörüyle toplanır.
+- **C. RoPE:** Vektör toplamayı tamamen terk eder. Vektörü 2D koordinat
+  düzlemlerinde pozisyonuna ve boyut frekansına orantılı açılarla döndürür.
 
 ```text
-A. Learned Absolute (GPT-2, BERT)   B. Sinusoidal (Vaswani 2017)   C. RoPE (Llama, Gemma 3)
-   Vektör Toplama                      Trigonometrik Toplama          Vektör Döndürme
-   x_i = TokenEmbed + PosEmbed         x_i = TokenEmbed + PE_pos      x_i = R(Θ, i) · TokenEmbed
-   (Sabit tavan: L_max)                (Norm şişmesi / semantik kayma)(Kesin norm koruma, ||x|| = sabit)
+A. Öğrenilmiş Mutlak (GPT-2, BERT)   B. Sinüzoidal (Vaswani 2017)   C. RoPE (Llama, Gemma 3)
+   Vektör Toplama                       Trigonometrik Toplama          Vektör Döndürme
+   x_i = TokenEmbed + PosEmbed          x_i = TokenEmbed + PE_pos      x_i = R(Θ, i) · TokenEmbed
+   (Sert sınır: L_max)                  (Norm şişmesi / kayması)       (Tam norm koruma, ||x|| = sabit)
 ```
 
-Bu mekanizmaları üç yaklaşım arasında net biçimde karşılaştırmak için 4
-boyutlu temsiller ($d = 4$) üzerinden 6 token'lık somut bir cümleyi izleyelim:
+Bu üç mekanizmayı temiz biçimde karşılaştırmak için **8 boyutlu temsiller ($d = 8$)**
+üzerinden 6 token'lık somut bir cümleyi adım adım izliyoruz:
 
 $$\text{Dizi: } [\text{"The"}, \ \text{"dog"}, \ \text{"chased"}, \ \text{"the"}, \ \text{"black"}, \ \text{"cat"}] \implies m \in \{0, 1, 2, 3, 4, 5\}$$
 
-Arama tablosundan çekilen ham kelime gömmeleri şöyle olsun:
+Sözlük tablosundan okunan ham kelime vektörleri şunlar olsun:
+- **Slot 0 ("The"):** $\mathbf{x}_{(0)} = [0,80, \ 0,60, \ 0,40, \ 0,20, \ 0,50, \ 0,10, \ 0,30, \ 0,20]^T \implies \Vert \mathbf{x}_{(0)}\Vert = \sqrt{1,59} \approx 1,2610$
+- **Slot 1 ("dog"):** $\mathbf{x}_{(1)} = [0,70, \ 0,10, \ 0,30, \ 0,50, \ 0,20, \ 0,40, \ 0,60, \ 0,10]^T \implies \Vert \mathbf{x}_{(1)}\Vert = \sqrt{1,41} \approx 1,1874$
+- **Slot 2 ("chased"):** $\mathbf{x}_{(2)} = [0,50, \ 0,80, \ 0,20, \ 0,30, \ 0,40, \ 0,20, \ 0,10, \ 0,50]^T \implies \Vert \mathbf{x}_{(2)}\Vert = \sqrt{1,48} \approx 1,2166$
+- **Slot 3 ("the"):** $\mathbf{x}_{(3)} = [0,80, \ 0,60, \ 0,40, \ 0,20, \ 0,50, \ 0,10, \ 0,30, \ 0,20]^T \implies \Vert \mathbf{x}_{(3)}\Vert = \sqrt{1,59} \approx 1,2610$
+- **Slot 4 ("black"):** $\mathbf{x}_{(4)} = [0,60, \ 0,20, \ 0,50, \ 0,10, \ 0,30, \ 0,60, \ 0,20, \ 0,40]^T \implies \Vert \mathbf{x}_{(4)}\Vert = \sqrt{1,31} \approx 1,1446$
+- **Slot 5 ("cat"):** $\mathbf{x}_{(5)} = [0,30, \ 0,90, \ 0,10, \ 0,40, \ 0,50, \ 0,20, \ 0,40, \ 0,10]^T \implies \Vert \mathbf{x}_{(5)}\Vert = \sqrt{1,53} \approx 1,2369$
 
-- **Slot 0 ("The"):** $\mathbf{x}_{(0)} = [0,80, \ 0,60, \ 0,50, \ 0,50]^T \implies \Vert{}\mathbf{x}_{(0)}\Vert{} = \sqrt{0,80^2 + 0,60^2 + 0,50^2 + 0,50^2} = \sqrt{1,50} \approx 1,2247$
-- **Slot 1 ("dog"):** $\mathbf{x}_{(1)} = [0,70, \ 0,10, \ 0,40, \ 0,80]^T \implies \Vert{}\mathbf{x}_{(1)}\Vert{} = \sqrt{0,70^2 + 0,10^2 + 0,40^2 + 0,80^2} = \sqrt{1,30} \approx 1,1402$
-- **Slot 2 ("chased"):** $\mathbf{x}_{(2)} = [0,50, \ 0,80, \ 0,30, \ 0,60]^T \implies \Vert{}\mathbf{x}_{(2)}\Vert{} = \sqrt{0,50^2 + 0,80^2 + 0,30^2 + 0,60^2} = \sqrt{1,34} \approx 1,1576$
-- **Slot 3 ("the"):** $\mathbf{x}_{(3)} = [0,80, \ 0,60, \ 0,50, \ 0,50]^T \implies \Vert{}\mathbf{x}_{(3)}\Vert{} = \sqrt{0,80^2 + 0,60^2 + 0,50^2 + 0,50^2} = \sqrt{1,50} \approx 1,2247$
-- **Slot 4 ("black"):** $\mathbf{x}_{(4)} = [0,60, \ 0,20, \ 0,70, \ 0,30]^T \implies \Vert{}\mathbf{x}_{(4)}\Vert{} = \sqrt{0,60^2 + 0,20^2 + 0,70^2 + 0,30^2} = \sqrt{0,98} \approx 0,9899$
-- **Slot 5 ("cat"):** $\mathbf{x}_{(5)} = [0,30, \ 0,90, \ 0,60, \ 0,20]^T \implies \Vert{}\mathbf{x}_{(5)}\Vert{} = \sqrt{0,30^2 + 0,90^2 + 0,60^2 + 0,20^2} = \sqrt{1,30} \approx 1,1402$
+*(Dikkat ederseniz Slot 0 "The" ve Slot 3 "the" kelimeleri sözlükte aynı satıra denk geldiğinden tamamen özdeş ham vektörlere ve $1,2610$ normuna sahiptir.)*
 
 ### A. Öğrenilmiş mutlak pozisyon (GPT-2, BERT)
 
@@ -252,47 +250,47 @@ vektörünün eleman düzeyinde toplamıdır:
 
 $$\mathbf{x}_i = \text{TokenEmbed}(w_i) + \text{PosEmbed}(i)$$
 
-Eğitim gradyanlarının öğrenilmiş pozisyon satırlarını şu değerlere getirdiğini
-varsayalım:
-- $\text{PosEmbed}(0) = [0,00, \ 0,20, \ 0,10, \ 0,00]$
-- $\text{PosEmbed}(1) = [0,20, \ -0,10, \ 0,00, \ 0,10]$
-- $\text{PosEmbed}(2) = [-0,10, \ 0,10, \ 0,20, \ -0,10]$
-- $\text{PosEmbed}(3) = [0,10, \ 0,00, \ -0,10, \ 0,20]$
-- $\text{PosEmbed}(4) = [0,00, \ -0,10, \ 0,10, \ 0,10]$
-- $\text{PosEmbed}(5) = [-0,10, \ 0,20, \ -0,10, \ 0,00]$
+Eğitim gradyanlarının öğrenilmiş 8 boyutlu pozisyon satırlarını şu değerlere
+getirdiğini varsayalım:
+- $\text{PosEmbed}(0) = [0,00, \ 0,20, \ 0,10, \ 0,00, \ 0,10, \ -0,10, \ 0,00, \ 0,10]$
+- $\text{PosEmbed}(1) = [0,20, \ -0,10, \ 0,00, \ 0,10, \ -0,10, \ 0,10, \ 0,10, \ 0,00]$
+- $\text{PosEmbed}(2) = [-0,10, \ 0,10, \ 0,20, \ -0,10, \ 0,00, \ 0,10, \ -0,10, \ 0,10]$
+- $\text{PosEmbed}(3) = [0,10, \ 0,00, \ -0,10, \ 0,20, \ 0,10, \ 0,00, \ 0,10, \ -0,10]$
+- $\text{PosEmbed}(4) = [0,00, \ -0,10, \ 0,10, \ 0,10, \ -0,10, \ 0,00, \ 0,10, \ 0,10]$
+- $\text{PosEmbed}(5) = [-0,10, \ 0,20, \ -0,10, \ 0,00, \ 0,10, \ -0,10, \ 0,00, \ 0,10]$
 
 Kelime temsillerini pozisyon vektörleriyle toplayalım:
 
 ```text
 Slot 0 ("The"):
-  TokenEmbed("The") = [ 0,80   0,60   0,50   0,50 ]
-  PosEmbed(0)       = [ 0,00   0,20   0,10   0,00 ]
-  x_0 (toplam)      = [ 0,80   0,80   0,60   0,50 ]  ──> Norm: 1,37  (1,22'den saptı)
+  TokenEmbed("The") = [ 0,80   0,60   0,40   0,20   0,50   0,10   0,30   0,20 ]
+  PosEmbed(0)       = [ 0,00   0,20   0,10   0,00   0,10  -0,10   0,00   0,10 ]
+  x_0 (toplam)      = [ 0,80   0,80   0,50   0,20   0,60   0,00   0,30   0,30 ]  ──> Norm: 1,45  (1,26'dan saptı)
 
 Slot 1 ("dog"):
-  TokenEmbed("dog") = [ 0,70   0,10   0,40   0,80 ]
-  PosEmbed(1)       = [ 0,20  -0,10   0,00   0,10 ]
-  x_1 (toplam)      = [ 0,90   0,00   0,40   0,90 ]  ──> Norm: 1,33  (1,14'ten saptı)
+  TokenEmbed("dog") = [ 0,70   0,10   0,30   0,50   0,20   0,40   0,60   0,10 ]
+  PosEmbed(1)       = [ 0,20  -0,10   0,00   0,10  -0,10   0,10   0,10   0,00 ]
+  x_1 (toplam)      = [ 0,90   0,00   0,30   0,60   0,10   0,50   0,70   0,10 ]  ──> Norm: 1,42  (1,19'dan saptı)
 
 Slot 2 ("chased"):
-  TokenEmbed("cha") = [ 0,50   0,80   0,30   0,60 ]
-  PosEmbed(2)       = [-0,10   0,10   0,20  -0,10 ]
-  x_2 (toplam)      = [ 0,40   0,90   0,50   0,50 ]  ──> Norm: 1,21  (1,16'dan saptı)
+  TokenEmbed("cha") = [ 0,50   0,80   0,20   0,30   0,40   0,20   0,10   0,50 ]
+  PosEmbed(2)       = [-0,10   0,10   0,20  -0,10   0,00   0,10  -0,10   0,10 ]
+  x_2 (toplam)      = [ 0,40   0,90   0,40   0,20   0,40   0,30   0,00   0,60 ]  ──> Norm: 1,33  (1,22'den saptı)
 
 Slot 3 ("the"):
-  TokenEmbed("the") = [ 0,80   0,60   0,50   0,50 ]
-  PosEmbed(3)       = [ 0,10   0,00  -0,10   0,20 ]
-  x_3 (toplam)      = [ 0,90   0,60   0,40   0,70 ]  ──> Norm: 1,35  (1,22'den saptı)
+  TokenEmbed("the") = [ 0,80   0,60   0,40   0,20   0,50   0,10   0,30   0,20 ]
+  PosEmbed(3)       = [ 0,10   0,00  -0,10   0,20   0,10   0,00   0,10  -0,10 ]
+  x_3 (toplam)      = [ 0,90   0,60   0,30   0,40   0,60   0,10   0,40   0,10 ]  ──> Norm: 1,40  (1,26'dan saptı)
 
 Slot 4 ("black"):
-  TokenEmbed("bla") = [ 0,60   0,20   0,70   0,30 ]
-  PosEmbed(4)       = [ 0,00  -0,10   0,10   0,10 ]
-  x_4 (toplam)      = [ 0,60   0,10   0,80   0,40 ]  ──> Norm: 1,08  (0,99'dan saptı)
+  TokenEmbed("bla") = [ 0,60   0,20   0,50   0,10   0,30   0,60   0,20   0,40 ]
+  PosEmbed(4)       = [ 0,00  -0,10   0,10   0,10  -0,10   0,00   0,10   0,10 ]
+  x_4 (toplam)      = [ 0,60   0,10   0,60   0,20   0,20   0,60   0,30   0,50 ]  ──> Norm: 1,23  (1,14'ten saptı)
 
 Slot 5 ("cat"):
-  TokenEmbed("cat") = [ 0,30   0,90   0,60   0,20 ]
-  PosEmbed(5)       = [-0,10   0,20  -0,10   0,00 ]
-  x_5 (toplam)      = [ 0,20   1,10   0,50   0,20 ]  ──> Norm: 1,24  (1,14'ten saptı)
+  TokenEmbed("cat") = [ 0,30   0,90   0,10   0,40   0,50   0,20   0,40   0,10 ]
+  PosEmbed(5)       = [-0,10   0,20  -0,10   0,00   0,10  -0,10   0,00   0,10 ]
+  x_5 (toplam)      = [ 0,20   1,10   0,00   0,40   0,60   0,10   0,40   0,20 ]  ──> Norm: 1,41  (1,24'ten saptı)
 ```
 
 - **Dezavantaj 1 (Sert bağlam tavanı):** Model 2.048 yuva ile eğitildiyse,
@@ -309,257 +307,248 @@ biçimde hesaplanır:
 
 $$PE_{(pos, 2j)} = \sin\left(\frac{pos}{10000^{2j/d}}\right), \quad PE_{(pos, 2j+1)} = \cos\left(\frac{pos}{10000^{2j/d}}\right)$$
 
-Burada $pos \in \{0, 1, 2, 3, 4, 5\}$, boyut indeksi $j \in \{0, 1\}$ ve model boyutu $d = 4$'tür:
-- $j = 0$ için (0 ve 1. kanallar): $\text{bölen} = 10000^0 = 1,0 \implies \text{frekans} = 1,0\text{ rad/adım}$
-- $j = 1$ için (2 ve 3. kanallar): $\text{bölen} = 10000^{2/4} = 100,0 \implies \text{frekans} = 0,01\text{ rad/adım}$
+Burada $pos \in \{0, 1, 2, 3, 4, 5\}$, çift indeksi $j \in \{0, 1, 2, 3\}$ ve model boyutu $d = 8$'dir:
+- $j = 0$ için (0 ve 1. kanallar): $\text{bölen} = 10000^{0/8} = 10000^0 = 1,0 \implies \text{frekans} = 1,0\text{ rad/adım}$
+- $j = 1$ için (2 ve 3. kanallar): $\text{bölen} = 10000^{2/8} = 10000^{1/4} = 10,0 \implies \text{frekans} = 0,1\text{ rad/adım}$
+- $j = 2$ için (4 ve 5. kanallar): $\text{bölen} = 10000^{4/8} = 10000^{1/2} = 100,0 \implies \text{frekans} = 0,01\text{ rad/adım}$
+- $j = 3$ için (6 ve 7. kanallar): $\text{bölen} = 10000^{6/8} = 10000^{3/4} = 1000,0 \implies \text{frekans} = 0,001\text{ rad/adım}$
 
-Her yuva için dalga koordinatları:
+Her yuva için 8 boyutlu dalga koordinatları:
 
 ```text
 Slot 0 (pos = 0):
-  PE_0 = [ sin(0,0), cos(0,0), sin(0,00), cos(0,00) ]
-       ≈ [ 0,0000,   1,0000,   0,0000,   1,0000   ]
+  PE_0 = [ sin(0,0), cos(0,0), sin(0,00), cos(0,00), sin(0,000), cos(0,000), sin(0,0000), cos(0,0000) ]
+       ≈ [ 0,0000,   1,0000,   0,0000,   1,0000,   0,0000,    1,0000,    0,0000,     1,0000     ]
 
 Slot 1 (pos = 1):
-  PE_1 = [ sin(1,0), cos(1,0), sin(0,01), cos(0,01) ]
-       ≈ [ 0,8415,   0,5403,   0,0100,   1,0000   ]
+  PE_1 = [ sin(1,0), cos(1,0), sin(0,10), cos(0,10), sin(0,010), cos(0,010), sin(0,0010), cos(0,0010) ]
+       ≈ [ 0,8415,   0,5403,   0,0998,   0,9950,   0,0100,    1,0000,    0,0010,     1,0000     ]
 
 Slot 2 (pos = 2):
-  PE_2 = [ sin(2,0), cos(2,0), sin(0,02), cos(0,02) ]
-       ≈ [ 0,9093,  -0,4161,   0,0200,   0,9998   ]
+  PE_2 = [ sin(2,0), cos(2,0), sin(0,20), cos(0,20), sin(0,020), cos(0,020), sin(0,0020), cos(0,0020) ]
+       ≈ [ 0,9093,  -0,4161,   0,1987,   0,9801,   0,0200,    0,9998,    0,0020,     1,0000     ]
 
 Slot 3 (pos = 3):
-  PE_3 = [ sin(3,0), cos(3,0), sin(0,03), cos(0,03) ]
-       ≈ [ 0,1411,  -0,9900,   0,0300,   0,9996   ]
+  PE_3 = [ sin(3,0), cos(3,0), sin(0,30), cos(0,30), sin(0,030), cos(0,030), sin(0,0030), cos(0,0030) ]
+       ≈ [ 0,1411,  -0,9900,   0,2955,   0,9553,   0,0300,    0,9996,    0,0030,     1,0000     ]
 
 Slot 4 (pos = 4):
-  PE_4 = [ sin(4,0), cos(4,0), sin(0,04), cos(0,04) ]
-       ≈ [-0,7568,  -0,6536,   0,0400,   0,9992   ]
+  PE_4 = [ sin(4,0), cos(4,0), sin(0,40), cos(0,40), sin(0,040), cos(0,040), sin(0,0040), cos(0,0040) ]
+       ≈ [-0,7568,  -0,6536,   0,3894,   0,9211,   0,0400,    0,9992,    0,0040,     1,0000     ]
 
 Slot 5 (pos = 5):
-  PE_5 = [ sin(5,0), cos(5,0), sin(0,05), cos(0,05) ]
-       ≈ [-0,9589,   0,2837,   0,0500,   0,9988   ]
+  PE_5 = [ sin(5,0), cos(5,0), sin(0,50), cos(0,50), sin(0,050), cos(0,050), sin(0,0050), cos(0,0050) ]
+       ≈ [-0,9589,   0,2837,   0,4794,   0,8776,   0,0500,    0,9988,    0,0050,     1,0000     ]
 ```
 
 Vektör toplama işlemi uygulandığında ($\mathbf{x}_m = \text{TokenEmbed}(w_m) + PE_m$):
 
 ```text
 Slot 0 ("The"):
-  x_0 (toplam) = [ 0,80 + 0,0000, 0,60 + 1,0000, 0,50 + 0,0000, 0,50 + 1,0000 ]
-               = [ 0,8000,        1,6000,        0,5000,        1,5000 ]      ──> Norm: 2,39  (+%95 şişti)
+  x_0 (toplam) = [ 0,80+0,0000, 0,60+1,0000, 0,40+0,0000, 0,20+1,0000, 0,50+0,0000, 0,10+1,0000, 0,30+0,0000, 0,20+1,0000 ]
+               = [ 0,8000,      1,6000,      0,4000,      1,2000,      0,5000,      1,1000,      0,3000,      1,2000 ]  ──> Norm: 2,79  (+%121 şişti)
 
 Slot 1 ("dog"):
-  x_1 (toplam) = [ 0,70 + 0,8415, 0,10 + 0,5403, 0,40 + 0,0100, 0,80 + 1,0000 ]
-               = [ 1,5415,        0,6403,        0,4100,        1,8000 ]      ──> Norm: 2,49  (+%118 şişti)
+  x_1 (toplam) = [ 0,70+0,8415, 0,10+0,5403, 0,30+0,0998, 0,50+0,9950, 0,20+0,0100, 0,40+1,0000, 0,60+0,0010, 0,10+1,0000 ]
+               = [ 1,5415,      0,6403,      0,3998,      1,4950,      0,2100,      1,4000,      0,6010,      1,1000 ]  ──> Norm: 2,96  (+%149 şişti)
 
 Slot 2 ("chased"):
-  x_2 (toplam) = [ 0,50 + 0,9093, 0,80 - 0,4161, 0,30 + 0,0200, 0,60 + 0,9998 ]
-               = [ 1,4093,        0,3839,        0,3200,        1,5998 ]      ──> Norm: 2,19  (+%89 şişti)
+  x_2 (toplam) = [ 0,50+0,9093, 0,80-0,4161, 0,20+0,1987, 0,30+0,9801, 0,40+0,0200, 0,20+0,9998, 0,10+0,0020, 0,50+1,0000 ]
+               = [ 1,4093,      0,3839,      0,3987,      1,2801,      0,4200,      1,1998,      0,1020,      1,5000 ]  ──> Norm: 2,79  (+%130 şişti)
 
 Slot 3 ("the"):
-  x_3 (toplam) = [ 0,80 + 0,1411, 0,60 - 0,9900, 0,50 + 0,0300, 0,50 + 0,9996 ]
-               = [ 0,9411,       -0,3900,        0,5300,        1,4996 ]      ──> Norm: 1,89  (+%54 şişti)
+  x_3 (toplam) = [ 0,80+0,1411, 0,60-0,9900, 0,40+0,2955, 0,20+0,9553, 0,50+0,0300, 0,10+0,9996, 0,30+0,0030, 0,20+1,0000 ]
+               = [ 0,9411,     -0,3900,      0,6955,      1,1553,      0,5300,      1,0996,      0,3030,      1,2000 ]  ──> Norm: 2,42  (+%92 şişti)
 
 Slot 4 ("black"):
-  x_4 (toplam) = [ 0,60 - 0,7568, 0,20 - 0,6536, 0,70 + 0,0400, 0,30 + 0,9992 ]
-               = [-0,1568,       -0,4536,        0,7400,        1,2992 ]      ──> Norm: 1,57  (+%59 şişti)
+  x_4 (toplam) = [ 0,60-0,7568, 0,20-0,6536, 0,50+0,3894, 0,10+0,9211, 0,30+0,0400, 0,60+0,9992, 0,20+0,0040, 0,40+1,0000 ]
+               = [-0,1568,     -0,4536,      0,8894,      1,0211,      0,3400,      1,5992,      0,2040,      1,4000 ]  ──> Norm: 2,60  (+%127 şişti)
 
 Slot 5 ("cat"):
-  x_5 (toplam) = [ 0,30 - 0,9589, 0,90 + 0,2837, 0,60 + 0,0500, 0,20 + 0,9988 ]
-               = [-0,6589,        1,1837,        0,6500,        1,1988 ]      ──> Norm: 1,92  (+%69 şişti)
+  x_5 (toplam) = [ 0,30-0,9589, 0,90+0,2837, 0,10+0,4794, 0,40+0,8776, 0,50+0,0500, 0,20+0,9988, 0,40+0,0050, 0,10+1,0000 ]
+               = [-0,6589,      1,1837,      0,5794,      1,2776,      0,5500,      1,1988,      0,4050,      1,1000 ]  ──> Norm: 2,63  (+%113 şişti)
 ```
 
 - **Dezavantaj (Ağır semantik bozulma ve norm kayması):** Vektör toplama işlemi
   vektör boylarını dramatik biçimde deforme eder. Birebir aynı sözlük vektörüne
   sahip olan "The" (Slot 0) ve "the" (Slot 3) kelimeleri tamamen farklı normlara
-  ($2,39$ ve $1,89$) ulaşır; temel anlamsal sinyal cümlenin neresinde geçtiğine
+  ($2,79$ ve $2,42$) ulaşır; temel anlamsal sinyal cümlenin neresinde geçtiğine
   bağlı olarak bozulur.
 
 ### C. RoPE: Döner pozisyonel gömme (Gemma 3, Llama)
 
-Öğrenilmiş ve sinüzoidal yaklaşımlar (A ve B yöntemleri) pozisyon bilgisini
-vektör toplama ($\mathbf{x} + \mathbf{p}$) işlemiyle aktarır. Ancak gördüğümüz
-gibi iki vektörü toplamak, kelimenin orijinal anlam vektörünün boyunu (normunu)
-$1,22$'den $2,39$'a kadar şişirir; bu durum dikkat mekanizmasındaki iç
-çarpımları yapay olarak büyüterek softmax dengesini bozar.
+Önceki iki yöntemin (Öğrenilmiş Mutlak ve Sinüzoidal) temel çıkmazını gördük: Pozisyon bilgisini kelime vektörüne **vektör toplama ($\mathbf{x} + \mathbf{p}$)** yoluyla ekliyorlardı. Bu toplama işlemi, kelimenin orijinal anlam vektörünün boyunu (normunu) $1,26$'dan $2,96$'ya kadar (%149'a varan oranda) şişirdi. Dikkat katmanında bu yapay şişme, iç çarpımları fırlatarak softmax dengesini altüst eder.
 
-**RoPE'un temel çıkış noktası:** Bir vektörün büyüklüğünü (normunu) kesinlikle
-değiştirmeden, sadece cümledeki sırasına göre uzaydaki yönünü değiştirebilir
-miyiz? Evet: **Vektörü döndürerek (rotasyon)!** Masada duran 10 cm'lik bir
-kalemi kendi ekseni etrafında kaç derece çevirirseniz çevirin, boyu daima 10 cm
-kalır. RoPE, kelime vektörlerini uzatıp kısaltmak yerine pozisyonlarına göre
-belirli açılarla döndürür.
+**RoPE'un dâhiyane çıkış noktası tek bir soruyla özetlenebilir:**
+> *"Bir kelimenin anlamını (vektör boyunu) hiç bozmadan, sadece cümledeki sırasını nasıl kodlayabiliriz?"*
+
+**Cevap: Vektöre bir şey ekleme, onu bir pusula iğnesi gibi döndür!**
+
+Masada duran 10 cm uzunluğunda bir pusula iğnesini düşünün. İğneyi masanın üzerinde kaç derece çevirirseniz çevirin, boyu kuruşu kuruşuna 10 cm kalır. İşte **RoPE (Rotary Position Embedding)** tam olarak bunu yapar: Kelime vektörlerinin boyunu (öz anlamını) kesinlikle değiştirmeden, yalnızca uzaydaki yönünü token'ın cümledeki sırasına göre döndürür.
 
 $$\mathbf{x}_m = \mathbf{R}_{\Theta, m}^{d} \cdot \text{TokenEmbed}(w_m)$$
 
-Şöyle okuyun: *Kelime tablosundan okunan ham anlamsal vektör, $m$. pozisyona ve
-boyut frekanslarına göre oluşturulan ortogonal bir rotasyon matrisi ile çarpılır;
-vektörün boyu korunurken yönü pozisyona göre döner.*
+**Formülü sade bir dille okuyalım:**
+*Sözlük tablosundan okunan ham kelime vektörü ($\text{TokenEmbed}$), $m$. pozisyon için hesaplanan bir rotasyon (döndürme) matrisi ($\mathbf{R}$) ile çarpılır. Vektörün boyu milimetrik olarak korunurken, yönü kelimenin cümledeki sırasına göre döner.*
 
-Bu formüldeki her terimin somut anlamı ve mimarideki görevi şöyledir:
-- **$\text{TokenEmbed}(w_m)$:** Sözlük tablosundan okunan ham kelime vektörü
-  ($d$ boyutlu). Pozisyon bilgisi içermez; "The" kelimesi cümlenin neresinde
-  geçerse geçsin sözlükten aynı ham sayılarla çıkar.
-- **$m$:** Token'ın cümle içindeki sıra numarası / yuva indeksidir ($m = 0, 1, 2,
-  3, \dots$). RoPE'ta bu indeks, fiziksel sistemlerdeki "ayrık zaman adımı" gibi
-  işler.
-- **$\Theta = \{\theta_1, \theta_2, \dots, \theta_{d/2}\}$:** Her koordinat
-  çiftine tahsis edilen temel açısal frekanslar (dönüş hızları) kümesidir.
-- **$\mathbf{R}_{\Theta, m}^{d}$:** $m$. pozisyondaki token için hesaplanan
-  $d \times d$ boyutundaki blok-köşegen döndürme matrisidir.
-- **$\mathbf{x}_m$:** Döndürülmüş, hem anlamsal içeriği hem de pozisyon bilgisini
-  aynı anda taşıyan nihai $d$ boyutlu vektördür.
+Bu formüldeki yapı taşları:
+- **$\text{TokenEmbed}(w_m)$:** Sözlük tablosundan çekilen ham anlamsal vektör ($d = 8$ boyutlu). Pozisyon içermez; "The" kelimesi cümlenin neresinde geçerse geçsin aynı ham sayılarla gelir.
+- **$m$:** Token'ın cümledeki sıra indeksidir ($m = 0, 1, 2, 3, \dots$). Fiziksel sistemlerdeki "ayrık zaman adımı" gibidir.
+- **$\Theta = \{\theta_1, \theta_2, \dots, \theta_{d/2}\}$:** Boyut çiftlerine atanan açısal dönüş hızları kümesidir ($d = 8$ için 4 adet hız).
+- **$\mathbf{R}_{\Theta, m}^{d}$:** $m$. yuva için oluşturulan $8 \times 8$ boyutundaki blok-köşegen döndürme matrisidir.
+- **$\mathbf{x}_m$:** Boyu hiç bozulmamış, yönüne pozisyon bilgisi kusursuzca mühürlenmiş nihai vektördür.
 
-**Neden $d$ boyutlu uzay $d/2$ adet iki boyutlu (2D) alt uzaya bölünür?**
-128 boyutlu bir vektörü tek bir kütle gibi 128 boyutta döndürmek matematiksel
-olarak muazzam karmaşık tensörler gerektirir. RoPE bunu dâhiyane bir yöntemle
-çözer: $d$ boyutlu vektörü ikişerli koordinat çiftlerine böler:
-$$(x_1, x_2), \ (x_3, x_4), \ \dots, \ (x_{d-1}, x_d)$$
-Her koordinat çifti, bir saatin kadranı veya iki boyutlu bir pusula yüzeyi gibi
-kendi 2D düzleminde bağımsız bir nokta oluşturur. 2D düzlemde bir noktayı
-orijin etrafında $\phi$ açısıyla döndürmek ise lise geometrisidir:
+---
+
+#### 1. Temel Kural: Açı = Pozisyon × Açısal Hız
+
+RoPE'ta bir kelimenin ne kadar döneceği, dönen bir saatin ibresi kadar yalındır:
+
+$$\text{Dönüş Açısı} = \text{Pozisyon} \times \text{Açısal Hız} \implies \phi(m) = m \cdot \theta$$
+
+- **0. pozisyondaki kelime ($m = 0$):** $0 \times \theta = 0^\circ$ döner. İbre tam başlangıç noktasındadır (12 yönü, orijinal doğrultusunda kalır).
+- **1. pozisyondaki kelime ($m = 1$):** $1 \times \theta$ kadar ileri döner.
+- **2. pozisyondaki kelime ($m = 2$):** $2 \times \theta$ kadar ileri döner.
+- **50. pozisyondaki kelime ($m = 50$):** $50 \times \theta$ kadar ileri döner.
+
+Kelime cümlede ne kadar ilerideyse, ibresi o kadar ileri dönmüştür. Kelimenin öz anlamı (vektörün boyu) zerre kadar değişmez; yalnızca yönü cümledeki sırasına göre adım adım kayar.
+
+---
+
+#### 2. İki Boyutlu (2D) Düzlem Hilesi: 8 Boyut Nasıl Döndürülür?
+
+8 boyutlu bir vektörü 8 boyutta tek bir katı cisim gibi döndürmek yerine RoPE bunu **zarif bir parçalama hilesiyle** çözer:
+8 boyutlu vektörü ikişerli sayılardan oluşan **4 bağımsız 2D çifte (kadran)** böler:
+
+$$(x_1, x_2), \quad (x_3, x_4), \quad (x_5, x_6), \quad (x_7, x_8)$$
+
+Bunu bir masa üzerinde yan yana duran **4 küçük saat kadranı** gibi hayal edin. Her kadranın üzerinde iki boyutlu bir $(x, y)$ oku vardır. İki boyutlu bir oku merkez etrafında $\phi$ açısıyla döndürmek ise lise geometrisidir:
+
 $$\tilde{x}_1 = x_1 \cos\phi - x_2 \sin\phi$$
 $$\tilde{x}_2 = x_1 \sin\phi + x_2 \cos\phi$$
 
-**Normun kesinlikle korunmasının ispatı ($\cos^2\phi + \sin^2\phi = 1$):**
-Döndürülmüş bileşenlerin kareleri toplamı hesaplandığında:
-$$\tilde{x}_1^2 + \tilde{x}_2^2 = (x_1 \cos\phi - x_2 \sin\phi)^2 + (x_1 \sin\phi + x_2 \cos\phi)^2 = (x_1^2 + x_2^2)(\cos^2\phi + \sin^2\phi) = x_1^2 + x_2^2$$
-Trigonometrinin temel özdeşliği sayesinde vektörün uzunluğu bir milimetre bile
-şişmez; %0 kayma ile başlangıçtaki Öklid normunda kilitlenir.
+*(Karmaşık sayılarla düşünenler için: Bu işlem, $z = x_1 + i x_2$ sayısını $e^{i\phi}$ ile çarpmaktan ibarettir; Euler özdeşliği $|e^{i\phi}| = 1$ olduğundan büyüklük asla değişmez!)*
 
-**RoPE'ta "frekans" ($\theta_j$) tam olarak nedir ve ne işe yarar?**
-Dalga fiziğinde frekans bir dalganın birim zamanda kaç kez tekrarladığını
-gösterir. RoPE'ta ise frekans, **"Dizide 1 token ileri gittiğimizde bu 2D
-koordinat çifti kaç radyan dönecek?"** sorusunun cevabıdır (açısal hız).
-$j$. alt uzayın açısal hızı formülle belirlenir:
+**Vektör boyu neden asla bozulmaz? (Matematiksel İspat):**
+Döndürülmüş bileşenlerin karelerini topladığımızda:
+$$\tilde{x}_1^2 + \tilde{x}_2^2 = (x_1 \cos\phi - x_2 \sin\phi)^2 + (x_1 \sin\phi + x_2 \cos\phi)^2 = (x_1^2 + x_2^2)(\cos^2\phi + \sin^2\phi)$$
+Trigonometrinin temel özdeşliği gereği $\cos^2\phi + \sin^2\phi = 1$ olduğundan:
+$$\tilde{x}_1^2 + \tilde{x}_2^2 = x_1^2 + x_2^2$$
+Vektörün uzunluğunda milimetrik bir sapma bile oluşmaz; 4 çiftin dördünde de norm kayması kesinlikle **%0**'dır!
+
+---
+
+#### 3. Neden Tek Bir Hız Yetmez? Saat İbreleri Analojisi
+
+"Peki 4 kadranın hepsi aynı hızla ($\theta$) mı döner?"
+**Kesinlikle hayır.** Bir kol saatini düşünün: Bir saatte neden hem saniye, hem yelkovan, hem de akrep ibresi vardır?
+
+- **Eğer saatte sadece saniye ibresi olsaydı:** İbre her 60 saniyede bir tam tur atıp başa dönerdi. Öğlen 12:00 ile gece 24:00 birbirinin aynısı görünürdü (buna **faz çakışması / phase wrapping** denir).
+- **Eğer saatte sadece akrep ibresi olsaydı:** İbre o kadar yavaş kıpırdardı ki, hangi saniyede olduğunuzu asla ayırt edemezdiniz.
+
+RoPE, 8 boyutlu modelimizdeki 4 koordinat çiftine tam olarak bu mantıkla 4 farklı hız ($\theta_j$) atar:
+
+Bu açısal hızlar geometrik frekans serisiyle formüle edilir ($d = 8$ ve $\text{base} = 10.000$ için):
 
 $$\theta_j = \text{base}^{-\frac{2(j-1)}{d}} = \frac{1}{\text{base}^{\frac{2(j-1)}{d}}} \quad [\text{token başına radyan}]$$
 
-Formüldeki bileşenler:
-- **$\text{base}$ (taban frekans):** Standart olarak $10.000$ seçilir. En hızlı
-  dönen boyut ile en yavaş dönen boyut arasındaki hız makasını belirler.
-- **$j$:** Koordinat çiftinin sıra numarasıdır ($j = 1, 2, \dots, d/2$).
-- **$d$:** Vektör / başlık boyutudur ($d = 4$ ya da üretimde $128$).
-- $j$ büyüdükçe (vektörün son kanallarına doğru gidildikçe) paydadaki üs büyür;
-  dolayısıyla $\theta_j$ açısal hızı hızla küçülür. Yani **ilk kanallar fırıl
-  fırıl dönerken, son kanallar neredeyse yerinden kıpırdamaz.**
+Burada $10.000 = 10^4$ olduğundan, $d = 8$ boyutunda 4 çiftin üsleri tam olarak $10$'un katları şeklinde sadeleşir:
 
-**Neden tek bir hız yetmez? Saat ibreleri analojisi (Saniye, Yelkovan, Akrep):**
-Eğer tüm boyutlar aynı hızda dönseydi dil modelleri çalışamazdı:
-- Sadece hızlı dönselerdi: Birkaç kelime sonra $360^\circ$ tur atıp başa dönerler,
-  50 token önceki kelimeyle 1 token önceki kelime aynı yöne bakarak birbirine
-  karışırdı (faz çakışması).
-- Sadece yavaş dönselerdi: Yan yana duran kelimeler ("dog" ile "chased")
-  arasında neredeyse hiçbir açı farkı oluşmaz, model hangisinin önce geldiğini
-  anlayamazdı.
+- **1. Çift ($j = 1$, kanallar 1–2):**  
+  Üs: $\frac{2(1-1)}{8} = \frac{0}{8} = 0 \implies \theta_1 = \frac{1}{10000^0} = \frac{1}{1} = \mathbf{1{,}0\text{ rad/adım}} \ (\approx 57{,}3^\circ)$
+- **2. Çift ($j = 2$, kanallar 3–4):**  
+  Üs: $\frac{2(2-1)}{8} = \frac{2}{8} = \frac{1}{4} \implies \theta_2 = \frac{1}{10000^{1/4}} = \frac{1}{\sqrt[4]{10^4}} = \frac{1}{10} = \mathbf{0{,}1\text{ rad/adım}} \ (\approx 5{,}73^\circ)$
+- **3. Çift ($j = 3$, kanallar 5–6):**  
+  Üs: $\frac{2(3-1)}{8} = \frac{4}{8} = \frac{1}{2} \implies \theta_3 = \frac{1}{10000^{1/2}} = \frac{1}{\sqrt{10000}} = \frac{1}{100} = \mathbf{0{,}01\text{ rad/adım}} \ (\approx 0{,}57^\circ)$
+- **4. Çift ($j = 4$, kanallar 7–8):**  
+  Üs: $\frac{2(4-1)}{8} = \frac{6}{8} = \frac{3}{4} \implies \theta_4 = \frac{1}{10000^{3/4}} = \frac{1}{(\sqrt[4]{10^4})^3} = \frac{1}{10^3} = \frac{1}{1000} = \mathbf{0{,}001\text{ rad/adım}} \ (\approx 0{,}057^\circ)$
 
-Bir kol saatini düşünün:
-- **Saniye ibresi (Hızlı frekans, $\theta_1 = 1,0\text{ rad} \approx 57,3^\circ$):**
-  Her kelimede büyük bir açı fırlar. Görevi: **Yerel sözdizimini (local syntax)**
-  çözmek; yan yana duran kelimeleri keskin biçimde ayırt etmek.
-- **Yelkovan (Orta frekanslar):** Cümle ve yan tümce düzeyindeki mesafeleri
-  ölçmek.
-- **Akrep ibresi (Çok yavaş frekans, $\theta_2 = 0,01\text{ rad} \approx 0,57^\circ$):**
-  Her kelimede ancak $0,57^\circ$ kıpırdar. Görevi: **Küresel sırayı (global order)**
-  korumak; yüzlerce ve binlerce token sonra bile metnin başı ile sonu arasındaki
-  düzeni canlı tutmak.
+Standart $\text{base} = 10.000$ ile 4 çiftin açısal hızları ve tam tur süreleri:
 
-**Dönüş periyodu (dalga boyu $T_j$) nedir?**
-Bir koordinat çiftinin tam bir $360^\circ$ ($2\pi$ radyan) tur atıp başladığı
-yöne dönmesi için gereken token sayısıdır:
-$$T_j = \frac{2\pi}{\theta_j} = 2\pi \cdot \text{base}^{\frac{2(j-1)}{d}}$$
-
-4 boyutlu modelimiz ($d = 4$, $j \in \{1, 2\}$) ve standart $10.000$ tabanı için:
-- **1. Çift ($j=1$, 1–2. kanallar):**
-  $$\theta_1 = 10000^{-\frac{2(0)}{4}} = 10000^0 = 1,0 \text{ rad/adım} \quad (\approx 57,3^\circ/\text{adım})$$
-  $$T_1 = \frac{2\pi}{1,0} \approx 6,28 \text{ token} \quad (\text{Her 6 kelimede bir tam tur})$$
-- **2. Çift ($j=2$, 3–4. kanallar):**
-  $$\theta_2 = 10000^{-\frac{2(1)}{4}} = 10000^{-0,5} = \frac{1}{\sqrt{10000}} = 0,01 \text{ rad/adım} \quad (\approx 0,573^\circ/\text{adım})$$
-  $$T_2 = \frac{2\pi}{0,01} \approx 628,3 \text{ token} \quad (\text{Tam bir tur 628 token sürer})$$
-
-| Alt Uzay | Açısal Hız ($\theta_j$) | Token Başına Dönüş | Periyot ($T_j = 2\pi/\theta_j$) | Mimari Görevi ("Ne işe yarar?") |
+| Alt Uzay | Açısal Hız ($\theta_j$) | Adım Başına Dönüş | Tam Tur Süresi ($T_j = 2\pi/\theta_j$) | İbre Analojisi ve Görevi |
 | :--- | :---: | :---: | :---: | :--- |
-| **1. Çift ($j=1$, 1–2. kanallar)** | $1,0\text{ rad}$ | $\approx 57,3^\circ$ | $T_1 \approx 6,28\text{ token}$ | **Mikroskop / Saniye İbresi:** Hızlı döner; yan yana duran kelimelerin ("The" $\to$ "dog") sözdizimini ayırır. |
-| **2. Çift ($j=2$, 3–4. kanallar)** | $0,01\text{ rad}$ | $\approx 0,57^\circ$ | $T_2 \approx 628,3\text{ token}$ | **Teleskop / Akrep İbresi:** Çok yavaş döner; yüzlerce token boyunca cümlenin başı ile sonu arasındaki sırayı korur. |
+| **1. Çift ($j=1$, 1–2. kanallar)** | $1,0\text{ rad}$ | $\approx 57,3^\circ$ | $T_1 = 2\pi / 1,0 \approx 6,28\text{ token}$ | **Saniye İbresi (Mikroskop):** Hızlı döner; komşu kelimeleri ("The" $\to$ "dog") keskin biçimde ayırır. |
+| **2. Çift ($j=2$, 3–4. kanallar)** | $0,1\text{ rad}$ | $\approx 5,73^\circ$ | $T_2 = 2\pi / 0,1 \approx 62,83\text{ token}$ | **Hızlı Yelkovan:** Yan tümceler ve cümle içi mesafeleri (10–60 token) ölçer. |
+| **3. Çift ($j=3$, 5–6. kanallar)** | $0,01\text{ rad}$ | $\approx 0,57^\circ$ | $T_3 = 2\pi / 0,01 \approx 628,3\text{ token}$ | **Yavaş Yelkovan:** Paragraf düzeyindeki ilişkileri korur. |
+| **4. Çift ($j=4$, 7–8. kanallar)** | $0,001\text{ rad}$ | $\approx 0,057^\circ$ | $T_4 = 2\pi / 0,001 \approx 6283,2\text{ token}$ | **Akrep İbresi (Teleskop):** Çok yavaş döner; binlerce token boyunca küresel sırayı korur. |
 
-**`rope_theta` (taban frekans) neden 10.000'den 500.000 veya 1.000.000'a çıkarıldı?**
-LLaMA 1 ve 2 döneminde bağlam penceresi 2.048 veya 4.096 token ile sınırlıydı ve
-`base = 10000` yeterliydi. Fakat LLaMA 3 ve Gemma 3 bağlamı 131.072 (128k)
-token'a uzattığında, `base = 10000` kullanılsaydı en yavaş akrep ibreleri bile
-yüzlerce kez tam tur atarak yönlerini şaşırır ve **faz çakışmasına (phase
-wrapping)** düşerdi. Tabanın `1.000.000` yapılması, en yavaş ibrenin periyodunu
-milyonlarca token'a uzatarak devasa kitaplarda bile her pozisyona benzersiz bir
-açısal damga vurulmasını sağlar.
+**`rope_theta` Neden 10.000'den 1 Milyona Çıkarıldı?**
+LLaMA 1 döneminde modeller yalnızca 2.048 token okuyabiliyordu; en yavaş ibrenin tam bir turu ($6.283$ token) bu uzunluk için yeterliydi. Fakat LLaMA 3 ve Gemma 3 bağlamı **131.072 (128k) token'a** çıkardığında, $10.000$ tabanı yetersiz kaldı; çünkü en yavaş akrep ibreleri bile onlarca kez tam tur atarak yönünü şaşırır ve **faz çakışmasına (phase wrapping)** düşerdi. Tabanın `1.000.000` yapılması, en yavaş akrebin bir tam turunu **milyonlarca token'a** yayar; böylece 128k'lık dev belgelerde bile hiçbir pozisyon bir diğeriyle aynı açıya denk gelmez.
 
-**Frekans vektöre adım adım nasıl uygulanır? 4 adımlı dönüşüm hattı:**
-$m$ pozisyonundaki bir $\mathbf{x} = [x_1, x_2, x_3, x_4]^T$ girdi vektörünü
-dönüştürmek için şu 4 adım işletilir:
+---
 
-1. **2D çiftlere ayırma:** Kanallar bağımsız düzlemler halinde gruplanır:
+#### 4. Frekansın Vektöre Uygulanışı: 4 Adımlı Dönüşüm Hattı
+
+Bir token'ın ham 8 boyutlu vektörü $\mathbf{x} = [x_1, x_2, x_3, x_4, x_5, x_6, x_7, x_8]^T$ verildiğinde, $m$. pozisyon için RoPE şu 4 adımla uygulanır:
+
+1. **2D Çiftlere Ayır:** Vektörü 4 bağımsız düzlem halinde grupla:
    - 1. Çift: $(x_1, x_2)$
    - 2. Çift: $(x_3, x_4)$
-2. **$m$ pozisyonu için açıları ($\phi_j$) hesaplama:**
-   Her koordinat çiftinin dönüş açısı, pozisyon numarası ile açısal hızın çarpımıdır:
-   $$\phi_1(m) = m \cdot \theta_1 = m \times 1,0 \text{ rad}, \quad \phi_2(m) = m \cdot \theta_2 = m \times 0,01 \text{ rad}$$
-3. **Her çifti kendi düzleminde döndürme (2D rotasyon formülü):**
-   $$\begin{pmatrix} \tilde{x}_1 \\ \tilde{x}_2 \end{pmatrix} = \begin{pmatrix} \cos(\phi_1) & -\sin(\phi_1) \\ \sin(\phi_1) & \cos(\phi_1) \end{pmatrix} \begin{pmatrix} x_1 \\ x_2 \end{pmatrix} = \begin{pmatrix} x_1 \cos(\phi_1) - x_2 \sin(\phi_1) \\ x_1 \sin(\phi_1) + x_2 \cos(\phi_1) \end{pmatrix}$$
-   $$\begin{pmatrix} \tilde{x}_3 \\ \tilde{x}_4 \end{pmatrix} = \begin{pmatrix} \cos(\phi_2) & -\sin(\phi_2) \\ \sin(\phi_2) & \cos(\phi_2) \end{pmatrix} \begin{pmatrix} x_3 \\ x_4 \end{pmatrix} = \begin{pmatrix} x_3 \cos(\phi_2) - x_4 \sin(\phi_2) \\ x_3 \sin(\phi_2) + x_4 \cos(\phi_2) \end{pmatrix}$$
-4. **Blok-köşegen rotasyon matrisi $\mathbf{R}_{\Theta, m}^{4}$ ile birleştirme:**
-   Tüm 2D rotasyonlar bir arada tek bir matris çarpımı olarak ifade edilebilir:
-   $$\mathbf{R}_{\Theta, m}^{4} = \begin{bmatrix} \cos(m\theta_1) & -\sin(m\theta_1) & 0 & 0 \\ \sin(m\theta_1) & \cos(m\theta_1) & 0 & 0 \\ 0 & 0 & \cos(m\theta_2) & -\sin(m\theta_2) \\ 0 & 0 & \sin(m\theta_2) & \cos(m\theta_2) \end{bmatrix}$$
-   Bu matrisin köşegeninde iki adet $2 \times 2$'lik rotasyon bloğu yer alır;
-   kalan tüm hücreler sıfırdır. Vektör bu matrisle çarpıldığında her koordinat
-   çifti yalnızca kendi düzleminde döner, kanallar birbirine karışmaz.
+   - 3. Çift: $(x_5, x_6)$
+   - 4. Çift: $(x_7, x_8)$
+2. **Açıları Hesapla:** Pozisyon numarasıyla açısal hızları çarp:
+   $$\phi_1(m) = m \times 1,0, \quad \phi_2(m) = m \times 0,1, \quad \phi_3(m) = m \times 0,01, \quad \phi_4(m) = m \times 0,001$$
+3. **Her Çifti Kendi Açısıyla Döndür (2D trigonometri):**
+   $$\begin{pmatrix} \tilde{x}_1 \\ \tilde{x}_2 \end{pmatrix} = \begin{pmatrix} x_1 \cos(\phi_1) - x_2 \sin(\phi_1) \\ x_1 \sin(\phi_1) + x_2 \cos(\phi_1) \end{pmatrix}, \quad \begin{pmatrix} \tilde{x}_3 \\ \tilde{x}_4 \end{pmatrix} = \begin{pmatrix} x_3 \cos(\phi_2) - x_4 \sin(\phi_2) \\ x_3 \sin(\phi_2) + x_4 \cos(\phi_2) \end{pmatrix}$$
+   $$\begin{pmatrix} \tilde{x}_5 \\ \tilde{x}_6 \end{pmatrix} = \begin{pmatrix} x_5 \cos(\phi_3) - x_6 \sin(\phi_3) \\ x_5 \sin(\phi_3) + x_6 \cos(\phi_3) \end{pmatrix}, \quad \begin{pmatrix} \tilde{x}_7 \\ \tilde{x}_8 \end{pmatrix} = \begin{pmatrix} x_7 \cos(\phi_4) - x_8 \sin(\phi_4) \\ x_7 \sin(\phi_4) + x_8 \cos(\phi_4) \end{pmatrix}$$
+4. **Matris Olarak Birleştir:** Bu 4 bağımsız dönüş, tek bir blok-köşegen matris çarpımı olarak yazılabilir:
+   $$\mathbf{R}_{\Theta, m}^{8} = \begin{bmatrix} \mathbf{R}_{\phi_1} & 0 & 0 & 0 \\ 0 & \mathbf{R}_{\phi_2} & 0 & 0 \\ 0 & 0 & \mathbf{R}_{\phi_3} & 0 \\ 0 & 0 & 0 & \mathbf{R}_{\phi_4} \end{bmatrix}, \quad \text{burada } \mathbf{R}_{\phi_j} = \begin{bmatrix} \cos(m\theta_j) & -\sin(m\theta_j) \\ \sin(m\theta_j) & \cos(m\theta_j) \end{bmatrix}$$
+   Köşegendeki 4 adet $2 \times 2$'lik döndürme bloğu dışında her yer sıfırdır; kanallar birbirine taşmadan sadece kendi düzleminde döner.
 
-Bu dönüşümü 6 token'lık dizimize uygulayalım:
+Bu dönüşümü 6 token'lık dizimize adım adım uygulayalım:
 
-**Slot 0 ($m = 0$): "The"**
-- Açılar: $\phi_1 = 0 \times 1,0 = 0,0 \text{ rad}$ ($\cos = 1,0000, \sin = 0,0000$), $\phi_2 = 0 \times 0,01 = 0,00 \text{ rad}$ ($\cos = 1,00000, \sin = 0,0000$)
-- Dönüşüm:
-  $$x_{0, 1} = 0,80(1,0000) - 0,60(0,0000) = 0,8000, \quad x_{0, 2} = 0,80(0,0000) + 0,60(1,0000) = 0,6000$$
-  $$x_{0, 3} = 0,50(1,00000) - 0,50(0,0000) = 0,5000, \quad x_{0, 4} = 0,50(0,0000) + 0,50(1,00000) = 0,5000$$
-  $$\mathbf{x}_{\text{rotated}(0)} = [0,8000, \ 0,6000, \ 0,5000, \ 0,5000]^T \implies \text{Norm} = \mathbf{1,2247} \quad (\text{Korundu})$$
+**Slot 0 ($m = 0$): "The" — Adım Adım Hesaplama**
+- **Ham vektör:** $\mathbf{x}_{(0)} = [0,80, \ 0,60, \ 0,40, \ 0,20, \ 0,50, \ 0,10, \ 0,30, \ 0,20]^T$
+- **Açıların hesabı ($m = 0$ olduğu için tüm açılar $0$ radyan):**
+  - $\phi_1(0) = 0 \times 1,0 = 0,0\text{ rad} \implies \cos(0) = 1,0, \quad \sin(0) = 0,0$
+  - $\phi_2(0) = 0 \times 0,1 = 0,0\text{ rad} \implies \cos(0) = 1,0, \quad \sin(0) = 0,0$
+  - $\phi_3(0) = 0 \times 0,01 = 0,0\text{ rad} \implies \cos(0) = 1,0, \quad \sin(0) = 0,0$
+  - $\phi_4(0) = 0 \times 0,001 = 0,0\text{ rad} \implies \cos(0) = 1,0, \quad \sin(0) = 0,0$
+- **4 çiftin bağımsız 2D rotasyon hesabı:**
+  - 1. Çift: $\tilde{x}_1 = 0,80(1,0) - 0,60(0,0) = 0,8000, \quad \tilde{x}_2 = 0,80(0,0) + 0,60(1,0) = 0,6000$
+  - 2. Çift: $\tilde{x}_3 = 0,40(1,0) - 0,20(0,0) = 0,4000, \quad \tilde{x}_4 = 0,40(0,0) + 0,20(1,0) = 0,2000$
+  - 3. Çift: $\tilde{x}_5 = 0,50(1,0) - 0,10(0,0) = 0,5000, \quad \tilde{x}_6 = 0,50(0,0) + 0,10(1,0) = 0,1000$
+  - 4. Çift: $\tilde{x}_7 = 0,30(1,0) - 0,20(0,0) = 0,3000, \quad \tilde{x}_8 = 0,30(0,0) + 0,20(1,0) = 0,2000$
+- **Döndürülmüş vektör ve korunan norm:**
+  $$\mathbf{x}_{\text{rotated}(0)} = [0,8000, \ 0,6000, \ 0,4000, \ 0,2000, \ 0,5000, \ 0,1000, \ 0,3000, \ 0,2000]^T$$
+  $$\Vert \mathbf{x}_{\text{rotated}(0)}\Vert = \sqrt{0,80^2 + 0,60^2 + 0,40^2 + 0,20^2 + 0,50^2 + 0,10^2 + 0,30^2 + 0,20^2} = \sqrt{1,59} \approx \mathbf{1,2610} \quad (\text{Kuruşu kuruşuna korundu})$$
 
-**Slot 1 ($m = 1$): "dog"**
-- Açılar: $\phi_1 = 1 \times 1,0 = 1,0 \text{ rad}$ ($\cos \approx 0,5403, \sin \approx 0,8415$), $\phi_2 = 1 \times 0,01 = 0,01 \text{ rad}$ ($\cos \approx 0,99995, \sin \approx 0,0100$)
-- Dönüşüm:
-  $$x_{1, 1} = 0,70(0,5403) - 0,10(0,8415) = 0,2941, \quad x_{1, 2} = 0,70(0,8415) + 0,10(0,5403) = 0,6431$$
-  $$x_{1, 3} = 0,40(0,99995) - 0,80(0,0100) = 0,3920, \quad x_{1, 4} = 0,40(0,0100) + 0,80(0,99995) = 0,8040$$
-  $$\mathbf{x}_{\text{rotated}(1)} = [0,2941, \ 0,6431, \ 0,3920, \ 0,8040]^T \implies \text{Norm} = \mathbf{1,1402} \quad (\text{Korundu})$$
+**Slot 1 ($m = 1$): "dog" — Adım Adım Hesaplama**
+- **Ham vektör:** $\mathbf{x}_{(1)} = [0,70, \ 0,10, \ 0,30, \ 0,50, \ 0,20, \ 0,40, \ 0,60, \ 0,10]^T$
+- **Açıların hesabı ($m = 1$ adımı):**
+  - $\phi_1(1) = 1 \times 1,0 = 1,0\text{ rad} \implies \cos(1,0) \approx 0,5403, \quad \sin(1,0) \approx 0,8415$
+  - $\phi_2(1) = 1 \times 0,1 = 0,1\text{ rad} \implies \cos(0,1) \approx 0,9950, \quad \sin(0,1) \approx 0,0998$
+  - $\phi_3(1) = 1 \times 0,01 = 0,01\text{ rad} \implies \cos(0,01) \approx 1,0000, \quad \sin(0,01) \approx 0,0100$
+  - $\phi_4(1) = 1 \times 0,001 = 0,001\text{ rad} \implies \cos(0,001) \approx 1,0000, \quad \sin(0,001) \approx 0,0010$
+- **4 çiftin bağımsız 2D rotasyon hesabı:**
+  - 1. Çift: $\tilde{x}_1 = 0,70(0,5403) - 0,10(0,8415) = 0,2941, \quad \tilde{x}_2 = 0,70(0,8415) + 0,10(0,5403) = 0,6431$
+  - 2. Çift: $\tilde{x}_3 = 0,30(0,9950) - 0,50(0,0998) = 0,2486, \quad \tilde{x}_4 = 0,30(0,0998) + 0,50(0,9950) = 0,5275$
+  - 3. Çift: $\tilde{x}_5 = 0,20(1,0000) - 0,40(0,0100) = 0,1960, \quad \tilde{x}_6 = 0,20(0,0100) + 0,40(1,0000) = 0,4020$
+  - 4. Çift: $\tilde{x}_7 = 0,60(1,0000) - 0,10(0,0010) = 0,5999, \quad \tilde{x}_8 = 0,60(0,0010) + 0,10(1,0000) = 0,1006$
+- **Döndürülmüş vektör ve korunan norm:**
+  $$\mathbf{x}_{\text{rotated}(1)} = [0,2941, \ 0,6431, \ 0,2486, \ 0,5275, \ 0,1960, \ 0,4020, \ 0,5999, \ 0,1006]^T \implies \Vert \mathbf{x}_{\text{rotated}(1)}\Vert = \sqrt{1,41} \approx \mathbf{1,1874} \quad (\text{Korundu})$$
 
 **Slot 2 ($m = 2$): "chased"**
-- Açılar: $\phi_1 = 2 \times 1,0 = 2,0 \text{ rad}$ ($\cos \approx -0,4161, \sin \approx 0,9093$), $\phi_2 = 2 \times 0,01 = 0,02 \text{ rad}$ ($\cos \approx 0,99980, \sin \approx 0,0200$)
-- Dönüşüm:
-  $$x_{2, 1} = 0,50(-0,4161) - 0,80(0,9093) = -0,9355, \quad x_{2, 2} = 0,50(0,9093) + 0,80(-0,4161) = 0,1217$$
-  $$x_{2, 3} = 0,30(0,99980) - 0,60(0,0200) = 0,2879, \quad x_{2, 4} = 0,30(0,0200) + 0,60(0,99980) = 0,6059$$
-  $$\mathbf{x}_{\text{rotated}(2)} = [-0,9355, \ 0,1217, \ 0,2879, \ 0,6059]^T \implies \text{Norm} = \mathbf{1,1576} \quad (\text{Korundu})$$
+- Açılar: $\phi_1 = 2,0\text{ rad}, \ \phi_2 = 0,2\text{ rad}, \ \phi_3 = 0,02\text{ rad}, \ \phi_4 = 0,002\text{ rad}$
+- $\mathbf{x}_{\text{rotated}(2)} = [-0,9355, \ 0,1217, \ 0,1364, \ 0,3338, \ 0,3959, \ 0,2080, \ 0,0990, \ 0,5002]^T \implies \text{Norm} = \mathbf{1.2166} \quad (\text{Korundu})$
 
 **Slot 3 ($m = 3$): "the"**
-- Açılar: $\phi_1 = 3 \times 1,0 = 3,0 \text{ rad}$ ($\cos \approx -0,9900, \sin \approx 0,1411$), $\phi_2 = 3 \times 0,01 = 0,03 \text{ rad}$ ($\cos \approx 0,99955, \sin \approx 0,0300$)
-- Dönüşüm:
-  $$x_{3, 1} = 0,80(-0,9900) - 0,60(0,1411) = -0,8767, \quad x_{3, 2} = 0,80(0,1411) + 0,60(-0,9900) = -0,4811$$
-  $$x_{3, 3} = 0,50(0,99955) - 0,50(0,0300) = 0,4848, \quad x_{3, 4} = 0,50(0,0300) + 0,50(0,99955) = 0,5148$$
-  $$\mathbf{x}_{\text{rotated}(3)} = [-0,8767, \ -0,4811, \ 0,4848, \ 0,5148]^T \implies \text{Norm} = \mathbf{1,2247} \quad (\text{Korundu})$$
+- Açılar: $\phi_1 = 3,0\text{ rad}, \ \phi_2 = 0,3\text{ rad}, \ \phi_3 = 0,03\text{ rad}, \ \phi_4 = 0,003\text{ rad}$
+- $\mathbf{x}_{\text{rotated}(3)} = [-0,8767, \ -0,4811, \ 0,3230, \ 0,3093, \ 0,4968, \ 0,1150, \ 0,2994, \ 0,2009]^T \implies \text{Norm} = \mathbf{1.2610} \quad (\text{Korundu})$
 
 **Slot 4 ($m = 4$): "black"**
-- Açılar: $\phi_1 = 4 \times 1,0 = 4,0 \text{ rad}$ ($\cos \approx -0,6536, \sin \approx -0,7568$), $\phi_2 = 4 \times 0,01 = 0,04 \text{ rad}$ ($\cos \approx 0,99920, \sin \approx 0,0400$)
-- Dönüşüm:
-  $$x_{4, 1} = 0,60(-0,6536) - 0,20(-0,7568) = -0,2408, \quad x_{4, 2} = 0,60(-0,7568) + 0,20(-0,6536) = -0,5848$$
-  $$x_{4, 3} = 0,70(0,99920) - 0,30(0,0400) = 0,6874, \quad x_{4, 4} = 0,70(0,0400) + 0,30(0,99920) = 0,3278$$
-  $$\mathbf{x}_{\text{rotated}(4)} = [-0,2408, \ -0,5848, \ 0,6874, \ 0,3278]^T \implies \text{Norm} = \mathbf{0,9899} \quad (\text{Korundu})$$
+- Açılar: $\phi_1 = 4,0\text{ rad}, \ \phi_2 = 0,4\text{ rad}, \ \phi_3 = 0,04\text{ rad}, \ \phi_4 = 0,004\text{ rad}$
+- $\mathbf{x}_{\text{rotated}(4)} = [-0,2408, \ -0,5848, \ 0,4216, \ 0,2868, \ 0,2758, \ 0,6115, \ 0,1984, \ 0,4008]^T \implies \text{Norm} = \mathbf{1.1446} \quad (\text{Korundu})$
 
 **Slot 5 ($m = 5$): "cat"**
-- Açılar: $\phi_1 = 5 \times 1,0 = 5,0 \text{ rad}$ ($\cos \approx 0,2837, \sin \approx -0,9589$), $\phi_2 = 5 \times 0,01 = 0,05 \text{ rad}$ ($\cos \approx 0,99875, \sin \approx 0,0500$)
-- Dönüşüm:
-  $$x_{5, 1} = 0,30(0,2837) - 0,90(-0,9589) = 0,9481, \quad x_{5, 2} = 0,30(-0,9589) + 0,90(0,2837) = -0,0324$$
-  $$x_{5, 3} = 0,60(0,99875) - 0,20(0,0500) = 0,5893, \quad x_{5, 4} = 0,60(0,0500) + 0,20(0,99875) = 0,2297$$
-  $$\mathbf{x}_{\text{rotated}(5)} = [0,9481, \ -0,0324, \ 0,5893, \ 0,2297]^T \implies \text{Norm} = \mathbf{1,1402} \quad (\text{Korundu})$$
+- Açılar: $\phi_1 = 5,0\text{ rad}, \ \phi_2 = 0,5\text{ rad}, \ \phi_3 = 0,05\text{ rad}, \ \phi_4 = 0,005\text{ rad}$
+- $\mathbf{x}_{\text{rotated}(5)} = [0,9481, \ -0,0324, \ -0,1040, \ 0,3990, \ 0,4894, \ 0,2247, \ 0,3995, \ 0,1020]^T \implies \text{Norm} = \mathbf{1.2369} \quad (\text{Korundu})$
 
 **Referans PyTorch uygulaması: $O(d)$ sürede RoPE hesaplama.** Üretimdeki LLM'lerde
-(LLaMA, Gemma, Mistral) $\mathbf{R}_{\Theta, m}^{d}$ yoğun matris çarpımı hiçbir zaman
-açıkça oluşturulmaz. Bunun yerine döndürme işlemi, Query ($Q$) ve Key ($K$)
-tensörlerine eleman düzeyinde vektör işlemleriyle doğrudan $O(d)$ karmaşıklığında
-uygulanır:
+(LLaMA, Gemma, Mistral) $\mathbf{R}_{\Theta, m}^{d}$ yoğun matrisi asla bellekte
+oluşturulmaz. Bunun yerine rotasyon işlemi doğrudan vektör dilimleri üzerinde
+$O(d)$ karmaşıklıkla işletilir. Makalemizdeki hesaplamaları doğrudan test etmek
+isteyenler için metindeki 6 kelimelik 8 boyutlu mock tensörle birlikte kod şöyledir:
 
 ```python
 import torch
@@ -570,68 +559,106 @@ def get_rotary_position_encoding(
     device: str = "cpu"
 ) -> torch.Tensor:
     """
-    [context_length, dimension] şeklindeki tensöre RoPE (Rotary Position Embedding) uygular.
-    
-    LLaMA ve Hugging Face standardı olan ikiye bölme (split-half) düzenini kullanır:
-      - İlk yarı:  input[:, :dimension // 2]
-      - İkinci yarı: input[:, dimension // 2:]
+    Applies Rotary Position Embedding (RoPE) to a tensor of shape [context_length, dimension].
+    Makaledeki ardışık 2D çiftler (interleaved) kurgusuyla birebir eşleşir:
+      - 1. Çift: (x1, x2) = (input[:, 0], input[:, 1])
+      - 2. Çift: (x3, x4) = (input[:, 2], input[:, 3])
+      - 3. Çift: (x5, x6) = (input[:, 4], input[:, 5])
+      - 4. Çift: (x7, x8) = (input[:, 6], input[:, 7])
     """
     context_length, dimension = input.shape
-    assert dimension % 2 == 0, "Boyut (dimension) çift sayı olmalıdır"
+    assert dimension % 2 == 0, "Boyut çift sayı olmalıdır"
 
     half_dimension = dimension // 2
 
-    # 1. Adım: Her 2D alt uzay için temel açısal frekanslar:
-    # theta_j = 1 / (base ** (2 * j / dimension))
+    # Adım 1: Her 2D alt uzay için temel açısal frekanslar (theta_j = 1 / base^(2j/d))
     freqs_indices = torch.arange(0, half_dimension, device=device, dtype=torch.float32)
     freqs = 1.0 / (base ** (2.0 * freqs_indices / dimension))
 
-    # 2. Adım: Dış çarpımla açı ızgarası: phi(m, j) = m * theta_j
-    # Şekil: [context_length, 1] * [1, half_dimension] -> [context_length, half_dimension]
+    # Adım 2: Pozisyonlar ile frekansların dış çarpımı: phi(m, j) = m * theta_j
     positions = torch.arange(0, context_length, device=device, dtype=torch.float32).unsqueeze(1)
     angles = positions * freqs
 
     sin_angles = torch.sin(angles)
     cos_angles = torch.cos(angles)
 
-    # 3. Adım: Vektörü iki eşit yarıya ayırma (i. kanalı i + d/2 kanalıyla eşler):
-    input_first = input[:, :half_dimension]
-    input_second = input[:, half_dimension:]
+    # Adım 3: Ardışık 2D çiftlerin (çift ve tek indekslerin) ayrılması:
+    x_even = input[:, 0::2]  # kanallar 0, 2, 4, 6 (x1, x3, x5, x7)
+    x_odd  = input[:, 1::2]  # kanallar 1, 3, 5, 7 (x2, x4, x6, x8)
 
-    # 4. Adım: 2D rotasyon matrisi formülü:
-    # [x1']   [cos  -sin] [x1]   [x1 * cos - x2 * sin]
-    # [x2'] = [sin   cos] [x2] = [x1 * sin + x2 * cos]
-    input_first_rotated = input_first * cos_angles - input_second * sin_angles
-    input_second_rotated = input_first * sin_angles + input_second * cos_angles
+    # 2D rotasyon formülü: [x1*cos - x2*sin, x1*sin + x2*cos]
+    x_even_rotated = x_even * cos_angles - x_odd * sin_angles
+    x_odd_rotated  = x_even * sin_angles + x_odd * cos_angles
 
-    # 5. Adım: Döndürülmüş kanalları yeniden birleştirme
+    # Adım 4: Özgün kanal düzenine geri birleştirme
     input_rotated = torch.empty_like(input)
-    input_rotated[:, :half_dimension] = input_first_rotated
-    input_rotated[:, half_dimension:] = input_second_rotated
+    input_rotated[:, 0::2] = x_even_rotated
+    input_rotated[:, 1::2] = x_odd_rotated
 
     return input_rotated
 
-# Gösterim: 6 token'ın tamamında kesin norm koruma testi
-torch.manual_seed(1)
-context_length = 6
-random_input = torch.randn(context_length, 4)
+# -------------------------------------------------------------
+# Makaledeki 6 Token'lık 8 Boyutlu Mock Verilerle Doğrulama:
+# ["The", "dog", "chased", "the", "black", "cat"]
+# -------------------------------------------------------------
+mock_embeddings = torch.tensor([
+    [0.80, 0.60, 0.40, 0.20, 0.50, 0.10, 0.30, 0.20],  # Slot 0 ("The")
+    [0.70, 0.10, 0.30, 0.50, 0.20, 0.40, 0.60, 0.10],  # Slot 1 ("dog")
+    [0.50, 0.80, 0.20, 0.30, 0.40, 0.20, 0.10, 0.50],  # Slot 2 ("chased")
+    [0.80, 0.60, 0.40, 0.20, 0.50, 0.10, 0.30, 0.20],  # Slot 3 ("the")
+    [0.60, 0.20, 0.50, 0.10, 0.30, 0.60, 0.20, 0.40],  # Slot 4 ("black")
+    [0.30, 0.90, 0.10, 0.40, 0.50, 0.20, 0.40, 0.10],  # Slot 5 ("cat")
+], dtype=torch.float32)
 
-pos_rotary_encodings = get_rotary_position_encoding(random_input)
+# RoPE uygula:
+pos_rotary_encodings = get_rotary_position_encoding(mock_embeddings)
 
-# Doğrulama: Normlar rotasyondan önce ve sonra birebir aynıdır
-print("Orijinal normlar:  ", random_input.norm(dim=-1))
-print("Döndürülmüş normlar:", pos_rotary_encodings.norm(dim=-1))
-assert torch.allclose(random_input.norm(dim=-1), pos_rotary_encodings.norm(dim=-1))
+print("Ham Girdi Vektörleri:\n", mock_embeddings)
+print("\nDöndürülmüş Vektörler (RoPE):\n", pos_rotary_encodings.round(decimals=4))
+
+# Doğrulama: Normlar rotasyondan önce ve sonra birebir aynıdır (%0 sapma)
+print("\nOrijinal normlar:  ", mock_embeddings.norm(dim=-1).round(decimals=4))
+print("Döndürülmüş normlar:", pos_rotary_encodings.norm(dim=-1).round(decimals=4))
+assert torch.allclose(mock_embeddings.norm(dim=-1), pos_rotary_encodings.norm(dim=-1))
 ```
 
-> **Uygulama Notu (Aralıklı / Interleaved ve İkiye Bölme / Split-Half):** Orijinal
-> RoFormer makalesi (Su et al.) ardışık boyutları $(x_0, x_1), (x_2, x_3)$ adım
-> atlamalı dilimlerle (`input[:, 0::2]` ve `input[:, 1::2]`) eşleştirmiştir. Modern
-> üretim kütüphaneleri (LLaMA, Hugging Face `rotate_half`) ise tensörü tam ortadan
-> ikiye böler (`[:dimension//2]` ve `[dimension//2:]`). Her iki yöntem de özdeş
-> matematiksel özelliklere sahip bağımsız $d/2$ adet 2D düzlem dönüşü gerçekleştirir;
-> ancak ortadan ikiye bölme GPU bellek birleştirmesini (coalescing) koruduğundan
-> çok daha hızlı çalışır.
+> **Üretim Ortamı Notu 1: Gemma 3 ve LLaMA'da RoPE Gerçekte Nereye Uygulanır?**  
+> Bu bölümde sezgiyi canlı tutmak için RoPE'u doğrudan kelime gömme vektörlerine
+> uyguladık. Ancak üretim modellerinde (Gemma 3, LLaMA, Mistral, Qwen) RoPE kelime
+> arama tablosuna **kesinlikle uygulanmaz**. Bunun yerine, dikkat (attention)
+> katmanındaki **Query ($Q$) ve Key ($K$)** vektörlerine doğrudan her dikkat
+> başlığında (attention head) ayrı ayrı uygulanır; Değer ($V$) vektörleri ise
+> döndürülmez. Böylece dilin öz anlamsal içeriği ile geometrik pozisyonu, dikkat
+> iç çarpımının tam hesaplandığı âna kadar birbirinden tertemiz ayrılmış kalır.
+
+> **Üretim Ortamı Notu 2: İki Farklı Dilimleme Deseni — Aralıklı (Interleaved) vs. İkiye Bölmeli (Split-Half)**  
+> Pratik kodlamada 8 boyutlu (veya üretimdeki 128 boyutlu) vektörün 2D çiftlere nasıl
+> bölündüğü konusunda LLM dünyasında iki farklı ekol vardır:
+> 
+> 1. **Aralıklı / Birer Boşluklu (Interleaved / GPT-J ve Orijinal RoFormer Stili):**
+>    Vektörün ardışık kanalları yan yana çiftlenir: $(x_0, x_1), (x_2, x_3), (x_4, x_5), (x_6, x_7)$.
+>    PyTorch'ta tek ve çift indeks dilimleriyle (`input[:, 0::2]` ve `input[:, 1::2]`) işletilir.
+>    Su et al.'ın orijinal **RoFormer** makalesinde ve EleutherAI'ın **GPT-J** modelinde bu desen kullanılmıştır.
+>    Matematiksel ve geometrik açıdan 2D rotasyon matrisini doğrudan yansıttığı için kavraması en kolay formdur
+>    (makalemizdeki kod da bu sezgisel yapıyı temel almıştır).
+> 
+> 2. **İkiye Bölmeli / Yarı Yarıya (Split-Half / Rotate-Half / LLaMA, Gemma, Mistral Stili):**
+>    Vektör tam ortadan ikiye kesilir: birinci yarı $[0 \dots d/2-1]$ ile ikinci yarı $[d/2 \dots d-1]$.
+>    $i$. kanal ile $(i + d/2)$. kanal bir 2D çift oluşturur: $(x_i, x_{i + d/2})$.
+>    PyTorch'ta `input[:, :d//2]` ve `input[:, d//2:]` şeklinde dilimlenir.
+>    **LLaMA (Meta)**, **Gemma (Google)**, **Mistral**, **Qwen** ve Hugging Face Transformers
+>    kütüphanesindeki meşhur `rotate_half` fonksiyonu bu deseni kullanır.
+> 
+> **Peki modern modeller neden ikiye bölmeyi (split-half) tercih etti?**  
+> Cevap tamamen **GPU bellek mimarisidir (memory coalescing)**: GPU donanımında (CUDA ve Triton
+> çekirdeklerinde) bellekte peş peşe duran bitişik (contiguous) blokları okumak (`[:d//2]`),
+> atlamalı bellek adreslerini okumaktan (`0::2`) katbekat daha hızlıdır; önbellek satırlarını parçalamaz.
+> 
+> *Önemli Mühendislik Notu:* İki yöntem de uzayda $d/2$ adet bağımsız 2D rotasyon yaptığı için matematiksel
+> olarak tamamen **izomorftur** (özdeş temsil gücüne sahiptir). Ancak kanal eşleşmeleri farklı olduğundan,
+> "interleaved" formatında eğitilmiş ağırlıklar "split-half" çalıştıran bir motorda doğrudan kullanılamaz.
+> İşte bu nedenle Hugging Face'in LLaMA ağırlık dönüştürücüsünde (`convert_llama_weights_to_hf.py`),
+> tensör boyutlarını bu iki düzen arasında hizalayan özel bir matris permütasyon adımı (`permute`) yer alır.
 
 ### Göreli mesafenin doğal kazanımı
 
@@ -649,37 +676,36 @@ Bunu cümlemiz üzerinden doğrudan doğrulayabiliriz. "dog" ($m = 1$)
 sorgusunun "cat" ($n = 5$) anahtarına dikkatini ele alalım:
 - Göreli mesafe: $n - m = 5 - 1 = 4$ yuva.
 - Göreli rotasyon operatörü $\mathbf{R}_{5-1} = \mathbf{R}_4$ devreye girer:
-  - 1. alt uzay göreli açısı: $\Delta\phi_1 = 4 \times 1,0 = 4,0 \text{ rad}$
-  - 2. alt uzay göreli açısı: $\Delta\phi_2 = 4 \times 0,01 = 0,04 \text{ rad}$
+  - 1. alt uzay göreli açısı: $\Delta\phi_1 = 4 \times 1,0 = 4,0\text{ rad}$
+  - 2. alt uzay göreli açısı: $\Delta\phi_2 = 4 \times 0,1 = 0,4\text{ rad}$
+  - 3. alt uzay göreli açısı: $\Delta\phi_3 = 4 \times 0,01 = 0,04\text{ rad}$
+  - 4. alt uzay göreli açısı: $\Delta\phi_4 = 4 \times 0,001 = 0,004\text{ rad}$
 
 Bu token çifti ister $1 \to 5$ indekslerinde, isterse 128k'lık bir belgenin
 $10.001 \to 10.005$ indekslerinde yer alsın; $(n - m) = 4$ değişmez kalır.
 Mutlak pozisyonlar ($m=1, n=5$) iç çarpım hesabından tamamen düşer; yalnızca
-aralarındaki tam 4 adımlık göreli ilişki hesaplanır. Ayrıca yan yana duran
-kelime çiftleri — örneğin "The" ($m=0$) $\to$ "dog" ($n=1$) ve "the" ($m=3$) $\to$
-"black" ($n=4$) — her ikisi de $(n - m) = 1$ adım farkına sahiptir ve özdeş
-pozisyonel rotasyon dönüşümünü paylaşır.
+aralarındaki tam 4 adımlık göreli ilişki hesaplanır.
 
 ### Üç yöntemin karşılaştırma tablosu
 
 | Metrik / Davranış | A. Learned Absolute | B. Sinusoidal | C. RoPE |
 | :--- | :---: | :---: | :---: |
-| **Slot 0 ("The") Çıktısı** | `[0,80, 0,80, 0,60, 0,50]` | `[0,80, 1,60, 0,50, 1,50]` | `[0,80, 0,60, 0,50, 0,50]` |
-| **Slot 0 Normu** | 1,37 | 2,39 | **1,22 (%0 kayma)** |
-| **Slot 1 ("dog") Çıktısı** | `[0,90, 0,00, 0,40, 0,90]` | `[1,54, 0,64, 0,41, 1,80]` | `[0,29, 0,64, 0,39, 0,80]` |
-| **Slot 1 Normu** | 1,33 | 2,49 | **1,14 (%0 kayma)** |
-| **Slot 2 ("chased") Normu** | 1,21 | 2,19 | **1,16 (%0 kayma)** |
-| **Slot 3 ("the") Normu** | 1,35 | 1,89 | **1,22 (%0 kayma)** |
-| **Slot 4 ("black") Normu** | 1,08 | 1,57 | **0,99 (%0 kayma)** |
-| **Slot 5 ("cat") Normu** | 1,24 | 1,92 | **1,14 (%0 kayma)** |
+| **Slot 0 ("The") Çıktısı** | `[0,80, 0,80, 0,50, 0,20, 0,60, 0,00, 0,30, 0,30]` | `[0,80, 1,60, 0,40, 1,20, 0,50, 1,10, 0,30, 1,20]` | `[0,80, 0,60, 0,40, 0,20, 0,50, 0,10, 0,30, 0,20]` |
+| **Slot 0 Normu** | 1,45 | 2,79 | **1,26 (%0 kayma)** |
+| **Slot 1 ("dog") Çıktısı** | `[0,90, 0,00, 0,30, 0,60, 0,10, 0,50, 0,70, 0,10]` | `[1,54, 0,64, 0,40, 1,50, 0,21, 1,40, 0,60, 1,10]` | `[0,29, 0,64, 0,25, 0,53, 0,20, 0,40, 0,60, 0,10]` |
+| **Slot 1 Normu** | 1,42 | 2,96 | **1,19 (%0 kayma)** |
+| **Slot 2 ("chased") Normu** | 1,33 | 2,79 | **1,22 (%0 kayma)** |
+| **Slot 3 ("the") Normu** | 1,40 | 2,42 | **1,26 (%0 kayma)** |
+| **Slot 4 ("black") Normu** | 1,23 | 2,60 | **1,14 (%0 kayma)** |
+| **Slot 5 ("cat") Normu** | 1,41 | 2,63 | **1,24 (%0 kayma)** |
 | **Vektör Boyu Şişti mi?** | Evet | Evet (Aşırı) | **Hayır (Kesinlikle Korundu)** |
 | **Göreli Mesafe Doğal mı?** | Hayır | Kısmen | **Evet (Tam $n-m$)** |
 | **Eğitilebilir Parametre** | $L_{\max} \times d_{\text{model}}$ | 0 | **0** |
 
 **Vektör boyu neden bozulmamalı (norm koruma).** Dikkat puanı iç çarpımla
-hesaplanır: $\mathbf{u} \cdot \mathbf{v} = \Vert{}\mathbf{u}\Vert{} \Vert{}\mathbf{v}\Vert{} \cos(\theta)$.
-B yöntemindeki gibi bir vektörün normunun $1,22$'den $2,39$'a şişmesi,
-ölçeklenmemiş iç çarpımlarını yaklaşık 4 katına çıkararak softmax'i aşırı
+hesaplanır: $\mathbf{u} \cdot \mathbf{v} = \Vert \mathbf{u}\Vert \Vert \mathbf{v}\Vert \cos(\theta)$.
+B yöntemindeki gibi bir vektörün normunun $1,26$'dan $2,96$'ya kadar şişmesi,
+ölçeklenmemiş iç çarpımlarını yaklaşık 5 katına çıkararak softmax'i aşırı
 doygunluğa (saturation) iter. Tek bir token dikkat dağılımını tekeline alırken
 diğerlerinin gradyanı sıfırlanır. RoPE, vektörleri uzatıp bükmeden geometrik
 yüzeylerde döndürür ve normu tertemiz başlangıç büyüklüğünde kilitler.
@@ -692,18 +718,13 @@ aynı kalır. Bu çift farkı ($(n - m)$) modele üç temel yetenek kazandırır
 1. **Kayma değişmezliği (translation invariance):** Dil yapıları kaymaya
    duyarsızdır. $(n - m) = 1$ tıpatıp aynı $\mathbf{R}_1$ dönüşünü ürettiğinden,
    model belgenin neresinde olursa olsun özdeş sözdizimsel dikkati uygular.
-2. **Eğitim sınırının ötesine genelleme (extrapolation):** Öğrenilmiş mutlak
-   tablolar 2.049. yuvada çöker, çünkü 2.049 indeksi için ağırlık tahsis
-   edilmemiştir. RoPE'ta model 100.001 pozisyonunu asla bilinmeyen bir varlık
-   olarak görmez; ön eğitimde milyarlarca kez gördüğü tanıdık $(n - m) = 2$
-   aralığını değerlendirir.
-3. **Doğal frekans sönümlenmesi (decay):** Hızlı dönen boyutlar
+2. **Bağlam dışdeğerleme (extrapolation):** Mutlak pozisyon tabloları eğitim
+   uzunluğu ($L_{\max}$) ile sınırlıyken, göreli rotasyon açıları periyodik
+   olarak sonsuz uzunluktaki diziler boyunca işlemeye devam eder.
+3. **Doğal uzunluk sönümlenmesi (decay):** Hızlı dönen boyutlar
    ($\theta_1 = 1,0$) süratle salınarak yerel sözdizimini yalıtır. Yavaş dönen
-   boyutlar ($\theta_2 = 0,01$) ise adım başına neredeyse $0,01$ radyan
-   dönerek gürültüye dönüşmeden binlerce token boyunca uzun menzilli anlamsal
-   bütünlüğü korur.
-
----
+   boyutlar ($\theta_4 = 0,001$) ise binlerce token boyunca genel anlamsal
+   bağlamı canlı tutar.
 
 ## 5. Kayıp sıçramaları ve WeSaR
 

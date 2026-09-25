@@ -188,8 +188,8 @@ those weights.**
 
 ### Q, K, V — the mechanism, with numbers
 
-Within each attention layer, three learned weight matrices ($W_Q, W_K,
-W_V$) project each token's embedding into three distinct vectors:
+Within each attention layer, three learned weight matrices ($W_Q, W_K, W_V$)
+project each token's embedding into three distinct vectors:
 
 - **Query (Q):** "What kind of information am I looking to collect?"
 - **Key (K):** "What kind of information do I advertise to others?"
