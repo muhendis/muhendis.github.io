@@ -593,9 +593,9 @@ yerden başlayın: sıradaki token'dan.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — klasikleşmiş görsel anlatım.
 - Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — bütün makinenin sıfırdan Python ile inşası.
 - Bu blogda birbiriyle konuşan diğer derinlemesine incelemeler:
-  - [Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir) — metinden token ID'sine uzanan BPE masası.
-  - [Embedding katmanı derinlemesine](post.html?slug=embedding-katmani-derinlemesine) — ayrık sayılardan sürekli geometriye ve $\sqrt{d_{\text{model}}}$ ölçeklemesine.
-  - [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve çok boyutlu vektör uzayları.
+  - [Bir Prompt'un Yolculuğu (1): Tokenizasyon](post.html?slug=tokenizasyon-nasil-calisir) — metinden token ID'sine uzanan BPE masası.
+  - [Bir Prompt'un Yolculuğu (2): Embedding Katmanı](post.html?slug=embedding-katmani-derinlemesine) — ayrık sayılardan sürekli geometriye ve $\sqrt{d_{\text{model}}}$ ölçeklemesine.
+  - [Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve çok boyutlu vektör uzayları.
   - [vLLM derinlemesine](post.html?slug=vllm-derinlemesine) — PagedAttention, blok tabloları ve KV cache yönetimi.
   - [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu) — TTFT, ITL, bellek duvarı ve prefix caching.
   - [Post-training quantization](post.html?slug=post-training-quantization-llm-cikarim) — FP16'dan INT4'e ağırlık ve KV cache sıkıştırması.

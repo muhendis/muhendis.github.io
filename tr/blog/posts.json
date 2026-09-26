@@ -1,26 +1,56 @@
 {
   "lang": "tr",
-  "updated": "2026-09-20",
-  "posts": [
+  "updated": "2026-09-26",
+  "series": [
     {
-      "slug": "embedding-katmani-derinlemesine",
-      "title": "LLM'de embedding katmanı: Gemma 3 üzerinden mimari ve dinamikler",
-      "date": "2026-09-20",
-      "summary": "Ne: embed_tokens, ayrık token ID'lerini bir transformer'ın işleyebileceği sürekli vektörlere çeviren katman ve lm_head, onları geri izdüşüren bağlı matris. Neden önemli: 1B modelin parametrelerinin ~%30'udur, hiç çarpma yapmaz ve forward'ının içinde saklanan sqrt(d_model) ölçeklemesini iki kez uygulamak çok kolaydır. Nasıl: lookup table mekaniği ve tensör boyutları, ölçekleme ve PyTorch tuzağı, konumsal kodlamanın RoPE'a kadarki üç kuşağı, loss spike'lar ve WeSaR, eğitim ile servis arasındaki maliyet ayrımı. Nerede: Gemma 3 üzerinden inceleme; sayılar model config'inden. Kim için: model servis eden, ince ayar yapan ya da checkpoint taşıyan mühendisler. Ne zaman: VRAM bütçesi tutmadığında, sadakatle taşınan ağırlıklar yine de saçma çıktı verdiğinde ya da ön eğitimde kayıp fırladığında.",
-      "tags": [
-        "llm",
-        "mimari",
-        "embedding",
-        "pytorch"
-      ],
-      "readingMinutes": 16,
-      "translationSlug": "inside-the-embedding-layer",
-      "draft": false
+      "id": "bir-promptun-yolculugu",
+      "title": "Bir Prompt'un Yolculuğu",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), oradan anlamsal vektör uzayına 3 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "3 Bölümlük Seri",
+      "posts": [
+        "tokenizasyon-nasil-calisir",
+        "embedding-katmani-derinlemesine",
+        "embeddingler-derinlemesine"
+      ]
     },
     {
+      "id": "uretimde-llm-sistemleri",
+      "title": "Üretimde LLM Sistemleri",
+      "summary": "Demodan prodüksiyona geçerken patlayan maliyet ve gecikmelerden (TTFT, TPOT, batching) modern çıkarım motorlarının (vLLM, continuous batching, prefix caching) derinliklerine sistem mühendisliği.",
+      "badge": "2 Bölümlük Seri",
+      "posts": [
+        "llm-maliyet-ve-gecikme-optimizasyonu",
+        "vllm-derinlemesine"
+      ]
+    },
+    {
+      "id": "promptingden-ajanlara",
+      "title": "Prompting'den Otonom Ajanlara",
+      "summary": "Akıl yürütme tekniklerinden (CoT, ReAct) güvenilir bir otonom ajan sistem prompt'unun 8 katmanlı sözleşmesine ve üretim disiplinine geçiş.",
+      "badge": "2 Bölümlük Seri",
+      "posts": [
+        "prompting-teknikleri",
+        "ajan-promptunun-anatomisi"
+      ]
+    },
+    {
+      "id": "rag-ve-bilgi-erisimi",
+      "title": "RAG ve Bilgi Erişimi",
+      "summary": "Vektör veritabanlarının iç mimarisinden (HNSW, filtreler, CRUD) üretim kalitesinde RAG hatlarına ve 4 temel arıza ailesinin çözüm desenlerine uçtan uca arama mimarisi.",
+      "badge": "2 Bölümlük Seri",
+      "posts": [
+        "vektor-veritabani-derinlemesine",
+        "hangi-rag-deseni"
+      ]
+    }
+  ],
+  "posts": [
+    {
       "slug": "tokenizasyon-nasil-calisir",
-      "title": "Tokenizasyon nasıl çalışır: her prompt'un modelden önce uğradığı masa",
+      "title": "Bir Prompt'un Yolculuğu (1): Tokenizasyon — kelimelerden tamsayılara, BPE mekaniği ve fertility",
       "date": "2026-09-19",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 1,
       "summary": "En güçlü model hâlâ \"strawberry\" kelimesindeki r'leri yanlış sayıyor ve sebebi akıl yürütme değil: kelime ilk katmana ulaştığında çoktan üç tamsayıya dönüşmüştü ve girdide hiç bulunmayan bir şeyi sayamazsınız. Bu yazı tokenizer masasının içinden geçiyor — sabit bir vocabulary neden zorunlu, BPE onu sık çiftleri birleştirerek nasıl kuruyor, WordPiece ve Unigram nerede farklı karar veriyor, vocabulary boyutu parametre olarak ne götürüp dizi uzunluğu olarak ne kazandırıyor, tiktoken ile ölçülmüş Türkçe fertility rakamları, prompt'un düzeltemediği arızalar (glitch token'lar ve tokenizer.json kurcalaması dâhil) ve bir token ID'sinin sonunda nasıl vektöre dönüştüğü.",
       "tags": [
         "llm",
@@ -33,84 +63,28 @@
       "draft": false
     },
     {
-      "slug": "vllm-derinlemesine",
-      "title": "vLLM derinlemesine: motorun içi, önemli ayar kolları ve sizi önceden uyaran metrikler",
-      "date": "2026-09-04",
-      "summary": "GPU %92 dolu görünüyor ama işlem hacmi benchmark'ın üçte biri; üstelik hiç alarm kurmadığınız bir sayaç — num_preemptions_total — salıdan beri tırmanıyor. Bu yazı vLLM'in etrafından değil içinden geçiyor: blok tablosu ve prefix cache hash'leri, V1 scheduler'ının tek token bütçesi, bir kapasite sinyali olarak preemption, TTFT ile token arası gecikme ve işlem hacmi arasındaki ayar üçgeni, kapasite planlaması için KV cache aritmetiği ve SGLang ya da TensorRT-LLM'in ne zaman kazandığının dürüst haritası.",
+      "slug": "embedding-katmani-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (2): Embedding Katmanı — token ID'lerinden sürekli vektörlere, lookup tablosu ve RoPE",
+      "date": "2026-09-20",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 2,
+      "summary": "Ne: embed_tokens, ayrık token ID'lerini bir transformer'ın işleyebileceği sürekli vektörlere çeviren katman ve lm_head, onları geri izdüşüren bağlı matris. Neden önemli: 1B modelin parametrelerinin ~%30'udur, hiç çarpma yapmaz ve forward'ının içinde saklanan sqrt(d_model) ölçeklemesini iki kez uygulamak çok kolaydır. Nasıl: lookup table mekaniği ve tensör boyutları, ölçekleme ve PyTorch tuzağı, konumsal kodlamanın RoPE'a kadarki üç kuşağı, loss spike'lar ve WeSaR, eğitim ile servis arasındaki maliyet ayrımı. Nerede: Gemma 3 üzerinden inceleme; sayılar model config'inden. Kim için: model servis eden, ince ayar yapan ya da checkpoint taşıyan mühendisler. Ne zaman: VRAM bütçesi tutmadığında, sadakatle taşınan ağırlıklar yine de saçma çıktı verdiğinde ya da ön eğitimde kayıp fırladığında.",
       "tags": [
         "llm",
-        "çıkarım",
-        "vllm",
-        "mimari"
+        "mimari",
+        "embedding",
+        "pytorch"
       ],
-      "readingMinutes": 14,
-      "translationSlug": "vllm-from-paper-to-production",
-      "draft": false
-    },
-    {
-      "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
-      "title": "LLM maliyet ve gecikme optimizasyonu: para ve milisaniyeler gerçekte nereye gidiyor",
-      "date": "2026-09-04",
-      "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Bu yazı bütün yığını risk sırasıyla geziyor — TTFT, TPOT, Goodput ve bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler), model katmanları arasında routing, serving odası (disaggregation, PagedAttention), doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı.",
-      "tags": [
-        "llm",
-        "çıkarım",
-        "maliyet",
-        "mimari"
-      ],
-      "readingMinutes": 18,
-      "translationSlug": "optimizing-llm-cost-and-latency",
-      "draft": false
-    },
-    {
-      "slug": "prompting-teknikleri",
-      "title": "Prompting teknikleri: chain-of-thought'tan akıl yürüten modellere",
-      "date": "2026-09-03",
-      "summary": "Alanın en ünlü prompt tavsiyesi tek cümledir: 'adım adım düşün' ekleyin. 2022'de benchmark puanlarını dörde katlıyordu; bugünün modelleri siz istemeden düşünüyor ve aynı tavsiye 'yedek yöntem' rafında. Bu yazı bilinmeye değer tekniklerin — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — kompakt bir turu: akıl yürüten modellerin hangilerini yuttuğu, prompt'unuzda hâlâ ne olması gerektiği ve belirtiden çözüme götüren üç soruluk teşhis.",
-      "tags": [
-        "llm",
-        "prompt",
-        "akıl-yürütme",
-        "temeller"
-      ],
-      "readingMinutes": 6,
-      "translationSlug": "prompting-techniques",
-      "draft": false
-    },
-    {
-      "slug": "vektor-veritabani-derinlemesine",
-      "title": "Vektör veritabanı derinlemesine: vektör yığınından milisaniyede top-k'ye",
-      "date": "2026-09-03",
-      "summary": "FAISS demosu milisaniyede kusursuz cevap verir — sonra üretim bir silme talebi, bir müşteri filtresi ve dünkü yüklemeyle gelir ve demo dağılır. Bu yazı dizinin etrafındaki binayı geziyor: tek bir sorgunun hayatı, hangi dizin ailesinin hangi bedeli ödediği, filtrelerin top-k'yi neden sessizce aç bıraktığı, canlı verinin ne istediği, ölçeğin neye benzediği — ve bir vektör veritabanına gerçekten ihtiyacınız olup olmadığını söyleyen dört basamaklı merdiven.",
-      "tags": [
-        "llm",
-        "vektör-veritabanı",
-        "erişim",
-        "altyapı"
-      ],
-      "readingMinutes": 11,
-      "translationSlug": "what-a-vector-database-actually-does",
-      "draft": false
-    },
-    {
-      "slug": "ajan-promptunun-anatomisi",
-      "title": "Ajan prompt'unun anatomisi: ajanı güvenilir yapan sekiz bölüm",
-      "date": "2026-09-03",
-      "summary": "Bir talimatı tutup diğerinde haddini aşan ajan çoğu zaman sözleşme değil, dilek taşıyordur. Bu yazı sistem prompt'unu dört kata dizilmiş sekiz bölüm olarak kuruyor: rol, kapsam, ilkeler, iş akışı, araçlar, çıktı formatı, belirsizlik ve örnekler — her bölümün kötü ve iyi sürümü, sonda baştan sona tam bir prompt ve ajanları sessizce bozan hatalarla birlikte.",
-      "tags": [
-        "llm",
-        "ajanlar",
-        "prompt",
-        "temeller"
-      ],
-      "readingMinutes": 11,
-      "translationSlug": "anatomy-of-an-agent-prompt",
+      "readingMinutes": 16,
+      "translationSlug": "inside-the-embedding-layer",
       "draft": false
     },
     {
       "slug": "embeddingler-derinlemesine",
-      "title": "Embedding'ler derinlemesine: anlamın geometrisi",
-      "date": "2026-09-01",
+      "title": "Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler — anlamın koordinatları, kosinüs mesafesi ve HNSW arama uzayı",
+      "date": "2026-09-21",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 3,
       "summary": "Her RAG boru hattı, üzerinde 'embed' yazan bir kutuya güvenir. Bu yazı o kutuyu açıyor: bir cümle anlam haritasında nasıl tek noktaya dönüşür, haritayı contrastive eğitim nasıl çizer, kosinüs puanı gerçekte ne söyler, HNSW komşuları milisaniyede nasıl bulur, hangi düğme belleği kaliteyle takas eder — ve geometri nerede kör kalır.",
       "tags": [
         "llm",
@@ -123,9 +97,96 @@
       "draft": false
     },
     {
+      "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
+      "title": "Üretimde LLM Sistemleri (1): Maliyet ve Gecikme Anatomisi — TTFT, TPOT, prompt caching ve model yönlendirme",
+      "date": "2026-09-04",
+      "seriesId": "uretimde-llm-sistemleri",
+      "seriesPart": 1,
+      "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Bu yazı bütün yığını risk sırasıyla geziyor — TTFT, TPOT, Goodput ve bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler), model katmanları arasında routing, serving odası (disaggregation, PagedAttention), doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı.",
+      "tags": [
+        "llm",
+        "çıkarım",
+        "maliyet",
+        "mimari"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "optimizing-llm-cost-and-latency",
+      "draft": false
+    },
+    {
+      "slug": "vllm-derinlemesine",
+      "title": "Üretimde LLM Sistemleri (2): vLLM Motor Mimarisi — continuous batching, prefix cache ve KV bellek yönetimi",
+      "date": "2026-09-05",
+      "seriesId": "uretimde-llm-sistemleri",
+      "seriesPart": 2,
+      "summary": "GPU %92 dolu görünüyor ama işlem hacmi benchmark'ın üçte biri; üstelik hiç alarm kurmadığınız bir sayaç — num_preemptions_total — salıdan beri tırmanıyor. Bu yazı vLLM'in etrafından değil içinden geçiyor: blok tablosu ve prefix cache hash'leri, V1 scheduler'ının tek token bütçesi, bir kapasite sinyali olarak preemption, TTFT ile token arası gecikme ve işlem hacmi arasındaki ayar üçgeni, kapasite planlaması için KV cache aritmetiği ve SGLang ya da TensorRT-LLM'in ne zaman kazandığının dürüst haritası.",
+      "tags": [
+        "llm",
+        "çıkarım",
+        "vllm",
+        "mimari"
+      ],
+      "readingMinutes": 14,
+      "translationSlug": "vllm-from-paper-to-production",
+      "draft": false
+    },
+    {
+      "slug": "prompting-teknikleri",
+      "title": "Prompting'den Ajanlara (1): Akıl Yürütme ve Prompting — Chain-of-Thought, ReAct ve akıl yürüten modeller çağı",
+      "date": "2026-09-03",
+      "seriesId": "promptingden-ajanlara",
+      "seriesPart": 1,
+      "summary": "Alanın en ünlü prompt tavsiyesi tek cümledir: 'adım adım düşün' ekleyin. 2022'de benchmark puanlarını dörde katlıyordu; bugünün modelleri siz istemeden düşünüyor ve aynı tavsiye 'yedek yöntem' rafında. Bu yazı bilinmeye değer tekniklerin — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — kompakt bir turu: akıl yürüten modellerin hangilerini yuttuğu, prompt'unuzda hâlâ ne olması gerektiği ve belirtiden çözüme götüren üç soruluk teşhis.",
+      "tags": [
+        "llm",
+        "prompt",
+        "akıl-yürütme",
+        "temeller"
+      ],
+      "readingMinutes": 6,
+      "translationSlug": "prompting-techniques",
+      "draft": false
+    },
+    {
+      "slug": "ajan-promptunun-anatomisi",
+      "title": "Prompting'den Ajanlara (2): Ajan Prompt'unun Anatomisi — sistem sözleşmesi, araç sınırları ve 8 yapı taşı",
+      "date": "2026-09-04",
+      "seriesId": "promptingden-ajanlara",
+      "seriesPart": 2,
+      "summary": "Bir talimatı tutup diğerinde haddini aşan ajan çoğu zaman sözleşme değil, dilek taşıyordur. Bu yazı sistem prompt'unu dört kata dizilmiş sekiz bölüm olarak kuruyor: rol, kapsam, ilkeler, iş akışı, araçlar, çıktı formatı, belirsizlik ve örnekler — her bölümün kötü ve iyi sürümü, sonda baştan sona tam bir prompt ve ajanları sessizce bozan hatalarla birlikte.",
+      "tags": [
+        "llm",
+        "ajanlar",
+        "prompt",
+        "temeller"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "anatomy-of-an-agent-prompt",
+      "draft": false
+    },
+    {
+      "slug": "vektor-veritabani-derinlemesine",
+      "title": "RAG ve Bilgi Erişimi (1): Vektör Veritabanı Mimarisi — ANN indekslerinden metadata filtreleme ve canlı veriye",
+      "date": "2026-09-02",
+      "seriesId": "rag-ve-bilgi-erisimi",
+      "seriesPart": 1,
+      "summary": "FAISS demosu milisaniyede kusursuz cevap verir — sonra üretim bir silme talebi, bir müşteri filtresi ve dünkü yüklemeyle gelir ve demo dağılır. Bu yazı dizinin etrafındaki binayı geziyor: tek bir sorgunun hayatı, hangi dizin ailesinin hangi bedeli ödediği, filtrelerin top-k'yi neden sessizce aç bıraktığı, canlı verinin ne istediği, ölçeğin neye benzediği — ve bir vektör veritabanına gerçekten ihtiyacınız olup olmadığını söyleyen dört basamaklı merdiven.",
+      "tags": [
+        "llm",
+        "vektör-veritabanı",
+        "erişim",
+        "altyapı"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "what-a-vector-database-actually-does",
+      "draft": false
+    },
+    {
       "slug": "hangi-rag-deseni",
-      "title": "Hangi RAG desenine gerçekten ihtiyacınız var?",
-      "date": "2026-09-01",
+      "title": "RAG ve Bilgi Erişimi (2): Üretimde RAG Desenleri — 4 temel hata teşhisi, HyDE, hybrid arama ve reranking",
+      "date": "2026-09-03",
+      "seriesId": "rag-ve-bilgi-erisimi",
+      "seriesPart": 2,
       "summary": "RAG hataları sonsuz görünür; aslında yalnızca dört hata ailesi vardır. Bu yazı, belirtiden yola çıkarak doğru deseni seçtiren bir karar rehberi: HyDE'den hybrid arama ve reranking'e, reordering'den routing ve self-reflection'a, her desenin neyi düzelttiğini ve bedelinin ne olduğunu anlatıyor.",
       "tags": [
         "llm",
@@ -141,6 +202,7 @@
       "slug": "llm-nasil-calisir",
       "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
       "date": "2026-08-29",
+      "seriesId": null,
       "summary": "Tüm makine tek bir okumada: token'lar, embedding'ler, attention mekanizması, prefill ve decode fazları, KV cache matematiği, örnekleme stratejileri ve modellerin neden uydurduğu.",
       "tags": [
         "llm",
@@ -155,6 +217,7 @@
       "slug": "langgraph-llm-uygulamalari",
       "title": "LangGraph ile LLM uygulamalarında akış tasarımı",
       "date": "2026-08-29",
+      "seriesId": null,
       "summary": "Zincirden çizgeye geçmek ne kazandırıyor: durumu açık tutmak, dallanma ve ajan tasarımında ölçü.",
       "tags": [
         "llm",
@@ -169,6 +232,7 @@
       "slug": "post-training-quantization-llm-cikarim",
       "title": "LLM çıkarımında post-training quantization (eğitim sonrası nicemleme)",
       "date": "2026-08-29",
+      "seriesId": null,
       "summary": "Büyük bir dil modelini sunmak bellek bant genişliği darboğazına çarpar. Aktivasyon aykırı değerlerinin (outliers) naif nicemlemeyi neden bozduğuna ve modern GPU'larda gecikmeyi gerçekte neyin düşürdüğüne dair notlar.",
       "tags": [
         "llm",

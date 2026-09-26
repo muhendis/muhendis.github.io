@@ -1,26 +1,56 @@
 {
   "lang": "en",
-  "updated": "2026-09-20",
-  "posts": [
+  "updated": "2026-09-26",
+  "series": [
     {
-      "slug": "inside-the-embedding-layer",
-      "title": "The embedding layer in an LLM: architecture and dynamics on Gemma 3",
-      "date": "2026-09-20",
-      "summary": "What: embed_tokens, the layer that turns discrete token IDs into the continuous vectors a transformer can process, and lm_head, the tied matrix that projects them back. Why it matters: it is ~30% of a 1B model's parameters, performs no multiplication, and the sqrt(d_model) scaling hidden inside its forward is easy to apply twice. How: lookup table mechanics and tensor shapes, the scaling and its PyTorch trap, the three generations of positional encoding up to RoPE, loss spikes and WeSaR, and the cost split between training and serving. Where: a Gemma 3 walkthrough with every number from the model config. Who for: engineers serving models, fine-tuning them, or porting checkpoints. When: when the VRAM budget does not add up, when a faithful weight port still produces garbage, or when loss spikes during pre-training.",
-      "tags": [
-        "llm",
-        "architecture",
-        "embeddings",
-        "pytorch"
-      ],
-      "readingMinutes": 16,
-      "translationSlug": "embedding-katmani-derinlemesine",
-      "draft": false
+      "id": "a-prompts-journey",
+      "title": "A Prompt's Journey",
+      "summary": "A 3-part architectural journey from the desk every prompt passes before the model (tokenization), from integers to continuous geometry and RoPE (embedding layer), to the semantic vector space.",
+      "badge": "3-Part Series",
+      "posts": [
+        "how-tokenization-works",
+        "inside-the-embedding-layer",
+        "how-embeddings-work"
+      ]
     },
     {
+      "id": "llm-systems-in-production",
+      "title": "LLM Systems in Production",
+      "summary": "From runaway costs and p95 latency spikes (TTFT, TPOT, batching) to the engine room of modern serving engines (vLLM, continuous batching, prefix caching).",
+      "badge": "2-Part Series",
+      "posts": [
+        "optimizing-llm-cost-and-latency",
+        "vllm-from-paper-to-production"
+      ]
+    },
+    {
+      "id": "from-prompting-to-agents",
+      "title": "From Prompting to Autonomous Agents",
+      "summary": "From classical reasoning heuristics (CoT, ReAct) to the rigorous 8-section contract that makes autonomous agent system prompts reliable in production.",
+      "badge": "2-Part Series",
+      "posts": [
+        "prompting-techniques",
+        "anatomy-of-an-agent-prompt"
+      ]
+    },
+    {
+      "id": "rag-and-retrieval",
+      "title": "RAG & Retrieval Architecture",
+      "summary": "From the internal mechanics of vector databases (HNSW, metadata filters, live CRUD) to production-grade RAG pipelines and diagnosing the four root failure families.",
+      "badge": "2-Part Series",
+      "posts": [
+        "what-a-vector-database-actually-does",
+        "which-rag-pattern-do-you-need"
+      ]
+    }
+  ],
+  "posts": [
+    {
       "slug": "how-tokenization-works",
-      "title": "How tokenization works: the desk every prompt passes before the model sees it",
+      "title": "A Prompt's Journey (1): Tokenization — from text to integers, BPE mechanics, and fertility",
       "date": "2026-09-19",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 1,
       "summary": "A frontier model still miscounts the r's in \"strawberry\", and the reason is not reasoning: by the time the word reached the first layer it had become three integers, and you cannot count what was never in the input. This article works through the tokenizer desk — why a fixed vocabulary must exist, how BPE builds it by merging frequent pairs, where WordPiece and Unigram decide differently, what vocabulary size costs in parameters and buys in sequence length, measured Turkish fertility numbers from tiktoken, the failure modes prompting cannot fix including glitch tokens and tokenizer.json tampering, and how a token ID finally becomes a vector.",
       "tags": [
         "llm",
@@ -33,84 +63,28 @@
       "draft": false
     },
     {
-      "slug": "vllm-from-paper-to-production",
-      "title": "vLLM from paper to production: inside the engine, the knobs that matter, and the metrics that warn you",
-      "date": "2026-09-04",
-      "summary": "The GPU reads 92% allocated yet throughput is a third of the benchmark, and a counter you never alerted on — num_preemptions_total — has been climbing since Tuesday. This article goes inside vLLM instead of around it: the block table and prefix-cache hashes, the V1 scheduler's single token budget, preemption as a capacity signal, the tuning triangle between TTFT, inter-token latency, and throughput, KV-cache arithmetic for capacity planning, and an honest map of when SGLang or TensorRT-LLM wins instead.",
+      "slug": "inside-the-embedding-layer",
+      "title": "A Prompt's Journey (2): The Embedding Layer — from token IDs to continuous vectors, lookup tables, and RoPE",
+      "date": "2026-09-20",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 2,
+      "summary": "What: embed_tokens, the layer that turns discrete token IDs into the continuous vectors a transformer can process, and lm_head, the tied matrix that projects them back. Why it matters: it is ~30% of a 1B model's parameters, performs no multiplication, and the sqrt(d_model) scaling hidden inside its forward is easy to apply twice. How: lookup table mechanics and tensor shapes, the scaling and its PyTorch trap, the three generations of positional encoding up to RoPE, loss spikes and WeSaR, and the cost split between training and serving. Where: a Gemma 3 walkthrough with every number from the model config. Who for: engineers serving models, fine-tuning them, or porting checkpoints. When: when the VRAM budget does not add up, when a faithful weight port still produces garbage, or when loss spikes during pre-training.",
       "tags": [
         "llm",
-        "inference",
-        "vllm",
-        "architecture"
+        "architecture",
+        "embeddings",
+        "pytorch"
       ],
-      "readingMinutes": 14,
-      "translationSlug": "vllm-derinlemesine",
-      "draft": false
-    },
-    {
-      "slug": "optimizing-llm-cost-and-latency",
-      "title": "Optimizing LLM cost and latency: where the money and the milliseconds actually go",
-      "date": "2026-09-04",
-      "summary": "The demo cost cents and answered in a second; production brought a bill you didn't budget for and a p95 chart users feel. This article walks the whole stack in order of risk — TTFT, TPOT, Goodput and the two-phase anatomy of a call, the lossless wins (prompt caching, batch APIs), routing between model tiers, the serving room (disaggregation, PagedAttention), compressions that can hurt accuracy, and why agents multiply everything.",
-      "tags": [
-        "llm",
-        "inference",
-        "cost",
-        "architecture"
-      ],
-      "readingMinutes": 18,
-      "translationSlug": "llm-maliyet-ve-gecikme-optimizasyonu",
-      "draft": false
-    },
-    {
-      "slug": "prompting-techniques",
-      "title": "Prompting techniques: from chain-of-thought to reasoning models",
-      "date": "2026-09-03",
-      "summary": "The most famous prompt advice is one sentence: add 'think step by step'. In 2022 it quadrupled benchmark scores; today's models think before you ask, and the advice is filed under 'fallback'. A compact tour of the techniques worth knowing — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — which of them reasoning models absorbed, what still belongs in your prompt, and a three-question diagnosis from symptom to fix.",
-      "tags": [
-        "llm",
-        "prompts",
-        "reasoning",
-        "foundations"
-      ],
-      "readingMinutes": 6,
-      "translationSlug": "prompting-teknikleri",
-      "draft": false
-    },
-    {
-      "slug": "what-a-vector-database-actually-does",
-      "title": "What a vector database actually does: from a pile of vectors to a top-k in milliseconds",
-      "date": "2026-09-03",
-      "summary": "A FAISS demo answers perfectly in milliseconds — then production asks for a deletion, a tenant filter, and yesterday's upload, and the demo falls apart. This article walks through the building around the index: the life of one query, which index families pay which costs, why filters silently starve your top-k, what living data demands, what scale looks like — and a four-rung ladder for deciding whether you need a vector database at all.",
-      "tags": [
-        "llm",
-        "vector-database",
-        "retrieval",
-        "infrastructure"
-      ],
-      "readingMinutes": 11,
-      "translationSlug": "vektor-veritabani-derinlemesine",
-      "draft": false
-    },
-    {
-      "slug": "anatomy-of-an-agent-prompt",
-      "title": "Anatomy of an agent prompt: the eight sections that make agents reliable",
-      "date": "2026-09-03",
-      "summary": "An agent that ignores one instruction and overreaches another is usually carrying a wish, not a contract. This article structures the system prompt as eight sections on four floors — role, scope, principles, workflow, tools, output format, uncertainty, examples — with a bad and a good version of each, one complete prompt at the end, and the mistakes that quietly break agents.",
-      "tags": [
-        "llm",
-        "agents",
-        "prompts",
-        "foundations"
-      ],
-      "readingMinutes": 11,
-      "translationSlug": "ajan-promptunun-anatomisi",
+      "readingMinutes": 16,
+      "translationSlug": "embedding-katmani-derinlemesine",
       "draft": false
     },
     {
       "slug": "how-embeddings-work",
-      "title": "How embeddings work: the geometry of meaning",
-      "date": "2026-09-01",
+      "title": "A Prompt's Journey (3): Semantic Embeddings — the coordinates of meaning, cosine distance, and HNSW search space",
+      "date": "2026-09-21",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 3,
       "summary": "Every RAG pipeline trusts a box labeled 'embed'. This article opens it: how a sentence becomes a point on a map of meaning, how contrastive training draws the map, what a cosine score really tells you, how HNSW finds neighbors in milliseconds, which dials trade memory for quality — and where the geometry goes blind.",
       "tags": [
         "llm",
@@ -123,9 +97,96 @@
       "draft": false
     },
     {
+      "slug": "optimizing-llm-cost-and-latency",
+      "title": "LLM Systems in Production (1): Cost & Latency Anatomy — TTFT, TPOT, prompt caching, and model routing",
+      "date": "2026-09-04",
+      "seriesId": "llm-systems-in-production",
+      "seriesPart": 1,
+      "summary": "The demo cost cents and answered in a second; production brought a bill you didn't budget for and a p95 chart users feel. This article walks the whole stack in order of risk — TTFT, TPOT, Goodput and the two-phase anatomy of a call, the lossless wins (prompt caching, batch APIs), routing between model tiers, the serving room (disaggregation, PagedAttention), compressions that can hurt accuracy, and why agents multiply everything.",
+      "tags": [
+        "llm",
+        "inference",
+        "cost",
+        "architecture"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "llm-maliyet-ve-gecikme-optimizasyonu",
+      "draft": false
+    },
+    {
+      "slug": "vllm-from-paper-to-production",
+      "title": "LLM Systems in Production (2): Inside the vLLM Engine — continuous batching, prefix caching, and KV memory management",
+      "date": "2026-09-05",
+      "seriesId": "llm-systems-in-production",
+      "seriesPart": 2,
+      "summary": "The GPU reads 92% allocated yet throughput is a third of the benchmark, and a counter you never alerted on — num_preemptions_total — has been climbing since Tuesday. This article goes inside vLLM instead of around it: the block table and prefix-cache hashes, the V1 scheduler's single token budget, preemption as a capacity signal, the tuning triangle between TTFT, inter-token latency, and throughput, KV-cache arithmetic for capacity planning, and an honest map of when SGLang or TensorRT-LLM wins instead.",
+      "tags": [
+        "llm",
+        "inference",
+        "vllm",
+        "architecture"
+      ],
+      "readingMinutes": 14,
+      "translationSlug": "vllm-derinlemesine",
+      "draft": false
+    },
+    {
+      "slug": "prompting-techniques",
+      "title": "From Prompting to Agents (1): Reasoning & Prompting — Chain-of-Thought, ReAct, and the era of reasoning models",
+      "date": "2026-09-03",
+      "seriesId": "from-prompting-to-agents",
+      "seriesPart": 1,
+      "summary": "The most famous prompt advice is one sentence: add 'think step by step'. In 2022 it quadrupled benchmark scores; today's models think before you ask, and the advice is filed under 'fallback'. A compact tour of the techniques worth knowing — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — which of them reasoning models absorbed, what still belongs in your prompt, and a three-question diagnosis from symptom to fix.",
+      "tags": [
+        "llm",
+        "prompts",
+        "reasoning",
+        "foundations"
+      ],
+      "readingMinutes": 6,
+      "translationSlug": "prompting-teknikleri",
+      "draft": false
+    },
+    {
+      "slug": "anatomy-of-an-agent-prompt",
+      "title": "From Prompting to Agents (2): Anatomy of an Agent Prompt — system contracts, tool boundaries, and 8 building blocks",
+      "date": "2026-09-04",
+      "seriesId": "from-prompting-to-agents",
+      "seriesPart": 2,
+      "summary": "An agent that ignores one instruction and overreaches another is usually carrying a wish, not a contract. This article structures the system prompt as eight sections on four floors — role, scope, principles, workflow, tools, output format, uncertainty, examples — with a bad and a good version of each, one complete prompt at the end, and the mistakes that quietly break agents.",
+      "tags": [
+        "llm",
+        "agents",
+        "prompts",
+        "foundations"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "ajan-promptunun-anatomisi",
+      "draft": false
+    },
+    {
+      "slug": "what-a-vector-database-actually-does",
+      "title": "RAG & Retrieval Architecture (1): Vector Database Architecture — from ANN indexing to metadata filtering and live data",
+      "date": "2026-09-02",
+      "seriesId": "rag-and-retrieval",
+      "seriesPart": 1,
+      "summary": "A FAISS demo answers perfectly in milliseconds — then production asks for a deletion, a tenant filter, and yesterday's upload, and the demo falls apart. This article walks through the building around the index: the life of one query, which index families pay which costs, why filters silently starve your top-k, what living data demands, what scale looks like — and a four-rung ladder for deciding whether you need a vector database at all.",
+      "tags": [
+        "llm",
+        "vector-database",
+        "retrieval",
+        "infrastructure"
+      ],
+      "readingMinutes": 11,
+      "translationSlug": "vektor-veritabani-derinlemesine",
+      "draft": false
+    },
+    {
       "slug": "which-rag-pattern-do-you-need",
-      "title": "Which RAG pattern do you actually need?",
-      "date": "2026-09-01",
+      "title": "RAG & Retrieval Architecture (2): Production RAG Patterns — diagnosing 4 root failures, HyDE, hybrid search, and reranking",
+      "date": "2026-09-03",
+      "seriesId": "rag-and-retrieval",
+      "seriesPart": 2,
       "summary": "RAG failures look infinite; there are only four families. A symptom-first decision guide: HyDE, small-to-big, hybrid search and reranking, reordering, routing, self-reflection — what each one fixes, and what it costs.",
       "tags": [
         "llm",
@@ -141,6 +202,7 @@
       "slug": "how-llms-work",
       "title": "How LLMs actually work, in plain language",
       "date": "2026-08-29",
+      "seriesId": null,
       "summary": "The whole machine in one read: tokens, embeddings, attention mechanisms, prefill and decode phases, KV cache economics, sampling strategies, and why models hallucinate.",
       "tags": [
         "llm",
@@ -152,9 +214,25 @@
       "draft": false
     },
     {
+      "slug": "langgraph-flow-design-llm-applications",
+      "title": "Flow design in LLM applications with LangGraph",
+      "date": "2026-08-29",
+      "seriesId": null,
+      "summary": "What moving from chains to graphs buys you: explicit state management, conditional branching, and discipline in agent architecture.",
+      "tags": [
+        "llm",
+        "langgraph",
+        "langchain"
+      ],
+      "readingMinutes": 4,
+      "translationSlug": "langgraph-llm-uygulamalari",
+      "draft": true
+    },
+    {
       "slug": "post-training-quantization-llm-inference",
       "title": "Post-training quantization for LLM inference",
       "date": "2026-08-29",
+      "seriesId": null,
       "summary": "Serving an LLM is a memory-bandwidth problem. Notes on why activation outliers break naive quantization, and what actually moves latency on modern GPUs.",
       "tags": [
         "llm",
@@ -164,20 +242,6 @@
       ],
       "readingMinutes": 5,
       "translationSlug": "post-training-quantization-llm-cikarim",
-      "draft": true
-    },
-    {
-      "slug": "langgraph-flow-design-llm-applications",
-      "title": "Flow design in LLM applications with LangGraph",
-      "date": "2026-08-29",
-      "summary": "What moving from chains to graphs buys you: explicit state management, conditional branching, and discipline in agent architecture.",
-      "tags": [
-        "llm",
-        "langgraph",
-        "langchain"
-      ],
-      "readingMinutes": 4,
-      "translationSlug": "langgraph-llm-uygulamalari",
       "draft": true
     }
   ]

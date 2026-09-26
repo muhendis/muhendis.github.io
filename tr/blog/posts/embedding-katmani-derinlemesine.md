@@ -30,6 +30,10 @@ zıt yüzü.
   - [A. Öğrenilmiş mutlak pozisyon (GPT-2, BERT)](#a-öğrenilmiş-mutlak-pozisyon-gpt-2-bert)
   - [B. Sinüzoidal dalga (Vaswani et al., 2017)](#b-sinüzoidal-dalga-vaswani-et-al-2017)
   - [C. RoPE: Döner pozisyonel gömme (Gemma 3, Llama)](#c-rope-döner-pozisyonel-gömme-gemma-3-llama)
+    - [1. Temel Kural: Açı = Pozisyon × Açısal Hız](#1-temel-kural-açı--pozisyon--açısal-hız)
+    - [2. İki Boyutlu (2D) Düzlem Hilesi: 8 Boyut Nasıl Döndürülür?](#2-i̇ki-boyutlu-2d-düzlem-hilesi-8-boyut-nasıl-döndürülür)
+    - [3. Neden Tek Bir Hız Yetmez? Saat İbreleri Analojisi](#3-neden-tek-bir-hız-yetmez-saat-i̇breleri-analojisi)
+    - [4. Frekansın Vektöre Uygulanışı: 4 Adımlı Dönüşüm Hattı](#4-frekansın-vektöre-uygulanışı-4-adımlı-dönüşüm-hattı)
   - [Göreli mesafenin doğal kazanımı](#göreli-mesafenin-doğal-kazanımı)
   - [Üç yöntemin karşılaştırma tablosu](#üç-yöntemin-karşılaştırma-tablosu)
 - [5. Kayıp sıçramaları ve WeSaR](#5-kayıp-sıçramaları-ve-wesar)
@@ -898,4 +902,4 @@ Yazının temel kavramları, sezgi ve mühendislik sonuçlarıyla:
 - Su et al., [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864) (2021) — RoPE döner pozisyonel gömme mekaniği.
 - Nishida et al., [Initialization of Large Language Models via Reparameterization to Mitigate Loss Spikes](https://arxiv.org/abs/2410.05052) (2024) — WeSaR ve kayıp sıçramalarının analizi.
 - Google DeepMind, [Gemma 3 technical report](https://arxiv.org/abs/2503.19786) (2025) — Gemma 3 mimarisi ve çok modlu token genişlemesi.
-- Bu blogda: [Tokenizasyon nasıl çalışır](post.html?slug=tokenizasyon-nasil-calisir) — masanın bir önceki adımı: metinden token ID'sine —, [LLM nasıl çalışır](post.html?slug=llm-nasil-calisir) — vektörlerin katmanlar arasındaki yolculuğu — ve [Embedding'ler derinlemesine](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve vektör uzayları.
+- Bu blogda: [Bir Prompt'un Yolculuğu (1): Tokenizasyon](post.html?slug=tokenizasyon-nasil-calisir) — masanın bir önceki adımı: metinden token ID'sine —, [LLM nasıl çalışır](post.html?slug=llm-nasil-calisir) — vektörlerin katmanlar arasındaki yolculuğu — ve [Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler](post.html?slug=embeddingler-derinlemesine) — anlamsal arama ve vektör uzayları.

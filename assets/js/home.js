@@ -45,10 +45,28 @@
   fetch(BASE + '/posts.json', { cache: 'no-cache' })
     .then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); })
     .then(function (data) {
-      var posts = (data.posts || [])
-        .filter(function (p) { return !p.draft; })
-        .sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+      var posts = (data.posts || []).filter(function (p) { return !p.draft; });
       if (!posts.length) return;                 // all drafts: bio hero stands
+
+      // Series-aware sort so series stay together in sequence (1 -> 2 -> 3)
+      var seriesMaxDate = {};
+      posts.forEach(function (p) {
+        if (p.seriesId) {
+          if (!seriesMaxDate[p.seriesId] || p.date > seriesMaxDate[p.seriesId]) {
+            seriesMaxDate[p.seriesId] = p.date;
+          }
+        }
+      });
+
+      posts.sort(function (a, b) {
+        var aKey = a.seriesId ? seriesMaxDate[a.seriesId] : a.date;
+        var bKey = b.seriesId ? seriesMaxDate[b.seriesId] : b.date;
+        if (aKey !== bKey) return aKey < bKey ? 1 : -1;
+        if (a.seriesId && b.seriesId && a.seriesId === b.seriesId) {
+          return (a.seriesPart || 0) - (b.seriesPart || 0);
+        }
+        return a.date < b.date ? 1 : -1;
+      });
 
       var main = document.getElementById('main');
       var anchor = main && document.getElementById('about');
@@ -57,7 +75,10 @@
       // Featured story
       var feat = el('section', 'section featured');
       var fc = el('div', 'container');
-      fc.appendChild(el('p', 'eyebrow', T.featured));
+      var featEyebrow = posts[0].seriesId
+        ? (T.featured + (LANG === 'tr' ? ' · SERİ BAŞLANGICI' : ' · SERIES LAUNCH'))
+        : T.featured;
+      fc.appendChild(el('p', 'eyebrow', featEyebrow));
       var art = el('article', 'featured__article');
       var h2 = el('h2', 'featured__title');
       var a = el('a', null, posts[0].title);
@@ -79,7 +100,11 @@
         var grid = el('div', 'grid-auto');
         rest.forEach(function (p) {
           var card = el('article', 'card card--post');
-          if ((p.tags || []).length) card.appendChild(el('p', 'eyebrow', p.tags[0]));
+          if (p.seriesId) {
+            card.appendChild(el('p', 'eyebrow', (LANG === 'tr' ? 'SERİ · BÖLÜM ' : 'SERIES · PART ') + (p.seriesPart || '')));
+          } else if ((p.tags || []).length) {
+            card.appendChild(el('p', 'eyebrow', p.tags[0]));
+          }
           var t2 = el('h2', 'card__title');
           var ca = el('a', null, p.title);
           ca.href = postHref(p);

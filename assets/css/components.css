@@ -191,6 +191,186 @@ a.tag:hover { border-color: var(--c-accent); }
 .post-item--lead { grid-column: 1 / -1; border-bottom-width: 2px; }
 .post-item--lead .post-item__title { font-size: var(--fs-2xl); }
 
+/* ---- Series Showcase & Tracks ---- */
+.blog-header { margin-bottom: var(--sp-6); }
+.series-section { margin-top: var(--sp-6); margin-bottom: var(--sp-10); }
+.series-section[hidden] { display: none; }
+.series-cards {
+  display: grid;
+  gap: var(--sp-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+}
+
+.series-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-top: 3px solid var(--c-accent);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.series-card:hover {
+  border-color: var(--c-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.series-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.series-card__meta-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.series-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--c-accent);
+  background: var(--c-accent-subtle);
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-pill);
+}
+
+.series-duration {
+  font-size: var(--fs-xs);
+  color: var(--c-text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.series-card__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+  margin: 0;
+}
+
+.series-card__desc {
+  font-size: var(--fs-sm);
+  color: var(--c-text-mute);
+  line-height: var(--lh-body);
+  margin: 0;
+}
+
+.series-track {
+  list-style: none;
+  margin: auto 0 0 0;
+  padding: var(--sp-2) 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.series-track__item-wrap {
+  margin: 0;
+}
+
+.series-track__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.series-track__item:hover {
+  background: var(--c-surface);
+  border-color: var(--c-accent);
+  transform: translateX(4px);
+}
+
+.series-track__num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-accent);
+  background: var(--c-accent-subtle);
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.series-track__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.series-track__title {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--c-text);
+  margin-bottom: .2rem;
+}
+
+.series-track__item:hover .series-track__title {
+  color: var(--c-accent);
+}
+
+.series-track__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--c-text-mute);
+}
+
+.series-track__arrow {
+  color: var(--c-text-mute);
+  margin-left: auto;
+  transition: transform var(--transition), color var(--transition);
+  flex-shrink: 0;
+  font-size: var(--fs-sm);
+}
+
+.series-track__item:hover .series-track__arrow {
+  color: var(--c-accent);
+  transform: translateX(3px);
+}
+
+.post-series-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--c-accent);
+  background: var(--c-accent-subtle);
+  padding: .15rem .6rem;
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--sp-2);
+  width: fit-content;
+}
+
+.posts-section {
+  margin-top: var(--sp-8);
+}
+
 /* ---- Executive hero ---- */
 .exec-hero { padding-block: var(--sp-10) var(--sp-8); }
 .exec-hero__grid { display: grid; gap: var(--sp-8); align-items: center; }

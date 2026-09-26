@@ -91,11 +91,22 @@
   <main id="main" tabindex="-1">
     <section class="section">
       <div class="container">
-        <h1 class="section__title">Blog</h1>
-        <p class="section__lead">Notes on machine learning, LLM systems and computer vision.</p>
-        <ul class="tags" id="tag-filter" aria-label="Filter by tag"></ul>
-        <p class="status" id="list-status" role="status" aria-live="polite">Loading posts…</p>
-        <ul class="post-list" id="post-list" style="margin-top:var(--sp-6)"></ul>
+        <div class="blog-header">
+          <h1 class="section__title">Blog</h1>
+          <p class="section__lead">Notes on machine learning, LLM systems and computer vision.</p>
+        </div>
+
+        <section class="series-section" id="series-section" aria-labelledby="series-label" hidden>
+          <h2 class="section-label" id="series-label">Curated Series</h2>
+          <div class="series-cards" id="series-container"></div>
+        </section>
+
+        <section class="posts-section" id="posts-section" aria-labelledby="posts-label">
+          <h2 class="section-label" id="posts-label">All Articles</h2>
+          <ul class="tags" id="tag-filter" aria-label="Filter by tag"></ul>
+          <p class="status" id="list-status" role="status" aria-live="polite">Loading posts…</p>
+          <ul class="post-list" id="post-list" style="margin-top:var(--sp-6)"></ul>
+        </section>
       </div>
     </section>
   </main>

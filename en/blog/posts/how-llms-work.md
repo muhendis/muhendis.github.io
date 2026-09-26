@@ -594,9 +594,9 @@ next token.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — classic visual guide to attention mechanics.
 - Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — building a transformer from first principles in code.
 - Related deep dives on this blog:
-  - [How tokenization works](post.html?slug=how-tokenization-works) — BPE merge mechanics and vocabulary efficiency.
-  - [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) — discrete tokens to continuous geometry and $\sqrt{d_{\text{model}}}$ scaling.
-  - [How embeddings work](post.html?slug=how-embeddings-work) — semantic search, geometry, and high-dimensional spaces.
+  - [A Prompt's Journey (1): Tokenization](post.html?slug=how-tokenization-works) — BPE merge mechanics and vocabulary efficiency.
+  - [A Prompt's Journey (2): The Embedding Layer](post.html?slug=inside-the-embedding-layer) — discrete tokens to continuous geometry and $\sqrt{d_{\text{model}}}$ scaling.
+  - [A Prompt's Journey (3): Semantic Embeddings](post.html?slug=how-embeddings-work) — semantic search, geometry, and high-dimensional spaces.
   - [vLLM from paper to production](post.html?slug=vllm-from-paper-to-production) — PagedAttention, block management, and serving metrics.
   - [Optimizing LLM cost and latency](post.html?slug=optimizing-llm-cost-and-latency) — TTFT, ITL, memory bandwidth, and prefix caching.
   - [Post-training quantization for LLM inference](post.html?slug=post-training-quantization-llm-inference) — INT8, FP8, and INT4 compression strategies.

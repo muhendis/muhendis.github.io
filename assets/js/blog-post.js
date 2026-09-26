@@ -138,9 +138,20 @@
             document.getElementById('post-title').textContent = meta.title;
 
             var eyebrow = document.getElementById('post-eyebrow');
-            if (eyebrow && (meta.tags || []).length) {
-              eyebrow.textContent = meta.tags[0];
-              eyebrow.hidden = false;
+            if (eyebrow) {
+              if (meta.seriesId) {
+                var sList = idx.series || [];
+                var sObj = null;
+                for (var si = 0; si < sList.length; si++) {
+                  if (sList[si].id === meta.seriesId) { sObj = sList[si]; break; }
+                }
+                var sTitle = sObj ? sObj.title : (LANG === 'tr' ? 'Seri' : 'Series');
+                eyebrow.textContent = sTitle + (meta.seriesPart ? ' · ' + (LANG === 'tr' ? 'Bölüm ' : 'Part ') + meta.seriesPart : '');
+                eyebrow.hidden = false;
+              } else if ((meta.tags || []).length) {
+                eyebrow.textContent = meta.tags[0];
+                eyebrow.hidden = false;
+              }
             }
             var bylineEl = document.getElementById('post-byline');
             if (bylineEl) bylineEl.textContent = t.by;
