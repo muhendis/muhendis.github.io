@@ -30,14 +30,16 @@ Blogun temel ilkesi **"sıfır dedikodu, sıfır ikincil aktarım"**dır. Makale
 > **Yasak Kaynaklar:** Medium makaleleri, Substack yazıları, LinkedIn/X (Twitter) sansasyonel paylaşımları, SEO odaklı içerik çiftlikleri veya doğrulanmamış model yanıtları kaynak olarak kabul edilmez.
 
 ### 1.2. Arama Taktikleri ve Araç Kullanımı
-- Doğrudan yazar adı, arXiv kimliği veya teknik terim sorgulanır:
+- `search_web` kullanırken doğrudan yazar adı, arXiv kimliği veya teknik terim sorgulanır:
   - `site:arxiv.org "rotary position embedding" Su`
   - `site:huggingface.co "google/gemma-3-1b" "config.json"`
-- Bulunan sayfanın orijinal metni, denklem ve tabloları doğrudan çekilip taranır.
+- `read_url_content` ile bulunan sayfanın orijinal metni, denklem ve tabloları doğrudan çekilip taranır.
 
 ### 1.3. Sayısal Kesinlik ve Donanım Kısıtları
 - **Sayı Uydurmak Yasaktır:** Her sayısal iddia birincil kaynaktan doğrulanır; teyit edilemeyen sayılar makaleye sokulmaz ya da "yaklaşık" ifadesiyle sınırlandırılır.
 - **Tarihsel ve Donanımsal "Neden" Arayışı:** Bir mimari kararın arkasındaki donanım gerçeği araştırılır (ör. TPU HBM bellek darboğazı, GPU bellek bant genişliği vs compute-bound dengesi, sequential RNN bellek patlaması).
+- Kapsamlı araştırma rehberi: [bilgi_arama_ve_kaynak_dogrulama.md](./references/bilgi_arama_ve_kaynak_dogrulama.md)
+- Bellek ve donanım formülleri el kitabı: [muhendislik_hesaplari_ve_formuller.md](./references/muhendislik_hesaplari_ve_formuller.md)
 
 ---
 
@@ -57,10 +59,10 @@ flowchart TD
 ```
 
 1. **Planla:**
-   - Konu geldiğinde açı, derinlik veya odak belirsizse kullanıcıya sorulur.
+   - Konu geldiğinde açı, derinlik veya odak belirsizse `ask_question` aracı ile kullanıcıya sorulur.
    - Varsayılan yaklaşım: Kendi özgün mühendislik sentezimiz; kaynaklar açıkça kredilendirilir; asla yüzeysel özet ya da doğrudan çeviri yapılmaz.
 2. **Kaynakları Topla ve Doğrula:**
-   - Kullanıcının verdiği linkler ve birincil kaynaklar (arXiv, resmi repo) incelenir.
+   - Kullanıcının verdiği linkler ve birincil kaynaklar (arXiv, resmi repo) `read_url_content` ile okunur.
    - Somut bir vaka çalışması (case study) seçilir (ör. Gemma 3 veya LLaMA 3.1).
 3. **İskelet Oluştur (Scaffold):**
    - Yeni bir makale çifti açılacaksa `./.agents/skills/makale/scripts/new_post.py` çalıştırılarak dosya şablonları ve `posts.json` taslak girdileri hazır kurulur.
@@ -72,7 +74,7 @@ flowchart TD
    - `tr/blog/posts.json` ve `en/blog/posts.json` dosyalarına 5N1K formatında özet eklenir.
    - `sitemap.xml` dosyasına iki dilli URL çifti eklenir.
 7. **Otomatik Doğrulamaları Koş:**
-   - `./.agents/skills/makale/scripts/validate_post.sh <slug>` komutuyla tüm testler koşturulur (0 hata şart).
+   - `./.agents/skills/makale/scripts/validate_post.sh <slug>` komutuyla tüm testler (site doğrulaması, TOC linkleri, KaTeX math render, iki dilli simetri) koşturulur (0 hata şart).
 8. **Commit ve Push Disiplini:**
    - **Engin "push" ya da "commit" demeden ASLA git commit veya git push yapılmaz.**
 
@@ -115,6 +117,9 @@ Her makale istisnasız şu üç bölümle biter:
 2. `## Glossary` / `## Terimler sözlüğü` (Jargon + yalın karşılık + sezgi/sonuç cümlesi).
 3. `## Going deeper` / `## Daha derine inmek için` (arXiv birincil linkleri + blog içi `post.html?slug=...` çapraz linkleri).
 
+- Detaylı pedagoji ve şablon kuralları: [sablon_ve_pedagoji_rehberi.md](./references/sablon_ve_pedagoji_rehberi.md)
+- Örnek makale taslağı: [ornek_makale_sablonu_tr.md](./examples/ornek_makale_sablonu_tr.md)
+
 ---
 
 ## 4. Türkçe Dil Kuralları ve Çift Dilli Eşzamanlılık
@@ -145,6 +150,7 @@ Her makale istisnasız şu üç bölümle biter:
   - **Nerede:** Vaka çalışması yapılan somut model (örn. Gemma 3).
   - **Kim için:** Hedef mühendislik profili.
   - **Ne zaman:** Hangi mimari karar ya da üretim darboğazı anında.
+- Örnek 5N1K JSON yapısı: [ornek_posts_entry.json](./examples/ornek_posts_entry.json)
 
 ### 5.3. sitemap.xml Sözleşmesi
 - Her makale için `en` ve `tr` olmak üzere iki `<url>` bloğu eklenir; üçlü hreflang (en, tr, x-default=en), `priority` 0.7 ve `lastmod` girilir.

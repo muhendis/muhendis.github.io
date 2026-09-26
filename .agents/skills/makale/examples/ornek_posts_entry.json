@@ -1,0 +1,39 @@
+{
+  "_aciklama": "tr/blog/posts.json ve en/blog/posts.json için 5N1K altın formatı",
+  "tr_entry": {
+    "slug": "self-attention-derinlemesine",
+    "title": "Bir Prompt'un Yolculuğu (4): Self-Attention — Q, K, V mantığı, adım adım matris matematiği ve bağlam vektörleri",
+    "date": "2026-09-26",
+    "seriesId": "bir-promptun-yolculugu",
+    "seriesPart": 4,
+    "summary": "Ne: Bir model 'köpek kediyi kovaladı' cümlesindeki kelimeleri birbirine nasıl bağlar? Neden önemli: İzole vektörler arasındaki anlamsal boşluğu kapatarak tek global vektör darboğazını kırar. Nasıl: Query, Key ve Value'nun ayrılma gerekçesi, 3 kelimelik somut örnek üzerinde elle yapılan Q, K, V, dot-product ve softmax hesabı, RoPE entegrasyonu, 1/sqrt(d_k) varyans ispatı ve emergent grammar. Nerede: Gemma 3 ve LLaMA mimarileri. Kim için: Model eğiten, optimize eden ve mimariyi derinlemesine anlamak isteyen mühendisler. Ne zaman: VRAM/hesap bütçesi tutmadığında veya dikkat mekanizmasının matematiksel ispatına ihtiyaç duyulduğunda.",
+    "tags": [
+      "llm",
+      "transformer",
+      "self-attention",
+      "mimari",
+      "temeller"
+    ],
+    "readingMinutes": 18,
+    "translationSlug": "inside-self-attention",
+    "draft": false
+  },
+  "en_entry": {
+    "slug": "inside-self-attention",
+    "title": "A Prompt's Journey (4): Self-Attention — Q, K, V logic, step-by-step matrix math, and context vectors",
+    "date": "2026-09-26",
+    "seriesId": "a-prompts-journey",
+    "seriesPart": 4,
+    "summary": "What: How a transformer connects isolated token vectors into rich context-aware representations. Why it matters: Breaks the single global vector bottleneck with dynamic, data-dependent weighted lookback. How: The geometric separation of Q, K, V roles, step-by-step manual tensor math on 3 concrete words, 1/sqrt(d_k) variance proof, RoPE integration, and emergent grammar. Where: Gemma 3 and LLaMA architectures. Who: ML engineers serving, fine-tuning, or designing architectures. When: Debugging attention saturation, scaling context, or profiling KV cache memory.",
+    "tags": [
+      "llm",
+      "transformer",
+      "self-attention",
+      "architecture",
+      "fundamentals"
+    ],
+    "readingMinutes": 18,
+    "translationSlug": "self-attention-derinlemesine",
+    "draft": false
+  }
+}
