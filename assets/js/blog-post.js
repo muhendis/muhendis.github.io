@@ -137,6 +137,16 @@
 
             document.getElementById('post-title').textContent = meta.title;
 
+            /* Per-browser read marker; the blog index turns it into series
+               progress. Storage can be blocked, so it is best-effort only. */
+            try {
+              var read = JSON.parse(localStorage.getItem('readPosts') || '[]');
+              if (read.indexOf(slug) === -1) {
+                read.push(slug);
+                localStorage.setItem('readPosts', JSON.stringify(read));
+              }
+            } catch (e) {}
+
             var eyebrow = document.getElementById('post-eyebrow');
             if (eyebrow) {
               if (meta.seriesId) {

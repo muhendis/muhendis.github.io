@@ -89,23 +89,40 @@
   </header>
 <!-- #endregion shared:header -->
   <main id="main" tabindex="-1">
-    <section class="section">
+    <section class="section blog">
       <div class="container">
-        <div class="blog-header">
-          <h1 class="section__title">Blog</h1>
-          <p class="section__lead">Notes on machine learning, LLM systems and computer vision.</p>
-        </div>
+        <header class="blog-hero">
+          <h1 class="blog-hero__title">Blog</h1>
+          <p class="blog-hero__lead">Notes on machine learning, LLM systems and computer vision.</p>
+          <p class="blog-hero__stats" id="blog-stats"></p>
+        </header>
+
+        <article class="lead-story" id="lead-story" aria-label="Latest article" hidden></article>
 
         <section class="series-section" id="series-section" aria-labelledby="series-label" hidden>
-          <h2 class="section-label" id="series-label">Curated Series</h2>
+          <h2 class="section-label" id="series-label">Series</h2>
+          <p class="series-section__lead">Multi-part deep dives, meant to be read in order.</p>
           <div class="series-cards" id="series-container"></div>
         </section>
 
-        <section class="posts-section" id="posts-section" aria-labelledby="posts-label">
-          <h2 class="section-label" id="posts-label">All Articles</h2>
-          <ul class="tags" id="tag-filter" aria-label="Filter by tag"></ul>
+        <section class="archive" id="posts-section" aria-labelledby="posts-label">
+          <h2 class="section-label" id="posts-label">All articles</h2>
+          <div class="archive-toolbar">
+            <label class="search" for="post-search">
+              <span class="visually-hidden">Search articles</span>
+              <svg class="search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+              </svg>
+              <input class="search__input" id="post-search" type="search" autocomplete="off"
+                     placeholder="Search by title, topic or series" aria-describedby="result-count">
+              <kbd class="search__kbd" aria-hidden="true">/</kbd>
+            </label>
+            <p class="archive-toolbar__count" id="result-count" role="status" aria-live="polite"></p>
+          </div>
+          <ul class="tags archive-filter" id="tag-filter" aria-label="Filter by topic"></ul>
           <p class="status" id="list-status" role="status" aria-live="polite">Loading posts…</p>
-          <ul class="post-list" id="post-list" style="margin-top:var(--sp-6)"></ul>
+          <ol class="post-grid" id="post-list"></ol>
         </section>
       </div>
     </section>

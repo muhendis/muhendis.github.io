@@ -702,7 +702,7 @@ Döngüyü motorun kendisi gibi kapatalım — önce belirti:
   — bu yazının içini açtığı serving odası —,
   [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine)
   — VocabParallelEmbedding ve çıkarımda lm_head maliyeti —,
-  [LLM'ler nasıl çalışır](post.html?slug=llm-nasil-calisir) —
+  [Büyük Resim (1): Baştan Sona Bir LLM](post.html?slug=llm-nasil-calisir) —
   prefill, decode ve KV cache'in sakladığı şey —,
   [Ajan prompt'unun anatomisi](post.html?slug=ajan-promptunun-anatomisi)
   — prefix caching'in ödüllendirdiği sabit-prefix trafiği — ve

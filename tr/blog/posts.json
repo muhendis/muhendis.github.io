@@ -3,6 +3,16 @@
   "updated": "2026-09-26",
   "series": [
     {
+      "id": "buyuk-resim",
+      "title": "Büyük Resim",
+      "pinned": true,
+      "summary": "Buradan başlayın: LLM makinesinin baştan sona sade bir anlatımı — token'lar, embedding'ler, attention, prefill ve decode, KV cache, örnekleme ve modellerin neden uydurduğu — derinlemesine seriler her parçayı tek tek açmadan önce.",
+      "badge": "Buradan Başlayın",
+      "posts": [
+        "llm-nasil-calisir"
+      ]
+    },
+    {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
       "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına ve çok başlıklı dikkat (multi-head attention) alt uzaylarına 5 bölümlük derinlemesine mimari yolculuk.",
@@ -238,9 +248,11 @@
     },
     {
       "slug": "llm-nasil-calisir",
-      "title": "LLM'ler gerçekte nasıl çalışır? Sade bir anlatım",
+      "pinned": true,
+      "title": "Büyük Resim (1): Baştan Sona Bir LLM — token, transformer, eğitim, çıkarım ve neden uydurduğu",
       "date": "2026-08-29",
-      "seriesId": null,
+      "seriesId": "buyuk-resim",
+      "seriesPart": 1,
       "summary": "Tüm makine tek bir okumada: token'lar, embedding'ler, attention mekanizması, prefill ve decode fazları, KV cache matematiği, örnekleme stratejileri ve modellerin neden uydurduğu.",
       "tags": [
         "llm",

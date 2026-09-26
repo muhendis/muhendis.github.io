@@ -3,6 +3,16 @@
   "updated": "2026-09-26",
   "series": [
     {
+      "id": "the-big-picture",
+      "title": "The Big Picture",
+      "pinned": true,
+      "summary": "Start here: the whole LLM machine end to end in plain language — tokens, embeddings, attention, prefill and decode, KV cache, sampling, and why models hallucinate — before the deep-dive series zoom into each piece.",
+      "badge": "Start Here",
+      "posts": [
+        "how-llms-work"
+      ]
+    },
+    {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
       "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine and multi-head attention subspaces — a 5-part architectural journey.",
@@ -238,9 +248,11 @@
     },
     {
       "slug": "how-llms-work",
-      "title": "How LLMs actually work, in plain language",
+      "pinned": true,
+      "title": "The Big Picture (1): An LLM, End to End — tokens, transformer, training, inference, and why it makes things up",
       "date": "2026-08-29",
-      "seriesId": null,
+      "seriesId": "the-big-picture",
+      "seriesPart": 1,
       "summary": "The whole machine in one read: tokens, embeddings, attention mechanisms, prefill and decode phases, KV cache economics, sampling strategies, and why models hallucinate.",
       "tags": [
         "llm",

@@ -437,7 +437,7 @@ with one worked example, the most representative one, sitting last.
   on: clarity, examples, structured output.
 
 On this blog: why the model reads your prompt the way it does —
-[How LLMs actually work](post.html?slug=how-llms-work) — how
+[The Big Picture (1): An LLM, End to End](post.html?slug=how-llms-work) — how
 chain-of-thought and the other prompting techniques fit into these
 sections —
 [Prompting techniques](post.html?slug=prompting-techniques) —

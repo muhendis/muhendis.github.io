@@ -1077,8 +1077,8 @@ Makalenin temel sözlüğü, her biri birer satır:
   ve [How we built our multi-agent research
   system](https://www.anthropic.com/engineering/built-multi-agent-research-system)
   — caching mekaniği ve 4x/15x ajan token ölçümleri.
-- Bu blogda: [LLM'ler nasıl
-  çalışır](post.html?slug=llm-nasil-calisir) — decode neden sıralı
+- Bu blogda: [Büyük Resim (1): Baştan Sona Bir
+  LLM](post.html?slug=llm-nasil-calisir) — decode neden sıralı
   ve KV cache ne saklar —, [LLM'de embedding katmanı](post.html?slug=embedding-katmani-derinlemesine) —
   çıkarımda bağlı projeksiyon matrisinin işlem maliyeti —, [Prompting
   teknikleri](post.html?slug=prompting-teknikleri) — thinking

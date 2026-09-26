@@ -674,7 +674,7 @@ Close the loop the way the engine itself would — symptom first:
   serving room this article unpacks —,
   [Inside the embedding layer](post.html?slug=inside-the-embedding-layer)
   — VocabParallelEmbedding and the cost of lm_head in inference —,
-  [How LLMs work](post.html?slug=how-llms-work) — prefill, decode,
+  [The Big Picture (1): An LLM, End to End](post.html?slug=how-llms-work) — prefill, decode,
   and what the KV cache stores —,
   [Anatomy of an agent prompt](post.html?slug=anatomy-of-an-agent-prompt)
   — the stable-prefix traffic that prefix caching rewards — and

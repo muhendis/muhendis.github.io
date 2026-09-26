@@ -1036,7 +1036,7 @@ The base vocabulary of the article, one line each:
   and [How we built our multi-agent research
   system](https://www.anthropic.com/engineering/built-multi-agent-research-system)
   — the caching mechanics and the 4x/15x agent token measurements.
-- On this blog: [How LLMs work](post.html?slug=how-llms-work) — why
+- On this blog: [The Big Picture (1): An LLM, End to End](post.html?slug=how-llms-work) — why
   decode is sequential and what the KV cache stores —, [Inside the embedding layer](post.html?slug=inside-the-embedding-layer) —
   the computational cost of the tied projection matrix in inference —, [Prompting
   techniques](post.html?slug=prompting-techniques) — thinking
