@@ -5,12 +5,13 @@
     {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), oradan anlamsal vektör uzayına 3 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "3 Bölümlük Seri",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına ve bağlam vektörlerine 4 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "4 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
-        "embeddingler-derinlemesine"
+        "embeddingler-derinlemesine",
+        "self-attention-derinlemesine"
       ]
     },
     {
@@ -94,6 +95,24 @@
       ],
       "readingMinutes": 11,
       "translationSlug": "how-embeddings-work",
+      "draft": false
+    },
+    {
+      "slug": "self-attention-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (4): Self-Attention — Q, K, V mantığı, adım adım matris matematiği ve bağlam vektörleri",
+      "date": "2026-09-26",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 4,
+      "summary": "Bir model 'köpek kediyi kovaladı' cümlesindeki kelimeleri birbirine nasıl bağlar? Bu yazı transformer mimarisinin kalbini açıyor: Query, Key ve Value'nun ayrılma gerekçesi, 3 kelimelik somut örnek üzerinde hiçbir adım atlanmadan elle yapılan Q, K, V, dot-product ve softmax hesabı, RoPE'un dikkat katmanına nerede bağlandığı, 1/sqrt(d_k) ölçeklemesinin varyans ispatı, bağlam vektörünün (context vector) anatomisi, dilbilgisinin (emergent grammar) rastgelelikten nasıl belirdiği ve Bahdanau'dan Vaswani'ye uzanan tarihsel devrim.",
+      "tags": [
+        "llm",
+        "transformer",
+        "self-attention",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "inside-self-attention",
       "draft": false
     },
     {

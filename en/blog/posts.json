@@ -5,12 +5,13 @@
     {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
-      "summary": "A 3-part architectural journey from the desk every prompt passes before the model (tokenization), from integers to continuous geometry and RoPE (embedding layer), to the semantic vector space.",
-      "badge": "3-Part Series",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine and context vectors at the heart of the transformer — a 4-part architectural journey.",
+      "badge": "4-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
-        "how-embeddings-work"
+        "how-embeddings-work",
+        "inside-self-attention"
       ]
     },
     {
@@ -94,6 +95,24 @@
       ],
       "readingMinutes": 11,
       "translationSlug": "embeddingler-derinlemesine",
+      "draft": false
+    },
+    {
+      "slug": "inside-self-attention",
+      "title": "A Prompt's Journey (4): Inside Self-Attention — Q, K, V mechanics, step-by-step matrix arithmetic, and context vectors",
+      "date": "2026-09-26",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 4,
+      "summary": "How does a language model connect words like 'the dog chased the cat' into a coherent thought? This article opens the engine room of the transformer: the rationale behind Query, Key, and Value, a complete step-by-step manual calculation of Q, K, V, dot-product, and softmax on a 3-token example without skipping a single arithmetic step, where RoPE plugs into attention, the variance proof behind the 1/sqrt(d_k) scaling factor, the anatomy of context vectors, how grammar emerges from random weights, and the historical lineage from Bahdanau to Vaswani.",
+      "tags": [
+        "llm",
+        "transformer",
+        "self-attention",
+        "architecture",
+        "foundations"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "self-attention-derinlemesine",
       "draft": false
     },
     {
