@@ -5,13 +5,14 @@
     {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına ve bağlam vektörlerine 4 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "4 Bölümlük Seri",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına ve çok başlıklı dikkat (multi-head attention) alt uzaylarına 5 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "5 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
         "embeddingler-derinlemesine",
-        "self-attention-derinlemesine"
+        "self-attention-derinlemesine",
+        "multi-head-attention-derinlemesine"
       ]
     },
     {
@@ -46,6 +47,24 @@
     }
   ],
   "posts": [
+    {
+      "slug": "multi-head-attention-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (5): Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama",
+      "date": "2026-09-26",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 5,
+      "summary": "Ne: Multi-Head Attention, model boyutunu paralel alt uzaylara bölerek dildeki birden çok asimetrik ilişkiyi aynı anda takip eden mimari motor. Neden önemli: Model parametre sayısını ve FLOP maliyetini sabit tutarak tek bir benzerlik matrisinin uzlaşma çıkmazını kırar; ancak çıkarımda her kafa için bağımsız KV cache tahsisi gerektirerek bellek bant genişliğini kilitler. Nasıl: Z girdisinin H paralel projeksiyonla (W_Q, W_K, W_V) d_k alt uzaylarına ayrılması, her kafanın kendi dikkat matrisini üretmesi, Concat ve W^O ile tek tensöre indirgenmesi; bağımsız rastgele başlatmanın simetriyi kırması, pozitif geri beslemeyle uzmanlaşma dinamikleri, Michel ve Voita'nın kafa budama deneyleri, Anthropic'in indüksiyon kafaları bulgusu ve GPU'da tek kaynaşık GEMM ile reshape optimizasyonu. Nerede: Bölüm 4'teki 3 kelimelik somut örnek, oyuncak tensör hesabı ve LLaMA / Gemma ölçeği. Kim için: Transformer iç mekaniğini, eğitim dinamiklerini ve çıkarım belleği darboğazlarını anlamak isteyen yapay zekâ ve sistem mühendisleri. Ne zaman: Tek bir dikkat kafasının dildeki çakışan bağlamları neden taşıyamadığını ve çıkarımda neden MQA/GQA'ya geçildiğini sorgularken.",
+      "tags": [
+        "llm",
+        "transformer",
+        "multi-head-attention",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "inside-multi-head-attention",
+      "draft": false
+    },
     {
       "slug": "tokenizasyon-nasil-calisir",
       "title": "Bir Prompt'un Yolculuğu (1): Tokenizasyon — kelimelerden tamsayılara, BPE mekaniği ve fertility",

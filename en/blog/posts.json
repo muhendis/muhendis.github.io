@@ -5,13 +5,14 @@
     {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
-      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine and context vectors at the heart of the transformer — a 4-part architectural journey.",
-      "badge": "4-Part Series",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine and multi-head attention subspaces — a 5-part architectural journey.",
+      "badge": "5-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
         "how-embeddings-work",
-        "inside-self-attention"
+        "inside-self-attention",
+        "inside-multi-head-attention"
       ]
     },
     {
@@ -46,6 +47,24 @@
     }
   ],
   "posts": [
+    {
+      "slug": "inside-multi-head-attention",
+      "title": "A Prompt's Journey (5): Multi-Head Attention — subspaces, symmetry breaking, and head pruning",
+      "date": "2026-09-26",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 5,
+      "summary": "What: Multi-Head Attention, the architectural engine that divides the hidden dimension into independent geometric subspaces to track multiple asymmetric linguistic relationships in parallel. Why: It breaks the compromise trap of a single similarity matrix at virtually zero extra parameter or FLOP cost, yet in inference requires dedicated KV cache allocation per head, choking GPU memory bandwidth. How: Projecting input Z into H parallel subspaces of dimension d_k, computing independent attention distributions, concatenating and reducing via W^O; symmetry breaking from random initialization, self-reinforcing gradient dynamics, empirical head pruning by Michel and Voita, Anthropic's induction heads discovery, and fused GPU GEMM with zero-copy reshape mechanics. Where: The 3-token concrete matrix walkthrough carried over from Part 4, alongside production LLaMA and Gemma dimensions. Who: AI and systems engineers seeking an exact understanding of Transformer internals, attention dynamics, and serving memory constraints. When: Investigating why single-head attention collapses competing semantic dependencies and why modern architectures evolve toward MQA and GQA.",
+      "tags": [
+        "llm",
+        "transformer",
+        "multi-head-attention",
+        "architecture",
+        "foundations"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "multi-head-attention-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "how-tokenization-works",
       "title": "A Prompt's Journey (1): Tokenization — from text to integers, BPE mechanics, and fertility",
