@@ -15,6 +15,7 @@ node_modules/
 __pycache__/
 *.pyc
 *.log
+draft-context/
 
 # One-off page scaffolder; output is committed, the script is not part of the site.
 .build/

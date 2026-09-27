@@ -281,4 +281,20 @@
     <lastmod>2026-09-26</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=how-ai-agent-memory-works</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-ai-agent-memory-works"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=ajan-hafizasi-nasil-calisir"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-ai-agent-memory-works"/>
+    <lastmod>2026-09-27</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=ajan-hafizasi-nasil-calisir</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-ai-agent-memory-works"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=ajan-hafizasi-nasil-calisir"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-ai-agent-memory-works"/>
+    <lastmod>2026-09-27</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>

@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "series": [
     {
       "id": "buyuk-resim",
@@ -38,11 +38,12 @@
     {
       "id": "promptingden-ajanlara",
       "title": "Prompting'den Otonom Ajanlara",
-      "summary": "Akıl yürütme tekniklerinden (CoT, ReAct) güvenilir bir otonom ajan sistem prompt'unun 8 katmanlı sözleşmesine ve üretim disiplinine geçiş.",
-      "badge": "2 Bölümlük Seri",
+      "summary": "Akıl yürütme tekniklerinden (CoT, ReAct) güvenilir bir ajan sistem prompt'unun 8 katmanlı sözleşmesine, oradan da ajanın kullanıcıyı oturumlar boyunca yanlış hatırlamadan hatırlamasını sağlayan hafıza sistemine uzanan yolculuk.",
+      "badge": "3 Bölümlük Seri",
       "posts": [
         "prompting-teknikleri",
-        "ajan-promptunun-anatomisi"
+        "ajan-promptunun-anatomisi",
+        "ajan-hafizasi-nasil-calisir"
       ]
     },
     {
@@ -57,6 +58,24 @@
     }
   ],
   "posts": [
+    {
+      "slug": "ajan-hafizasi-nasil-calisir",
+      "title": "Prompting'den Ajanlara (3): Ajan Hafızası — yazma ve okuma yolları, geçersiz kılma, dreaming ve çok ajanlı kapsam",
+      "date": "2026-09-27",
+      "seriesId": "promptingden-ajanlara",
+      "seriesPart": 3,
+      "summary": "Ne: Ajan hafızası, durumsuz bir dil modelinin etrafında her turda prompt'a neyin gireceğine, uzun süreli depoda neyin değişeceğine ve bu deponun oturumlar arasında nasıl birleştirileceğine karar veren sistemdir. Neden önemli: Tam geçmiş LOCOMO'da yaklaşık 26.000 token ve p95'te 17 saniyeye mal oluyor; GPT-4o yaklaşık 115.000 token'da, kanıt prompt'ta dururken göreli olarak %30 doğruluk kaybediyor. Çelişen bilgileri birlikte saklayan bir depo ise ajanın kendinden emin biçimde yanlış hatırlamasına yol açıyor. Nasıl: Yazı bağlam penceresini çalışma belleği olarak ve neden bir veritabanı olmadığını ele alıyor. CoALA'nın dört hafıza türünü; ayıklama, ADD/UPDATE/DELETE/NOOP, iki zamanlı geçersiz kılma, Ebbinghaus unutma eğrisi ve PII kapısından oluşan yazma yolunu; sorgu yeniden yazma, elle yürütülen yakınlık-önem-ilgi puanlaması, RRF ve önbelleği gözeten paketlemeden oluşan okuma yolunu anlatıyor. Sleep-time compute'tan Anthropic ve OpenAI'ın 2026 dreaming özelliklerine uzanan çevrimdışı birleştirmeyi ve bağlam çöküşü tuzağını; sekiz mimariyi; yazma politikalarını, MINJA'yı ve hafıza zehirlenmesini; Memory-R1'in pekiştirmeli öğrenmeyle eğitilen hafıza yöneticisini; KV cache faturasını; kiracı yalıtımını, gecikme bütçesini ve tek sisteme dört puan üreten benchmark tartışmasını da inceliyor. Nerede: Generative Agents, MemGPT, Mem0, Zep, ACE, Claude Managed Agents hafıza depoları ve ChatGPT üzerinden, taşınan şehir hatasını düzelten 60 satırlık bir Python referans uygulamasıyla. Kim için: Kullanıcıları oturumlar boyunca hatırlaması gereken asistan ve ajanlar geliştiren mühendisler için. Ne zaman: Bir demo ajan ikinci oturumuyla, ilk çelişen bilgisiyle ya da ikinci kiracısıyla karşılaştığı anda.",
+      "tags": [
+        "llm",
+        "ajanlar",
+        "hafıza",
+        "erişim",
+        "mimari"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "how-ai-agent-memory-works",
+      "draft": false
+    },
     {
       "slug": "multi-head-attention-derinlemesine",
       "title": "Bir Prompt'un Yolculuğu (5): Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama",

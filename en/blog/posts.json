@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "series": [
     {
       "id": "the-big-picture",
@@ -38,11 +38,12 @@
     {
       "id": "from-prompting-to-agents",
       "title": "From Prompting to Autonomous Agents",
-      "summary": "From classical reasoning heuristics (CoT, ReAct) to the rigorous 8-section contract that makes autonomous agent system prompts reliable in production.",
-      "badge": "2-Part Series",
+      "summary": "From classical reasoning heuristics (CoT, ReAct), through the rigorous 8-section contract that makes agent system prompts reliable, to the memory system that lets an agent remember users across sessions without remembering wrong.",
+      "badge": "3-Part Series",
       "posts": [
         "prompting-techniques",
-        "anatomy-of-an-agent-prompt"
+        "anatomy-of-an-agent-prompt",
+        "how-ai-agent-memory-works"
       ]
     },
     {
@@ -57,6 +58,24 @@
     }
   ],
   "posts": [
+    {
+      "slug": "how-ai-agent-memory-works",
+      "title": "From Prompting to Agents (3): Agent Memory — write and read paths, supersession, dreaming, and multi-agent scope",
+      "date": "2026-09-27",
+      "seriesId": "from-prompting-to-agents",
+      "seriesPart": 3,
+      "summary": "What: agent memory, the system around a stateless language model that decides on every turn what goes into the prompt, what changes in the long-term store, and how that store is consolidated between sessions. Why: full history costs about 26,000 tokens and a 17-second p95 on LOCOMO, GPT-4o loses 30% relative accuracy at about 115,000 tokens with the evidence still present, and a store that keeps contradictory facts makes an agent confidently remember wrong. How: the context window as working memory and why it is not a database; CoALA's four memory types; a write path with extraction, ADD/UPDATE/DELETE/NOOP, bi-temporal supersession, an Ebbinghaus forgetting curve and a PII gate; a read path with query rewriting, recency-importance-relevance scoring worked by hand, RRF and cache-aware packing; offline consolidation from sleep-time compute to Anthropic's and OpenAI's 2026 dreaming, and the context-collapse trap; eight architectures; write policies, MINJA and memory poisoning; Memory-R1's reinforcement-learned memory manager; the KV cache bill; tenant isolation, latency budgets and a benchmark dispute that produced four scores for one system. Where: Generative Agents, MemGPT, Mem0, Zep, ACE, Claude Managed Agents memory stores and ChatGPT, plus a 60-line Python reference implementation that fixes a moved-city bug. Who: engineers building assistants and agents that must remember users across sessions. When: the moment a demo agent meets its second session, its first contradicting fact, or its second tenant.",
+      "tags": [
+        "llm",
+        "agents",
+        "memory",
+        "retrieval",
+        "architecture"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "ajan-hafizasi-nasil-calisir",
+      "draft": false
+    },
     {
       "slug": "inside-multi-head-attention",
       "title": "A Prompt's Journey (5): Multi-Head Attention — subspaces, symmetry breaking, and head pruning",
