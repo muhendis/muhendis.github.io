@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-09-29",
+  "updated": "2026-09-30",
   "series": [
     {
       "id": "buyuk-resim",
@@ -15,15 +15,16 @@
     {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına ve çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına 6 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "6 Bölümlük Seri",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına ve tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN ve konveks örtü sınırı) 7 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "7 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
         "embeddingler-derinlemesine",
         "self-attention-derinlemesine",
         "causal-attention-derinlemesine",
-        "multi-head-attention-derinlemesine"
+        "multi-head-attention-derinlemesine",
+        "transformer-blogu-derinlemesine"
       ]
     },
     {
@@ -59,6 +60,26 @@
     }
   ],
   "posts": [
+    {
+      "slug": "transformer-blogu-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (7): Transformer Bloğu — gradyan otoyolu, konveks örtü ve FFN'in ilişkisel belleği",
+      "date": "2026-09-30",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 7,
+      "summary": "Ne: Tek bir Transformer bloğunun tam iç mekaniği; residual bağlantılar, LayerNorm/RMSNorm stabilizasyonu ve Feed-Forward Network (FFN/MLP) katmanının matematiksel anatomisi. Neden önemli: Residual bağlantı olmadan 20 katmanda milyonda birine çöken gradyanları I + f'(x) garantisiyle 100 katmana taşır; self-attention mekanizmasının konveks örtü sınırına hapsolarak üretemediği doğrusal-olmayan mantıksal özellikleri FFN ile açar ve model parametrelerinin üçte ikisinde olgusal bilgileri depolar. Nasıl: Zincir kuralında gradyan sönümlemesi ve He et al. 2015 ResNet birim otoyolu; Ba et al. 2016 LayerNorm orkestra benzetmesi, BatchNorm'un dil modellerindeki iflası, Pre-LN vs Post-LN kararlılık ispatı ve Zhang & Sennrich 2019 RMSNorm optimizasyonu; Softmax konveks kombinasyonunun geometrisi ve boya karıştırma analojisi; FFN'in Geva et al. 2021 ilişkisel anahtar-değer belleği olarak çalışması; Hendrycks 2016 GELU yumuşak kapılaması ve Shazeer 2020 SwiGLU mimarisi; Llama 3 biassız tasarımı, Gemma 2 çift pre-and-post normalizasyonu ve DeepSeek-V3 MoE ayrıştırması (AFD); eğitimde aktivasyon kontrol noktaları ve çıkarımda GEMM vs GEMV bellek bant genişliği dinamikleri. Nerede: Serimizin 3 kelimelik somut köpek-kedi matris yürüyüşü, adım adım elle sayısal hesap ve tam PyTorch doğrulaması üzerinden. Kim için: LLM mimarisini, derin ağların gradyan dinamiğini ve modern üretim modellerinin blok tasarımlarını en alt seviyede kavramak isteyen yapay zeka mühendisleri. Ne zaman: Derin modellerde gradyan kaybolması ya da patlaması yaşandığında ve attention ile FFN arasındaki gerçek iş bölümünü anlamak gerektiğinde.",
+      "tags": [
+        "llm",
+        "transformer",
+        "residual",
+        "layernorm",
+        "ffn",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "inside-the-transformer-block",
+      "draft": false
+    },
     {
       "slug": "causal-attention-derinlemesine",
       "title": "Bir Prompt'un Yolculuğu (5): Causal Attention — zamanın oku, alt üçgensel matris ve yokluğun matematiği",

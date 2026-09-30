@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-09-29",
+  "updated": "2026-09-30",
   "series": [
     {
       "id": "the-big-picture",
@@ -15,15 +15,16 @@
     {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
-      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, and multi-head attention & GQA subspaces — a 6-part architectural journey.",
-      "badge": "6-Part Series",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, and the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN, and the convex hull barrier) — a 7-part architectural journey.",
+      "badge": "7-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
         "how-embeddings-work",
         "inside-self-attention",
         "inside-causal-attention",
-        "inside-multi-head-attention"
+        "inside-multi-head-attention",
+        "inside-the-transformer-block"
       ]
     },
     {
@@ -59,6 +60,26 @@
     }
   ],
   "posts": [
+    {
+      "slug": "inside-the-transformer-block",
+      "title": "A Prompt's Journey (7): The Transformer Block — the gradient highway, the convex hull, and FFN associative memory",
+      "date": "2026-09-30",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 7,
+      "summary": "What: The complete inner mechanics of a single Transformer block; residual connections, LayerNorm/RMSNorm stabilization, and the mathematical anatomy of the Feed-Forward Network (FFN/MLP). Why: Enables error gradients that would otherwise extinguish to one-millionth across 20 layers to flow across 100+ layers via the I + f'(x) guarantee; shatters the convex hull boundary that traps self-attention into linear interpolation, allowing non-linear feature synthesis and storing factual knowledge in two-thirds of the model parameters. How: Backpropagation chain rule and He et al. 2015 ResNet identity highways; Ba et al. 2016 LayerNorm orchestra analogy, why BatchNorm fails on variable-length sequences, Pre-LN vs Post-LN stability proofs, and Zhang & Sennrich 2019 RMSNorm efficiency; Softmax convex combination geometry and paint-mixing analogy; Geva et al. 2021 FFN key-value associative memory mechanics; Hendrycks 2016 GELU probabilistic gating and Shazeer 2020 SwiGLU architectures; Llama 3 bias removal, Gemma 2 dual pre-and-post-norm, and DeepSeek-V3 MoE Attention-FFN Disaggregation (AFD); activation checkpointing in training and GEMM vs GEMV memory bandwidth in inference. Where: Traced across our running 3-token dog-cat sequence with manual tensor arithmetic and runnable PyTorch verification. Who: Senior ML engineers and systems architects seeking an exact structural understanding of Transformer layer dynamics. When: When deep architectures suffer vanishing or exploding gradients, or when analyzing the distinct computational workloads of attention versus FFNs.",
+      "tags": [
+        "llm",
+        "transformer",
+        "residual",
+        "layernorm",
+        "ffn",
+        "architecture",
+        "fundamentals"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "transformer-blogu-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "inside-causal-attention",
       "title": "A Prompt's Journey (5): Inside Causal Attention — The Arrow of Time, Lower Triangular Matrices, and the Math of the Void",
