@@ -40,29 +40,12 @@ ortaya koyuyor.
 **Bu yazıda**
 
 - [1. En yalın hâliyle dikkat: Fener, rozet ve çanta analojisi](#1-en-yalın-hâliyle-dikkat-fener-rozet-ve-çanta-analojisi)
-  - [Günlük hayattan seçici geri-bakış: "kovaladı" neyi arar?](#günlük-hayattan-seçici-geri-bakış-kovaladı-neyi-arar)
-  - [Üç soru: Kime, ne kadar, neden?](#üç-soru-kime-ne-kadar-neden)
 - [2. Q, K, V mantığı: Neden üç ayrı vektör?](#2-q-k-v-mantığı-neden-üç-ayrı-vektör)
-  - [Veritabanı analojisi: Sert sorgudan yumuşak benzerliğe](#veritabanı-analojisi-sert-sorgudan-yumuşak-benzerliğe)
-  - [İş görüşmesi analojisi](#i̇ş-görüşmesi-analojisi)
-  - [Tek bir matris kullansaydık ne kırılırdı?](#tek-bir-matris-kullansaydık-ne-kırılırdı)
-  - [Value neden adresleme hesabına girmez?](#value-neden-adresleme-hesabına-girmez)
 - [3. Adım adım sayısal hesaplama: Üç kelimenin tam matris yürüyüşü](#3-adım-adım-sayısal-hesaplama-üç-kelimenin-tam-matris-yürüyüşü)
-  - [Girdi matrisi Z ve projeksiyon ağırlıkları](#girdi-matrisi-z-ve-projeksiyon-ağırlıkları)
-  - [A. Query vektörlerinin hesabı (q = z · W_Q)](#a-query-vektörlerinin-hesabı-q--z--w_q)
-  - [B. Key vektörlerinin hesabı (k = z · W_K)](#b-key-vektörlerinin-hesabı-k--z--w_k)
-  - [C. Value vektörlerinin hesabı (v = z · W_V)](#c-value-vektörlerinin-hesabı-v--z--w_v)
-  - [D. Ham dikkat skorları: S = Q K^T (Kimin feneri kimin rozetine denk geldi?)](#d-ham-dikkat-skorları-s--q-kt-kimin-feneri-kimin-rozetine-denk-geldi)
-- [4. Neden sqrt(d_k) ile bölüyoruz? Skorları sakinleştirme ihtiyacı](#4-neden-sqrtd_k-ile-bölüyoruz-skorları-sakinleştirme-ihtiyacı)
-  - [Sade sezgi: Neden sayılar büyür ve softmax körleşir?](#sade-sezgi-neden-sayılar-büyür-ve-softmax-körleşir)
-  - [Meraklısına: Matematiksel varyans ispatı](#meraklısına-matematiksel-varyans-ispatı)
+- [4. Neden sqrt(d_k) ile bölüyoruz? Skorları sakinleştirme ihtiyacı](#4-neden-sqrtdk-ile-bölüyoruz-skorları-sakinleştirme-ihtiyacı)
 - [5. Softmax: Skorları yüzdelik dikkat ağırlıklarına çevirme](#5-softmax-skorları-yüzdelik-dikkat-ağırlıklarına-çevirme)
 - [6. Değerleri harmanlama: Bağlam vektörünün (Context Vector) doğuşu](#6-değerleri-harmanlama-bağlam-vektörünün-context-vector-doğuşu)
-  - [Çantaları karıştırmak: Çıktı matrisi O = AV](#çantaları-karıştırmak-çıktı-matrisi-o--av)
-  - [Bu dikkat yüzdeleri bize ne anlatıyor?](#bu-dikkat-yüzdeleri-bize-ne-anlatıyor)
-  - [Temsil zincirinde context vector'ün yeri](#temsil-zincirinde-context-vectorün-yeri)
-- [7. İleri düzey bakış: M = W_Q W_K^T ve dilbilgisel asimetri](#7-i̇leri-düzey-bakış-m--w_q-w_kt-ve-dilbilgisel-asimetri)
-  - [Bölüm 2 ile köprü: RoPE dikkat mekanizmasına tam olarak nerede girer?](#bölüm-2-ile-köprü-rope-dikkat-mekanizmasına-tam-olarak-nerede-girer)
+- [7. İleri düzey bakış: M = W_Q W_K^T ve dilbilgisel asimetri](#7-ileri-düzey-bakış-m-wq-wkt-ve-dilbilgisel-asimetri)
 - [8. Hesaplamanın emergent yapısı: Rastgelelikten role geçiş](#8-hesaplamanın-emergent-yapısı-rastgelelikten-role-geçiş)
 - [9. Google Research perde arkası: Bir mimarinin doğuşu (Zaman Çizelgesi)](#9-google-research-perde-arkası-bir-mimarinin-doğuşu-zaman-çizelgesi)
 - [10. Tek kafanın sınırları ve Multi-Head Attention motivasyonu](#10-tek-kafanın-sınırları-ve-multi-head-attention-motivasyonu)
@@ -635,9 +618,7 @@ Oysa gerçek bir cümlede aynı anda birden çok bağımsız ilişki yaşanır:
 Tek bir projeksiyon uzayı, bu ilişkilerin hepsini çakışmadan aynı anda temsil
 edemez. Bir kafa özneye odaklandığında nesne ilişkisini bastırmak zorunda kalır.
 
-Bu sınırlılık, serimizin sonraki adımı olan **Multi-Head Attention (Çok Başlıklı Dikkat)**
-mimarisinin doğrudan motivasyonudur: Gizli boyutu bağımsız alt uzaylara bölerek her
-bir kafanın cümlenin farklı bir dilbilgisel eksenine uzmanlaşmasını sağlamak.
+Bu sınırlılık ve zamanın tek yönlü oku, serimizin sonraki adımları olan [Causal Attention](post.html?slug=causal-attention-derinlemesine) (Bölüm 5) ve [Multi-Head Attention](post.html?slug=multi-head-attention-derinlemesine) (Bölüm 6) mimarilerinin doğrudan motivasyonudur: Önce üretken modellerde geleceği maskelemek, ardından gizli boyutu bağımsız alt uzaylara bölerek her bir kafanın cümlenin farklı bir dilbilgisel eksenine uzmanlaşmasını sağlamak.
 
 ---
 
@@ -753,4 +734,4 @@ Dikkat Ağırlıkları (A):
 - Parikh et al., [A Decomposable Attention Model for Natural Language Inference](https://arxiv.org/abs/1606.01933) (2016) — Rekürrans olmadan sadece attention ile dil modelleme başarısının ilk kanıtı.
 - Elhage et al., [A Mathematical Framework for Transformer Circuits](https://transformer-circuits.pub/2021/framework/index.html) (2021) — Anthropic'in dikkat kafalarının iç mekaniğini ve indüksiyon kafalarını inceleyen çığır açıcı analizi.
 - Zeiler & Fergus, [Visualizing and Understanding Convolutional Networks](https://arxiv.org/abs/1311.2901) (2013) — Derin ağlarda özelliklerin kendiliğinden belirmesinin (emergent features) görsel kanıtı.
-- Bu blogda: [Bir Prompt'un Yolculuğu (1): Tokenizasyon](post.html?slug=tokenizasyon-nasil-calisir) — masanın ilk adımı: metinden token ID'sine —, [Bir Prompt'un Yolculuğu (2): Embedding Katmanı](post.html?slug=embedding-katmani-derinlemesine) — tamsayıları sürekli geometriye ve $Z$ matrisine çeviren katman —, [Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler](post.html?slug=embeddingler-derinlemesine) — anlamın koordinatları ve vektör uzayları — ve [Büyük Resim (1): Baştan Sona Bir LLM](post.html?slug=llm-nasil-calisir) — attention katmanlarının model boyunca yolculuğu.
+- Bu blogda serinin diğer adımları: [Bir Prompt'un Yolculuğu (1): Tokenizasyon](post.html?slug=tokenizasyon-nasil-calisir) — masanın ilk adımı: metinden token ID'sine —, [Bir Prompt'un Yolculuğu (2): Embedding Katmanı](post.html?slug=embedding-katmani-derinlemesine) — tamsayıları sürekli geometriye ve $Z$ matrisine çeviren katman —, [Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler](post.html?slug=embeddingler-derinlemesine) — anlamın koordinatları ve vektör uzayları —, [Bir Prompt'un Yolculuğu (5): Causal Attention](post.html?slug=causal-attention-derinlemesine) — zamanın oku, alt üçgensel matris ve yokluğun matematiği — ve [Bir Prompt'un Yolculuğu (6): Multi-Head Attention](post.html?slug=multi-head-attention-derinlemesine) — alt uzaylar, simetri kırılması ve kafa budama.

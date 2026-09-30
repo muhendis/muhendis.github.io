@@ -40,29 +40,12 @@ transformer — with maximum clarity, zero repetition, and uncompromising techni
 **In this article**
 
 - [1. Attention in its simplest form: The flashlight, badge, and bag analogy](#1-attention-in-its-simplest-form-the-flashlight-badge-and-bag-analogy)
-  - [In-sentence selective lookback: What does "chased" look for?](#in-sentence-selective-lookback-what-does-chased-look-for)
-  - [Three questions: Who, how much, and why?](#three-questions-who-how-much-and-why)
 - [2. The logic of Q, K, and V: Why three distinct vectors?](#2-the-logic-of-q-k-and-v-why-three-distinct-vectors)
-  - [The database analogy: From hard queries to soft differentiable similarity](#the-database-analogy-from-hard-queries-to-soft-differentiable-similarity)
-  - [The hiring interview analogy](#the-hiring-interview-analogy)
-  - [What would break if we used a single matrix?](#what-would-break-if-we-used-a-single-matrix)
-  - [Why Value never enters the addressing calculation](#why-value-never-enters-the-addressing-calculation)
 - [3. Step-by-step arithmetic: The complete matrix walkthrough on three tokens](#3-step-by-step-arithmetic-the-complete-matrix-walkthrough-on-three-tokens)
-  - [Input matrix Z and projection weights](#input-matrix-z-and-projection-weights)
-  - [A. Computing Query vectors (q = z · W_Q)](#a-computing-query-vectors-q--z--w_q)
-  - [B. Computing Key vectors (k = z · W_K)](#b-computing-key-vectors-k--z--w_k)
-  - [C. Computing Value vectors (v = z · W_V)](#c-computing-value-vectors-v--z--w_v)
-  - [D. Raw attention scores: S = Q K^T (Whose flashlight caught whose badge?)](#d-raw-attention-scores-s--q-kt-whose-flashlight-caught-whose-badge)
-- [4. Why divide by sqrt(d_k)? Taming the attention scores](#4-why-divide-by-sqrtd_k-taming-the-attention-scores)
-  - [Simple intuition: Why numbers explode and softmax blinds](#simple-intuition-why-numbers-explode-and-softmax-blinds)
-  - [For the mathematically curious: The variance proof](#for-the-mathematically-curious-the-variance-proof)
+- [4. Why divide by sqrt(d_k)? Taming the attention scores](#4-why-divide-by-sqrtdk-taming-the-attention-scores)
 - [5. Softmax: Converting scores into percentage attention weights](#5-softmax-converting-scores-into-percentage-attention-weights)
 - [6. Blending values: The birth of the Context Vector](#6-blending-values-the-birth-of-the-context-vector)
-  - [Mixing the bags: Output matrix O = AV](#mixing-the-bags-output-matrix-o--av)
-  - [What does this attention distribution reveal?](#what-does-this-attention-distribution-reveal)
-  - [Where the context vector sits in the representation chain](#where-the-context-vector-sits-in-the-representation-chain)
-- [7. Advanced perspective: M = W_Q W_K^T and linguistic asymmetry](#7-advanced-perspective-m--w_q-w_kt-and-linguistic-asymmetry)
-  - [Bridge to Part 2: Where does RoPE plug into attention?](#bridge-to-part-2-where-does-rope-plug-into-attention)
+- [7. Advanced perspective: M = W_Q W_K^T and linguistic asymmetry](#7-advanced-perspective-m-wq-wkt-and-linguistic-asymmetry)
 - [8. Emergent computation: The transition from randomness to functional roles](#8-emergent-computation-the-transition-from-randomness-to-functional-roles)
 - [9. Inside Google Research: The genesis of an architecture (Timeline)](#9-inside-google-research-the-genesis-of-an-architecture-timeline)
 - [10. Limitations of a single head and the need for Multi-Head Attention](#10-limitations-of-a-single-head-and-the-need-for-multi-head-attention)
@@ -623,10 +606,7 @@ A single attention head cannot track multiple independent relational planes at
 once without interference. If the single head focuses on the subject, it suppresses
 the object.
 
-This exact constraint motivates **Multi-Head Attention**: splitting the hidden
-dimension into multiple independent subspace projections, allowing different heads
-to specialize concurrently in syntactic agreement, pronoun binding, and semantic
-association.
+This exact constraint and the unidirectional arrow of time motivate the next steps in our series: [Inside Causal Attention](post.html?slug=inside-causal-attention) (Part 5) and [Inside Multi-Head Attention](post.html?slug=inside-multi-head-attention) (Part 6) — first enforcing causality to prevent models from seeing into the future, and then partitioning the hidden dimension into independent subspace projections so different heads can specialize concurrently across multiple linguistic axes.
 
 ---
 
@@ -742,4 +722,4 @@ Output Context Vectors (O):
 - Parikh et al., [A Decomposable Attention Model for Natural Language Inference](https://arxiv.org/abs/1606.01933) (2016) — Early proof that pure attention without recurrent networks achieves state-of-the-art NLI results.
 - Elhage et al., [A Mathematical Framework for Transformer Circuits](https://transformer-circuits.pub/2021/framework/index.html) (2021) — Anthropic's landmark analysis of attention head circuits and induction heads.
 - Zeiler & Fergus, [Visualizing and Understanding Convolutional Networks](https://arxiv.org/abs/1311.2901) (2013) — Landmark empirical demonstration of emergent hierarchical features in deep models.
-- On this blog: [A Prompt's Journey (1): Tokenization](post.html?slug=how-tokenization-works) — from text to integer IDs —, [A Prompt's Journey (2): The Embedding Layer](post.html?slug=inside-the-embedding-layer) — converting IDs to continuous geometry and $Z$ —, [A Prompt's Journey (3): Semantic Embeddings](post.html?slug=how-embeddings-work) — coordinate spaces and vector retrieval —, and [The Big Picture (1): An LLM, End to End](post.html?slug=how-llms-work) — the broader architectural journey through layers and caches.
+- Other installments in this series on this blog: [A Prompt's Journey (1): Tokenization](post.html?slug=how-tokenization-works) — from text to integer IDs —, [A Prompt's Journey (2): The Embedding Layer](post.html?slug=inside-the-embedding-layer) — converting IDs to continuous geometry and $Z$ —, [A Prompt's Journey (3): Semantic Vectors](post.html?slug=how-embeddings-work) — coordinate spaces and vector retrieval —, [A Prompt's Journey (5): Inside Causal Attention](post.html?slug=inside-causal-attention) — the arrow of time, lower-triangular masking, and the mathematics of absence —, and [A Prompt's Journey (6): Inside Multi-Head Attention](post.html?slug=inside-multi-head-attention) — subspaces, symmetry breaking, and head pruning.

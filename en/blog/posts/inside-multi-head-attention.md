@@ -1,9 +1,11 @@
 When you feed a prompt into a large language model, the foundational layers explored in previous installments of our series have already transformed raw text into geometry:
 1. At the [Tokenization](post.html?slug=how-tokenization-works) desk, text is partitioned into discrete integers (`[1054, 492, 281]`).
 2. The [Embedding Layer](post.html?slug=inside-the-embedding-layer) retrieves continuous representation vectors from the dictionary matrix, and Rotary Position Embeddings (RoPE) prepare them for sequence-aware geometry.
-3. The [Self-Attention mechanism](post.html?slug=inside-self-attention) provides the dynamic engine where tokens project Query, Key, and Value vectors to attend to one another and produce contextualized representations.
+3. The [Semantic Vector Space](post.html?slug=how-embeddings-work) establishes the coordinate system where concepts acquire geometric meaning and proximity.
+4. The [Self-Attention mechanism](post.html?slug=inside-self-attention) provides the dynamic engine where tokens project Query, Key, and Value vectors to attend to one another and produce contextualized representations.
+5. The [Causal Attention mechanism](post.html?slug=inside-causal-attention) enforces the arrow of time with a lower-triangular mask, ensuring each token attends only to past tokens and cementing the mathematical foundation of the KV cache.
 
-Recall the concrete three-token sentence we analyzed in Part 4: **`["dog", "cat", "chased"]`** (subject, object, and predicate). Using a single set of projection weights ($W_Q, W_K, W_V$), every token cast its Query flashlight against every Key badge. In that single-head setup, the attention weights converged heavily toward the verb ("chased") — capturing a predicate-centric view where every participant asked what action was taking place.
+Recall the concrete three-token sentence we analyzed in Parts 4 and 5: **`["dog", "cat", "chased"]`** (subject, object, and predicate). Using a single set of projection weights ($W_Q, W_K, W_V$), every token cast its Query flashlight against every Key badge, yielding a predicate-centric attention distribution that was subsequently masked to obey causality in Part 5.
 
 Yet here lies an insurmountable limitation of single-head attention: natural language never operates on just one isolated relationship at a time. Within that same sentence, multiple independent relational axes exist concurrently:
 - Subject–verb dependency ("dog" $\to$ "chased")
@@ -13,31 +15,17 @@ Yet here lies an insurmountable limitation of single-head attention: natural lan
 
 In single-head attention, the entire model dimension $d_{\text{model}}$ is consumed by a single bilinear similarity matrix ($M = W_Q W_K^T$). Because a single matrix can only capture one geometric orientation at a time, it is trapped in an **"uncomfortable compromise"** when forced to represent conflicting relationships simultaneously: it either focuses on the verb and blinds itself to immediate word order, or preserves local word order and fails to capture the long-range predicate.
 
-This article, Part 5 of our series, explains how **Multi-Head Attention (MHA)** shatters this compromise trap. We explore the intuition of splitting the hidden dimension into independent geometric subspaces ($d_k = d_{\text{model}} / H$) at zero additional parameter cost, trace a complete step-by-step numerical calculation with two distinct heads operating on our concrete 3-token tensor, examine the training dynamics of symmetry breaking and positive feedback, review seminal empirical head-pruning literature (Michel, Voita, Anthropic's induction heads), explain how GPUs compute multi-head projections with a single fused GEMM and zero-copy pointer reshapes, and analyze why the severe memory-bandwidth bottleneck of the multi-head KV cache forced modern architectures to evolve toward MQA and GQA.
+This article, Part 6 of our series, explains how **Multi-Head Attention (MHA)** shatters this compromise trap. We explore the intuition of splitting the hidden dimension into independent geometric subspaces ($d_k = d_{\text{model}} / H$) at zero additional parameter cost, trace a complete step-by-step numerical calculation with two distinct heads operating on our concrete 3-token tensor, examine the training dynamics of symmetry breaking and positive feedback, review seminal empirical head-pruning literature (Michel, Voita, Anthropic's induction heads), explain how GPUs compute multi-head projections with a single fused GEMM and zero-copy pointer reshapes, and analyze why the severe memory-bandwidth bottleneck of the multi-head KV cache forced modern architectures to evolve toward MQA and GQA.
 
 **In this article**
 
 - [1. From a single projector to multiple lenses: Multi-Head intuition and the single-head bottleneck](#1-from-a-single-projector-to-multiple-lenses-multi-head-intuition-and-the-single-head-bottleneck)
 - [2. The mathematics of Multi-Head Attention: Subspaces, Concat, and WO projection](#2-the-mathematics-of-multi-head-attention-subspaces-concat-and-wo-projection)
-  - [Reading the symbols:](#reading-the-symbols)
-  - [The parameter and FLOP neutrality paradox](#the-parameter-and-flop-neutrality-paradox)
 - [3. Step-by-step numerical calculation: Two heads, two distinct perspectives](#3-step-by-step-numerical-calculation-two-heads-two-distinct-perspectives)
-  - [Head 1: The predicate-centric head](#head-1-the-predicate-centric-head)
-  - [Head 2: The local positional adjacency head](#head-2-the-local-positional-adjacency-head)
-  - [Concatenation and the WO projection](#concatenation-and-the-wo-projection)
-  - [What happened numerically? (The 131% paradox)](#what-happened-numerically-the-131-paradox)
 - [4. The hardware reality: Computing Multi-Head Attention on GPUs and tensor tricks](#4-the-hardware-reality-computing-multi-head-attention-on-gpus-and-tensor-tricks)
-  - [Three critical tensor tricks in production:](#three-critical-tensor-tricks-in-production)
 - [5. Training dynamics: From random initialization to symmetry breaking](#5-training-dynamics-from-random-initialization-to-symmetry-breaking)
-  - [The symmetry trap: Why random initialization is mandatory](#the-symmetry-trap-why-random-initialization-is-mandatory)
-  - [Distinct computational paths and gradient divergence](#distinct-computational-paths-and-gradient-divergence)
-  - [Snowball effect: Positive feedback](#snowball-effect-positive-feedback)
 - [6. Is specialization guaranteed? Head pruning and induction heads](#6-is-specialization-guaranteed-head-pruning-and-induction-heads)
-  - [Empirical evidence: Are sixteen heads really better than one?](#empirical-evidence-are-sixteen-heads-really-better-than-one)
-  - [Anthropic's induction heads: The circuit of in-context learning](#anthropics-induction-heads-the-circuit-of-in-context-learning)
 - [7. Two engineering lenses: Training vs inference and the evolution of MHA](#7-two-engineering-lenses-training-vs-inference-and-the-evolution-of-mha)
-  - [The KV Cache crisis in Multi-Head Attention](#the-kv-cache-crisis-in-multi-head-attention)
-  - [The architectural evolution: From MHA to MQA, GQA, and MLA](#the-architectural-evolution-from-mha-to-mqa-gqa-and-mla)
 - [8. Full step-by-step verification with PyTorch](#8-full-step-by-step-verification-with-pytorch)
 - [The whole story in six lines](#the-whole-story-in-six-lines)
 - [Glossary](#glossary)
@@ -47,7 +35,46 @@ This article, Part 5 of our series, explains how **Multi-Head Attention (MHA)** 
 
 ## 1. From a single projector to multiple lenses: Multi-Head intuition and the single-head bottleneck
 
-To grasp why Multi-Head Attention is indispensable, imagine a theater stage or a photographic studio.
+### An intuitive everyday analogy: Two fundamental attention modes
+
+Before diving into complex mathematical formulas, let us ground these two foundational attention architectures in an intuitive analogy drawn from everyday reading.
+
+Consider analyzing a single sentence from a printed book:  
+**`"Because it rained heavily yesterday, Ahmet grabbed his umbrella."`**
+
+When processing this sentence, an artificial intelligence system operates under one of two fundamentally distinct operational regimes:
+
+#### 1. Normal Multi-Head Attention (Bidirectional Attention)
+This mechanism is deployed when we want to place an entire text on the table at once, reading and comprehending all parts simultaneously. It resides inside the **Encoder** block of the Transformer (exemplified by **BERT** and **RoBERTa**). It is also deployed in Encoder-Decoder architectures (the original 2017 Transformer and **T5**) inside the second attention layer (**Encoder-Decoder / Cross-Attention**), where the target sequence attends bidirectionally across the source sequence.
+
+* **How It Works:** Every word in the sentence attends simultaneously to all preceding words and all succeeding words in a single, unconstrained bidirectional view.
+* **Analogy:** The entire sentence is open and visible on the page before you. When your eyes land on the word *"umbrella"*, you glance backward to see *"Ahmet"* and *"rained"*, and simultaneously glance forward to observe that the action was *"grabbed"*. You resolve all semantic connections in a single pass.
+* **Objective:** Form an exhaustive, holistic understanding of grammatical relationships and contextual representation (analysis, classification, and retrieval).
+
+#### 2. Multi-Head Causal Self-Attention (Masked / Autoregressive Attention)
+This mechanism is deployed when generating new text sequentially from scratch (writing word by word). It resides in the first attention layer of the Transformer's **Decoder** block (dominating virtually all modern frontier generative models: **GPT-4**, **LLaMA 3**, **Mistral**, **Gemma**).
+
+* **How It Works:** When the model attempts to predict the next word, it is strictly forbidden from observing future words that have not yet been produced. Future token positions are sealed beneath a rigorous mathematical mask. Each word can only attend to words to its left (the past) and itself.
+* **Analogy:** Predictive text autocomplete on a smartphone keyboard. You sequentially type *"Ahmet"*, *"yesterday"*, *"because"*. While predicting the next word, the predictive model cannot peek ahead to see what you intend to write on the right. Relying solely on the prefix on the left, it predicts the most probable next word: *"rained"*.
+* **Objective:** Prevent the generative model from "peeking into the future and cheating," compelling it to construct coherent, logically sound continuations step by step.
+
+#### 3. Multi-Head Cross-Attention
+Present in dual-stack architectures like the original Transformer (Vaswani 2017) and T5 inside the Decoder's second attention layer. Here, Query vectors are generated by target tokens inside the Decoder, while Key and Value vectors are fed directly from the representations produced by the Encoder. As the model emits words in the target language (e.g., German), it attends bidirectionally across the entire unmasked source sentence (e.g., English).
+
+The table below delineates the architectural boundaries between these attention mechanisms:
+
+| Feature | Normal Multi-Head Attention (Bidirectional) | Masked (Causal) Multi-Head Attention | Multi-Head Cross-Attention |
+| :--- | :--- | :--- | :--- |
+| **Attention Direction** | Bidirectional (Past and Future) | Unidirectional (Past and Present Only) | Bidirectional (Full Source Sequence) |
+| **Masking** | None (Padding mask only) | Active ($-\infty$ causal mask for $j > i$) | None (Entire encoder output is unmasked) |
+| **Architectural Location** | Encoder block (All layers) | Decoder block (Input / First attention layer) | Decoder block (Second / Upper attention layer) |
+| **Q, K, V Source** | $Q, K, V$ from same sequence (Self-Attention) | $Q, K, V$ from same sequence (Causal Self-Attention) | $Q$ from Decoder; $K, V$ from Encoder |
+| **Primary Task** | Holistic comprehension (Analysis & Representation) | Autoregressive generation (Sequential writing) | Aligning generated text with source context (Translation/Summary) |
+| **Example Models** | BERT, RoBERTa, DeBERTa, ViT | GPT-4, Llama 3, Mistral, Gemma | Original Transformer (Vaswani 2017), T5, BART |
+
+### From a single projector to multiple lenses: The theater analogy and single-head bottleneck
+
+Why, across both operational modes, can a language model not rely on a single attention head? Why is a **"Multi-Head"** architecture strictly necessary? To grasp why, imagine a theater stage or a photographic studio.
 
 Suppose a single massive white floodlight hangs from the ceiling. When turned on, it floods the entire stage with uniform, average white illumination. You can point this floodlight directly at the lead actor; but when you do, the background details sink into deep, harsh shadows. If you widen the beam to illuminate both the actor and the background set simultaneously, the luminous intensity drops everywhere; neither the actor's subtle facial expressions stand out, nor the background textures appear crisp. With a single light source, you cannot simultaneously cast a high-contrast portrait key light on the actor, a soft ambient fill light across the stage, and a sharp rim light to separate the silhouette from the backdrop.
 
@@ -94,7 +121,7 @@ $$M^{(h)} = W_Q^{(h)} \left(W_K^{(h)}\right)^T, \quad h \in \{1, 2, \dots, H\}$$
 Just as a Convolutional Neural Network (CNN) does not use a single filter for an entire image — where filter 1 detects horizontal edges, filter 2 detects corners, and filter 3 detects textures — each attention head specializes in a distinct linguistic axis within its own private subspace.
 
 > [!NOTE]
-> **The Single-Lens Budget Paradox (The 131% Dilemma):** To fully contextualize the word *"chased"*, the artificial intelligence must simultaneously attend to two distinct targets: what the action is (to its own token: at $56.1\%$) and who received the action (to the direct object, *"cat"*: at $75.0\%$). However, under the mathematical rules of the Softmax function, the total attention budget allocated across all tokens is strictly capped at exactly $100\%$. Because $56.1\% + 75.0\% = 131.1\%$, a single $100\%$ budget cannot possibly represent both strong relationships at once; the scores share the same denominator and dilute each other. Multi-Head Attention is the architecture designed to grant each semantic relationship its own independent $100\%$ budget.
+> **The Single-Lens Budget Paradox (The 131% Dilemma):** To fully contextualize the word *"chased"*, the artificial intelligence must simultaneously attend to two distinct targets: what the action is (to its own token: at $56.1\%$) and who received the action (to the immediate direct object, *"cat"*: at $75.0\%$). However, under the mathematical rules of the Softmax function, the total attention budget allocated across all tokens is strictly capped at exactly $100\%$. Because $56.1\% + 75.0\% = 131.1\%$, a single $100\%$ budget cannot possibly represent both strong relationships at once; the scores share the same denominator and dilute each other. Multi-Head Attention is the architecture designed to grant each semantic relationship its own independent $100\%$ budget.
 
 ---
 
@@ -130,6 +157,68 @@ $$\text{MultiHead}(Z) = \text{Concat}(\text{head}_1, \text{head}_2, \dots, \text
 
 $$W^O \in \mathbb{R}^{d_{\text{model}} \times d_{\text{model}}}$$
 
+### Mathematical masking matrix: -∞ and Softmax anatomy
+
+The masking operation at the heart of Causal Attention is a mathematically rigorous zeroing mechanism that renders future lookahead strictly impossible.
+
+Each attention head $h$ first computes raw scaled dot-product scores ($S$) in its subspace:
+
+$$S_{ij} = \frac{q_i k_j^T}{\sqrt{d_k}}$$
+
+A strict lower-triangular causal masking matrix ($M$) is subsequently added element-wise:
+
+$$S^{\text{masked}}_{ij} = S_{ij} + M_{ij}, \quad \text{where } M_{ij} = \begin{cases} 0, & j \le i \text{ (past and present)} \\ -\infty, & j > i \text{ (future)} \end{cases}$$
+
+When the Softmax operator is applied to this masked logit matrix, an exponential transformation takes place:
+
+$$A_{ij} = \text{softmax}(S^{\text{masked}})_{ij} = \frac{\exp(S_{ij} + M_{ij})}{\sum_{k=1}^N \exp(S_{ik} + M_{ik})}$$
+
+The core mathematical property lies in the asymptotic limit of the exponential function at negative infinity:
+
+$$\lim_{x \to -\infty} \exp(x) = 0$$
+
+For any future token position ($j > i$):
+1. **The numerator collapses to zero:** $\exp(S_{ij} - \infty) = 0$.
+2. **Future terms vanish from the denominator:** In the denominator sum, all future terms contribute an exact zero; the normalizer thus sums strictly across past and present tokens ($k=1 \dots i$):
+
+$$A_{ij} = \begin{cases} \frac{\exp(S_{ij})}{\sum_{k=1}^i \exp(S_{ik})}, & j \le i \\ 0, & j > i \end{cases}$$
+
+Consequently, each attention head produces an output that is strictly a convex combination of past Value vectors:
+
+$$\text{head}_h = A^{(h)} V_h = \text{softmax}\left(\frac{Q_h K_h^T}{\sqrt{d_k}} + M\right) V_h \in \mathbb{R}^{N \times d_v}$$
+
+Notice the chronological execution sequence in hardware:
+
+```mermaid
+flowchart LR
+    Z["Input Z"] --> Proj["Q, K, V Projections"]
+    Proj --> Split["Partition into H Heads (Q_h, K_h, V_h)"]
+    Split --> Dot["1. Scores: S_h = Q_h K_h^T / sqrt(d_k)"]
+    Dot --> Mask["2. MASKING: S_h + M (-inf to future)"]
+    Mask --> Smax["3. SOFTMAX: A_h = softmax(S_h + M)"]
+    Smax --> WSum["4. Context: head_h = A_h V_h"]
+    WSum --> Concat["5. Concatenation: Concat(head_1, ..., head_H)"]
+    Concat --> Out["6. Projection: Concat * W^O -> O"]
+```
+
+The causal masking step is inserted **strictly between scaled dot-product scores and the Softmax function**. Because $e^{-\infty} = 0$, all future token logits vanish in the exponential, ensuring that zero future information can leak into the head outputs.
+> [!IMPORTANT]
+> **The Gradient Shield:** When the attention weight $A_{ij} \equiv 0$ for $j > i$, the chain rule dictates that the backpropagated gradient from future tokens into past representations is strictly zero ($\frac{\partial \mathcal{L}}{\partial S_{ij}} = 0$). Without this absolute algebraic barrier, models during training would simply copy future tokens directly, suffering **shortcut collapse** and entering infinite loops during autoregressive inference.
+
+### Why modern LLMs converged exclusively on Causal MHA
+
+When the Transformer was first introduced (Vaswani 2017), it was a dual-stack Encoder-Decoder. In 2018, Google pursued an Encoder-only path with BERT (Normal MHA), while OpenAI pursued a Decoder-only path with GPT-1 (Causal MHA). Today, virtually all frontier production LLMs (GPT-4, Llama 3, Mistral, Claude, DeepSeek) have standardized on **Decoder-only Causal MHA**. Three architectural and hardware pillars explain this convergence:
+
+1. **A Unified Self-Supervised Objective (Next-Token Prediction):**
+   BERT's Masked Language Modeling (randomly replacing 15% of tokens with `[MASK]`) is exceptional for sentence representation and classification, but fundamentally incapable of open-ended generation. Next-token prediction under Causal MHA scales effortlessly across trillions of unstructured tokens without human annotation. To accurately predict the next token, the network is compelled to acquire world knowledge, syntactic nuance, multi-step logical deduction, and in-context learning.
+
+2. **Inference Latency and the Invariance of the KV Cache:**
+   In bidirectional attention (BERT), appending a single token at the end retroactively modifies the representations of all preceding tokens. Consequently, generating text would require **recomputing the entire sequence from scratch at every step** ($O(N^2)$ latency blowout).  
+   In Causal Attention, the arrow of time cannot be reversed: token $t$ can never alter the Key or Value representations of past tokens. Those past KV tensors freeze permanently. The model never recomputes the past; it reads existing keys and values directly from the KV cache and produces each new token with a single step ($O(1)$ projection compute and $O(N)$ memory bandwidth).
+
+3. **Hardware Parallelism During Training (Teacher Forcing):**
+   While autoregressive inference is necessarily sequential, training under Causal MHA is embarrassingly parallel. Thanks to the lower-triangular mask, all $N$ tokens of a training sequence are computed simultaneously in a single fused GEMM matrix multiplication on GPUs. The model computes loss across the entire document in a single forward pass without recurrent loops.
+
 ### Reading the symbols:
 
 - $H$: Number of attention heads (e.g., 32 in LLaMA-3 8B, 128 in LLaMA-3 70B).
@@ -163,24 +252,30 @@ Multi-Head Attention does not increase the computation budget. Instead, **it reo
 
 ## 3. Step-by-step numerical calculation: Two heads, two distinct perspectives
 
-Let us make this abstraction completely concrete using the 3-token sentence from Part 4:
-`["dog", "cat", "chased"]` (subject, object, verb).
+Recall the paramount engineering principle established in Part 5 ([Inside Causal Attention](post.html?slug=inside-causal-attention)): **in an autoregressive language model, looking into the future is strictly forbidden.** If an autoregressive model sees future tokens during training, its attention projections degenerate into an identity shortcut collapse, causing inference to derail into repetitive gibberish.
 
-To track every number by hand, let the model dimension be $d_{\text{model}} = 4$ and the number of heads be $H = 2$.
-Each head will operate in a subspace of dimension:
-$d_k = d_v = 4 / 2 = 2$.
+Therefore, in production LLMs, Multi-Head Attention is never computed using unmasked, bidirectional matrices; rather, it operates as **Multi-Head Causal Attention**, where every single head independently enforces the lower-triangular causal mask ($M$). Let us now trace the complete step-by-step manual calculation across two causal heads ($H=2$) using the exact running tensors from Parts 4 and 5.
 
-Our input tensor $Z \in \mathbb{R}^{3 \times 4}$ is:
+We retain our standard configuration from Parts 4 and 5:
+- Sequence length: $N = 3$ (`["dog", "cat", "chased"]` — subject, object, and verb).
+- Model dimension: $d_{\text{model}} = 4$.
+- Number of heads: $H = 2$.
+- Subspace dimension: $d_k = d_v = d_{\text{model}} / H = 4 / 2 = 2$.
+
+Our input matrix $Z \in \mathbb{R}^{3 \times 4}$ remains identical to earlier installments:
 
 $$Z = \begin{bmatrix} 0.21 & 0.82 & 0.13 & 0.44 \\ 0.95 & 0.16 & 0.37 & 0.28 \\ 0.19 & 0.40 & 1.01 & 0.82 \end{bmatrix} \quad \begin{matrix} \text{token 1 (dog — subject)} \\ \text{token 2 (cat — object)} \\ \text{token 3 (chased — verb)} \end{matrix}$$
 
-### Head 1: The predicate-centric head
+### Head 1: The predicate-centric causal head
 
-In Part 4, we calculated the attention distribution using our initial projection matrices and obtained:
+Recall the causal attention matrix ($A^{(1)}$) obtained in Part 5 by applying the lower-triangular causal mask ($M$) to scaled dot-product scores ($S$) prior to Softmax:
 
-$$A^{(1)} = \begin{bmatrix} 0.266 & 0.280 & 0.454 \\ 0.232 & 0.273 & 0.495 \\ 0.193 & 0.246 & 0.561 \end{bmatrix}$$
+$$A^{(1)} = \begin{bmatrix} 1.000 & 0.000 & 0.000 \\ 0.459 & 0.541 & 0.000 \\ 0.193 & 0.246 & 0.561 \end{bmatrix}$$
 
-Notice this pattern: across every row, the highest attention weight is allocated to the 3rd token, the verb ("chased"): $45.4\%$, $49.5\%$, and $56.1\%$. Head 1 has specialized as a **predicate-centric head**, locking onto the main verb of the clause.
+Let us read the geometry of this matrix:
+- **Row 1 ("dog"):** Because no prior tokens exist in the sequence, it allocates $100\%$ of its budget strictly to itself; future tokens ("cat" and "chased") are blacked out via $-\infty$ ($0.000$).
+- **Row 2 ("cat"):** Balanced between the preceding subject "dog" ($45.9\%$) and itself ($54.1\%$); leakage to the future verb is strictly zero ($0.000$).
+- **Row 3 ("chased"):** It now observes the entire past and concentrates the bulk of its attention ($56.1\%$) on the action itself. Head 1 has specialized as a **predicate-centric causal head**.
 
 Let Head 1's Value projection matrix $W_V^{(1)} \in \mathbb{R}^{4 \times 2}$ be the first two columns of the $W_V$ matrix from Part 4:
 
@@ -198,171 +293,163 @@ V_1 Matrix:
   token 3 (chased): [1.200, 1.410]
 ```
 
-Now we compute the context output for this subspace ($\text{head}_1 = A^{(1)} V_1$):
-- Row 1: $0.266 [0.34, 0.95] + 0.280 [1.32, 0.53] + 0.454 [1.20, 1.41] = [1.005, 1.041]$
-- Row 2: $0.232 [0.34, 0.95] + 0.273 [1.32, 0.53] + 0.495 [1.20, 1.41] = [1.033, 1.063]$
+Now we compute the causal context representation for this subspace ($\text{head}_1 = A^{(1)} V_1$):
+- Row 1: $1.000 [0.34, 0.95] = [0.340, 0.950]$
+- Row 2: $0.459 [0.34, 0.95] + 0.541 [1.32, 0.53] = [0.870, 0.723]$
 - Row 3: $0.193 [0.34, 0.95] + 0.246 [1.32, 0.53] + 0.561 [1.20, 1.41] = [1.064, 1.105]$
 
-$$\text{head}_1 = \begin{bmatrix} 1.005 & 1.041 \\ 1.033 & 1.063 \\ 1.064 & 1.105 \end{bmatrix}$$
+$$\text{head}_1 = \begin{bmatrix} 0.340 & 0.950 \\ 0.870 & 0.723 \\ 1.064 & 1.105 \end{bmatrix}$$
 
-These numbers are exactly identical to the first two columns of the 4D context vector computed in Part 4.
+> [!NOTE]
+> Examine these numbers closely: this $\text{head}_1$ matrix is **strictly identical down to the third decimal place** to the first two columns of the 4D output matrix ($O$) computed in Part 5 under single-head Causal Attention!
 
 ### Head 2: The local positional adjacency head
 
-Now consider a second, independently initialized weight triplet $(W_Q^{(2)}, W_K^{(2)}, W_V^{(2)})$. During training, this second head settled on an entirely different pattern: **local adjacency**.
+Now consider a second, independently initialized weight triplet $(W_Q^{(2)}, W_K^{(2)}, W_V^{(2)})$. During training, this second head specialized in an entirely different linguistic role: **local adjacency (attending strictly to the immediate predecessor / $i-1$ position).**
 
-Suppose the trained attention matrix of Head 2 converges to:
+This head must also respect causality; therefore, its upper triangle is strictly zero:
 
-$$A^{(2)} = \begin{bmatrix} 0.85 & 0.10 & 0.05 \\ 0.15 & 0.80 & 0.05 \\ 0.05 & 0.75 & 0.20 \end{bmatrix}$$
+$$A^{(2)} = \begin{bmatrix} 1.000 & 0.000 & 0.000 \\ 0.800 & 0.200 & 0.000 \\ 0.050 & 0.750 & 0.200 \end{bmatrix}$$
 
-Let us inspect this matrix:
-- "dog" attends predominantly to itself ($85\%$).
-- "cat" attends predominantly to itself ($80\%$) and previous context.
-- "chased" allocates $75\%$ of its attention to its immediate neighbor, "cat"!
+Let us analyze this matrix:
+- **"dog":** Lacking any prior context, it attends exclusively to itself ($100\%$). Future positions remain masked ($0.000$).
+- **"cat":** Allocates an overwhelming $80.0\%$ of its attention to its immediate preceding subject ("dog")!
+- **"chased":** Unlike Head 1, it does not fixate on the verb; instead, it locks **$75.0\%$** of its attention onto the immediate direct object ("cat")!
 
-This is a **local, positional attention pattern**. While Head 1 searches globally for the predicate, Head 2 tracks immediate left-side neighbors and syntactic phrase boundaries.
+While Head 1 captures global predicate identity, Head 2 tracks immediate left-side syntactic dependencies and bigram adjacency ($i-1$).
 
-Let Head 2's Value matrix $W_V^{(2)} \in \mathbb{R}^{4 \times 2}$ be:
+Let Head 2's Value matrix $W_V^{(2)} \in \mathbb{R}^{4 \times 2}$ be the last two columns of $W_V$ from Part 4:
 
 $$W_V^{(2)} = \begin{bmatrix} 0.0 & 1.0 \\ 1.0 & 0.0 \\ 0.0 & 0.0 \\ 1.0 & 1.0 \end{bmatrix}$$
 
 Computing $V_2 = Z W_V^{(2)} \in \mathbb{R}^{3 \times 2}$:
-- Token 1: $[0.82(1) + 0.44(1), \; 0.21(1) + 0.44(1)] = [1.26, 0.65] \to [0.62, 0.65]$
+- Token 1: $[0.82(1) + 0.44(1), \; 0.21(1) + 0.44(1)] = [1.26, 0.65]$
 - Token 2: $[0.16(1) + 0.28(1), \; 0.95(1) + 0.28(1)] = [0.44, 1.23]$
 - Token 3: $[0.40(1) + 0.82(1), \; 0.19(1) + 0.82(1)] = [1.22, 1.01]$
 
 ```text
 V_2 Matrix:
-  token 1 (dog):    [0.620, 0.650]
+  token 1 (dog):    [1.260, 0.650]
   token 2 (cat):    [0.440, 1.230]
   token 3 (chased): [1.220, 1.010]
 ```
 
 Computing context for Head 2 ($\text{head}_2 = A^{(2)} V_2$):
-- Row 1: $0.85 [0.62, 0.65] + 0.10 [0.44, 1.23] + 0.05 [1.22, 1.01] = [1.176, 0.726]$
-- Row 2: $0.15 [0.62, 0.65] + 0.80 [0.44, 1.23] + 0.05 [1.22, 1.01] = [0.602, 1.132]$
-- Row 3: $0.05 [0.62, 0.65] + 0.75 [0.44, 1.23] + 0.20 [1.22, 1.01] = [0.637, 1.157]$
+- Row 1: $1.000 [1.26, 0.65] = [1.260, 0.650]$
+- Row 2: $0.800 [1.26, 0.65] + 0.200 [0.44, 1.23] = [1.008 + 0.088, \; 0.520 + 0.246] = [1.096, 0.766]$
+- Row 3: $0.050 [1.26, 0.65] + 0.750 [0.44, 1.23] + 0.200 [1.22, 1.01] = [0.063 + 0.330 + 0.244, \; 0.033 + 0.923 + 0.202] = [0.637, 1.157]$
 
-$$\text{head}_2 = \begin{bmatrix} 1.176 & 0.726 \\ 0.602 & 1.132 \\ 0.637 & 1.157 \end{bmatrix}$$
+$$\text{head}_2 = \begin{bmatrix} 1.260 & 0.650 \\ 1.096 & 0.766 \\ 0.637 & 1.157 \end{bmatrix}$$
 
 ### Concatenation and the WO projection
 
-Now we concatenate both independent perspectives along the column axis:
+Now we concatenate these two independent causal perspectives along the feature axis:
 
-$$\text{Concat}(\text{head}_1, \text{head}_2) = \begin{bmatrix} 1.005 & 1.041 & 1.176 & 0.726 \\ 1.033 & 1.063 & 0.602 & 1.132 \\ 1.064 & 1.105 & 0.637 & 1.157 \end{bmatrix} \in \mathbb{R}^{3 \times 4}$$
+$$\text{Concat}(\text{head}_1, \text{head}_2) = \begin{bmatrix} 0.340 & 0.950 & 1.260 & 0.650 \\ 0.870 & 0.723 & 1.096 & 0.766 \\ 1.064 & 1.105 & 0.637 & 1.157 \end{bmatrix} \in \mathbb{R}^{3 \times 4}$$
 
-Let the model's output projection matrix $W^O \in \mathbb{R}^{4 \times 4}$ be:
+Let the output projection matrix $W^O \in \mathbb{R}^{4 \times 4}$ be:
 
 $$W^O = \begin{bmatrix} 1.0 & 0.0 & 0.5 & 0.0 \\ 0.0 & 1.0 & 0.0 & 0.5 \\ 0.5 & 0.0 & 1.0 & 0.0 \\ 0.0 & 0.5 & 0.0 & 1.0 \end{bmatrix}$$
 
-Multiplying the concatenated matrix by $W^O$ yields the final output tensor $O \in \mathbb{R}^{3 \times 4}$:
+Multiplying the concatenated matrix by $W^O$ produces the final output tensor ($O \in \mathbb{R}^{3 \times 4}$):
 
 $$O = \text{Concat}(\text{head}_1, \text{head}_2) W^O$$
 
-- **Token 1:**
-  - Col 1: $1.005(1.0) + 1.176(0.5) = 1.005 + 0.588 = 1.593$
-  - Col 2: $1.041(1.0) + 0.726(0.5) = 1.041 + 0.363 = 1.404$
-  - Col 3: $1.005(0.5) + 1.176(1.0) = 0.5025 + 1.176 = 1.678$
-  - Col 4: $1.041(0.5) + 0.726(1.0) = 0.5205 + 0.726 = 1.247$
-- **Token 2:**
-  - Col 1: $1.033(1.0) + 0.602(0.5) = 1.033 + 0.301 = 1.334$
-  - Col 2: $1.063(1.0) + 1.132(0.5) = 1.063 + 0.566 = 1.629$
-  - Col 3: $1.033(0.5) + 0.602(1.0) = 0.5165 + 0.602 = 1.119$
-  - Col 4: $1.063(0.5) + 1.132(1.0) = 0.5315 + 1.132 = 1.664$
-- **Token 3:**
+- **Token 1 ("dog"):**
+  - Col 1: $0.340(1.0) + 1.260(0.5) = 0.340 + 0.630 = 0.970$
+  - Col 2: $0.950(1.0) + 0.650(0.5) = 0.950 + 0.325 = 1.275$
+  - Col 3: $0.340(0.5) + 1.260(1.0) = 0.170 + 1.260 = 1.430$
+  - Col 4: $0.950(0.5) + 0.650(1.0) = 0.475 + 0.650 = 1.125$
+- **Token 2 ("cat"):**
+  - Col 1: $0.870(1.0) + 1.096(0.5) = 0.870 + 0.548 = 1.418$
+  - Col 2: $0.723(1.0) + 0.766(0.5) = 0.723 + 0.383 = 1.106$
+  - Col 3: $0.870(0.5) + 1.096(1.0) = 0.435 + 1.096 = 1.531$
+  - Col 4: $0.723(0.5) + 0.766(1.0) = 0.3615 + 0.766 = 1.128$
+- **Token 3 ("chased"):**
   - Col 1: $1.064(1.0) + 0.637(0.5) = 1.064 + 0.3185 = 1.382$
   - Col 2: $1.105(1.0) + 1.157(0.5) = 1.105 + 0.5785 = 1.683$
   - Col 3: $1.064(0.5) + 0.637(1.0) = 0.532 + 0.637 = 1.169$
   - Col 4: $1.105(0.5) + 1.157(1.0) = 0.5525 + 1.157 = 1.709$
 
-$$O = \begin{bmatrix} 1.593 & 1.404 & 1.678 & 1.247 \\ 1.334 & 1.629 & 1.119 & 1.664 \\ 1.382 & 1.683 & 1.169 & 1.709 \end{bmatrix}$$
+$$O = \begin{bmatrix} 0.970 & 1.275 & 1.430 & 1.125 \\ 1.418 & 1.106 & 1.531 & 1.128 \\ 1.382 & 1.683 & 1.169 & 1.709 \end{bmatrix}$$
 
-### What happened numerically? (The 131% paradox)
+### What happened numerically? (The 131% budget paradox)
 
-Look at the final vector for "chased" ($O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$). The entire elegance of Multi-Head Attention is hidden in how these four numbers were produced:
+Observe the final output vector for the token "chased" ($O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$). The structural elegance of Causal Multi-Head Attention lies in how these four numbers were formed:
 
-**1. Where did the percentages come from? (Attention rows):**
+**1. Where did the percentage allocations come from?**
 
-Let us inspect row 3 (the "chased" row) of the attention matrices computed in Sections 3.1 and 3.2:
+Let us inspect row 3 ("chased") in both attention matrices:
 
-- **Head 1 (Row 3 of matrix $A^{(1)}$):**
+- **Head 1 ($A^{(1)}$ row 3 — Predicate focus):**
 
 $$A^{(1)}[3, :] = [\underbrace{0.193}_{\text{dog (19.3\%)}}, \; \underbrace{0.246}_{\text{cat (24.6\%)}}, \; \underbrace{\mathbf{0.561}}_{\text{chased (56.1\%)}}]$$
 
-Multiplying the softmax probability $0.561$ by $100$ reveals that Head 1 allocated **$56.1\%$** of its attention budget to the verb itself. Computing the weighted average with $V_1$:
+Head 1 allocates **$56.1\%$** of its budget to the action itself. Weighted against $V_1$, it yields $[1.064, \; 1.105]$, informing the model: *"What action took place?"*
 
-$$0.193 \begin{bmatrix} 0.34 \\ 0.95 \end{bmatrix} + 0.246 \begin{bmatrix} 1.32 \\ 0.53 \end{bmatrix} + \mathbf{0.561} \begin{bmatrix} 1.20 \\ 1.41 \end{bmatrix} = \begin{bmatrix} 1.064 \\ 1.105 \end{bmatrix}$$
+- **Head 2 ($A^{(2)}$ row 3 — Direct object focus):**
 
-Here, the verb's own contribution is $0.561 \times [1.20, \; 1.41] = [0.673, \; 0.791]$. More than half of the resulting $[1.064, \; 1.105]$ vector stems directly from the predicate. This first drawer answers: *"What action took place?"*
+$$A^{(2)}[3, :] = [\underbrace{0.050}_{\text{dog (5.0\%)}}, \; \underbrace{\mathbf{0.750}}_{\text{cat (75.0\%)}}, \; \underbrace{0.200}_{\text{chased (20.0\%)}}]$$
 
-- **Head 2 (Row 3 of matrix $A^{(2)}$):**
+Operating in an independent subspace, Head 2 concentrates an immense **$75.0\%$** of its budget on the direct object ("cat"). Weighted against $V_2$, it yields $[0.637, \; 1.157]$, informing the model: *"Who was the immediate direct object of this action?"*
 
-$$A^{(2)}[3, :] = [\underbrace{0.05}_{\text{dog (5.0\%)}}, \; \underbrace{\mathbf{0.75}}_{\text{cat (75.0\%)}}, \; \underbrace{0.20}_{\text{chased (20.0\%)}}]$$
+**2. Combining drawers via Concat and $W^O$:**
 
-Operating in an independent subspace, Head 2 assigned a dominant weight of $0.75$ ($0.75 \times 100 = \mathbf{75.0\%}$) to the direct object ("cat"). Multiplying by $V_2$:
+Because both heads operate in independent subspaces, these two signals do not cannibalize each other:
 
-$$0.05 \begin{bmatrix} 0.62 \\ 0.65 \end{bmatrix} + \mathbf{0.75} \begin{bmatrix} 0.44 \\ 1.23 \end{bmatrix} + 0.20 \begin{bmatrix} 1.22 \\ 1.01 \end{bmatrix} = \begin{bmatrix} 0.637 \\ 1.157 \end{bmatrix}$$
+$$\text{Concat}(\text{head}_1, \text{head}_2)[3] = [\underbrace{1.064, \; 1.105}_{\text{Action Drawer}}, \quad \underbrace{0.637, \; 1.157}_{\text{Object Drawer}}]$$
 
-Fully three-quarters of $[0.637, \; 1.157]$ ($0.75 \times [0.44, \; 1.23] = [0.330, \; 0.923]$) was pumped directly from the direct object. This second drawer answers: *"What was the direct target of the action?"*
+$W^O$ subsequently mixes these drawers to create the composite vector $O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$.
 
-**2. Concatenation of drawers (Concat) and $W^O$:**
+Let us formalize the resolution of the single-head limitation:
 
-Because both heads operate in independent subspaces, their representations sit side-by-side without interference:
+**1. The 131% Paradox (The Budget Bottleneck):**
 
-$$\text{Concat}(\text{head}_1, \text{head}_2)[3] = [\underbrace{1.064, \; 1.105}_{\text{Predicate Drawer}}, \quad \underbrace{0.637, \; 1.157}_{\text{Object Drawer}}]$$
+To fully contextualize "chased", the model must attend concurrently to:
+- The identity of the action (itself: **$56.1\%$**).
+- The direct object of the action (the immediate predecessor "cat": **$75.0\%$**).
 
-The $W^O$ projection then blends these two drawers to produce the final vector $O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$ for the residual stream.
-
-Let us distill the essence of this mechanism in three crystal-clear, intuitive steps that leave zero ambiguity:
-
-**1. The 131% Paradox (The Attention Budget Problem):**
-
-To fully understand the contextual role of "chased" within the sentence, the artificial intelligence must simultaneously attend to two distinct targets:
-- What the action is (to its own word: at **$56.1\%$**).
-- Who received the action (to the grammatical object, "cat": at **$75.0\%$**).
-
-If the model operated with only a single attention head, the mathematical law of the Softmax function dictates that the total attention budget allocated across all tokens must sum to **strictly $100\%$ ($1.0$)**:
+Under single-head attention, the Softmax axiom strictly dictates that the sum of attention weights across any row must equal **exactly $100\%$ ($1.0$)**:
 
 $$\sum_{j=1}^N A_{i, j} = 1 \quad (100\%)$$
 
-Adding the attention demands of these two essential relationships:
+Summing the requirements of both dependencies:
 
 $$56.1\% + 75.0\% = \mathbf{131.1\%} > 100\%$$
 
-Because the total budget is capped at $100\%$, a single $100\%$ budget cannot possibly represent both strong relationships at once!
+A single head cannot allocate $131.1\%$ across a single $100\%$ budget!
 
-**2. Why the Single-Head System Fails (Mathematical Collapse & Cannibalization):**
+**2. Why Single-Head Attention Collapses (Denominator Cannibalization):**
 
-What happens to the shared denominator in the Softmax formula when a single head attempts to assign strong similarity to both critical tokens?
+If a single head attempts to assign high logits to both targets, consider the Softmax expression for the third token:
 
 $$A_{3, j} = \frac{e^{s_j}}{e^{s_1} + e^{s_2} + e^{s_3}}$$
 
-When the model tries to capture both action and object strongly in a single head ($s_2 \approx 2.5$ for the object, $s_3 \approx 2.5$ for the verb, and $s_1 \approx 0.5$ for the subject):
-- **Exponential terms surge:** $e^{0.5} \approx 1.65$, $e^{2.5} \approx 12.18$, $e^{2.5} \approx 12.18$.
-- **The shared denominator doubles:**
+When the model tries to see both the action and object strongly ($s_2 \approx 2.5$ object, $s_3 \approx 2.5$ verb, and $s_1 \approx 0.5$ subject):
+- Exponentials surge: $e^{0.5} \approx 1.65$, $e^{2.5} \approx 12.18$, $e^{2.5} \approx 12.18$.
+- The denominator doubles:
 
-$$\text{Denominator} = 1.65 + \underbrace{12.18}_{\text{object}} + \underbrace{12.18}_{\text{predicate}} = 26.01$$
+$$\text{Denominator} = 1.65 + \underbrace{12.18}_{\text{object}} + \underbrace{12.18}_{\text{action}} = 26.01$$
 
-Because both high scores share the exact same denominator, they directly undermine and cannibalize each other's percentage (known in the literature as **denominator cannibalization**).
-- **Both attention weights collapse into mediocrity:**
+Both high scores share the same denominator, directly diluting each other's percentage (known in literature as **denominator cannibalization**).
+- Both weights collapse to an uninformative compromise:
 
 $$A_{3, 2} = \frac{12.18}{26.01} \approx \mathbf{46.8\%}, \quad A_{3, 3} = \frac{12.18}{26.01} \approx \mathbf{46.8\%}$$
 
-As a result, neither "cat" can reach $75\%$, nor can "chased" reach $56\%$; both are trapped in a mediocre $\sim 46\%$ compromise, blurring the model's grasp of the action-object relationship.
+Neither dependency is sharply resolved; the representation blurs.
 
-**3. The Multi-Head Attention Solution:**
+**3. The Multi-Head Causal Attention Solution:**
 
-The architecture resolves this dilemma by partitioning the workload across specialized heads in three definitive stages:
+- **Independent Budgets:** Each head receives its own dedicated $100\%$ budget. Head 1 dedicates **$56.1\%$** uncompromised to the action; Head 2 dedicates **$75.0\%$** uncompromised to the object ($A^{(2)}[3, 2] = 0.750$).
+- **Dedicated Drawers (`Concat`):** Information is stored in separate feature slices:
 
-- **Independent Budgets:** The model grants each head its own independent $100\%$ budget. Head 1 focuses purely on the "action," uncontestedly spending **$56.1\%$** of its budget on itself ($A^{(1)}[3, 3] = 0.561$), while Head 2 focuses purely on the "object," allocating **$75.0\%$** of its own budget to "cat" ($A^{(2)}[3, 2] = 0.750$).
-- **Separate Drawers (`Concat`):** The crisp, high-conviction representations produced by both heads are placed side-by-side into separate "drawers" (vectors) without overwriting or interfering with one another:
+$$\text{Concat}(\text{head}_1, \text{head}_2)[3] = [\underbrace{1.064, \; 1.105}_{\text{Drawer 1: Action (56.1\%)}}, \quad \underbrace{0.637, \; 1.157}_{\text{Drawer 2: Object (75.0\%)}}]$$
 
-$$\text{Concat}(\text{head}_1, \text{head}_2)[3] = [\underbrace{1.064, \; 1.105}_{\text{Drawer 1: Predicate Focus (56.1\%)}}, \quad \underbrace{0.637, \; 1.157}_{\text{Drawer 2: Object Focus (75.0\%)}}]$$
-
-- **Blending ($W^O$):** In the final step, the projection matrix $W^O$ blends these independent drawers to construct the final 4-dimensional vector ($O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$) that preserves the full linguistic richness of the action.
+- **Harmonization ($W^O$):** Projections are blended into the final output vector $O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$.
+- **Zero Future Leakage:** Crucially, because both heads strictly honor the lower-triangular causal mask ($M$), zero future information has leaked into past representations.
 
 > [!IMPORTANT]
-> **Core Takeaway:** If a single attention mechanism attempts to perform multiple tasks at once, token importance scores collide in the shared denominator and dilute each other. Multi-Head Attention solves this by allocating each relational axis its own independent $100\%$ budget, storing the resulting high-conviction outputs in separate "drawers" (`Concat`), and blending them at the end ($W^O$) so that every linguistic nuance is preserved at full strength.
+> **Core Takeaway:** Single-head attention forces competing semantic dependencies into a zero-sum Softmax trade-off. Multi-Head Causal Attention allocates an independent $100\%$ budget to each relational axis while strictly preserving the arrow of time, allowing modern LLMs to capture complex syntax and semantics without leaking future context.
 
 ---
 
@@ -398,7 +485,7 @@ flowchart TD
     GEMM2 --> Out["Output: (B, N, d_model)"]
 ```
 
-### Three critical tensor tricks in production:
+### Four critical tensor tricks in production:
 
 1. **Fused QKV GEMM Matrix:**
    Rather than maintaining $H$ separate matrices for Query, Key, and Value, all projections are packed into one single master matrix:
@@ -417,6 +504,9 @@ flowchart TD
    After multiplying attention scores by $V$, head outputs have shape $(B, H, N, d_k)$. Recombining them requires no extra memory allocation; dimensions are permuted and flattened:
    $$\text{tensor}.\text{transpose}(1, 2).\text{contiguous}().\text{view}(B, N, d_{\text{model}})$$
    This aligns head coordinates side-by-side in memory and feeds directly into the $W^O$ projection.
+
+4. **Zero-Overhead Causal Mask Broadcasting:**
+   The lower-triangular causal mask is allocated as a single master copy of shape $(1, 1, N, N)$ in memory. PyTorch and CUDA kernels apply this mask to the $(B, H, N, N)$ attention score tensor $S$ using hardware stride broadcasting, avoiding allocating $B \times H$ duplicate mask copies across memory.
 
 In state-of-the-art inference engines, **FlashAttention** (Dao et al., 2022; 2023) pushes this optimization further: it loads $Q, K, V$ tiles directly into fast GPU SRAM ($192\text{ KB}$ per Streaming Multiprocessor), computes softmax online, and never materializes the massive $N \times N$ attention matrix in slow HBM memory.
 
@@ -536,142 +626,533 @@ More than a terabyte of high-bandwidth GPU memory is consumed just holding past 
 ### The architectural evolution: From MHA to MQA, GQA, and MLA
 
 To overcome this crippling KV cache memory wall, modern LLM architectures evolved attention head layouts:
+Storing independent Key and Value vectors for every single attention head works flawlessly during training, but runs directly into the most unforgiving hardware bottleneck in modern inference: **HBM memory bandwidth.**
+
+During the autoregressive decode phase, generation proceeds one token at a time. The underlying computational kernel is GEMV (Matrix-Vector multiplication), where arithmetic intensity is minimal ($\approx 1\text{ FLOP/byte}$). The GPU spends over 90% of its execution time stalled, waiting for massive historical KV tensors to transfer across the memory bus from HBM into ultra-fast on-chip SRAM (**memory-bandwidth-bound GEMV regime**).
+
+To dismantle this memory wall, the AI research community engineered a four-generation architectural revolution, transitioning from standard MHA to MQA, GQA, and ultimately MLA:
 
 ```mermaid
 flowchart TD
     subgraph MHA["Standard MHA (e.g., GPT-3)"]
         Q1["Q1..QH"] --- K1["K1..KH"] --- V1["V1..VH"]
+    subgraph MHA["1. MHA (Vaswani 2017)"]
+        Q1["32 Query Heads"] --- K1["32 Key Heads"] --- V1["32 Value Heads"]
+        MHA_Note["Ratio: 1 : 1 : 1\nKV Cache: 100% (Full Budget)"]
     end
 
     subgraph GQA["Grouped-Query Attention (e.g., LLaMA-3)"]
         QG["Group of 8 Q Heads"] --> K_Shared["1 Shared K Head"]
         QG --> V_Shared["1 Shared V Head"]
+    subgraph MQA["2. MQA (Shazeer 2019)"]
+        Q2["32 Query Heads"] --- K2["1 Shared Key Head"] --- V2["1 Shared Value Head"]
+        MQA_Note["Ratio: 32 : 1 : 1\nKV Cache: 3.1% (32x Reduction)"]
     end
 
     subgraph MLA["Multi-Head Latent Attention (DeepSeek-V2/V3)"]
         Q_MLA["Q Heads"] --> Compress["Low-Rank Latent Compression"]
         Compress --> Decompress["RoPE & Decoupled Cache (93% KV Savings)"]
+    subgraph GQA["3. GQA (Ainslie 2023)"]
+        Q3["32 Query Heads (8 Groups)"] --- K3["8 Group Key Heads"] --- V3["8 Group Value Heads"]
+        GQA_Note["Ratio: 4 : 1 : 1\nKV Cache: 25% (4x Reduction)"]
+    end
+
+    subgraph MLA["4. MLA (DeepSeek 2024)"]
+        Q4["128 Query Heads"] --- LatentKV["Compressed Latent Vector: c_t (d_c=512)"]
+        MLA_Note["Don't prune heads; compress!\nKV Cache: 1.8% (56x Reduction)"]
     end
 ```
 
 1. **Multi-Query Attention (MQA - Shazeer, 2019):**  
    Uses multiple Query heads, but collapses Key and Value projections into **a single shared head** across the entire layer. Reduces KV Cache by $H\times$ (e.g., $32\times$), but can impair expressive capacity on complex reasoning.
+#### 1. MHA (Multi-Head Attention - Vaswani et al., 2017)
+* **Core Philosophy:** "Assign every Query head its own dedicated Key head and Value head."
+* **Architecture:** $H$ Query heads matched symmetrically to $H$ Key heads and $H$ Value heads (a strict $1:1:1$ ratio).
+* **KV Footprint Per Token:** Each layer stores $2 \times H \times d_k$ parameters:
+$$\text{KV}_{\text{MHA}} = 2 \times H \times d_k$$
+* **Intuitive Analogy:** A research institute with 32 specialized investigators (Query heads). Each investigator has their own private filing cabinet (Key/Value heads) inside their private office. For 32 investigators, the institute maintains 32 complete filing cabinets.
+* **Strength:** Uncompromised representational expressiveness. Each head independently tracks distinct grammatical and semantic axes (subject-verb, coreferences, local syntax).
+* **Fatal Flaw:** Serving a 70B model to just 100 concurrent users requires over $1\text{ TB}$ of VRAM strictly for the KV cache. Decode throughput chokes on memory bandwidth.
 
 2. **Grouped-Query Attention (GQA - Ainslie et al., 2023):**  
    The industry standard in modern models (LLaMA-3, Mistral). Queries are partitioned into groups (e.g., 8 groups of 4 Q heads), and each group shares 1 Key and 1 Value head. Delivers $8\times$ KV Cache reduction with virtually zero quality loss.
+#### 2. MQA (Multi-Query Attention - Noam Shazeer, 2019)
+* **Core Philosophy:** "Force all Query heads to share a single, unified Key and Value head."
+* **Architecture:** Preserves all $H$ Query heads, but collapses Key and Value projections into **a single head** across the layer ($n_{\text{kv\_heads}} = 1$), yielding an $H:1:1$ ratio.
+* **KV Footprint Per Token:** Slashes the KV Cache footprint by exactly $H\times$ (e.g., a $32\times$ or $96.9\%$ reduction in a 32-head model):
+$$\text{KV}_{\text{MQA}} = 2 \times 1 \times d_k$$
+* **Intuitive Analogy:** All 32 investigators continue working, but all their private filing cabinets are removed. A **single shared filing cabinet** is placed in the center hallway. All 32 investigators must query the exact same files and extract the exact same values.
+* **Strength:** Drastically cuts KV memory bandwidth; generation speed and concurrent serving capacity surge dramatically (pioneered in Google PaLM, Falcon, and StarCoder).
+* **The Trade-Off (Capacity Bottleneck):** Because all Query heads are forced to attend over identical Key/Value projections, model performance on multi-hop reasoning, in-context learning, and fine-grained association tasks suffers measurable degradation.
 
 3. **Multi-Head Latent Attention (MLA - DeepSeek, 2024):**  
    DeepSeek-V2 and V3 project Key and Value vectors into a low-rank compressed latent space ($d_c \ll d_{\text{model}}$). Reduces KV cache footprint by up to **$93.3\%$**, allowing ultra-long context windows at lightning speeds.
+#### 3. GQA (Grouped-Query Attention - Ainslie et al., 2023)
+* **Core Philosophy:** "The golden mean: Strike the optimal balance between MHA's expressive power and MQA's speed."
+* **Architecture:** Partitions $H$ Query heads into $G$ groups. Each group of $H/G$ queries shares a single Key head and Value head ($H:G:G$ ratio).
+* **KV Footprint Per Token:** Achieves an $H/G$-fold reduction (e.g., $4\times$ to $8\times$ smaller than MHA):
+$$\text{KV}_{\text{GQA}} = 2 \times G \times d_k$$
+* **Intuitive Analogy:** The 32 investigators are organized into 8 departmental teams of 4. Each 4-person team shares a single departmental filing cabinet. Instead of 32 cabinets, the facility maintains only 8.
+* **Industry Standard:** Standardized by LLaMA-2/3, Mistral, and Gemma 2. Retains $>99\%$ of MHA's empirical benchmark accuracy while slashing KV cache bandwidth and VRAM by $4\times$ to $8\times$.
+
+#### 4. MLA (Multi-Head Latent Attention - DeepSeek-V2 / V3, 2024)
+* **Core Philosophy:** "Stop pruning heads! Keep all heads intact, but compress Keys and Values into a shared low-rank latent subspace."
+* **Architecture:** Rather than reducing head counts, MLA maintains a massive head count ($H = 128$). Instead of caching wide Key/Value tensors, it projects hidden states into a compact latent vector ($c_t^{KV} \in \mathbb{R}^{d_c}$) via low-rank down-projection:
+$$c_t^{KV} = X_t W_{DKV} \in \mathbb{R}^{d_c}, \quad \text{KV}_{\text{MLA}} = d_c + d_R$$
+* **Decoupled RoPE:** Rotary Position Embeddings cannot be straightforwardly compressed into a low-rank bottleneck without corrupting spatial rotation. DeepSeek resolves this by decoupling positional geometry from content: $c_t^{KV}$ ($512$ dimensions) carries pure content, while a tiny $64$-dimensional shared decoupled RoPE key ($k_t^R$) is cached alongside it.
+* **Zero Inference Overhead:** Thanks to matrix associativity ($Q (W_{UK} c_t) = (Q W_{UK}) c_t$), the up-projection matrix $W_{UK}$ can be pre-multiplied into Query projections during inference. The GPU never materializes full 128 Key heads in HBM or spends extra compute decompressing them!
+* **Intuitive Analogy:** Rather than stacking bulky paper encyclopedias in cabinets, convert all text into ultra-high-density microfilms / QR codes ($c_t^{KV}$). Investigators stream microfilms into fast on-chip memory and read them in a single flash.
+* **The Result:** Achieves a **$93.3\%$ to $98.2\%$ KV Cache reduction** compared to MHA (in DeepSeek-V2/V3). It consumes even less memory than MQA while preserving the full expressive capacity of 128 attention heads.
+
+The table below summarizes the architectural characteristics across these four evolutionary generations:
+
+| Feature | MHA (Vaswani 2017) | MQA (Shazeer 2019) | GQA (Ainslie 2023) | MLA (DeepSeek 2024) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Head Ratio ($Q : K : V$)** | $H : H : H$ ($32 : 32 : 32$) | $H : 1 : 1$ ($32 : 1 : 1$) | $H : G : G$ ($32 : 8 : 8$) | $H : H : H$ (Low-rank compressed via $c_t^{KV}$) |
+| **Memory Per Token** | $2 \times H \times d_k$ ($1\times$ baseline) | $2 \times 1 \times d_k$ ($H\times$ smaller) | $2 \times G \times d_k$ ($4\times - 8\times$ smaller) | $d_c + d_R$ ($56\times$ smaller, $98\%$ reduction) |
+| **Expressive Quality** | Maximum baseline ($100\%$) | Measurable degradation in reasoning | Nearly identical to MHA ($99+\%$) | Matches or exceeds MHA baseline |
+| **Hardware Bottleneck** | Memory bandwidth bound | Maximum decoding throughput | Balanced, high throughput | Ultra-low bandwidth + massive context ($128\text{K}+$) |
+| **RoPE Integration** | Standard (Per-head RoPE) | Standard (Single-head RoPE) | Standard (Grouped RoPE) | Resolved via decoupled RoPE key ($k_t^R$) |
+| **Flagship Models** | Original Transformer, GPT-3 | PaLM, Falcon, StarCoder | LLaMA 2/3, Mistral, Gemma 2 | DeepSeek-V2, DeepSeek-V3, DeepSeek-R1 |
 
 ---
 
 ## 8. Full step-by-step verification with PyTorch
 
-Below is the standalone Python script verifying the exact tensor calculations from Section 3:
+Having manually walked through the two-head Causal Multi-Head Attention arithmetic on paper in Section 3, we now construct the entire pipeline tensor-by-tensor in PyTorch. The goal of this section is to show how abstract formulas and pencil-and-paper derivations translate directly into executable code, and to observe granularly how tensor shapes, causal masking, and subspace drawers function in real memory.
+
+We break the computation down into 6 focused steps, followed by a complete, self-contained Python script ready for single-click execution.
+
+### Step 1: Input tensor and subspace projection matrices
+
+We first define the input matrix $Z \in \mathbb{R}^{3 \times 4}$ representing our three tokens (`["dog", "cat", "chased"]`) with model dimension $d_{\text{model}} = 4$.
+
+In Multi-Head Attention, the overall dimension $d_{\text{model}}$ is split evenly across the $H = 2$ heads:
+
+$$\text{shape}(Z) = (3, 4), \quad \text{shape}(W_{V1}) = (4, 2), \quad \text{shape}(V_1) = (3, 2)$$
+
+Each head's Value projection matrix ($W_{V1}$ and $W_{V2}$) projects the 4-dimensional representation into an independent 2-dimensional semantic subspace ($d_v = 2$). The distinct learned weights in these matrices allow each head to extract fundamentally different semantic features from the sentence:
 
 ```python
 import torch
-import torch.nn.functional as F
+
+# Formatting settings: display clean floats with 3 decimal places
+torch.set_printoptions(precision=3, sci_mode=False)
 
 # 1. Input tensor Z (3 tokens, d_model = 4)
-# ["dog", "cat", "chased"]
 Z = torch.tensor([
-    [0.21, 0.82, 0.13, 0.44],  # dog
-    [0.95, 0.16, 0.37, 0.28],  # cat
-    [0.19, 0.40, 1.01, 0.82]   # chased
+    [0.21, 0.82, 0.13, 0.44],  # dog (t=0)
+    [0.95, 0.16, 0.37, 0.28],  # cat (t=1)
+    [0.19, 0.40, 1.01, 0.82]   # chased (t=2)
 ], dtype=torch.float32)
 
-# 2. Subspace Value projection weights (d_model = 4 -> d_v = 2)
-W_v1 = torch.tensor([
+# 2. Subspace Value projection matrices (d_model = 4 -> d_v = 2)
+W_V1 = torch.tensor([
     [1.0, 0.0],
     [0.0, 1.0],
     [1.0, 1.0],
     [0.0, 0.0]
 ], dtype=torch.float32)
 
-W_v2 = torch.tensor([
+W_V2 = torch.tensor([
     [0.0, 1.0],
     [1.0, 0.0],
     [0.0, 0.0],
     [1.0, 1.0]
 ], dtype=torch.float32)
 
-# 3. Value tensors (V = Z @ W_v)
-V1 = torch.matmul(Z, W_v1)
-V2 = torch.matmul(Z, W_v2)
+# Compute Value tensors (V = Z @ W_V)
+V1 = torch.matmul(Z, W_V1)
+V2 = torch.matmul(Z, W_V2)
 
-# 4. Attention weight matrices from our walkthrough
-A1 = torch.tensor([
-    [0.266, 0.280, 0.454],
-    [0.232, 0.273, 0.495],
-    [0.193, 0.246, 0.561]
+print("V1 (Head 1 Value Tensor - Action Space):\n", V1)
+print("\nV2 (Head 2 Value Tensor - Object Space):\n", V2)
+```
+
+Console output:
+
+```text
+V1 (Head 1 Value Tensor - Action Space):
+ tensor([[0.340, 0.950],
+         [1.320, 0.530],
+         [1.200, 1.410]])
+
+V2 (Head 2 Value Tensor - Object Space):
+ tensor([[1.260, 0.650],
+         [0.440, 1.230],
+         [1.220, 1.010]])
+```
+
+**What did we observe?** Each token now holds two distinct 2-dimensional identities: for example, `"dog"` is projected to $[0.340, \; 0.950]$ in Head 1's subspace, and to $[1.260, \; 0.650]$ in Head 2's subspace. These two coordinate systems never overwrite or pollute each other.
+
+### Step 2: Raw attention scores and causal masking
+
+Projecting Queries and Keys ($Q K^T / \sqrt{d_k}$) produces a $3 \times 3$ scaled dot-product similarity matrix ($S_1$ and $S_2$) for each head. Where do the exact numbers inside the $S_1$ and $S_2$ matrices originate? In the attention mechanism, no value is arbitrary:
+
+1. **The Origin of Matrix $S_1$ (The Bridge to Parts 4 & 5):**
+   Head 1 is the predicate-centric causal head. Input matrix $Z$ is projected using the $W_Q$ and $W_K$ weight matrices from Part 4 to yield $Q = Z W_Q$ and $K = Z W_K$. The dot products are then evaluated and scaled by $\sqrt{d_k} = \sqrt{4} = 2.0$:
+   - For token 3 ("chased"), $q_2 \cdot k_0 / 2 = 1.900$ (dog), $q_2 \cdot k_1 / 2 = 2.141$ (cat), and $q_2 \cdot k_2 / 2 = 2.968$ (chased).
+   - When Softmax processes these scores, $e^{2.968} = 19.453$ claims the dominant share, driving Head 1's focus to precisely $56.1\%$ on the verb itself.
+
+2. **The Origin of Matrix $S_2$ (Logit Inversion and Object-Centric Geometry):**
+   Head 2 is an independently trained subspace specializing in local adjacency and direct object resolution ($i-1$ target). The decimals in this matrix ($1.386$ and $2.708$) derive with mathematical rigor from logit inversion ($s_j - s_k = \ln(A_j / A_k)$):
+   - In row 2 ("cat"), the model targets an $80\%$ to $20\%$ focus between previous subject ("dog") and self. With an odds ratio of $0.80 / 0.20 = 4$, the required logit difference is $\ln(4) \approx 1.386$ ($s_{10} = 1.386, s_{11} = 0.0$).
+   - In row 3 ("chased"), the model targets $75\%$ on the immediate direct object ("cat"), $20\%$ on self ("chased"), and $5\%$ on the distant subject ("dog"). With relative odds $15 : 4 : 1$, the logit levels are $\ln(15) \approx 2.708$, $\ln(4) \approx 1.386$, and $\ln(1) = 0.000$.
+   - Consequently, when $Q_2 K_2^T / \sqrt{d_k}$ computes these projections, Head 2 achieves its uncompromising $75.0\%$ direct-object focus.
+
+However, an existential danger remains: **at this stage, the upper triangle is still exposed!** The first token `"dog"` ($t=0$) holds positive raw affinity scores ($1.389$ and $1.871$) toward future tokens `"cat"` ($t=1$) and `"chased"` ($t=2$). If we fed this matrix directly to Softmax, the model would cheat by inspecting the future.
+
+We therefore apply our causal mask ($M$) to add $-\infty$ to all upper-triangular positions before Softmax:
+
+$$S_{\text{masked}} = S_{\text{scaled}} + M$$
+
+```python
+# Head 1 Projection Weights (Predicate-centric head from Parts 4 & 5)
+W_Q1 = torch.tensor([
+    [1.0, 0.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0, 1.0],
+    [1.0, 0.0, 0.0, 1.0],
+    [0.0, 1.0, 1.0, 0.0]
 ], dtype=torch.float32)
 
-A2 = torch.tensor([
-    [0.85, 0.10, 0.05],
-    [0.15, 0.80, 0.05],
-    [0.05, 0.75, 0.20]
+W_K1 = torch.tensor([
+    [1.0, 1.0, 0.0, 0.0],
+    [0.0, 1.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [1.0, 0.0, 0.0, 1.0]
 ], dtype=torch.float32)
 
-# 5. Head outputs (head = A @ V)
+# Head 2 Projection Weights (Direct object and local adjacency i-1 head)
+W_Q2 = torch.tensor([
+    [ 3.118, -2.194,  0.015, 0.0],
+    [ 1.883, -0.148, -0.428, 0.0],
+    [-1.270,  3.834,  2.015, 0.0],
+    [-0.076,  2.463,  1.104, 0.0]
+], dtype=torch.float32)
+
+W_K2 = torch.tensor([
+    [-0.015,  1.136, -0.402, 0.0],
+    [ 1.238, -0.214, -0.256, 0.0],
+    [-0.613, -0.016,  0.821, 0.0],
+    [ 0.154, -0.139,  0.426, 0.0]
+], dtype=torch.float32)
+
+# Generate Query and Key tensors (Q = Z @ W_Q, K = Z @ W_K)
+Q1 = torch.matmul(Z, W_Q1)
+K1 = torch.matmul(Z, W_K1)
+Q2 = torch.matmul(Z, W_Q2)
+K2 = torch.matmul(Z, W_K2)
+
+# Compute raw scores via dot-product and scale by sqrt(d_k) = 2.0
+S1_scaled = torch.matmul(Q1, K1.T) / 2.0
+S2_scaled = torch.matmul(Q2, K2.T) / 2.0
+
+# Upper-triangular mask with -inf (diagonal=1: above main diagonal)
+mask = torch.triu(torch.full((3, 3), float("-inf")), diagonal=1)
+
+# Masking: all future-looking positions are banished to -inf
+S1_masked = S1_scaled + mask
+S2_masked = S2_scaled + mask
+
+print("Masked Scores Head 1 (S1_masked):\n", S1_masked)
+print("\nMasked Scores Head 2 (S2_masked):\n", S2_masked)
+```
+
+Console output:
+
+```text
+Masked Scores Head 1 (S1_masked):
+ tensor([[1.339,  -inf,  -inf],
+         [1.391, 1.554,  -inf],
+         [1.900, 2.141, 2.968]])
+
+Masked Scores Head 2 (S2_masked):
+ tensor([[1.000,  -inf,  -inf],
+         [1.386, 0.000,  -inf],
+         [0.000, 2.708, 1.386]])
+```
+
+**What did we observe?** Every entry where $j > i$ is strictly converted to `-inf`. Future information channels are mathematically locked down.
+
+### Step 3: Softmax normalization and the 131% dilemma in tensors
+
+We pass the masked scores through the Softmax function along the final axis (`dim=-1`). Because $e^{-\infty} = 0.0$, all masked upper-triangular entries collapse to exactly $0.000$:
+
+$$A = \text{Softmax}(S_{\text{masked}})$$
+
+```python
+# Softmax normalization: e^-inf = 0.000, row sums = 1.0 (100%)
+A1 = torch.softmax(S1_masked, dim=-1)
+A2 = torch.softmax(S2_masked, dim=-1)
+
+print("Head 1 Attention Weights (A1 - Action Focused):\n", A1)
+print("\nHead 2 Attention Weights (A2 - Object Focused):\n", A2)
+```
+
+Console output:
+
+```text
+Head 1 Attention Weights (A1 - Action Focused):
+ tensor([[1.000, 0.000, 0.000],
+         [0.459, 0.541, 0.000],
+         [0.193, 0.246, 0.561]])
+
+Head 2 Attention Weights (A2 - Object Focused):
+ tensor([[1.000, 0.000, 0.000],
+         [0.800, 0.200, 0.000],
+         [0.050, 0.750, 0.200]])
+```
+
+**The 131% Dilemma in the Tensors:**
+These two printed matrices embody the foundational thesis of Multi-Head Attention. Inspect row 3 (`"chased"`, $t=2$):
+- **Head 1 ($A_1[2]$):** Allocates exactly **$56.1\%$** ($0.561$) of its attention to the action itself.
+- **Head 2 ($A_2[2]$):** Allocates an enormous **$75.0\%$** ($0.750$) of its attention to the direct object (`"cat"`).
+- **Why Single-Head Fails:** In a single-head layer, row probabilities must sum to $100\%$. Accommodating both demands would require $56.1\% + 75.0\% = \mathbf{131.1\%} > 100\%$, forcing an awkward compromise. By providing two independent $100\%$ budgets, Multi-Head Attention captures both syntactic axes with pristine clarity.
+
+### Step 4: Value aggregation and head output generation (head = AV)
+
+Each head now multiplies its attention distribution matrix ($A$) against its corresponding Value matrix ($V$):
+
+$$\text{head}_1 = A_1 V_1, \quad \text{head}_2 = A_2 V_2$$
+
+This operation is a standard matrix multiplication (`(3, 3) @ (3, 2) -> (3, 2)`). Each token gathers a weighted average of prior token Value vectors within its dedicated 2-dimensional subspace:
+
+```python
+# Compute independent head outputs (head = A @ V)
 head1 = torch.matmul(A1, V1)
 head2 = torch.matmul(A2, V2)
 
-# 6. Concatenate heads side-by-side
+print("Head 1 Output (head1 - Drawer 1: Action Context):\n", head1)
+print("\nHead 2 Output (head2 - Drawer 2: Object Context):\n", head2)
+```
+
+Console output:
+
+```text
+Head 1 Output (head1 - Drawer 1: Action Context):
+ tensor([[0.340, 0.950],
+         [0.870, 0.723],
+         [1.064, 1.105]])
+
+Head 2 Output (head2 - Drawer 2: Object Context):
+ tensor([[1.260, 0.650],
+         [1.096, 0.766],
+         [0.637, 1.157]])
+```
+
+**What did we observe?** The tensor values match Section 3's hand-calculated results bit-for-bit:
+- For token `"chased"`: Head 1 produces $[1.064, \; 1.105]$ (predicate context).
+- For token `"chased"`: Head 2 produces $[0.637, \; 1.157]$ (direct object context).
+
+### Step 5: Drawer concatenation (Concat)
+
+To preserve both rich, independent representations without losing information, the model joins the two head outputs side-by-side along the feature dimension (`dim=-1`):
+
+$$\text{Concat} = [\text{head}_1 \; \| \; \text{head}_2] \in \mathbb{R}^{3 \times 4}$$
+
+```python
+# Concatenate heads along feature dimension (Concat)
 concat_heads = torch.cat([head1, head2], dim=-1)
 
-# 7. Output projection matrix W^O (4 x 4)
-W_o = torch.tensor([
+print("Concatenated Heads (Concat):\n", concat_heads)
+```
+
+Console output:
+
+```text
+Concatenated Heads (Concat):
+ tensor([[0.340, 0.950, 1.260, 0.650],
+         [0.870, 0.723, 1.096, 0.766],
+         [1.064, 1.105, 0.637, 1.157]])
+```
+
+**The Drawer Metaphor in Code:**
+Every row in this concatenated tensor contains 4 elements:
+- The first two columns ($[:, 0:2]$) hold the pure action information from Head 1 (`[1.064, 1.105]`).
+- The last two columns ($[:, 2:4]$) hold the pure direct object information from Head 2 (`[0.637, 1.157]`).
+No numbers have been averaged, overwritten, or diluted. Both drawers are placed side-by-side on the table.
+
+### Step 6: Output projection (WO) and final multi-head representation (O)
+
+The final step is to mix these adjacent drawers back into a single unified representation via the learned projection matrix $W^O \in \mathbb{R}^{4 \times 4}$:
+
+$$O = \text{Concat} \times W^O \in \mathbb{R}^{3 \times 4}$$
+
+```python
+# Output projection matrix W^O (4 x 4)
+W_O = torch.tensor([
     [1.0, 0.0, 0.5, 0.0],
     [0.0, 1.0, 0.0, 0.5],
     [0.5, 0.0, 1.0, 0.0],
     [0.0, 0.5, 0.0, 1.0]
 ], dtype=torch.float32)
 
-# 8. Final Multi-Head Attention output (O = Concat @ W^O)
-O = torch.matmul(concat_heads, W_o)
+# Final Multi-Head Attention output (O = Concat @ W_O)
+O = torch.matmul(concat_heads, W_O)
 
-print("--- HEAD 1 OUTPUT (Predicate-Centric, 3x2) ---")
-print(torch.round(head1 * 1000) / 1000)
-
-print("
---- HEAD 2 OUTPUT (Adjacency-Centric, 3x2) ---")
-print(torch.round(head2 * 1000) / 1000)
-
-print("
---- CONCATENATED TENSOR CONCAT (3x4) ---")
-print(torch.round(concat_heads * 1000) / 1000)
-
-print("
---- FINAL OUTPUT TENSOR O (3x4) ---")
-print(torch.round(O * 1000) / 1000)
+print("Final MultiHead(Z) Output (O):\n", O)
 ```
 
-Running this code produces:
+Console output:
 
 ```text
---- HEAD 1 OUTPUT (Predicate-Centric, 3x2) ---
-tensor([[1.0050, 1.0410],
-        [1.0330, 1.0630],
-        [1.0640, 1.1050]])
-
---- HEAD 2 OUTPUT (Adjacency-Centric, 3x2) ---
-tensor([[1.1760, 0.7260],
-        [0.6020, 1.1320],
-        [0.6370, 1.1570]])
-
---- CONCATENATED TENSOR CONCAT (3x4) ---
-tensor([[1.0050, 1.0410, 1.1760, 0.7260],
-        [1.0330, 1.0630, 0.6020, 1.1320],
-        [1.0640, 1.1050, 0.6370, 1.1570]])
-
---- FINAL OUTPUT TENSOR O (3x4) ---
-tensor([[1.5930, 1.4040, 1.6780, 1.2470],
-        [1.3340, 1.6290, 1.1190, 1.6640],
-        [1.3820, 1.6830, 1.1690, 1.7090]])
+Final MultiHead(Z) Output (O):
+ tensor([[0.970, 1.275, 1.430, 1.125],
+         [1.418, 1.106, 1.531, 1.128],
+         [1.382, 1.683, 1.169, 1.709]])
 ```
 
-The PyTorch execution matches our manual mathematical calculations down to the exact third decimal place!
+**Exact Agreement with Section 3:**
+Examine the final context vector for token 3 (`"chased"`):
+$$O[2] = [1.382, \quad 1.683, \quad 1.169, \quad 1.709]$$
+It matches our step-by-step arithmetic from Section 3 down to the third decimal place! $W^O$ blends both the action drawer and the object drawer into a balanced, 4-dimensional contextual embedding.
+
+### Step 7: Complete self-contained executable PyTorch script
+
+Here is the complete, self-contained Python script uniting all steps, ready to copy and run directly in any terminal or Jupyter notebook:
+
+```python
+import torch
+
+# Formatting settings
+torch.set_printoptions(precision=3, sci_mode=False)
+
+# 1. Input tensor Z (3 tokens, d_model = 4)
+Z = torch.tensor([
+    [0.21, 0.82, 0.13, 0.44],  # dog (t=0)
+    [0.95, 0.16, 0.37, 0.28],  # cat (t=1)
+    [0.19, 0.40, 1.01, 0.82]   # chased (t=2)
+], dtype=torch.float32)
+
+# 2. Subspace Value projection matrices (d_model = 4 -> d_v = 2)
+W_V1 = torch.tensor([
+    [1.0, 0.0],
+    [0.0, 1.0],
+    [1.0, 1.0],
+    [0.0, 0.0]
+], dtype=torch.float32)
+
+W_V2 = torch.tensor([
+    [0.0, 1.0],
+    [1.0, 0.0],
+    [0.0, 0.0],
+    [1.0, 1.0]
+], dtype=torch.float32)
+
+# Value tensors (V = Z @ W_V)
+V1 = torch.matmul(Z, W_V1)
+V2 = torch.matmul(Z, W_V2)
+
+# 3. Query and Key projection weights
+W_Q1 = torch.tensor([
+    [1.0, 0.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0, 1.0],
+    [1.0, 0.0, 0.0, 1.0],
+    [0.0, 1.0, 1.0, 0.0]
+], dtype=torch.float32)
+
+W_K1 = torch.tensor([
+    [1.0, 1.0, 0.0, 0.0],
+    [0.0, 1.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [1.0, 0.0, 0.0, 1.0]
+], dtype=torch.float32)
+
+W_Q2 = torch.tensor([
+    [ 3.118, -2.194,  0.015, 0.0],
+    [ 1.883, -0.148, -0.428, 0.0],
+    [-1.270,  3.834,  2.015, 0.0],
+    [-0.076,  2.463,  1.104, 0.0]
+], dtype=torch.float32)
+
+W_K2 = torch.tensor([
+    [-0.015,  1.136, -0.402, 0.0],
+    [ 1.238, -0.214, -0.256, 0.0],
+    [-0.613, -0.016,  0.821, 0.0],
+    [ 0.154, -0.139,  0.426, 0.0]
+], dtype=torch.float32)
+
+# Generate Query and Key tensors (Q = Z @ W_Q, K = Z @ W_K)
+Q1 = torch.matmul(Z, W_Q1)
+K1 = torch.matmul(Z, W_K1)
+Q2 = torch.matmul(Z, W_Q2)
+K2 = torch.matmul(Z, W_K2)
+
+# Compute raw scores via dot-product and scale by sqrt(d_k) = 2.0
+S1_scaled = torch.matmul(Q1, K1.T) / 2.0
+S2_scaled = torch.matmul(Q2, K2.T) / 2.0
+
+# 4. Causal masking
+mask = torch.triu(torch.full((3, 3), float("-inf")), diagonal=1)
+S1_masked = S1_scaled + mask
+S2_masked = S2_scaled + mask
+
+# 5. Softmax normalization
+A1 = torch.softmax(S1_masked, dim=-1)
+A2 = torch.softmax(S2_masked, dim=-1)
+
+# 6. Head output calculation (head = A @ V)
+head1 = torch.matmul(A1, V1)
+head2 = torch.matmul(A2, V2)
+
+# 7. Drawer concatenation (Concat)
+concat_heads = torch.cat([head1, head2], dim=-1)
+
+# 8. Output projection (O = Concat @ W_O)
+W_O = torch.tensor([
+    [1.0, 0.0, 0.5, 0.0],
+    [0.0, 1.0, 0.0, 0.5],
+    [0.5, 0.0, 1.0, 0.0],
+    [0.0, 0.5, 0.0, 1.0]
+], dtype=torch.float32)
+
+O = torch.matmul(concat_heads, W_O)
+
+# Print verification results
+print("=== Causal Multi-Head Attention Verification ===")
+print("\nA1 (Head 1 Attention Weights):\n", A1)
+print("\nA2 (Head 2 Attention Weights):\n", A2)
+print("\nhead1 (Head 1 Output):\n", head1)
+print("\nhead2 (Head 2 Output):\n", head2)
+print("\nConcat (Combined Drawers):\n", concat_heads)
+print("\nO (Final Multi-Head Output):\n", O)
+```
+
+Console output:
+
+```text
+=== Causal Multi-Head Attention Verification ===
+
+A1 (Head 1 Attention Weights):
+ tensor([[1.000, 0.000, 0.000],
+         [0.459, 0.541, 0.000],
+         [0.193, 0.246, 0.561]])
+
+A2 (Head 2 Attention Weights):
+ tensor([[1.000, 0.000, 0.000],
+         [0.800, 0.200, 0.000],
+         [0.050, 0.750, 0.200]])
+
+head1 (Head 1 Output):
+ tensor([[0.340, 0.950],
+         [0.870, 0.723],
+         [1.064, 1.105]])
+
+head2 (Head 2 Output):
+ tensor([[1.260, 0.650],
+         [1.096, 0.766],
+         [0.637, 1.157]])
+
+Concat (Combined Drawers):
+ tensor([[0.340, 0.950, 1.260, 0.650],
+         [0.870, 0.723, 1.096, 0.766],
+         [1.064, 1.105, 0.637, 1.157]])
+
+O (Final Multi-Head Output):
+ tensor([[0.970, 1.275, 1.430, 1.125],
+         [1.418, 1.106, 1.531, 1.128],
+         [1.382, 1.683, 1.169, 1.709]])
+```
 
 ---
 
@@ -679,7 +1160,7 @@ The PyTorch execution matches our manual mathematical calculations down to the e
 
 - **The Single-Head Bottleneck:** A single $W_Q W_K^T$ matrix can only point along one geometric direction, forcing conflicting linguistic relationships into an averaged compromise.
 - **Subspace Partitioning:** Multi-Head Attention divides the model dimension into $H$ parallel subspaces ($d_k = d_{\text{model}} / H$) without adding parameters or computational cost.
-- **The 131% Paradox:** A single attention row has a $100\%$ softmax budget; when a verb demands $56\%$ on itself and $75\%$ on its object, a single head fails ($131\% > 100\%$), whereas MHA grants two independent $100\%$ budgets.
+- **The 131% Paradox:** A single attention row has a $100\%$ softmax budget; when a verb demands $56.1\%$ on itself and $75.0\%$ on its object, a single head fails ($131.1\% > 100\%$), whereas MHA grants two independent $100\%$ budgets.
 - **Hardware Execution:** Production engines never use loops; they compute all heads with a single fused GEMM and zero-copy pointer views/transposes.
 - **Symmetry Breaking:** Independent random initialization is mandatory to break mathematical symmetry so gradient descent can specialize heads.
 - **Inference Evolution:** Because multi-head KV caches consume terabytes of VRAM during inference, modern architectures transitioned to GQA and MLA.
@@ -713,3 +1194,4 @@ The PyTorch execution matches our manual mathematical calculations down to the e
 - Shazeer (2019) — *[Fast Transformer Decoding: One Write-Head is All You Need](https://arxiv.org/abs/1911.02150)*: Introduction of Multi-Query Attention (MQA).
 - Ainslie et al. (2023) — *[GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)*: Introduction of Grouped-Query Attention (GQA).
 - DeepSeek-AI (2024) — *[DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model](https://arxiv.org/abs/2405.04434)*: Technical details of Multi-Head Latent Attention (MLA).
+- On this blog: [A Prompt's Journey (1): Tokenization](post.html?slug=how-tokenization-works), [A Prompt's Journey (2): The Embedding Layer](post.html?slug=inside-the-embedding-layer), [A Prompt's Journey (3): Semantic Vectors](post.html?slug=how-embeddings-work), [A Prompt's Journey (4): Inside Self-Attention](post.html?slug=inside-self-attention), and [A Prompt's Journey (5): Inside Causal Attention](post.html?slug=inside-causal-attention).

@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-09-27",
+  "updated": "2026-09-29",
   "series": [
     {
       "id": "buyuk-resim",
@@ -15,13 +15,14 @@
     {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına ve çok başlıklı dikkat (multi-head attention) alt uzaylarına 5 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "5 Bölümlük Seri",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına ve çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına 6 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "6 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
         "embeddingler-derinlemesine",
         "self-attention-derinlemesine",
+        "causal-attention-derinlemesine",
         "multi-head-attention-derinlemesine"
       ]
     },
@@ -59,6 +60,24 @@
   ],
   "posts": [
     {
+      "slug": "causal-attention-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (5): Causal Attention — zamanın oku, alt üçgensel matris ve yokluğun matematiği",
+      "date": "2026-09-28",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 5,
+      "summary": "Ne: Causal (Masked) Self-Attention, her token'ın yalnızca geçmişe ve kendine bakmasını şart koşarak autoregressive dil modellerinin eğitimde geleceği kopyalamasını engelleyen zamansal emniyet sübabı. Neden önemli: Modelin eğitim kaybını sıfıra indirirken çıkarımda çökmesini önler; 128k bağlamda kafa başına 32,7 GB tutan maske matrisini FlashAttention ile GPU SRAM üzerinde sıfırlayarak bellek duvarını kırar. Nasıl: Alt üçgensel matris geometrisi; Llama 3'ün 128k continued pre-training'deki belge seviyesinde maskelemesi (document mask), Gemma 2 ve Mistral'in kayan pencere (SWA) varyantları, DeepSeek V3'ün MLA ve çoklu token tahmini (MTP) nedensel zinciri; Softmax öncesi -inf eklemenin pay ve paydadaki titiz matematiksel imhası; eğitimde teacher forcing ile tam paralellik ve sıfır gradyan sızıntısı; çıkarımda prefill vs decode ayrımı ve vLLM parçalı ön doldurma (chunked prefill); float16 ve bfloat16 sayısal taşma tuzakları, IEEE 754 sınırları ve FlashAttention varlen cu_seqlens donanım optimizasyonu. Nerede: Serinin önceki bölümlerindeki 3 kelimelik somut köpek-kedi örneği, adım adım sayısal tensör yürüyüşü ve tam PyTorch doğrulaması üzerinden. Kim için: Transformer iç mimarisini, modern üretim modellerinin maske kurgularını ve GPU sayısal kararlılığını derinlemesine anlamak isteyen makine öğrenmesi ve sistem mühendisleri. Ne zaman: Eğitim kaybı hızla düşerken çıkarımda model hezeyan ürettiğinde ya da uzun bağlamda dikkat belleği tükendiğinde.",
+      "tags": [
+        "llm",
+        "transformer",
+        "causal-attention",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "inside-causal-attention",
+      "draft": false
+    },
+    {
       "slug": "ajan-hafizasi-nasil-calisir",
       "title": "Prompting'den Ajanlara (3): Ajan Hafızası — yazma ve okuma yolları, geçersiz kılma, dreaming ve çok ajanlı kapsam",
       "date": "2026-09-27",
@@ -78,10 +97,10 @@
     },
     {
       "slug": "multi-head-attention-derinlemesine",
-      "title": "Bir Prompt'un Yolculuğu (5): Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama",
-      "date": "2026-09-26",
+      "title": "Bir Prompt'un Yolculuğu (6): Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama",
+      "date": "2026-09-29",
       "seriesId": "bir-promptun-yolculugu",
-      "seriesPart": 5,
+      "seriesPart": 6,
       "summary": "Ne: Multi-Head Attention, model boyutunu paralel alt uzaylara bölerek dildeki birden çok asimetrik ilişkiyi aynı anda takip eden mimari motor. Neden önemli: Model parametre sayısını ve FLOP maliyetini sabit tutarak tek bir benzerlik matrisinin uzlaşma çıkmazını kırar; ancak çıkarımda her kafa için bağımsız KV cache tahsisi gerektirerek bellek bant genişliğini kilitler. Nasıl: Z girdisinin H paralel projeksiyonla (W_Q, W_K, W_V) d_k alt uzaylarına ayrılması, her kafanın kendi dikkat matrisini üretmesi, Concat ve W^O ile tek tensöre indirgenmesi; bağımsız rastgele başlatmanın simetriyi kırması, pozitif geri beslemeyle uzmanlaşma dinamikleri, Michel ve Voita'nın kafa budama deneyleri, Anthropic'in indüksiyon kafaları bulgusu ve GPU'da tek kaynaşık GEMM ile reshape optimizasyonu. Nerede: Bölüm 4'teki 3 kelimelik somut örnek, oyuncak tensör hesabı ve LLaMA / Gemma ölçeği. Kim için: Transformer iç mekaniğini, eğitim dinamiklerini ve çıkarım belleği darboğazlarını anlamak isteyen yapay zekâ ve sistem mühendisleri. Ne zaman: Tek bir dikkat kafasının dildeki çakışan bağlamları neden taşıyamadığını ve çıkarımda neden MQA/GQA'ya geçildiğini sorgularken.",
       "tags": [
         "llm",

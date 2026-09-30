@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-09-27",
+  "updated": "2026-09-29",
   "series": [
     {
       "id": "the-big-picture",
@@ -15,13 +15,14 @@
     {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
-      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine and multi-head attention subspaces — a 5-part architectural journey.",
-      "badge": "5-Part Series",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, and multi-head attention & GQA subspaces — a 6-part architectural journey.",
+      "badge": "6-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
         "how-embeddings-work",
         "inside-self-attention",
+        "inside-causal-attention",
         "inside-multi-head-attention"
       ]
     },
@@ -59,6 +60,24 @@
   ],
   "posts": [
     {
+      "slug": "inside-causal-attention",
+      "title": "A Prompt's Journey (5): Inside Causal Attention — The Arrow of Time, Lower Triangular Matrices, and the Math of the Void",
+      "date": "2026-09-28",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 5,
+      "summary": "What: Causal (Masked) Self-Attention is the architectural mechanism that forces every token to attend exclusively to itself and preceding tokens, preventing autoregressive language models from copying the future during training. Why: Prevents catastrophic information leakage where training loss plummets while inference degenerates into gibberish, and overcomes the 32.7 GB per-head HBM memory wall at 128k context via FlashAttention SRAM kernel fusion. How: Lower triangular matrix mechanics; Meta Llama 3 document-level masking in 128k continued pre-training, Google Gemma 2 and Mistral sliding window attention (SWA) variants, DeepSeek V3 MLA and multi-token prediction (MTP) causal chains; the mathematical eradication of future tokens inside Softmax via -inf, parallel teacher forcing with zero backward gradient leakage, prefill versus decode dichotomy and vLLM chunked prefill, IEEE 754 float16 and bfloat16 numerical stability traps, and FlashAttention varlen cu_seqlens hardware execution. Where: Analyzed across our running 3-token dog-cat sequence with manual step-by-step tensor calculations and runnable PyTorch verification. Who: Senior ML engineers and systems architects seeking an exact mathematical and hardware understanding of attention masking in production models. When: When training loss drops to zero but inference loops, or when long-context attention memory exhausts GPU VRAM.",
+      "tags": [
+        "llm",
+        "transformer",
+        "causal-attention",
+        "architecture",
+        "fundamentals"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "causal-attention-derinlemesine",
+      "draft": false
+    },
+    {
       "slug": "how-ai-agent-memory-works",
       "title": "From Prompting to Agents (3): Agent Memory — write and read paths, supersession, dreaming, and multi-agent scope",
       "date": "2026-09-27",
@@ -78,10 +97,10 @@
     },
     {
       "slug": "inside-multi-head-attention",
-      "title": "A Prompt's Journey (5): Multi-Head Attention — subspaces, symmetry breaking, and head pruning",
-      "date": "2026-09-26",
+      "title": "A Prompt's Journey (6): Inside Multi-Head Attention — subspaces, symmetry breaking, and head pruning",
+      "date": "2026-09-29",
       "seriesId": "a-prompts-journey",
-      "seriesPart": 5,
+      "seriesPart": 6,
       "summary": "What: Multi-Head Attention, the architectural engine that divides the hidden dimension into independent geometric subspaces to track multiple asymmetric linguistic relationships in parallel. Why: It breaks the compromise trap of a single similarity matrix at virtually zero extra parameter or FLOP cost, yet in inference requires dedicated KV cache allocation per head, choking GPU memory bandwidth. How: Projecting input Z into H parallel subspaces of dimension d_k, computing independent attention distributions, concatenating and reducing via W^O; symmetry breaking from random initialization, self-reinforcing gradient dynamics, empirical head pruning by Michel and Voita, Anthropic's induction heads discovery, and fused GPU GEMM with zero-copy reshape mechanics. Where: The 3-token concrete matrix walkthrough carried over from Part 4, alongside production LLaMA and Gemma dimensions. Who: AI and systems engineers seeking an exact understanding of Transformer internals, attention dynamics, and serving memory constraints. When: Investigating why single-head attention collapses competing semantic dependencies and why modern architectures evolve toward MQA and GQA.",
       "tags": [
         "llm",
