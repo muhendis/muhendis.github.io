@@ -4,20 +4,38 @@ Then, they load the checkpoint into an interactive inference endpoint and prompt
 
 Instead of completing the thought, the model enters a catastrophic, unrecoverable loop: `"is is is is is is is..."`. They bump the temperature, adjust top-p sampling, inject repetition penalties—nothing works. When forced to produce text, the weights spew degenerate gibberish.
 
-The post-mortem reveals an expensive, agonizing truth: the cluster burned $120,000 of compute training on a broken attention kernel. An off-by-one index error or a misconfigured boolean flag in the attention block left the upper triangle exposed. Because the network could attend to future ground-truth tokens during training, the attention projection matrices ($W_Q W_K^T$) collapsed into trivial identity lookup channels. The model never learned to perform autoregressive deduction ($P(x_t \mid x_{<t})$); it simply learned to read the next token directly from the input matrix. The moment it reached inference—where future tokens do not yet exist—its internal state suffered an absolute vacuum, trapping the decoding loop in an inescapable local minimum.
+The post-mortem reveals an expensive, agonizing truth: the cluster burned \$120,000 of compute training on a broken attention kernel. An off-by-one index error or a misconfigured boolean flag in the attention block left the upper triangle exposed. Because the network could attend to future ground-truth tokens during training, the attention projection matrices ($W_Q W_K^T$) collapsed into trivial identity lookup channels. The model never learned to perform autoregressive deduction ($P(x_t \mid x_{<t})$); it simply learned to read the next token directly from the input matrix. The moment it reached inference—where future tokens do not yet exist—its internal state suffered an absolute vacuum, trapping the decoding loop in an inescapable local minimum.
 
 This article dissects how the Transformer architecture enforces the unidirectional arrow of time: the mechanics of **Causal (Masked) Self-Attention**, lower triangular matrix geometry, the rigorous mathematical eradication of future tokens inside Softmax via $-\infty$, step-by-step manual tensor calculations matching our ongoing three-token toy sequence, the fundamental engineering split between parallel training and inference (including the mechanics of chunked prefill), IEEE 754 float16/bfloat16 numerical stability traps, how modern FlashAttention kernels eliminate the mask matrix in silicon, and how production models like **Llama 3, Gemma 2, Mistral, and DeepSeek** diverge from standard causal attention.
 
 **In this article**
 
 - [1. The arrow of time and the autoregressive imperative](#1-the-arrow-of-time-and-the-autoregressive-imperative)
+  - [1. The Probabilistic Foundation: The Autoregressive Chain Rule](#1-the-probabilistic-foundation-the-autoregressive-chain-rule)
+  - [2. Invariance of Past Representations and the Birth of KV Cache](#2-invariance-of-past-representations-and-the-birth-of-kv-cache)
+  - [3. Shortcut Collapse: Why Peeking at the Future Poisons the Network](#3-shortcut-collapse-why-peeking-at-the-future-poisons-the-network)
 - [2. A murder mystery with glued pages: The core intuition](#2-a-murder-mystery-with-glued-pages-the-core-intuition)
 - [3. Lower triangular matrix mechanics: Masking the future](#3-lower-triangular-matrix-mechanics-masking-the-future)
 - [4. Anatomy of masks: Causal, padding, and truncation](#4-anatomy-of-masks-causal-padding-and-truncation)
 - [5. The math of the void: Why the mask MUST precede Softmax](#5-the-math-of-the-void-why-the-mask-must-precede-softmax)
+  - [For Future Tokens ($j \> i$):](#for-future-tokens-j--i)
+  - [The Fallacy of Post-Softmax Zeroing](#the-fallacy-of-post-softmax-zeroing)
 - [6. Step-by-step manual tensor walk: Three tokens through causal attention](#6-step-by-step-manual-tensor-walk-three-tokens-through-causal-attention)
+  - [Step 1: Raw Scores and Scaling](#step-1-raw-scores-and-scaling)
+  - [Step 2: Adding the Causal Mask ($S\_{\\text{scaled}} + M$)](#step-2-adding-the-causal-mask-s_textscaled--m)
+  - [Step 3: Row-by-Row Softmax Computation](#step-3-row-by-row-softmax-computation)
+    - [Row 0 ("dog", $t=0$):](#row-0-dog-t0)
+    - [Row 1 ("cat", $t=1$):](#row-1-cat-t1)
+    - [Row 2 ("chased", $t=2$):](#row-2-chased-t2)
+  - [Step 4: Blending Values (Output Context Vectors $O = A V$)](#step-4-blending-values-output-context-vectors-o--a-v)
+  - [Side-by-Side Comparison: Bidirectional (Part 4) vs. Causal (Part 5)](#side-by-side-comparison-bidirectional-part-4-vs-causal-part-5)
 - [7. The two engineering lenses: Training vs. inference and chunked prefill](#7-the-two-engineering-lenses-training-vs-inference-and-chunked-prefill)
+  - [1. The Training Lens: Teacher Forcing, Parallel GEMM, and Gradient Isolation](#1-the-training-lens-teacher-forcing-parallel-gemm-and-gradient-isolation)
+  - [2. The Inference Lens: The Severe Shift from Prefill to Decode](#2-the-inference-lens-the-severe-shift-from-prefill-to-decode)
+  - [3. Production Engine Optimization: Chunked Prefill (vLLM / Sarathi-Serve)](#3-production-engine-optimization-chunked-prefill-vllm--sarathi-serve)
 - [8. Hardware and numerical stability: IEEE 754, fp16 traps, and FlashAttention varlen](#8-hardware-and-numerical-stability-ieee-754-fp16-traps-and-flashattention-varlen)
+  - [The Precision Trap: fp16 vs. bf16](#the-precision-trap-fp16-vs-bf16)
+  - [FlashAttention Varlen: Eliminating the Mask via cu\_seqlens](#flashattention-varlen-eliminating-the-mask-via-cu_seqlens)
 - [9. PyTorch verification: Step-by-step code and tensors](#9-pytorch-verification-step-by-step-code-and-tensors)
 - [10. Production frontiers: How modern models diverge (Llama 3, Gemma 2, Mistral, DeepSeek)](#10-production-frontiers-how-modern-models-diverge-llama-3-gemma-2-mistral-deepseek)
 - [The whole story in six lines](#the-whole-story-in-six-lines)
@@ -213,10 +231,12 @@ $$\sum_{k=1}^T e^{z_{ik}} = \sum_{k=1}^i e^{\frac{q_i k_k^T}{\sqrt{d_k}} + 0} + 
 
 Notice the mathematical elegance: **future tokens are completely purged from the denominator.** The normalisation budget is distributed strictly among valid past and present positions ($k \le i$):
 
-$$A_{ij} = \begin{cases} 
+$$
+A_{ij} = \begin{cases} 
 \dfrac{e^{\frac{q_i k_j^T}{\sqrt{d_k}}}}{\sum_{k=1}^i e^{\frac{q_i k_k^T}{\sqrt{d_k}}}} & \text{if } j \le i \\
 0 & \text{if } j > i 
-\end{cases}$$
+\end{cases}
+$$
 
 When computing the final context vector $o_i$:
 

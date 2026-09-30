@@ -403,16 +403,16 @@ from the providers' official pricing pages on **September 4, 2026**
 (rounded, per million tokens; prices age quickly, so re-verify
 before any production decision):
 
-| Tier | Example | Input $/M | Output $/M |
+| Tier | Example | Input \$/M | Output \$/M |
 |---|---|---|---|
-| Top frontier | Claude Fable 5, OpenAI flagship | $10 | $50 |
-| Frontier | Claude Opus 5 | $5 | $25 |
-| Mid | Claude Sonnet 5 | $2 | $10 |
-| Mid | Gemini 3.1 Pro (≤200K prompt) | $2 | $12 |
-| Small | Claude Haiku 4.5 | $1 | $5 |
-| Small-fast | Gemini 3.8 Flash | $0.75 | $3.75 |
-| Open-weights via API | DeepSeek-R1 (OpenRouter) | $0.70 | $2.50 |
-| Nano | cheapest OpenAI nano tier | $0.20 | $1.25 |
+| Top frontier | Claude Fable 5, OpenAI flagship | \$10 | \$50 |
+| Frontier | Claude Opus 5 | \$5 | \$25 |
+| Mid | Claude Sonnet 5 | \$2 | \$10 |
+| Mid | Gemini 3.1 Pro (≤200K prompt) | \$2 | \$12 |
+| Small | Claude Haiku 4.5 | \$1 | \$5 |
+| Small-fast | Gemini 3.8 Flash | \$0.75 | \$3.75 |
+| Open-weights via API | DeepSeek-R1 (OpenRouter) | \$0.70 | \$2.50 |
+| Nano | cheapest OpenAI nano tier | \$0.20 | \$1.25 |
 
 Three things to read off this table. First, the spread from nano to
 top frontier is roughly 50x on input and 40x on output — the two
@@ -783,9 +783,9 @@ For a sense of the ceiling, Anthropic's most extreme published
 experiment (February 2026) had 16 Claude agents working in parallel
 for nearly two weeks to write a C compiler from scratch: almost
 2,000 sessions, 2 billion input tokens, 140 million output tokens,
-just under $20,000 in API cost — for a 100,000-line Rust compiler
+just under \$20,000 in API cost — for a 100,000-line Rust compiler
 that built Linux 6.9 on three architectures. Two readings of the
-same numbers: the pessimist sees a $20K bill; the optimist sees a
+same numbers: the pessimist sees a \$20K bill; the optimist sees a
 compiler for the price of one engineer-month. But notice the ratio —
 input tokens outnumber output 14 to 1, because every lap of every
 agent's loop re-reads its accumulated context. That ratio is the
@@ -846,20 +846,20 @@ support assistant handling 100,000 requests a day. Each request
 carries a 6,000-token prompt — 5,000 tokens of stable system
 prompt, tool definitions, and product documentation, plus 1,000
 tokens of user question and history — and returns an 800-token
-answer from a mid-tier model at $2/$10 per million tokens.
+answer from a mid-tier model at \$2/\$10 per million tokens.
 
-- **Naive bill:** 600M input tokens a day ($1,200) plus 80M output
-  tokens ($800) — $2,000 a day, roughly $60,000 a month.
+- **Naive bill:** 600M input tokens a day (\$1,200) plus 80M output
+  tokens (\$800) — \$2,000 a day, roughly \$60,000 a month.
 - **Prompt caching:** the 5,000 stable tokens become cache reads at
-  ~0.1x the input price. The input line drops from $1,200 to about
-  $300 a day.
+  ~0.1x the input price. The input line drops from \$1,200 to about
+  \$300 a day.
 - **Output budget:** tighter format instructions bring answers from
-  800 to 500 tokens. The output line drops from $800 to $500.
+  800 to 500 tokens. The output line drops from \$800 to \$500.
 - **Routing:** 60% of the queries are FAQ-grade and move to a small
   model at half the price; the whole bill scales by 0.7 — about
-  $560 a day.
+  \$560 a day.
 
-Total: from $60,000 a month to roughly $17,000 — a 72% cut — and
+Total: from \$60,000 a month to roughly \$17,000 — a 72% cut — and
 the only step that touched quality at all was the routed share,
 which is exactly what the per-category monitoring from section 3
 guards. Notice how unheroic the arithmetic is: no quantization, no
@@ -1031,7 +1031,7 @@ The base vocabulary of the article, one line each:
   quantization rules of thumb, up to 405B.
 - Anthropic, [Building a C compiler with a team of parallel
   Claudes](https://www.anthropic.com/engineering/building-c-compiler)
-  (2026) — the $20K, 2-billion-input-token agentic ceiling case.
+  (2026) — the \$20K, 2-billion-input-token agentic ceiling case.
 - Anthropic, [Prompt caching](https://claude.com/blog/prompt-caching)
   and [How we built our multi-agent research
   system](https://www.anthropic.com/engineering/built-multi-agent-research-system)

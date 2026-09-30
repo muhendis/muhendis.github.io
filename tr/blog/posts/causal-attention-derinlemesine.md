@@ -215,10 +215,12 @@ $$\sum_{k=1}^T e^{z_{ik}} = \sum_{k=1}^i e^{\frac{q_i k_k^T}{\sqrt{d_k}} + 0} + 
 
 Buradaki mucizeye dikkat edin: **Gelecekteki token'lar paydadan tamamen silinmiştir.** Paydadaki normalizasyon bütçesi yalnızca yasal geçmiş token'lar ($k \le i$) arasında paylaştırılır:
 
-$$A_{ij} = \begin{cases} 
+$$
+A_{ij} = \begin{cases} 
 \dfrac{e^{\frac{q_i k_j^T}{\sqrt{d_k}}}}{\sum_{k=1}^i e^{\frac{q_i k_k^T}{\sqrt{d_k}}}} & \text{eğer } j \le i \\
 0 & \text{eğer } j > i 
-\end{cases}$$
+\end{cases}
+$$
 
 Nihai bağlam vektörü $o_i$ hesaplanırken:
 

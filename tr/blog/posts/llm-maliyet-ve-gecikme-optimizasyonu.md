@@ -416,16 +416,16 @@ sağlayıcıların resmî fiyat sayfalarından alındı (milyon token
 başına, yuvarlanmış; fiyatlar hızla eskir, production kararından
 önce yeniden doğrulayın):
 
-| Katman | Örnek | Input $/M | Output $/M |
+| Katman | Örnek | Input \$/M | Output \$/M |
 |---|---|---|---|
-| En üst frontier | Claude Fable 5, OpenAI amiral gemisi | $10 | $50 |
-| Frontier | Claude Opus 5 | $5 | $25 |
-| Orta | Claude Sonnet 5 | $2 | $10 |
-| Orta | Gemini 3.1 Pro (≤200K prompt) | $2 | $12 |
-| Küçük | Claude Haiku 4.5 | $1 | $5 |
-| Küçük-hızlı | Gemini 3.8 Flash | $0,75 | $3,75 |
-| API üzerinden açık ağırlıklı | DeepSeek-R1 (OpenRouter) | $0,70 | $2,50 |
-| Nano | en ucuz OpenAI nano katmanı | $0,20 | $1,25 |
+| En üst frontier | Claude Fable 5, OpenAI amiral gemisi | \$10 | \$50 |
+| Frontier | Claude Opus 5 | \$5 | \$25 |
+| Orta | Claude Sonnet 5 | \$2 | \$10 |
+| Orta | Gemini 3.1 Pro (≤200K prompt) | \$2 | \$12 |
+| Küçük | Claude Haiku 4.5 | \$1 | \$5 |
+| Küçük-hızlı | Gemini 3.8 Flash | \$0,75 | \$3,75 |
+| API üzerinden açık ağırlıklı | DeepSeek-R1 (OpenRouter) | \$0,70 | \$2,50 |
+| Nano | en ucuz OpenAI nano katmanı | \$0,20 | \$1,25 |
 
 Bu tablodan okunacak üç şey var. Birincisi, nano'dan en üst
 frontier'a açıklık input'ta kabaca 50 kat, output'ta 40 kat —
@@ -878,22 +878,22 @@ fiyatlandıralım: günde 100.000 istek karşılayan bir destek
 asistanı. Her istek 6.000 token'lık bir prompt taşıyor — 5.000
 token sabit sistem prompt'u, tool tanımları ve ürün dokümantasyonu,
 artı 1.000 token kullanıcı sorusu ve geçmişi — ve milyon token
-başına $2/$10'luk orta katman bir modelden 800 token'lık yanıt
+başına \$2/\$10'luk orta katman bir modelden 800 token'lık yanıt
 dönüyor.
 
-- **Naif fatura:** günde 600 milyon input token'ı ($1.200) artı 80
-  milyon output token'ı ($800) — günde $2.000, ayda kabaca
-  $60.000.
+- **Naif fatura:** günde 600 milyon input token'ı (\$1.200) artı 80
+  milyon output token'ı (\$800) — günde \$2.000, ayda kabaca
+  \$60.000.
 - **Prompt caching:** sabit 5.000 token, input fiyatının ~0,1
-  katına cache okuması olur. Input kalemi günde $1.200'den yaklaşık
-  $300'a düşer.
+  katına cache okuması olur. Input kalemi günde \$1.200'den yaklaşık
+  \$300'a düşer.
 - **Output bütçesi:** daha sıkı format talimatları yanıtları
-  800'den 500 token'a indirir. Output kalemi $800'den $500'a düşer.
+  800'den 500 token'a indirir. Output kalemi \$800'den \$500'a düşer.
 - **Routing:** sorguların %60'ı SSS düzeyindedir ve yarı fiyatına
   küçük bir modele taşınır; bütün fatura 0,7 ile çarpılır — günde
-  yaklaşık $560.
+  yaklaşık \$560.
 
-Toplam: ayda $60.000'den kabaca $17.000'a — %72 kesinti — ve
+Toplam: ayda \$60.000'den kabaca \$17.000'a — %72 kesinti — ve
 kaliteye dokunan tek adım, tam da 3. bölümdeki kategori başına
 izlemenin koruduğu routing payıydı. Aritmetiğin ne kadar
 gösterişsiz olduğuna dikkat edin: quantization yok, sıkıştırma yok,
