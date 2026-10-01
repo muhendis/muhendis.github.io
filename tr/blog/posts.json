@@ -1,10 +1,34 @@
 {
   "lang": "tr",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
+  "stages": [
+    {
+      "id": "orientation",
+      "title": "Yön Bulma",
+      "tagline": "Önce bütün makineyi tek parça olarak görün."
+    },
+    {
+      "id": "foundations",
+      "title": "Temeller",
+      "tagline": "Bir sinir ağını eğiten matematiği kurun."
+    },
+    {
+      "id": "architecture",
+      "title": "Mimari",
+      "tagline": "Transformer'ın içine girip bir prompt'u katman katman izleyin."
+    },
+    {
+      "id": "systems",
+      "title": "Sistemler",
+      "tagline": "Bu modüller birbirinden bağımsızdır, istediğiniz sırayla okuyabilirsiniz."
+    }
+  ],
   "series": [
     {
       "id": "buyuk-resim",
       "title": "Büyük Resim",
+      "stage": "orientation",
+      "tagline": "Bir LLM'in uçtan uca nasıl çalıştığını tek oturuşta görün; derin modüller bu haritanın parçalarını tek tek açar.",
       "pinned": true,
       "summary": "Buradan başlayın: LLM makinesinin baştan sona sade bir anlatımı — token'lar, embedding'ler, attention, prefill ve decode, KV cache, örnekleme ve modellerin neden uydurduğu — derinlemesine seriler her parçayı tek tek açmadan önce.",
       "badge": "Buradan Başlayın",
@@ -13,8 +37,25 @@
       ]
     },
     {
+      "id": "sinir-aglarinin-yapi-taslari",
+      "title": "Sinir Ağlarının Yapı Taşları",
+      "stage": "foundations",
+      "tagline": "Bir sinir ağını eğitilebilir kılan beş parçayı kuruyoruz: aktivasyon, kayıp, geriye yayılım, optimizasyon ve normalizasyon.",
+      "summary": "Modern yapay sinir ağlarının ve büyük dil modellerinin omurgasını oluşturan beş kritik temel: doğrusalsızlığın geometrisi aktivasyonlardan (Sigmoid, ReLU, GELU, SwiGLU), hatanın ölçülmesi ve Log-Sum-Exp kararlılığına (Cross-Entropy, InfoNCE), geriye yayılımın hesaplama çizgesi ve aktivasyon belleğinden, AdamW ve Muon optimizasyon devrimine, katman kararlılığı ve RMSNorm'a 5 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "5 Bölümlük Seri",
+      "posts": [
+        "aktivasyon-fonksiyonlari-derinlemesine",
+        "kayip-fonksiyonlari-derinlemesine",
+        "geriye-yayilim-ve-otomatik-turev",
+        "optimizasyon-algoritmalari-derinlemesine",
+        "agirlik-baslatma-ve-normalizasyon"
+      ]
+    },
+    {
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
+      "stage": "architecture",
+      "tagline": "Bir prompt'u tokenizer'dan transformer bloğunun çıkışına kadar adım adım izliyoruz.",
       "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına ve tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN ve konveks örtü sınırı) 7 bölümlük derinlemesine mimari yolculuk.",
       "badge": "7 Bölümlük Seri",
       "posts": [
@@ -30,6 +71,8 @@
     {
       "id": "uretimde-llm-sistemleri",
       "title": "Üretimde LLM Sistemleri",
+      "stage": "systems",
+      "tagline": "Bir LLM'i üretimde hızlı ve ekonomik tutmak için maliyete, gecikmeye ve vLLM motorunun içine bakıyoruz.",
       "summary": "Demodan prodüksiyona geçerken patlayan maliyet ve gecikmelerden (TTFT, TPOT, batching) modern çıkarım motorlarının (vLLM, continuous batching, prefix caching) derinliklerine sistem mühendisliği.",
       "badge": "2 Bölümlük Seri",
       "posts": [
@@ -40,6 +83,8 @@
     {
       "id": "promptingden-ajanlara",
       "title": "Prompting'den Otonom Ajanlara",
+      "stage": "systems",
+      "tagline": "Prompting tekniklerinden başlayıp ajanın sistem prompt'unu ve uzun süreli hafızasını kuruyoruz.",
       "summary": "Akıl yürütme tekniklerinden (CoT, ReAct) güvenilir bir ajan sistem prompt'unun 8 katmanlı sözleşmesine, oradan da ajanın kullanıcıyı oturumlar boyunca yanlış hatırlamadan hatırlamasını sağlayan hafıza sistemine uzanan yolculuk.",
       "badge": "3 Bölümlük Seri",
       "posts": [
@@ -51,6 +96,8 @@
     {
       "id": "rag-ve-bilgi-erisimi",
       "title": "RAG ve Bilgi Erişimi",
+      "stage": "systems",
+      "tagline": "Vektör veritabanının içinden başlayıp üretimde ayakta kalan RAG desenlerine kadar erişim katmanını inceliyoruz.",
       "summary": "Vektör veritabanlarının iç mimarisinden (HNSW, filtreler, CRUD) üretim kalitesinde RAG hatlarına ve 4 temel arıza ailesinin çözüm desenlerine uçtan uca arama mimarisi.",
       "badge": "2 Bölümlük Seri",
       "posts": [
@@ -61,12 +108,113 @@
   ],
   "posts": [
     {
+      "slug": "agirlik-baslatma-ve-normalizasyon",
+      "title": "Sinir Ağlarının Yapı Taşları (5): Ağırlık Başlatma ve Normalizasyon — Xavier, Kaiming, LayerNorm ve RMSNorm matematiği",
+      "date": "2026-10-01",
+      "seriesId": "sinir-aglarinin-yapi-taslari",
+      "seriesPart": 5,
+      "summary": "Ne: Modern yapay sinir ağlarında ve büyük dil modellerinde ağırlık başlatma ve normalizasyon mekanizmalarının tam matematiksel ve mimari anatomisi; derinlik boyunca sinyal sönümlenmesi ve patlaması, permütasyon simetrisi kırılması, Xavier/Glorot ve Kaiming/He varyans koruma formülleri, residual akışta varyans birikimi (1/sqrt(2L) ve DeepNorm), BatchNorm'un LLM'lerde iflası, LayerNorm matematiksel ve geri yayılım türevi, ortalamayı atarak hız kazandıran RMSNorm ve Gemma 2 çift normalizasyon (dual-norm) mimarisi. Neden önemli: Ağırlık varyansı katman boyutuna göre ayarlanmazsa sinyal 30 katmanda milyarda birine çöker veya aritmetik taşmayla NaN üretir; residual bağlantılar katman derinliğiyle doğrusal artan varyans (Var(x_L) approx L * sigma^2) biriktirir. LayerNorm ve RMSNorm, bu varyans patlamasını dizginleyen dinamik bir termostat görevi görürken, ortalamayı ve bias terimini çıkaran RMSNorm bellek bant genişliği darboğazını kırıp normalizasyon süresini %15 hızlandırarak modern LLM'lerin (LLaMA, Mistral, DeepSeek, Gemma) tartışmasız standardı olmuştur. Nasıl: Lineer katmanlarda varyans çarpanı d * sigma_w^2 = 1 ispatı; sıfır başlatmada permütasyon simetrisi ve rank çöküşü; Glorot 2010 harmonik ortalama varyansı (2 / (n_in + n_out)); He 2015 ReLU düzeltmesi (2 / n_in); GPT-2 artık izdüşümlerinde 1/sqrt(2L) varyans sönümlemesi; Wang 2022 DeepNorm katsayıları (alpha, beta); Ba, Kiros & Hinton 2016 LayerNorm analitik geri yayılım türevi (sum dL/dx_i = 0 ortogonalite); Zhang & Sennrich 2019 RMSNorm tek geçişli (x_i^2) indirgeme mekaniği; Pre-LN gradyan otoyolu vs artık akış kayması (residual drift); Triton/CUDA kaynaşmış (fused) residual+RMSNorm çekirdekleri ve çıkarımda ağırlık katlama (diag(gamma) W). Nerede: 4 boyutlu oyuncak aktivasyon vektörü ve afin parametreleri üzerinde adım adım elle yürütülen LayerNorm ve RMSNorm ileri ve geri geçiş hesapları, 30 katmanlı varyans sönümlenme simülasyonu ve virgülden sonra 6 basamaklı bağımsız Python doğrulaması üzerinden. Kim için: Büyük modeller eğiten, derin ağlarda eğitim kararsızlıklarını, loss patlamalarını ve bellek bant genişliği darboğazlarını en alt seviyede çözmek isteyen yapay zeka mühendisleri ve mimarları. Ne zaman: Eğitim başlangıcında model loss patlaması veya donma yaşadığında, özel Transformer blokları ve CUDA çekirdekleri tasarlanırken veya derin modellerde normalizasyon mimarisi (Pre-LN vs RMSNorm vs Dual-Norm) seçilirken.",
+      "tagline": "Xavier ve Kaiming başlatmanın, LayerNorm ve RMSNorm'un derin bir ağda sinyali nasıl ayakta tuttuğunu varyans hesabıyla gösteriyoruz.",
+      "tags": [
+        "derin-öğrenme",
+        "normalizasyon",
+        "ağırlık-başlatma",
+        "rmsnorm",
+        "layernorm",
+        "temeller"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "inside-initialization-and-normalization",
+      "draft": false
+    },
+    {
+      "slug": "optimizasyon-algoritmalari-derinlemesine",
+      "title": "Sinir Ağlarının Yapı Taşları (4): Optimizasyon Algoritmaları — SGD salınımları, AdamW paradoksu ve Muon devrimi",
+      "date": "2026-10-01",
+      "seriesId": "sinir-aglarinin-yapi-taslari",
+      "seriesPart": 4,
+      "summary": "Ne: Modern yapay sinir ağlarında ve büyük dil modellerinde optimizasyon algoritmalarının tam matematiksel ve mimari mekaniği; dar vadilerde SGD salınımları, Momentum ve Nesterov sönümlemesi, RMSProp ve AdaGrad adaptif öğrenme hızları, AdamW'nin decoupled weight decay (ayrık ağırlık çürümesi) devrimi, epsilon sayısal kararlılığı ve 2024–2026 ön-eğitim atılımı Muon (Newton-Schulz matris ortogonalizasyonu). Neden önemli: L2 regülarizasyonunu adaptif gradyan ölçeklemesiyle birleştiren standart Adam, sık güncellenen parametreleri gereğinden az, seyrek parametreleri aşırı çürüterek ağırlık çürümesini iflas ettirir; AdamW bu bağı kopararak modern LLM eğitiminin standardı haline gelmiştir. Ayrıca AdamW'nin parametre başına 8 bayt ek durum belleği (VRAM) tüketmesi ve koordinat-bazlı güncellemeler yapması karşısında Muon, spektral yarıçapı normalize edip Newton-Schulz matris polar ayrışımıyla eğitim adımlarını %30 hızlandırırken VRAM'den devasa tasarruf sağlar. Nasıl: Kötü koşullu (ill-conditioned) Hessian yüzeylerinde SGD salınım matematiği; Polyak ağır top (heavy-ball) momentumu; Kingma & Ba 2014 Adam algoritması, birinci ve ikinci moment (m_t, v_t) eğrilik düzeltmeleri; Loshchilov & Hutter 2017 AdamW ayrık ağırlık çürümesi ispatı; Keller Jordan et al. 2024–2025 Muon optimizasyon algoritması, matrislerin spektral normunu sınırlayan Newton-Schulz iterasyonları (X_{k+1} = X_k (1.5 I - 0.5 X_k^T X_k)); FP32 master weights vs BF16 tensör dinamikleri; eğitimde ZeRO-1 optimizer state bölümlemesi; çıkarımda optimizasyon durumunun tamamen atılması. Nerede: İki parametreli kötü koşullu kuadratik vadi yüzeyinde SGD, Momentum ve AdamW adımlarının 3 iterasyonluk adım adım elle hesabı, 2x2 matris üzerinde 3 iterasyonluk Newton-Schulz ortogonalizasyonu ve bağımsız Python betiğiyle kuruşu kuruşuna doğrulanması üzerinden. Kim için: Büyük modeller eğiten, loss spike'ları ve optimizasyon kararsızlıklarını çözmek isteyen, GPU bellek kısıtlarını yöneten yapay zeka mühendisleri, araştırmacıları ve sistem mimarları. Ne zaman: Eğitimde kayıp platosu aşılamadığında, model parametre büyüklüğüne göre AdamW hiperparametreleri (beta1, beta2, wd, eps) seçilirken veya modern ön-eğitim hatlarında Muon ve hibrit optimizer mimarileri değerlendirilirken.",
+      "tagline": "SGD'nin dar vadilerde neden salındığını, AdamW'nin weight decay'i neden ayırdığını ve Muon'un neyi değiştirdiğini adım adım hesaplıyoruz.",
+      "tags": [
+        "derin-öğrenme",
+        "optimizasyon",
+        "adamw",
+        "muon",
+        "sgd",
+        "temeller"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "inside-optimization-algorithms",
+      "draft": false
+    },
+    {
+      "slug": "geriye-yayilim-ve-otomatik-turev",
+      "title": "Sinir Ağlarının Yapı Taşları (3): Geriye Yayılım ve Otomatik Türev — hesaplama çizgesi, aktivasyon belleği ve zincir kuralı anatomisi",
+      "date": "2026-10-01",
+      "seriesId": "sinir-aglarinin-yapi-taslari",
+      "seriesPart": 3,
+      "summary": "Ne: Yapay sinir ağlarında geriye yayılımın (backpropagation) ve otomatik türevin (autodiff) eksiksiz matematiksel ve donanımsal mekaniği; sayısal ve sembolik türevin iflası, yönlü çevrimsiz hesaplama çizgesi (DAG), ters-yönlü topolojik sıralama, yoğun katmanların matris kalkülüsü, aktivasyon belleği darboğazı ve Gradient Checkpointing mimarisi. Neden önemli: Bir katmanın ağırlık gradyanını hesaplamak ileri geçiş aktivasyonlarının bellekte dondurulmasını (X^T dZ) şart koştuğundan aktivasyon belleği model ağırlıklarını katlarca aşar; ters-yönlü otomatik türev tek bir geri geçişle milyarlarca parametrenin tam gradyanını çıkarırken, Gradient Checkpointing %33 ek hesaplama karşılığında VRAM tüketimini %80 azaltır. Nasıl: Sayısal sonlu farkların O(N) ileri hesaplama ve basamak silinmesi kısıtı; sembolik türevin ifade patlaması; dual sayılarla ileri-yönlü AD vs ters-yönlü AD boyutsal asimetrisi (N girdi, 1 skaler kayıp); PyTorch dinamik hesaplama çizgesi ve grad_fn düğümleri; çok değişkenli zincir kuralı ve residual bağlantılarda gradyan birikimi (I + dF/dx); tam bağlantılı katmanlarda dZ = dA * phi'(Z), dW = X^T dZ, db = sum(dZ) ve dX = dZ W^T ispatı; Tianqi Chen 2016 Gradient Checkpointing blok sınır stratejisi; genel Öklid normu ile gradyan kırpma (gradient clipping); eğitimde asenkron All-Reduce iletişim kovaları ve çıkarımda çizgenin yok edilmesi (inference_mode). Nerede: 2 katmanlı oyuncak MLP mimarisi, adım adım elle yürütülen tam ileri ve geri tensör hesabı, genel norm kırpma simülasyonu ve PyTorch autograd ile kuruşu kuruşuna sayısal eşleşme üzerinden. Kim için: Derin ağların eğitim kararsızlıklarını, bellek tüketiminin matematiksel köklerini ve autograd motorlarının iç mimarisini en alt seviyede kavramak isteyen yapay zeka mühendisleri ve mimarları. Ne zaman: GPU'da eğitim başlarken aniden OOM (bellek yetersizliği) alındığında, uzun bağlamlı modellerde aktivasyon belleğini optimize etmek gerektiğinde veya özel CUDA/C++ geri yayılım operatörleri geliştirirken.",
+      "tagline": "Zincir kuralının bir hesaplama çizgesi üzerinde nasıl işletildiğini ve geriye yayılımın belleği neden aktivasyonlarla doldurduğunu görüyoruz.",
+      "tags": [
+        "derin-öğrenme",
+        "backpropagation",
+        "autodiff",
+        "hesaplama-çizgesi",
+        "gradient-checkpointing",
+        "temeller"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "inside-backpropagation-and-autodiff",
+      "draft": false
+    },
+    {
+      "slug": "kayip-fonksiyonlari-derinlemesine",
+      "title": "Sinir Ağlarının Yapı Taşları (2): Kayıp Fonksiyonları — hatanın geometrisi, Log-Sum-Exp kararlılığı ve Cross-Entropy sadeleşmesi",
+      "date": "2026-10-01",
+      "seriesId": "sinir-aglarinin-yapi-taslari",
+      "seriesPart": 2,
+      "summary": "Ne: Yapay sinir ağlarında kayıp fonksiyonlarının tam matematiksel ve geometrik anatomisi; MSE'nin sınıflandırmada iflası, Shannon öz-bilgisi ve KL uzaklığı, Softmax ve Cross-Entropy birleşimindeki p - y türev sadeleşmesi, donanımda Float16 taşmasını önleyen Log-Sum-Exp hilesi ve modern InfoNCE kontrastif öğrenme kaybı. Neden önemli: Yanlış kayıp seçimi vahim tahmin hatalarında gradyanı sıfırlayarak eğitimi aylarca platoya hapsederken; Cross-Entropy hatayla doğrudan orantılı doğrusal bir çekiş uygular ve Chunked Cross-Entropy ile 128k sözlüklü LLM'lerde 8.4 GB'lık logit bellek duvarını yıkar. Nasıl: MSE logit türevinin doyması ve konveks-olmayan yüzey analizi; Shannon entropisi H(P), çapraz entropi H(P, Q) ve KL uzaklığı D_KL(P||Q) üzerinden Maximum Likelihood ispatı; Softmax Jacobian matrisi (p_i(delta_ik - p_i)) ve Cross-Entropy zincir kuralında pay-payda sadeleşmesi; IEEE 754 Float16 formatında z > 11.09 üstel taşması (65504 sınırı) ve max(z) çıkarımlı Log-Sum-Exp sayısal kararlılık algoritması; Szegedy 2016 Label Smoothing kalibrasyonu, Lin 2017 Focal Loss ve van den Oord 2018 InfoNCE kontrastif amaç fonksiyonu; eğitimde GPU HBM sözlük darboğazı ve çıkarımda kaybın tamamen elenmesi. Nerede: 3 sınıflı oyuncak sınıflandırma ve kontrastif ranking problemi, elle yapılan adım adım skaler ve tensör hesapları, MSE vs CE gradyan büyüklüğü karşılaştırması ve bağımsız Python/PyTorch doğrulaması üzerinden. Kim için: Sınıflandırma, dil modelleri ve embedding sistemleri inşa eden, eğitim kararsızlıklarını ve GPU bellek kısıtlarını en alt seviyede kavramak isteyen yapay zeka mühendisleri ve araştırmacıları. Ne zaman: Eğitim kaybı vahim hatalara rağmen düşmediğinde, Float16/Bfloat16 eğitiminde NaN taşmaları yaşandığında veya CLIP/embedding mimarilerinde kontrastif kayıp tasarlarken.",
+      "tagline": "MSE'nin sınıflandırmada neden iflas ettiğini, Cross-Entropy türevinin p − y'ye nasıl sadeleştiğini ve onu kararlı tutan Log-Sum-Exp hilesini açıklıyoruz.",
+      "tags": [
+        "derin-öğrenme",
+        "kayıp-fonksiyonu",
+        "cross-entropy",
+        "log-sum-exp",
+        "infonce",
+        "temeller"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "inside-loss-functions",
+      "draft": false
+    },
+    {
+      "slug": "aktivasyon-fonksiyonlari-derinlemesine",
+      "title": "Sinir Ağlarının Yapı Taşları (1): Aktivasyon Fonksiyonları — doğrusalsızlığın geometrisi, sönümlenen gradyanlar ve SwiGLU devrimi",
+      "date": "2026-10-01",
+      "seriesId": "sinir-aglarinin-yapi-taslari",
+      "seriesPart": 1,
+      "summary": "Ne: Yapay sinir ağlarındaki aktivasyon fonksiyonlarının tam matematiksel ve mimari mekaniği; matris birleşme çöküşü, sigmoid ve tanh gradyan doygunluğu, ReLU ve ölü nöron patolojisi, GELU olasılıksal kapılaması ve modern LLM'lerin standardı SwiGLU. Neden önemli: Doğrusal-olmayan aktivasyon olmadan 100 katmanlı bir ağ tek bir regresyon matrisine çöker; yanlış aktivasyon seçimi gradyanları 10 katmanda milyonda birine düşürürken, LLaMA 3 ve DeepSeek-V3 gibi modern modeller SwiGLU'nun dinamik çarpımsal kapılamasıyla üstün temsil gücü elde eder. Nasıl: Matris çarpımının birleşme özelliği ve rank eşitsizliği ispatı; logistic sigmoid ve tanh türev kalkülüsü; ReLU'nun yönlü geri döndürülemezliği ve LeakyReLU çözümü; Hendrycks 2016 GELU Gauss hata integrali (erf) ve hızlı tanh yaklaşımı; Dauphin 2016 GLU ve Shazeer 2020 SwiGLU formülasyonu; parametre bütçesini korumak için ara boyutun 8/3 d_model değerine ölçeklenmesi; eğitimde aktivasyon belleği darboğazı, CUDA kaynaşmış çekirdekler ve çıkarımda GEMM prefill vs GEMV decode dinamikleri. Nerede: Negatif, sıfır ve pozitif noktalardan oluşan 1D skaler yürüyüş, 2D oyuncak tensörlerle adım adım tam SwiGLU katmanı hesabı ve bağımsız Python/PyTorch doğrulaması üzerinden. Kim için: Derin ağların matematiksel dinamiklerini, aktivasyon hafıza maliyetlerini ve modern LLM mimarilerini en temel seviyede kavramak isteyen yapay zeka mühendisleri ve mimarları. Ne zaman: Ağ derinleştikçe eğitim kaybı donduğunda, ölü nöron şüphesi doğduğunda veya modern modellerdeki SwiGLU katmanlarının çalışma mantığını anlamak gerektiğinde.",
+      "tagline": "Doğrusalsızlık olmadan katmanların neden tek bir matrise çöktüğünü ve ReLU'dan SwiGLU'ya giden yolu anlatıyoruz.",
+      "tags": [
+        "derin-öğrenme",
+        "aktivasyon",
+        "swiglu",
+        "gelu",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "inside-activation-functions",
+      "draft": false
+    },
+    {
       "slug": "transformer-blogu-derinlemesine",
       "title": "Bir Prompt'un Yolculuğu (7): Transformer Bloğu — gradyan otoyolu, konveks örtü ve FFN'in ilişkisel belleği",
       "date": "2026-09-30",
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 7,
       "summary": "Ne: Tek bir Transformer bloğunun tam iç mekaniği; residual bağlantılar, LayerNorm/RMSNorm stabilizasyonu ve Feed-Forward Network (FFN/MLP) katmanının matematiksel anatomisi. Neden önemli: Residual bağlantı olmadan 20 katmanda milyonda birine çöken gradyanları I + f'(x) garantisiyle 100 katmana taşır; self-attention mekanizmasının konveks örtü sınırına hapsolarak üretemediği doğrusal-olmayan mantıksal özellikleri FFN ile açar ve model parametrelerinin üçte ikisinde olgusal bilgileri depolar. Nasıl: Zincir kuralında gradyan sönümlemesi ve He et al. 2015 ResNet birim otoyolu; Ba et al. 2016 LayerNorm orkestra benzetmesi, BatchNorm'un dil modellerindeki iflası, Pre-LN vs Post-LN kararlılık ispatı ve Zhang & Sennrich 2019 RMSNorm optimizasyonu; Softmax konveks kombinasyonunun geometrisi ve boya karıştırma analojisi; FFN'in Geva et al. 2021 ilişkisel anahtar-değer belleği olarak çalışması; Hendrycks 2016 GELU yumuşak kapılaması ve Shazeer 2020 SwiGLU mimarisi; Llama 3 biassız tasarımı, Gemma 2 çift pre-and-post normalizasyonu ve DeepSeek-V3 MoE ayrıştırması (AFD); eğitimde aktivasyon kontrol noktaları ve çıkarımda GEMM vs GEMV bellek bant genişliği dinamikleri. Nerede: Serimizin 3 kelimelik somut köpek-kedi matris yürüyüşü, adım adım elle sayısal hesap ve tam PyTorch doğrulaması üzerinden. Kim için: LLM mimarisini, derin ağların gradyan dinamiğini ve modern üretim modellerinin blok tasarımlarını en alt seviyede kavramak isteyen yapay zeka mühendisleri. Ne zaman: Derin modellerde gradyan kaybolması ya da patlaması yaşandığında ve attention ile FFN arasındaki gerçek iş bölümünü anlamak gerektiğinde.",
+      "tagline": "Residual bağlantıların, normalizasyonun ve FFN'in tek bir transformer bloğunda nasıl birlikte çalıştığını parçalarına ayırıyoruz.",
       "tags": [
         "llm",
         "transformer",
@@ -87,6 +235,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 5,
       "summary": "Ne: Causal (Masked) Self-Attention, her token'ın yalnızca geçmişe ve kendine bakmasını şart koşarak autoregressive dil modellerinin eğitimde geleceği kopyalamasını engelleyen zamansal emniyet sübabı. Neden önemli: Modelin eğitim kaybını sıfıra indirirken çıkarımda çökmesini önler; 128k bağlamda kafa başına 32,7 GB tutan maske matrisini FlashAttention ile GPU SRAM üzerinde sıfırlayarak bellek duvarını kırar. Nasıl: Alt üçgensel matris geometrisi; Llama 3'ün 128k continued pre-training'deki belge seviyesinde maskelemesi (document mask), Gemma 2 ve Mistral'in kayan pencere (SWA) varyantları, DeepSeek V3'ün MLA ve çoklu token tahmini (MTP) nedensel zinciri; Softmax öncesi -inf eklemenin pay ve paydadaki titiz matematiksel imhası; eğitimde teacher forcing ile tam paralellik ve sıfır gradyan sızıntısı; çıkarımda prefill vs decode ayrımı ve vLLM parçalı ön doldurma (chunked prefill); float16 ve bfloat16 sayısal taşma tuzakları, IEEE 754 sınırları ve FlashAttention varlen cu_seqlens donanım optimizasyonu. Nerede: Serinin önceki bölümlerindeki 3 kelimelik somut köpek-kedi örneği, adım adım sayısal tensör yürüyüşü ve tam PyTorch doğrulaması üzerinden. Kim için: Transformer iç mimarisini, modern üretim modellerinin maske kurgularını ve GPU sayısal kararlılığını derinlemesine anlamak isteyen makine öğrenmesi ve sistem mühendisleri. Ne zaman: Eğitim kaybı hızla düşerken çıkarımda model hezeyan ürettiğinde ya da uzun bağlamda dikkat belleği tükendiğinde.",
+      "tagline": "Maske matrisinin her token'ın yalnızca geçmişe bakmasını nasıl sağladığını ve eğitimin buna neden muhtaç olduğunu gösteriyoruz.",
       "tags": [
         "llm",
         "transformer",
@@ -105,6 +254,7 @@
       "seriesId": "promptingden-ajanlara",
       "seriesPart": 3,
       "summary": "Ne: Ajan hafızası, durumsuz bir dil modelinin etrafında her turda prompt'a neyin gireceğine, uzun süreli depoda neyin değişeceğine ve bu deponun oturumlar arasında nasıl birleştirileceğine karar veren sistemdir. Neden önemli: Tam geçmiş LOCOMO'da yaklaşık 26.000 token ve p95'te 17 saniyeye mal oluyor; GPT-4o yaklaşık 115.000 token'da, kanıt prompt'ta dururken göreli olarak %30 doğruluk kaybediyor. Çelişen bilgileri birlikte saklayan bir depo ise ajanın kendinden emin biçimde yanlış hatırlamasına yol açıyor. Nasıl: Yazı bağlam penceresini çalışma belleği olarak ve neden bir veritabanı olmadığını ele alıyor. CoALA'nın dört hafıza türünü; ayıklama, ADD/UPDATE/DELETE/NOOP, iki zamanlı geçersiz kılma, Ebbinghaus unutma eğrisi ve PII kapısından oluşan yazma yolunu; sorgu yeniden yazma, elle yürütülen yakınlık-önem-ilgi puanlaması, RRF ve önbelleği gözeten paketlemeden oluşan okuma yolunu anlatıyor. Sleep-time compute'tan Anthropic ve OpenAI'ın 2026 dreaming özelliklerine uzanan çevrimdışı birleştirmeyi ve bağlam çöküşü tuzağını; sekiz mimariyi; yazma politikalarını, MINJA'yı ve hafıza zehirlenmesini; Memory-R1'in pekiştirmeli öğrenmeyle eğitilen hafıza yöneticisini; KV cache faturasını; kiracı yalıtımını, gecikme bütçesini ve tek sisteme dört puan üreten benchmark tartışmasını da inceliyor. Nerede: Generative Agents, MemGPT, Mem0, Zep, ACE, Claude Managed Agents hafıza depoları ve ChatGPT üzerinden, taşınan şehir hatasını düzelten 60 satırlık bir Python referans uygulamasıyla. Kim için: Kullanıcıları oturumlar boyunca hatırlaması gereken asistan ve ajanlar geliştiren mühendisler için. Ne zaman: Bir demo ajan ikinci oturumuyla, ilk çelişen bilgisiyle ya da ikinci kiracısıyla karşılaştığı anda.",
+      "tagline": "Durumsuz bir modelin etrafında neyin hatırlanacağına, neyin güncelleneceğine ve neyin unutulacağına karar veren sistemi kuruyoruz.",
       "tags": [
         "llm",
         "ajanlar",
@@ -123,6 +273,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 6,
       "summary": "Ne: Multi-Head Attention, model boyutunu paralel alt uzaylara bölerek dildeki birden çok asimetrik ilişkiyi aynı anda takip eden mimari motor. Neden önemli: Model parametre sayısını ve FLOP maliyetini sabit tutarak tek bir benzerlik matrisinin uzlaşma çıkmazını kırar; ancak çıkarımda her kafa için bağımsız KV cache tahsisi gerektirerek bellek bant genişliğini kilitler. Nasıl: Z girdisinin H paralel projeksiyonla (W_Q, W_K, W_V) d_k alt uzaylarına ayrılması, her kafanın kendi dikkat matrisini üretmesi, Concat ve W^O ile tek tensöre indirgenmesi; bağımsız rastgele başlatmanın simetriyi kırması, pozitif geri beslemeyle uzmanlaşma dinamikleri, Michel ve Voita'nın kafa budama deneyleri, Anthropic'in indüksiyon kafaları bulgusu ve GPU'da tek kaynaşık GEMM ile reshape optimizasyonu. Nerede: Bölüm 4'teki 3 kelimelik somut örnek, oyuncak tensör hesabı ve LLaMA / Gemma ölçeği. Kim için: Transformer iç mekaniğini, eğitim dinamiklerini ve çıkarım belleği darboğazlarını anlamak isteyen yapay zekâ ve sistem mühendisleri. Ne zaman: Tek bir dikkat kafasının dildeki çakışan bağlamları neden taşıyamadığını ve çıkarımda neden MQA/GQA'ya geçildiğini sorgularken.",
+      "tagline": "Model boyutunu alt uzaylara bölen kafaların farklı ilişkileri paralel olarak nasıl takip ettiğini ve hangilerinin budanabildiğini inceliyoruz.",
       "tags": [
         "llm",
         "transformer",
@@ -141,6 +292,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 1,
       "summary": "En güçlü model hâlâ \"strawberry\" kelimesindeki r'leri yanlış sayıyor ve sebebi akıl yürütme değil: kelime ilk katmana ulaştığında çoktan üç tamsayıya dönüşmüştü ve girdide hiç bulunmayan bir şeyi sayamazsınız. Bu yazı tokenizer masasının içinden geçiyor — sabit bir vocabulary neden zorunlu, BPE onu sık çiftleri birleştirerek nasıl kuruyor, WordPiece ve Unigram nerede farklı karar veriyor, vocabulary boyutu parametre olarak ne götürüp dizi uzunluğu olarak ne kazandırıyor, tiktoken ile ölçülmüş Türkçe fertility rakamları, prompt'un düzeltemediği arızalar (glitch token'lar ve tokenizer.json kurcalaması dâhil) ve bir token ID'sinin sonunda nasıl vektöre dönüştüğü.",
+      "tagline": "Metnin modele ulaşmadan tamsayılara nasıl dönüştüğünü, BPE'nin sözlüğü nasıl kurduğunu ve Türkçe metnin neden daha çok token harcadığını anlatıyoruz.",
       "tags": [
         "llm",
         "tokenizasyon",
@@ -158,6 +310,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 2,
       "summary": "Ne: embed_tokens, ayrık token ID'lerini bir transformer'ın işleyebileceği sürekli vektörlere çeviren katman ve lm_head, onları geri izdüşüren bağlı matris. Neden önemli: 1B modelin parametrelerinin ~%30'udur, hiç çarpma yapmaz ve forward'ının içinde saklanan sqrt(d_model) ölçeklemesini iki kez uygulamak çok kolaydır. Nasıl: lookup table mekaniği ve tensör boyutları, ölçekleme ve PyTorch tuzağı, konumsal kodlamanın RoPE'a kadarki üç kuşağı, loss spike'lar ve WeSaR, eğitim ile servis arasındaki maliyet ayrımı. Nerede: Gemma 3 üzerinden inceleme; sayılar model config'inden. Kim için: model servis eden, ince ayar yapan ya da checkpoint taşıyan mühendisler. Ne zaman: VRAM bütçesi tutmadığında, sadakatle taşınan ağırlıklar yine de saçma çıktı verdiğinde ya da ön eğitimde kayıp fırladığında.",
+      "tagline": "Token ID'lerini sürekli vektörlere çeviren arama tablosunu, lm_head ile paylaştığı ağırlıkları ve RoPE'un devreye girdiği yeri inceliyoruz.",
       "tags": [
         "llm",
         "mimari",
@@ -175,6 +328,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 3,
       "summary": "Her RAG boru hattı, üzerinde 'embed' yazan bir kutuya güvenir. Bu yazı o kutuyu açıyor: bir cümle anlam haritasında nasıl tek noktaya dönüşür, haritayı contrastive eğitim nasıl çizer, kosinüs puanı gerçekte ne söyler, HNSW komşuları milisaniyede nasıl bulur, hangi düğme belleği kaliteyle takas eder — ve geometri nerede kör kalır.",
+      "tagline": "Bir cümlenin anlam uzayında tek bir noktaya nasıl dönüştüğünü, kosinüs benzerliğinin gerçekte ne söylediğini ve HNSW'nin komşuları nasıl bulduğunu anlatıyoruz.",
       "tags": [
         "llm",
         "embedding",
@@ -192,6 +346,7 @@
       "seriesId": "bir-promptun-yolculugu",
       "seriesPart": 4,
       "summary": "Bir model 'köpek kediyi kovaladı' cümlesindeki kelimeleri birbirine nasıl bağlar? Bu yazı transformer mimarisinin kalbini açıyor: Query, Key ve Value'nun ayrılma gerekçesi, 3 kelimelik somut örnek üzerinde hiçbir adım atlanmadan elle yapılan Q, K, V, dot-product ve softmax hesabı, RoPE'un dikkat katmanına nerede bağlandığı, 1/sqrt(d_k) ölçeklemesinin varyans ispatı, bağlam vektörünün (context vector) anatomisi, dilbilgisinin (emergent grammar) rastgelelikten nasıl belirdiği ve Bahdanau'dan Vaswani'ye uzanan tarihsel devrim.",
+      "tagline": "Q, K ve V'nin neden ayrı tutulduğunu üç kelimelik bir örnek üzerinde, hiçbir adımı atlamadan elle hesaplıyoruz.",
       "tags": [
         "llm",
         "transformer",
@@ -210,6 +365,7 @@
       "seriesId": "uretimde-llm-sistemleri",
       "seriesPart": 1,
       "summary": "Demo sentlere mal oluyor ve bir saniyede yanıtlıyordu; production, bütçede olmayan bir fatura ve kullanıcının hissettiği bir p95 grafiğiyle geldi. Bu yazı bütün yığını risk sırasıyla geziyor — TTFT, TPOT, Goodput ve bir çağrının iki fazlı anatomisi, kayıpsız kazanımlar (prompt caching, batch API'ler), model katmanları arasında routing, serving odası (disaggregation, PagedAttention), doğruluğu zedeleyebilen sıkıştırmalar ve ajanların her şeyi neden çarptığı.",
+      "tagline": "TTFT ve TPOT ölçümleri, prompt caching ve model yönlendirme ile bir LLM çağrısının faturasını ve gecikmesini nasıl düşüreceğinizi gösteriyoruz.",
       "tags": [
         "llm",
         "çıkarım",
@@ -227,6 +383,7 @@
       "seriesId": "uretimde-llm-sistemleri",
       "seriesPart": 2,
       "summary": "GPU %92 dolu görünüyor ama işlem hacmi benchmark'ın üçte biri; üstelik hiç alarm kurmadığınız bir sayaç — num_preemptions_total — salıdan beri tırmanıyor. Bu yazı vLLM'in etrafından değil içinden geçiyor: blok tablosu ve prefix cache hash'leri, V1 scheduler'ının tek token bütçesi, bir kapasite sinyali olarak preemption, TTFT ile token arası gecikme ve işlem hacmi arasındaki ayar üçgeni, kapasite planlaması için KV cache aritmetiği ve SGLang ya da TensorRT-LLM'in ne zaman kazandığının dürüst haritası.",
+      "tagline": "vLLM'in KV belleğini bloklara nasıl böldüğünü, continuous batching'in ve prefix cache'in nasıl çalıştığını motorun içinden izliyoruz.",
       "tags": [
         "llm",
         "çıkarım",
@@ -244,6 +401,7 @@
       "seriesId": "promptingden-ajanlara",
       "seriesPart": 1,
       "summary": "Alanın en ünlü prompt tavsiyesi tek cümledir: 'adım adım düşün' ekleyin. 2022'de benchmark puanlarını dörde katlıyordu; bugünün modelleri siz istemeden düşünüyor ve aynı tavsiye 'yedek yöntem' rafında. Bu yazı bilinmeye değer tekniklerin — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — kompakt bir turu: akıl yürüten modellerin hangilerini yuttuğu, prompt'unuzda hâlâ ne olması gerektiği ve belirtiden çözüme götüren üç soruluk teşhis.",
+      "tagline": "Chain-of-Thought ve ReAct gibi tekniklerin, kendi başına akıl yürüten modeller çağında hâlâ nerede işe yaradığını tartışıyoruz.",
       "tags": [
         "llm",
         "prompt",
@@ -261,6 +419,7 @@
       "seriesId": "promptingden-ajanlara",
       "seriesPart": 2,
       "summary": "Bir talimatı tutup diğerinde haddini aşan ajan çoğu zaman sözleşme değil, dilek taşıyordur. Bu yazı sistem prompt'unu dört kata dizilmiş sekiz bölüm olarak kuruyor: rol, kapsam, ilkeler, iş akışı, araçlar, çıktı formatı, belirsizlik ve örnekler — her bölümün kötü ve iyi sürümü, sonda baştan sona tam bir prompt ve ajanları sessizce bozan hatalarla birlikte.",
+      "tagline": "Bir ajanın sistem prompt'unu, rolden araç sınırlarına kadar sekiz yapı taşından oluşan bir sözleşme olarak kuruyoruz.",
       "tags": [
         "llm",
         "ajanlar",
@@ -278,6 +437,7 @@
       "seriesId": "rag-ve-bilgi-erisimi",
       "seriesPart": 1,
       "summary": "FAISS demosu milisaniyede kusursuz cevap verir — sonra üretim bir silme talebi, bir müşteri filtresi ve dünkü yüklemeyle gelir ve demo dağılır. Bu yazı dizinin etrafındaki binayı geziyor: tek bir sorgunun hayatı, hangi dizin ailesinin hangi bedeli ödediği, filtrelerin top-k'yi neden sessizce aç bıraktığı, canlı verinin ne istediği, ölçeğin neye benzediği — ve bir vektör veritabanına gerçekten ihtiyacınız olup olmadığını söyleyen dört basamaklı merdiven.",
+      "tagline": "Bir vektör veritabanının ANN indeksinin etrafına silme, metadata filtreleme ve canlı veri için neler kurduğunu inceliyoruz.",
       "tags": [
         "llm",
         "vektör-veritabanı",
@@ -295,6 +455,7 @@
       "seriesId": "rag-ve-bilgi-erisimi",
       "seriesPart": 2,
       "summary": "RAG hataları sonsuz görünür; aslında yalnızca dört hata ailesi vardır. Bu yazı, belirtiden yola çıkarak doğru deseni seçtiren bir karar rehberi: HyDE'den hybrid arama ve reranking'e, reordering'den routing ve self-reflection'a, her desenin neyi düzelttiğini ve bedelinin ne olduğunu anlatıyor.",
+      "tagline": "RAG hatalarını dört aileye ayırıyor, HyDE, hybrid arama ve reranking gibi desenleri belirtiye bakarak seçmeyi gösteriyoruz.",
       "tags": [
         "llm",
         "rag",
@@ -313,6 +474,7 @@
       "seriesId": "buyuk-resim",
       "seriesPart": 1,
       "summary": "Tüm makine tek bir okumada: token'lar, embedding'ler, attention mekanizması, prefill ve decode fazları, KV cache matematiği, örnekleme stratejileri ve modellerin neden uydurduğu.",
+      "tagline": "Token'lardan attention'a, eğitimden çıkarıma ve uydurmaya kadar bir LLM'in bütün parçalarını tek okumada bir araya getiriyoruz.",
       "tags": [
         "llm",
         "temeller",
@@ -328,6 +490,7 @@
       "date": "2026-08-29",
       "seriesId": null,
       "summary": "Zincirden çizgeye geçmek ne kazandırıyor: durumu açık tutmak, dallanma ve ajan tasarımında ölçü.",
+      "tagline": "Zincirden çizgeye geçmenin durum yönetiminde, dallanmada ve ajan tasarımında ne kazandırdığını tartışıyoruz.",
       "tags": [
         "llm",
         "langgraph",
@@ -343,6 +506,7 @@
       "date": "2026-08-29",
       "seriesId": null,
       "summary": "Büyük bir dil modelini sunmak bellek bant genişliği darboğazına çarpar. Aktivasyon aykırı değerlerinin (outliers) naif nicemlemeyi neden bozduğuna ve modern GPU'larda gecikmeyi gerçekte neyin düşürdüğüne dair notlar.",
+      "tagline": "Aktivasyon aykırı değerlerinin naif nicemlemeyi neden bozduğunu ve modern GPU'larda gecikmeyi gerçekte neyin düşürdüğünü anlatıyoruz.",
       "tags": [
         "llm",
         "nicemleme",

@@ -1,10 +1,34 @@
 {
   "lang": "en",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
+  "stages": [
+    {
+      "id": "orientation",
+      "title": "Orientation",
+      "tagline": "See the whole machine in one piece first."
+    },
+    {
+      "id": "foundations",
+      "title": "Foundations",
+      "tagline": "Build up the maths that trains a neural network."
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "tagline": "Go inside the transformer and follow a prompt layer by layer."
+    },
+    {
+      "id": "systems",
+      "title": "Systems",
+      "tagline": "These modules are independent of each other; read them in any order."
+    }
+  ],
   "series": [
     {
       "id": "the-big-picture",
       "title": "The Big Picture",
+      "stage": "orientation",
+      "tagline": "See how an LLM works end to end in one sitting; the deep-dive modules then open up each part of this map.",
       "pinned": true,
       "summary": "Start here: the whole LLM machine end to end in plain language — tokens, embeddings, attention, prefill and decode, KV cache, sampling, and why models hallucinate — before the deep-dive series zoom into each piece.",
       "badge": "Start Here",
@@ -13,8 +37,25 @@
       ]
     },
     {
+      "id": "building-blocks-of-neural-networks",
+      "title": "Building Blocks of Neural Networks",
+      "stage": "foundations",
+      "tagline": "The five pieces that make a neural network trainable: activations, losses, backpropagation, optimizers and normalization.",
+      "summary": "The fundamental components underpinning modern deep learning and large language models: from the geometry of non-linearity and activations (Sigmoid, ReLU, GELU, SwiGLU), the mathematics of error and Log-Sum-Exp numerical stability (Cross-Entropy, InfoNCE), backpropagation computational graphs and activation memory, to the AdamW and Muon optimization revolution, layer stability and RMSNorm — a 5-part deep-dive journey.",
+      "badge": "5-Part Series",
+      "posts": [
+        "inside-activation-functions",
+        "inside-loss-functions",
+        "inside-backpropagation-and-autodiff",
+        "inside-optimization-algorithms",
+        "inside-initialization-and-normalization"
+      ]
+    },
+    {
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
+      "stage": "architecture",
+      "tagline": "Follow a prompt step by step, from the tokenizer to the output of a transformer block.",
       "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, and the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN, and the convex hull barrier) — a 7-part architectural journey.",
       "badge": "7-Part Series",
       "posts": [
@@ -30,6 +71,8 @@
     {
       "id": "llm-systems-in-production",
       "title": "LLM Systems in Production",
+      "stage": "systems",
+      "tagline": "What it takes to keep an LLM fast and affordable in production, from cost and latency down to the vLLM engine.",
       "summary": "From runaway costs and p95 latency spikes (TTFT, TPOT, batching) to the engine room of modern serving engines (vLLM, continuous batching, prefix caching).",
       "badge": "2-Part Series",
       "posts": [
@@ -40,6 +83,8 @@
     {
       "id": "from-prompting-to-agents",
       "title": "From Prompting to Autonomous Agents",
+      "stage": "systems",
+      "tagline": "From prompting techniques to an agent's system prompt and its long-term memory.",
       "summary": "From classical reasoning heuristics (CoT, ReAct), through the rigorous 8-section contract that makes agent system prompts reliable, to the memory system that lets an agent remember users across sessions without remembering wrong.",
       "badge": "3-Part Series",
       "posts": [
@@ -51,6 +96,8 @@
     {
       "id": "rag-and-retrieval",
       "title": "RAG & Retrieval Architecture",
+      "stage": "systems",
+      "tagline": "The retrieval layer, from inside the vector database to RAG patterns that survive production.",
       "summary": "From the internal mechanics of vector databases (HNSW, metadata filters, live CRUD) to production-grade RAG pipelines and diagnosing the four root failure families.",
       "badge": "2-Part Series",
       "posts": [
@@ -61,12 +108,113 @@
   ],
   "posts": [
     {
+      "slug": "inside-initialization-and-normalization",
+      "title": "Building Blocks of Neural Networks (5): Weight Initialization and Normalization — Xavier, Kaiming, LayerNorm, and RMSNorm mathematics",
+      "date": "2026-10-01",
+      "seriesId": "building-blocks-of-neural-networks",
+      "seriesPart": 5,
+      "summary": "What: The complete mathematical and architectural mechanics of weight initialization and normalization layers in modern neural networks and large language models; signal decay and exploding activations across depth, permutation symmetry breaking, Xavier/Glorot and Kaiming/He variance preservation derivations, residual stream variance accumulation (1/sqrt(2L) and DeepNorm), why BatchNorm failed in LLMs, the complete analytical backward derivation of LayerNorm, the mean-stripping RMSNorm revolution, and Gemma 2 dual-norm architecture. Why it matters: Without variance-preserving initialization, forward activations collapse to 10^-45 or detonate into NaN floating-point overflow within 30 layers; unscaled skip connections compound variance linearly with depth (Var(x_L) approx L * sigma^2). LayerNorm and RMSNorm act as continuous dynamical thermostats to bound this variance, with RMSNorm eliminating mean calculation and affine bias to slash memory bandwidth overhead by up to 15%, establishing itself as the modern standard across LLaMA, Mistral, DeepSeek, and Gemma. How: Proof of linear variance condition d * sigma_w^2 = 1; permutation symmetry and rank collapse under zero initialization; Glorot 2010 harmonic mean variance (2 / (n_in + n_out)); He 2015 ReLU variance correction (2 / n_in); GPT-2 residual projection scaling by 1/sqrt(2L); Wang 2022 DeepNorm scaling factors (alpha, beta); Ba, Kiros & Hinton 2016 LayerNorm analytical backward gradient derivation with mean-centering and orthogonality; Zhang & Sennrich 2019 RMSNorm single-pass (x_i^2) reduction; Pre-LN gradient highways versus residual drift; Triton/CUDA fused residual+RMSNorm kernels and inference weight folding (diag(gamma) W). Where: Traced through a 4-dimensional toy activation vector and affine parameters, step-by-step manual LayerNorm and RMSNorm forward and backward calculations, a 30-layer variance decay simulation, and 6-decimal-place independent Python script verification. Who it's for: AI engineers, machine learning researchers, and deep learning systems architects training deep models who need to diagnose training divergence, design stable architectures, and optimize GPU memory bandwidth. When to use: When facing loss explosion or vanishing gradients at step zero, designing custom Transformer layers and CUDA kernels, or selecting normalization strategies (Pre-LN vs RMSNorm vs Dual-Norm) for large-scale pre-training.",
+      "tagline": "How Xavier and Kaiming initialization, LayerNorm and RMSNorm keep the signal alive through a deep network, shown with the variance arithmetic.",
+      "tags": [
+        "deep-learning",
+        "normalization",
+        "initialization",
+        "rmsnorm",
+        "layernorm",
+        "fundamentals"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "agirlik-baslatma-ve-normalizasyon",
+      "draft": false
+    },
+    {
+      "slug": "inside-optimization-algorithms",
+      "title": "Building Blocks of Neural Networks (4): Optimization Algorithms — SGD oscillations, the AdamW paradox, and the Muon revolution",
+      "date": "2026-10-01",
+      "seriesId": "building-blocks-of-neural-networks",
+      "seriesPart": 4,
+      "summary": "What: The complete mathematical and architectural mechanics of optimization algorithms in deep neural networks and large language models; SGD oscillations in ill-conditioned ravines, Momentum and Nesterov dampening, RMSProp and AdaGrad coordinate scaling, AdamW's decoupled weight decay revolution, epsilon numerical stability, and the 2024–2026 pre-training breakthrough Muon (Newton-Schulz matrix orthogonalization). Why it matters: Coupling L2 regularization with adaptive gradient scaling in standard Adam penalizes frequently updated weights too little and rare weights too much, breaking weight decay; AdamW decouples weight decay to restore generalization. Furthermore, while AdamW consumes 8 bytes of optimizer states per parameter and makes coordinate-wise updates, Muon bounds the spectral radius via Newton-Schulz polar decomposition, accelerating training steps by up to 30% while drastically cutting memory overhead. How: Ill-conditioned Hessian dynamics and oscillatory SGD behavior; Polyak heavy-ball momentum; Kingma & Ba 2014 Adam algorithm, first and second moment (m_t, v_t) bias corrections; Loshchilov & Hutter 2017 AdamW decoupled update derivation; Keller Jordan et al. 2024–2025 Muon optimizer, Newton-Schulz iteration (X_{k+1} = X_k (1.5 I - 0.5 X_k^T X_k)) for matrix orthogonalization; FP32 master weights vs BF16 forward tensor dynamics; ZeRO-1 optimizer state sharding during training; complete optimizer state elimination during inference. Where: Across an ill-conditioned quadratic valley toy problem with 3 manual iterations of SGD, Momentum, and AdamW, a 2x2 matrix 3-iteration Newton-Schulz orthogonalization, verified to the penny against independent Python scripts. Who it's for: AI engineers, deep learning researchers, and infrastructure architects training modern neural networks who need to debug training instabilities, tune optimizer hyperparameters, and manage GPU memory. When to use: When facing loss spikes and divergence during pre-training, tuning AdamW hyperparameters (beta1, beta2, weight decay, eps), or designing high-efficiency pre-training pipelines with Muon and hybrid optimizers.",
+      "tagline": "Why SGD oscillates in narrow ravines, why AdamW decouples weight decay and what Muon changes, worked out step by step.",
+      "tags": [
+        "deep-learning",
+        "optimization",
+        "adamw",
+        "muon",
+        "sgd",
+        "fundamentals"
+      ],
+      "readingMinutes": 22,
+      "translationSlug": "optimizasyon-algoritmalari-derinlemesine",
+      "draft": false
+    },
+    {
+      "slug": "inside-backpropagation-and-autodiff",
+      "title": "Building Blocks of Neural Networks (3): Backpropagation and Autodiff — computational graphs, activation memory, and chain rule anatomy",
+      "date": "2026-10-01",
+      "seriesId": "building-blocks-of-neural-networks",
+      "seriesPart": 3,
+      "summary": "What: The complete mathematical and architectural mechanics of backpropagation and automatic differentiation (autodiff) in deep neural networks; why numerical and symbolic differentiation fail, directed acyclic computation graphs (DAG), reverse-mode topological sorting, tensor calculus of dense affine layers, activation memory footprints, and Gradient Checkpointing. Why: Computing parameter gradients requires holding intermediate forward activations in memory (X^T dZ), causing activation memory to drastically exceed model parameter footprints; reverse-mode automatic differentiation computes exact gradients for billions of parameters in a single backward pass, while Gradient Checkpointing slashes VRAM usage by 80% at a modest 33% compute cost. How: Computational intractability of numerical finite differences; symbolic expression swelling; dual numbers in forward-mode versus reverse-mode dimensional asymmetry (N parameters, 1 scalar loss); PyTorch dynamic execution graphs and grad_fn nodes; multivariable chain rule accumulation across branching graph topologies and residual highways (I + dF/dx); exact derivations of dZ = dA * phi'(Z), dW = X^T dZ, db = sum(dZ), and dX = dZ W^T; Tianqi Chen 2016 Gradient Checkpointing boundary strategies; global Euclidean norm gradient clipping; asynchronous All-Reduce communication buckets in distributed training and graph elimination in inference. Where: Traced through a 2-layer toy MLP, step-by-step manual tensor arithmetic, global norm clipping simulation, and standalone Python/PyTorch autograd verification. Who: Deep learning practitioners, AI systems engineers, and kernel developers seeking foundational mastery over memory consumption, gradient flow, and autograd runtimes. When: When training jobs crash with unexpected Out-Of-Memory (OOM) errors during backpropagation, when scaling context lengths in LLMs, or when writing custom PyTorch/CUDA backward operators.",
+      "tagline": "How the chain rule runs over a computation graph, and why backpropagation fills memory with activations.",
+      "tags": [
+        "deep-learning",
+        "backpropagation",
+        "autodiff",
+        "computational-graph",
+        "gradient-checkpointing",
+        "fundamentals"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "geriye-yayilim-ve-otomatik-turev",
+      "draft": false
+    },
+    {
+      "slug": "inside-loss-functions",
+      "title": "Building Blocks of Neural Networks (2): Loss Functions — the geometry of error, Log-Sum-Exp stability, and the Cross-Entropy simplification",
+      "date": "2026-10-01",
+      "seriesId": "building-blocks-of-neural-networks",
+      "seriesPart": 2,
+      "summary": "What: The complete mathematical and architectural mechanics of loss functions in deep neural networks; why Mean Squared Error fails for classification, Shannon surprisal and KL divergence, the analytic p - y gradient collapse of Softmax and Cross-Entropy, the Log-Sum-Exp trick for float16 hardware stability, and modern InfoNCE contrastive objectives. Why: Inappropriate loss functions trap optimization on zero-gradient plateaus during severe mistakes, while Cross-Entropy delivers direct, non-saturating corrective updates and Chunked Cross-Entropy breaks through the 8.4 GB vocabulary logit memory wall in 128k LLMs. How: Non-convex loss surface analysis under MSE; Shannon entropy H(P), cross-entropy H(P, Q), and KL divergence D_KL(P||Q) establishing identity with Maximum Likelihood Estimation; derivation of the Softmax Jacobian and exact denominator cancellation in the chain rule; IEEE 754 Float16 exponent overflow (65504 ceiling at z > 11.09) and the max(z) shifted Log-Sum-Exp identity; Szegedy 2016 Label Smoothing regularization, Lin 2017 Focal Loss, and van den Oord 2018 InfoNCE formulations; GPU HBM vocabulary bottlenecks in training versus complete loss omission in inference. Where: Traced through a 3-class classification toy setup, exact manual scalar and tensor calculations, MSE versus CE gradient amplitude comparisons, and standalone Python/PyTorch verification. Who: Machine learning engineers, deep learning practitioners, and NLP systems architects designing robust training objectives and loss kernels. When: When training loss stagnates despite severe classification errors, numerical instability produces NaN values in half-precision training, or when designing contrastive retrieval and embedding heads.",
+      "tagline": "Why MSE fails for classification, how the Cross-Entropy gradient simplifies to p − y, and the Log-Sum-Exp trick that keeps it stable.",
+      "tags": [
+        "deep-learning",
+        "loss-functions",
+        "cross-entropy",
+        "log-sum-exp",
+        "infonce",
+        "fundamentals"
+      ],
+      "readingMinutes": 20,
+      "translationSlug": "kayip-fonksiyonlari-derinlemesine",
+      "draft": false
+    },
+    {
+      "slug": "inside-activation-functions",
+      "title": "Building Blocks of Neural Networks (1): Activation Functions — the geometry of non-linearity, vanishing gradients, and the SwiGLU revolution",
+      "date": "2026-10-01",
+      "seriesId": "building-blocks-of-neural-networks",
+      "seriesPart": 1,
+      "summary": "What: The complete mathematical and architectural mechanics of activation functions in neural networks; matrix associativity collapse, Sigmoid and Tanh gradient saturation, ReLU and dying neuron pathology, GELU probabilistic gating, and the modern LLM standard SwiGLU. Why: Without non-linear activations, 100 stacked layers collapse algebraically into a single linear regression matrix; improper activation selection extinguishes error gradients by one-millionth across 10 layers, while modern models like LLaMA 3 and DeepSeek-V3 rely on SwiGLU's bilinear multiplicative gating for dynamic feature filtration. How: Proof of linear collapse and rank bounds under matrix associativity; derivative calculus of logistic sigmoid and tanh; directional irreversibility in ReLU and LeakyReLU recovery; Hendrycks 2016 GELU Gaussian error integrals (erf) and fast tanh approximations; Dauphin 2016 GLU and Shazeer 2020 SwiGLU formulations; scaling intermediate hidden size to 8/3 d_model for strict parameter and FLOP equivalence; training activation memory pressure, fused CUDA kernels, and GEMM prefill vs GEMV decode serving dynamics. Where: Evaluated across negative, zero, and positive 1D scalar spectra, a complete 2D toy tensor SwiGLU layer forward pass, and standalone Python/PyTorch verification. Who: Machine learning engineers, deep learning practitioners, and AI systems architects seeking foundational rigor in neural network dynamics and LLM design. When: When training loss stagnates in deep architectures, dead neurons are suspected, or when evaluating SwiGLU layers in state-of-the-art transformer architectures.",
+      "tagline": "Why layers collapse into a single matrix without non-linearity, and the road from ReLU to SwiGLU.",
+      "tags": [
+        "deep-learning",
+        "activation",
+        "swiglu",
+        "gelu",
+        "architecture",
+        "fundamentals"
+      ],
+      "readingMinutes": 18,
+      "translationSlug": "aktivasyon-fonksiyonlari-derinlemesine",
+      "draft": false
+    },
+    {
       "slug": "inside-the-transformer-block",
       "title": "A Prompt's Journey (7): The Transformer Block — the gradient highway, the convex hull, and FFN associative memory",
       "date": "2026-09-30",
       "seriesId": "a-prompts-journey",
       "seriesPart": 7,
       "summary": "What: The complete inner mechanics of a single Transformer block; residual connections, LayerNorm/RMSNorm stabilization, and the mathematical anatomy of the Feed-Forward Network (FFN/MLP). Why: Enables error gradients that would otherwise extinguish to one-millionth across 20 layers to flow across 100+ layers via the I + f'(x) guarantee; shatters the convex hull boundary that traps self-attention into linear interpolation, allowing non-linear feature synthesis and storing factual knowledge in two-thirds of the model parameters. How: Backpropagation chain rule and He et al. 2015 ResNet identity highways; Ba et al. 2016 LayerNorm orchestra analogy, why BatchNorm fails on variable-length sequences, Pre-LN vs Post-LN stability proofs, and Zhang & Sennrich 2019 RMSNorm efficiency; Softmax convex combination geometry and paint-mixing analogy; Geva et al. 2021 FFN key-value associative memory mechanics; Hendrycks 2016 GELU probabilistic gating and Shazeer 2020 SwiGLU architectures; Llama 3 bias removal, Gemma 2 dual pre-and-post-norm, and DeepSeek-V3 MoE Attention-FFN Disaggregation (AFD); activation checkpointing in training and GEMM vs GEMV memory bandwidth in inference. Where: Traced across our running 3-token dog-cat sequence with manual tensor arithmetic and runnable PyTorch verification. Who: Senior ML engineers and systems architects seeking an exact structural understanding of Transformer layer dynamics. When: When deep architectures suffer vanishing or exploding gradients, or when analyzing the distinct computational workloads of attention versus FFNs.",
+      "tagline": "How residual connections, normalization and the FFN work together inside a single transformer block.",
       "tags": [
         "llm",
         "transformer",
@@ -87,6 +235,7 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 5,
       "summary": "What: Causal (Masked) Self-Attention is the architectural mechanism that forces every token to attend exclusively to itself and preceding tokens, preventing autoregressive language models from copying the future during training. Why: Prevents catastrophic information leakage where training loss plummets while inference degenerates into gibberish, and overcomes the 32.7 GB per-head HBM memory wall at 128k context via FlashAttention SRAM kernel fusion. How: Lower triangular matrix mechanics; Meta Llama 3 document-level masking in 128k continued pre-training, Google Gemma 2 and Mistral sliding window attention (SWA) variants, DeepSeek V3 MLA and multi-token prediction (MTP) causal chains; the mathematical eradication of future tokens inside Softmax via -inf, parallel teacher forcing with zero backward gradient leakage, prefill versus decode dichotomy and vLLM chunked prefill, IEEE 754 float16 and bfloat16 numerical stability traps, and FlashAttention varlen cu_seqlens hardware execution. Where: Analyzed across our running 3-token dog-cat sequence with manual step-by-step tensor calculations and runnable PyTorch verification. Who: Senior ML engineers and systems architects seeking an exact mathematical and hardware understanding of attention masking in production models. When: When training loss drops to zero but inference loops, or when long-context attention memory exhausts GPU VRAM.",
+      "tagline": "How the mask matrix lets each token look only at the past, and why training depends on it.",
       "tags": [
         "llm",
         "transformer",
@@ -105,6 +254,7 @@
       "seriesId": "from-prompting-to-agents",
       "seriesPart": 3,
       "summary": "What: agent memory, the system around a stateless language model that decides on every turn what goes into the prompt, what changes in the long-term store, and how that store is consolidated between sessions. Why: full history costs about 26,000 tokens and a 17-second p95 on LOCOMO, GPT-4o loses 30% relative accuracy at about 115,000 tokens with the evidence still present, and a store that keeps contradictory facts makes an agent confidently remember wrong. How: the context window as working memory and why it is not a database; CoALA's four memory types; a write path with extraction, ADD/UPDATE/DELETE/NOOP, bi-temporal supersession, an Ebbinghaus forgetting curve and a PII gate; a read path with query rewriting, recency-importance-relevance scoring worked by hand, RRF and cache-aware packing; offline consolidation from sleep-time compute to Anthropic's and OpenAI's 2026 dreaming, and the context-collapse trap; eight architectures; write policies, MINJA and memory poisoning; Memory-R1's reinforcement-learned memory manager; the KV cache bill; tenant isolation, latency budgets and a benchmark dispute that produced four scores for one system. Where: Generative Agents, MemGPT, Mem0, Zep, ACE, Claude Managed Agents memory stores and ChatGPT, plus a 60-line Python reference implementation that fixes a moved-city bug. Who: engineers building assistants and agents that must remember users across sessions. When: the moment a demo agent meets its second session, its first contradicting fact, or its second tenant.",
+      "tagline": "The system around a stateless model that decides what to remember, what to update and what to forget.",
       "tags": [
         "llm",
         "agents",
@@ -123,12 +273,13 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 6,
       "summary": "What: Multi-Head Attention, the architectural engine that divides the hidden dimension into independent geometric subspaces to track multiple asymmetric linguistic relationships in parallel. Why: It breaks the compromise trap of a single similarity matrix at virtually zero extra parameter or FLOP cost, yet in inference requires dedicated KV cache allocation per head, choking GPU memory bandwidth. How: Projecting input Z into H parallel subspaces of dimension d_k, computing independent attention distributions, concatenating and reducing via W^O; symmetry breaking from random initialization, self-reinforcing gradient dynamics, empirical head pruning by Michel and Voita, Anthropic's induction heads discovery, and fused GPU GEMM with zero-copy reshape mechanics. Where: The 3-token concrete matrix walkthrough carried over from Part 4, alongside production LLaMA and Gemma dimensions. Who: AI and systems engineers seeking an exact understanding of Transformer internals, attention dynamics, and serving memory constraints. When: Investigating why single-head attention collapses competing semantic dependencies and why modern architectures evolve toward MQA and GQA.",
+      "tagline": "How heads split the model dimension into subspaces to track different relationships in parallel, and which of them can be pruned.",
       "tags": [
         "llm",
         "transformer",
         "multi-head-attention",
         "architecture",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 18,
       "translationSlug": "multi-head-attention-derinlemesine",
@@ -141,11 +292,12 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 1,
       "summary": "A frontier model still miscounts the r's in \"strawberry\", and the reason is not reasoning: by the time the word reached the first layer it had become three integers, and you cannot count what was never in the input. This article works through the tokenizer desk — why a fixed vocabulary must exist, how BPE builds it by merging frequent pairs, where WordPiece and Unigram decide differently, what vocabulary size costs in parameters and buys in sequence length, measured Turkish fertility numbers from tiktoken, the failure modes prompting cannot fix including glitch tokens and tokenizer.json tampering, and how a token ID finally becomes a vector.",
+      "tagline": "How text becomes integers before it reaches the model, how BPE builds its vocabulary, and why some languages spend more tokens.",
       "tags": [
         "llm",
         "tokenization",
         "nlp",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 12,
       "translationSlug": "tokenizasyon-nasil-calisir",
@@ -158,6 +310,7 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 2,
       "summary": "What: embed_tokens, the layer that turns discrete token IDs into the continuous vectors a transformer can process, and lm_head, the tied matrix that projects them back. Why it matters: it is ~30% of a 1B model's parameters, performs no multiplication, and the sqrt(d_model) scaling hidden inside its forward is easy to apply twice. How: lookup table mechanics and tensor shapes, the scaling and its PyTorch trap, the three generations of positional encoding up to RoPE, loss spikes and WeSaR, and the cost split between training and serving. Where: a Gemma 3 walkthrough with every number from the model config. Who for: engineers serving models, fine-tuning them, or porting checkpoints. When: when the VRAM budget does not add up, when a faithful weight port still produces garbage, or when loss spikes during pre-training.",
+      "tagline": "The lookup table that turns token IDs into vectors, the weights it shares with lm_head, and where RoPE comes in.",
       "tags": [
         "llm",
         "architecture",
@@ -175,11 +328,12 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 3,
       "summary": "Every RAG pipeline trusts a box labeled 'embed'. This article opens it: how a sentence becomes a point on a map of meaning, how contrastive training draws the map, what a cosine score really tells you, how HNSW finds neighbors in milliseconds, which dials trade memory for quality — and where the geometry goes blind.",
+      "tagline": "How a sentence becomes a single point in meaning space, what cosine similarity really tells you, and how HNSW finds neighbours fast.",
       "tags": [
         "llm",
         "embeddings",
         "retrieval",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 11,
       "translationSlug": "embeddingler-derinlemesine",
@@ -192,12 +346,13 @@
       "seriesId": "a-prompts-journey",
       "seriesPart": 4,
       "summary": "How does a language model connect words like 'the dog chased the cat' into a coherent thought? This article opens the engine room of the transformer: the rationale behind Query, Key, and Value, a complete step-by-step manual calculation of Q, K, V, dot-product, and softmax on a 3-token example without skipping a single arithmetic step, where RoPE plugs into attention, the variance proof behind the 1/sqrt(d_k) scaling factor, the anatomy of context vectors, how grammar emerges from random weights, and the historical lineage from Bahdanau to Vaswani.",
+      "tagline": "Why Q, K and V are kept separate, computed by hand on a three-word example without skipping a step.",
       "tags": [
         "llm",
         "transformer",
         "self-attention",
         "architecture",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 18,
       "translationSlug": "self-attention-derinlemesine",
@@ -210,6 +365,7 @@
       "seriesId": "llm-systems-in-production",
       "seriesPart": 1,
       "summary": "The demo cost cents and answered in a second; production brought a bill you didn't budget for and a p95 chart users feel. This article walks the whole stack in order of risk — TTFT, TPOT, Goodput and the two-phase anatomy of a call, the lossless wins (prompt caching, batch APIs), routing between model tiers, the serving room (disaggregation, PagedAttention), compressions that can hurt accuracy, and why agents multiply everything.",
+      "tagline": "How to bring down the bill and the latency of LLM calls with TTFT and TPOT metrics, prompt caching and model routing.",
       "tags": [
         "llm",
         "inference",
@@ -227,6 +383,7 @@
       "seriesId": "llm-systems-in-production",
       "seriesPart": 2,
       "summary": "The GPU reads 92% allocated yet throughput is a third of the benchmark, and a counter you never alerted on — num_preemptions_total — has been climbing since Tuesday. This article goes inside vLLM instead of around it: the block table and prefix-cache hashes, the V1 scheduler's single token budget, preemption as a capacity signal, the tuning triangle between TTFT, inter-token latency, and throughput, KV-cache arithmetic for capacity planning, and an honest map of when SGLang or TensorRT-LLM wins instead.",
+      "tagline": "How vLLM pages KV memory into blocks, and how continuous batching and the prefix cache work, traced from inside the engine.",
       "tags": [
         "llm",
         "inference",
@@ -244,11 +401,12 @@
       "seriesId": "from-prompting-to-agents",
       "seriesPart": 1,
       "summary": "The most famous prompt advice is one sentence: add 'think step by step'. In 2022 it quadrupled benchmark scores; today's models think before you ask, and the advice is filed under 'fallback'. A compact tour of the techniques worth knowing — few-shot, self-consistency, chaining, ReAct, Reflexion, tree-of-thoughts — which of them reasoning models absorbed, what still belongs in your prompt, and a three-question diagnosis from symptom to fix.",
+      "tagline": "Where techniques such as Chain-of-Thought and ReAct still earn their place now that models reason on their own.",
       "tags": [
         "llm",
         "prompts",
         "reasoning",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 6,
       "translationSlug": "prompting-teknikleri",
@@ -261,11 +419,12 @@
       "seriesId": "from-prompting-to-agents",
       "seriesPart": 2,
       "summary": "An agent that ignores one instruction and overreaches another is usually carrying a wish, not a contract. This article structures the system prompt as eight sections on four floors — role, scope, principles, workflow, tools, output format, uncertainty, examples — with a bad and a good version of each, one complete prompt at the end, and the mistakes that quietly break agents.",
+      "tagline": "Building an agent's system prompt as a contract of eight blocks, from its role to its tool boundaries.",
       "tags": [
         "llm",
         "agents",
         "prompts",
-        "foundations"
+        "fundamentals"
       ],
       "readingMinutes": 11,
       "translationSlug": "ajan-promptunun-anatomisi",
@@ -278,6 +437,7 @@
       "seriesId": "rag-and-retrieval",
       "seriesPart": 1,
       "summary": "A FAISS demo answers perfectly in milliseconds — then production asks for a deletion, a tenant filter, and yesterday's upload, and the demo falls apart. This article walks through the building around the index: the life of one query, which index families pay which costs, why filters silently starve your top-k, what living data demands, what scale looks like — and a four-rung ladder for deciding whether you need a vector database at all.",
+      "tagline": "What a vector database builds around its ANN index to handle deletes, metadata filtering and live data.",
       "tags": [
         "llm",
         "vector-database",
@@ -295,6 +455,7 @@
       "seriesId": "rag-and-retrieval",
       "seriesPart": 2,
       "summary": "RAG failures look infinite; there are only four families. A symptom-first decision guide: HyDE, small-to-big, hybrid search and reranking, reordering, routing, self-reflection — what each one fixes, and what it costs.",
+      "tagline": "RAG failures fall into four families; this guide picks the fix by symptom, from HyDE to hybrid search and reranking.",
       "tags": [
         "llm",
         "rag",
@@ -313,10 +474,11 @@
       "seriesId": "the-big-picture",
       "seriesPart": 1,
       "summary": "The whole machine in one read: tokens, embeddings, attention mechanisms, prefill and decode phases, KV cache economics, sampling strategies, and why models hallucinate.",
+      "tagline": "Every part of an LLM in one read, from tokens and attention to training, inference and why models make things up.",
       "tags": [
         "llm",
         "fundamentals",
-        "transformers"
+        "transformer"
       ],
       "readingMinutes": 16,
       "translationSlug": "llm-nasil-calisir",
@@ -328,6 +490,7 @@
       "date": "2026-08-29",
       "seriesId": null,
       "summary": "What moving from chains to graphs buys you: explicit state management, conditional branching, and discipline in agent architecture.",
+      "tagline": "What moving from chains to graphs buys you in state management, branching and agent design.",
       "tags": [
         "llm",
         "langgraph",
@@ -343,6 +506,7 @@
       "date": "2026-08-29",
       "seriesId": null,
       "summary": "Serving an LLM is a memory-bandwidth problem. Notes on why activation outliers break naive quantization, and what actually moves latency on modern GPUs.",
+      "tagline": "Why activation outliers break naive quantization, and what actually lowers latency on modern GPUs.",
       "tags": [
         "llm",
         "quantization",
