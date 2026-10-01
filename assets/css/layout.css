@@ -76,7 +76,8 @@
   :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: block; }
 }
 
-@media (max-width: 40rem) {
+/* 62rem: below ~1000px the nav ("Akademik Çalışmalar" is long) wraps to two lines. */
+@media (max-width: 62rem) {
   .nav-toggle { display: inline-flex; }
   .site-nav {
     display: none; position: absolute; left: 0; right: 0; top: 100%;
@@ -87,7 +88,7 @@
   .site-nav ul { flex-direction: column; align-items: stretch; gap: var(--sp-1); }
   .site-nav a { padding: var(--sp-3); }
 }
-@media (min-width: 40.0625rem) { .nav-toggle { display: none; } }
+@media (min-width: 62.0625rem) { .nav-toggle { display: none; } }
 
 /* ---- Sections / footer ---- */
 main { display: block; }

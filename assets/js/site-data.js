@@ -32,14 +32,26 @@
       });
 
       var cites = d.publicationCitations || {};
+      var max = 0;
+      Object.keys(cites).forEach(function (k) { max = Math.max(max, cites[k] || 0); });
       document.querySelectorAll('[data-pub]').forEach(function (li) {
         var n = cites[li.dataset.pub];
         var span = li.querySelector('.pub__cites');
         if (n == null) return;
-        if (!n) { if (span) span.hidden = true; return; }
+        li.dataset.cites = String(n);
+        var bar = li.querySelector('.pub-bar > span');
+        if (bar) bar.style.width = (max ? 100 * n / max : 0) + '%';
+        if (!span) return;
+        if (!n) { span.textContent = LANG === 'tr' ? 'Henüz atıf yok' : 'No citations yet'; return; }
         var word = LANG === 'tr' ? 'atıf' : (n === 1 ? 'citation' : 'citations');
-        if (span) { span.hidden = false; span.textContent = n + ' ' + word; }
+        span.textContent = n + ' ' + word;
       });
+      document.querySelectorAll('[data-cites-for]').forEach(function (el) {
+        var n = cites[el.dataset.citesFor];
+        if (n != null) el.textContent = n;
+      });
+      // publications.js re-sorts by the fresh counts.
+      document.dispatchEvent(new Event('profile:loaded'));
     })
     .catch(function () { /* baked values stand */ });
 

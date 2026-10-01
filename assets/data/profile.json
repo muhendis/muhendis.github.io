@@ -1,33 +1,40 @@
 {
-  "updated": "2026-08-29",
+  "updated": "2026-10-01",
   "scholar": {
     "profile": "https://scholar.google.com/citations?user=qrj_QhMAAAAJ",
-    "citations": 170,
+    "citations": 178,
     "hIndex": 4,
-    "i10Index": 3
+    "i10Index": 3,
+    "interests": [
+      "Machine Learning",
+      "Efficient Machine Learning",
+      "Efficient LLM",
+      "Efficient Inference"
+    ]
   },
   "stats": {
     "en": {
       "years": "7+",
-      "citations": "170",
+      "citations": "178",
       "students": "20K+",
       "award": "1st"
     },
     "tr": {
       "years": "7+",
-      "citations": "170",
+      "citations": "178",
       "students": "20K+",
       "award": "1."
     }
   },
   "publicationCitations": {
-    "mitosis-domain-generalization": 85,
+    "mitosis-domain-generalization": 90,
     "mitnet": 37,
-    "tubule-u-net": 36,
+    "tubule-u-net": 39,
     "patch-based-grading": 5,
     "retinanet-nuclei": 4,
     "wsi-grading-jco": 2,
     "pleomorphism-caip": 1,
-    "mitotic-sarcoma": 0
+    "mitotic-sarcoma": 0,
+    "llm-ptq-thesis": 0
   }
 }
