@@ -142,7 +142,24 @@ else:
             if f"slug={p['slug']}" not in text:
                 warn(f"sitemap.xml does not list the published post {lang}/{p['slug']}")
 
-# 6. Vendored dependency keeps its licence.
+# 6. Pre-rendered blog index (no-JS / crawler fallback) matches posts.json,
+#    and every series sits on a known learning-path stage.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import build_blog_index
+for page in build_blog_index.stale_pages(write=False):
+    err(f"Pre-rendered list is stale: {page}. Run python3 .github/scripts/build_blog_index.py")
+for lang, m in manifests.items():
+    stage_ids = {s.get("id") for s in m.get("stages", [])}
+    for s in m.get("series", []):
+        if s.get("stage") not in stage_ids:
+            err(f"{lang}: series '{s.get('id')}' has stage {s.get('stage')!r}, not one of {sorted(stage_ids)}.")
+        if not s.get("tagline"):
+            warn(f"{lang}: series '{s.get('id')}' has no tagline; the dashboard falls back to the long summary.")
+    for p in m.get("posts", []):
+        if not p.get("draft") and not p.get("tagline"):
+            warn(f"{lang}/{p.get('slug')}: no tagline; cards fall back to the summary's first clause.")
+
+# 7. Vendored dependency keeps its licence.
 if (ROOT / "assets/js/vendor/marked.umd.js").exists():
     lic = ROOT / "assets/js/vendor/marked.LICENSE.txt"
     if not lic.exists() or lic.stat().st_size < 500:

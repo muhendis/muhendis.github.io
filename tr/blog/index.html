@@ -35,6 +35,8 @@
        would flash the light theme on every navigation in dark mode. -->
   <script>
     (function () {
+      /* Blog index only: hides the pre-rendered fallback list. */
+      document.documentElement.classList.add('js');
       try {
         var s = localStorage.getItem('theme');
         if (s === 'dark' || s === 'light') document.documentElement.dataset.theme = s;
@@ -47,6 +49,7 @@
   <link rel="stylesheet" href="../../assets/css/base.css">
   <link rel="stylesheet" href="../../assets/css/layout.css">
   <link rel="stylesheet" href="../../assets/css/components.css">
+  <link rel="stylesheet" href="../../assets/css/blog-dashboard.css">
 </head>
 <body>
 <!-- #region shared:header v2 -->
@@ -89,43 +92,84 @@
   </header>
 <!-- #endregion shared:header -->
   <main id="main" tabindex="-1">
-    <section class="section blog">
-      <div class="container">
-        <header class="blog-hero">
-          <h1 class="blog-hero__title">Blog</h1>
-          <p class="blog-hero__lead">Makine öğrenmesi, LLM sistemleri ve bilgisayarlı görü üzerine notlar.</p>
-          <p class="blog-hero__stats" id="blog-stats"></p>
-        </header>
+    <div class="container dash-wrap">
+      <div class="dash">
+        <aside class="dash-side" aria-label="Blog panosu">
+          <label class="search" for="post-search">
+            <span class="visually-hidden">Yazılarda ara</span>
+            <svg class="search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input class="search__input" id="post-search" type="search" autocomplete="off"
+                   placeholder="Yazı, konu ya da modül ara">
+            <kbd class="search__kbd" aria-hidden="true">/</kbd>
+          </label>
 
-        <article class="lead-story" id="lead-story" aria-label="En yeni yazı" hidden></article>
+          <nav class="side-group" aria-label="Blog panosu">
+            <ul class="side-list" id="side-views">
+              <li><a class="side-link" href="./" data-view="overview"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="side-link__text">Genel Bakış</span></a></li>
+              <li><a class="side-link" href="?view=all" data-view="all"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="side-link__text">Tüm Yazılar</span><span class="side-link__count" id="count-all"></span></a></li>
+              <li><a class="side-link" href="?view=unread" data-view="unread"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="side-link__text">Okunmamışlar</span><span class="side-link__count" id="count-unread"></span></a></li>
+            </ul>
+          </nav>
 
-        <section class="series-section" id="series-section" aria-labelledby="series-label" hidden>
-          <h2 class="section-label" id="series-label">Seriler</h2>
-          <p class="series-section__lead">Sırayla okunmak üzere yazılmış çok bölümlü derin dalışlar.</p>
-          <div class="series-cards" id="series-container"></div>
-        </section>
+          <nav class="side-group" aria-labelledby="side-modules-label">
+            <h2 class="side-label" id="side-modules-label">Modüller</h2>
+            <ul class="side-list" id="side-modules"></ul>
+          </nav>
 
-        <section class="archive" id="posts-section" aria-labelledby="posts-label">
-          <h2 class="section-label" id="posts-label">Tüm yazılar</h2>
-          <div class="archive-toolbar">
-            <label class="search" for="post-search">
-              <span class="visually-hidden">Yazılarda ara</span>
-              <svg class="search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-              </svg>
-              <input class="search__input" id="post-search" type="search" autocomplete="off"
-                     placeholder="Başlık, konu ya da seri ara" aria-describedby="result-count">
-              <kbd class="search__kbd" aria-hidden="true">/</kbd>
-            </label>
-            <p class="archive-toolbar__count" id="result-count" role="status" aria-live="polite"></p>
+          <div class="side-group side-group--tags">
+            <h2 class="side-label" id="side-topics-label">Konular</h2>
+            <ul class="side-tags" id="side-tags" aria-labelledby="side-topics-label"></ul>
           </div>
-          <ul class="tags archive-filter" id="tag-filter" aria-label="Konuya göre filtrele"></ul>
+        </aside>
+
+        <div class="dash-main" id="dash-main" tabindex="-1">
+          <header class="dash-head" id="dash-head">
+            <h1 class="dash-title">Mühendislik Notları</h1>
+            <p class="dash-lead">Yapay zeka mimarisi, büyük dil modelleri ve derin öğrenme sistemleri üzerine bir öğrenme yolu olarak düzenlenmiş derinlemesine teknik yazılar.</p>
+          </header>
+          <div class="dash-view" id="dash-view">
+<!-- #region generated:blog-index -->
+<div class="static-index">
+<section class="panel">
+<h2 class="panel-title"><span>Yön Bulma · Modül 01 · Büyük Resim</span></h2>
+<p class="dash-lead">Bir LLM&#x27;in uçtan uca nasıl çalıştığını tek oturuşta görün; derin modüller bu haritanın parçalarını tek tek açar.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=llm-nasil-calisir"><span class="post-row__body"><span class="post-row__title">Baştan Sona Bir LLM — token, transformer, eğitim, çıkarım ve neden uydurduğu</span><span class="post-row__teaser">Token&#x27;lardan attention&#x27;a, eğitimden çıkarıma ve uydurmaya kadar bir LLM&#x27;in bütün parçalarını tek okumada bir araya getiriyoruz.</span></span><span class="post-row__meta"><time datetime="2026-08-29">29 Ağu 2026</time><span>16 dk okuma</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Temeller · Modül 02 · Sinir Ağlarının Yapı Taşları</span></h2>
+<p class="dash-lead">Bir sinir ağını eğitilebilir kılan beş parçayı kuruyoruz: aktivasyon, kayıp, geriye yayılım, optimizasyon ve normalizasyon.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=aktivasyon-fonksiyonlari-derinlemesine"><span class="post-row__body"><span class="post-row__title">Aktivasyon Fonksiyonları — doğrusalsızlığın geometrisi, sönümlenen gradyanlar ve SwiGLU devrimi</span><span class="post-row__teaser">Doğrusalsızlık olmadan katmanların neden tek bir matrise çöktüğünü ve ReLU&#x27;dan SwiGLU&#x27;ya giden yolu anlatıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Eki 2026</time><span>18 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=kayip-fonksiyonlari-derinlemesine"><span class="post-row__body"><span class="post-row__title">Kayıp Fonksiyonları — hatanın geometrisi, Log-Sum-Exp kararlılığı ve Cross-Entropy sadeleşmesi</span><span class="post-row__teaser">MSE&#x27;nin sınıflandırmada neden iflas ettiğini, Cross-Entropy türevinin p − y&#x27;ye nasıl sadeleştiğini ve onu kararlı tutan Log-Sum-Exp hilesini açıklıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Eki 2026</time><span>20 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=geriye-yayilim-ve-otomatik-turev"><span class="post-row__body"><span class="post-row__title">Geriye Yayılım ve Otomatik Türev — hesaplama çizgesi, aktivasyon belleği ve zincir kuralı anatomisi</span><span class="post-row__teaser">Zincir kuralının bir hesaplama çizgesi üzerinde nasıl işletildiğini ve geriye yayılımın belleği neden aktivasyonlarla doldurduğunu görüyoruz.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Eki 2026</time><span>20 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=optimizasyon-algoritmalari-derinlemesine"><span class="post-row__body"><span class="post-row__title">Optimizasyon Algoritmaları — SGD salınımları, AdamW paradoksu ve Muon devrimi</span><span class="post-row__teaser">SGD&#x27;nin dar vadilerde neden salındığını, AdamW&#x27;nin weight decay&#x27;i neden ayırdığını ve Muon&#x27;un neyi değiştirdiğini adım adım hesaplıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Eki 2026</time><span>22 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=agirlik-baslatma-ve-normalizasyon"><span class="post-row__body"><span class="post-row__title">Ağırlık Başlatma ve Normalizasyon — Xavier, Kaiming, LayerNorm ve RMSNorm matematiği</span><span class="post-row__teaser">Xavier ve Kaiming başlatmanın, LayerNorm ve RMSNorm&#x27;un derin bir ağda sinyali nasıl ayakta tuttuğunu varyans hesabıyla gösteriyoruz.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Eki 2026</time><span>20 dk okuma</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Mimari · Modül 03 · Bir Prompt&#x27;un Yolculuğu</span></h2>
+<p class="dash-lead">Bir prompt&#x27;u tokenizer&#x27;dan transformer bloğunun çıkışına kadar adım adım izliyoruz.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=tokenizasyon-nasil-calisir"><span class="post-row__body"><span class="post-row__title">Tokenizasyon — kelimelerden tamsayılara, BPE mekaniği ve fertility</span><span class="post-row__teaser">Metnin modele ulaşmadan tamsayılara nasıl dönüştüğünü, BPE&#x27;nin sözlüğü nasıl kurduğunu ve Türkçe metnin neden daha çok token harcadığını anlatıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-19">19 Eyl 2026</time><span>12 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=embedding-katmani-derinlemesine"><span class="post-row__body"><span class="post-row__title">Embedding Katmanı — token ID&#x27;lerinden sürekli vektörlere, lookup tablosu ve RoPE</span><span class="post-row__teaser">Token ID&#x27;lerini sürekli vektörlere çeviren arama tablosunu, lm_head ile paylaştığı ağırlıkları ve RoPE&#x27;un devreye girdiği yeri inceliyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-20">20 Eyl 2026</time><span>16 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=embeddingler-derinlemesine"><span class="post-row__body"><span class="post-row__title">Anlamsal Embedding&#x27;ler — anlamın koordinatları, kosinüs mesafesi ve HNSW arama uzayı</span><span class="post-row__teaser">Bir cümlenin anlam uzayında tek bir noktaya nasıl dönüştüğünü, kosinüs benzerliğinin gerçekte ne söylediğini ve HNSW&#x27;nin komşuları nasıl bulduğunu anlatıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-21">21 Eyl 2026</time><span>11 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=self-attention-derinlemesine"><span class="post-row__body"><span class="post-row__title">Self-Attention — Q, K, V mantığı, adım adım matris matematiği ve bağlam vektörleri</span><span class="post-row__teaser">Q, K ve V&#x27;nin neden ayrı tutulduğunu üç kelimelik bir örnek üzerinde, hiçbir adımı atlamadan elle hesaplıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-26">26 Eyl 2026</time><span>18 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=causal-attention-derinlemesine"><span class="post-row__body"><span class="post-row__title">Causal Attention — zamanın oku, alt üçgensel matris ve yokluğun matematiği</span><span class="post-row__teaser">Maske matrisinin her token&#x27;ın yalnızca geçmişe bakmasını nasıl sağladığını ve eğitimin buna neden muhtaç olduğunu gösteriyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-28">28 Eyl 2026</time><span>22 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=multi-head-attention-derinlemesine"><span class="post-row__body"><span class="post-row__title">Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama</span><span class="post-row__teaser">Model boyutunu alt uzaylara bölen kafaların farklı ilişkileri paralel olarak nasıl takip ettiğini ve hangilerinin budanabildiğini inceliyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-29">29 Eyl 2026</time><span>18 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=transformer-blogu-derinlemesine"><span class="post-row__body"><span class="post-row__title">Transformer Bloğu — gradyan otoyolu, konveks örtü ve FFN&#x27;in ilişkisel belleği</span><span class="post-row__teaser">Residual bağlantıların, normalizasyonun ve FFN&#x27;in tek bir transformer bloğunda nasıl birlikte çalıştığını parçalarına ayırıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-30">30 Eyl 2026</time><span>22 dk okuma</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Sistemler · Modül 04 · Üretimde LLM Sistemleri</span></h2>
+<p class="dash-lead">Bir LLM&#x27;i üretimde hızlı ve ekonomik tutmak için maliyete, gecikmeye ve vLLM motorunun içine bakıyoruz.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu"><span class="post-row__body"><span class="post-row__title">Maliyet ve Gecikme Anatomisi — TTFT, TPOT, prompt caching ve model yönlendirme</span><span class="post-row__teaser">TTFT ve TPOT ölçümleri, prompt caching ve model yönlendirme ile bir LLM çağrısının faturasını ve gecikmesini nasıl düşüreceğinizi gösteriyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-04">4 Eyl 2026</time><span>18 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=vllm-derinlemesine"><span class="post-row__body"><span class="post-row__title">vLLM Motor Mimarisi — continuous batching, prefix cache ve KV bellek yönetimi</span><span class="post-row__teaser">vLLM&#x27;in KV belleğini bloklara nasıl böldüğünü, continuous batching&#x27;in ve prefix cache&#x27;in nasıl çalıştığını motorun içinden izliyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-05">5 Eyl 2026</time><span>14 dk okuma</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Sistemler · Modül 05 · Prompting&#x27;den Otonom Ajanlara</span></h2>
+<p class="dash-lead">Prompting tekniklerinden başlayıp ajanın sistem prompt&#x27;unu ve uzun süreli hafızasını kuruyoruz.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=prompting-teknikleri"><span class="post-row__body"><span class="post-row__title">Akıl Yürütme ve Prompting — Chain-of-Thought, ReAct ve akıl yürüten modeller çağı</span><span class="post-row__teaser">Chain-of-Thought ve ReAct gibi tekniklerin, kendi başına akıl yürüten modeller çağında hâlâ nerede işe yaradığını tartışıyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-03">3 Eyl 2026</time><span>6 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=ajan-promptunun-anatomisi"><span class="post-row__body"><span class="post-row__title">Ajan Prompt&#x27;unun Anatomisi — sistem sözleşmesi, araç sınırları ve 8 yapı taşı</span><span class="post-row__teaser">Bir ajanın sistem prompt&#x27;unu, rolden araç sınırlarına kadar sekiz yapı taşından oluşan bir sözleşme olarak kuruyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-04">4 Eyl 2026</time><span>11 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=ajan-hafizasi-nasil-calisir"><span class="post-row__body"><span class="post-row__title">Ajan Hafızası — yazma ve okuma yolları, geçersiz kılma, dreaming ve çok ajanlı kapsam</span><span class="post-row__teaser">Durumsuz bir modelin etrafında neyin hatırlanacağına, neyin güncelleneceğine ve neyin unutulacağına karar veren sistemi kuruyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-27">27 Eyl 2026</time><span>35 dk okuma</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Sistemler · Modül 06 · RAG ve Bilgi Erişimi</span></h2>
+<p class="dash-lead">Vektör veritabanının içinden başlayıp üretimde ayakta kalan RAG desenlerine kadar erişim katmanını inceliyoruz.</p>
+<ol class="post-rows"><li><a class="post-row" href="/tr/blog/post.html?slug=vektor-veritabani-derinlemesine"><span class="post-row__body"><span class="post-row__title">Vektör Veritabanı Mimarisi — ANN indekslerinden metadata filtreleme ve canlı veriye</span><span class="post-row__teaser">Bir vektör veritabanının ANN indeksinin etrafına silme, metadata filtreleme ve canlı veri için neler kurduğunu inceliyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-02">2 Eyl 2026</time><span>11 dk okuma</span></span></a></li><li><a class="post-row" href="/tr/blog/post.html?slug=hangi-rag-deseni"><span class="post-row__body"><span class="post-row__title">Üretimde RAG Desenleri — 4 temel hata teşhisi, HyDE, hybrid arama ve reranking</span><span class="post-row__teaser">RAG hatalarını dört aileye ayırıyor, HyDE, hybrid arama ve reranking gibi desenleri belirtiye bakarak seçmeyi gösteriyoruz.</span></span><span class="post-row__meta"><time datetime="2026-09-03">3 Eyl 2026</time><span>8 dk okuma</span></span></a></li></ol>
+</section>
+</div>
+<!-- #endregion generated:blog-index -->
+          </div>
           <p class="status" id="list-status" role="status" aria-live="polite">Yazılar yükleniyor…</p>
-          <ol class="post-grid" id="post-list"></ol>
-        </section>
+        </div>
       </div>
-    </section>
+    </div>
   </main>
 <!-- #region shared:footer v2 -->
   <footer class="site-footer">

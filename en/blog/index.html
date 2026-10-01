@@ -35,6 +35,8 @@
        would flash the light theme on every navigation in dark mode. -->
   <script>
     (function () {
+      /* Blog index only: hides the pre-rendered fallback list. */
+      document.documentElement.classList.add('js');
       try {
         var s = localStorage.getItem('theme');
         if (s === 'dark' || s === 'light') document.documentElement.dataset.theme = s;
@@ -47,6 +49,7 @@
   <link rel="stylesheet" href="../../assets/css/base.css">
   <link rel="stylesheet" href="../../assets/css/layout.css">
   <link rel="stylesheet" href="../../assets/css/components.css">
+  <link rel="stylesheet" href="../../assets/css/blog-dashboard.css">
 </head>
 <body>
 <!-- #region shared:header v2 -->
@@ -89,43 +92,84 @@
   </header>
 <!-- #endregion shared:header -->
   <main id="main" tabindex="-1">
-    <section class="section blog">
-      <div class="container">
-        <header class="blog-hero">
-          <h1 class="blog-hero__title">Blog</h1>
-          <p class="blog-hero__lead">Notes on machine learning, LLM systems and computer vision.</p>
-          <p class="blog-hero__stats" id="blog-stats"></p>
-        </header>
+    <div class="container dash-wrap">
+      <div class="dash">
+        <aside class="dash-side" aria-label="Blog dashboard">
+          <label class="search" for="post-search">
+            <span class="visually-hidden">Search articles</span>
+            <svg class="search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input class="search__input" id="post-search" type="search" autocomplete="off"
+                   placeholder="Search articles or modules">
+            <kbd class="search__kbd" aria-hidden="true">/</kbd>
+          </label>
 
-        <article class="lead-story" id="lead-story" aria-label="Latest article" hidden></article>
+          <nav class="side-group" aria-label="Blog dashboard">
+            <ul class="side-list" id="side-views">
+              <li><a class="side-link" href="./" data-view="overview"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="side-link__text">Overview</span></a></li>
+              <li><a class="side-link" href="?view=all" data-view="all"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="side-link__text">All articles</span><span class="side-link__count" id="count-all"></span></a></li>
+              <li><a class="side-link" href="?view=unread" data-view="unread"><span class="side-link__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="side-link__text">Unread</span><span class="side-link__count" id="count-unread"></span></a></li>
+            </ul>
+          </nav>
 
-        <section class="series-section" id="series-section" aria-labelledby="series-label" hidden>
-          <h2 class="section-label" id="series-label">Series</h2>
-          <p class="series-section__lead">Multi-part deep dives, meant to be read in order.</p>
-          <div class="series-cards" id="series-container"></div>
-        </section>
+          <nav class="side-group" aria-labelledby="side-modules-label">
+            <h2 class="side-label" id="side-modules-label">Modules</h2>
+            <ul class="side-list" id="side-modules"></ul>
+          </nav>
 
-        <section class="archive" id="posts-section" aria-labelledby="posts-label">
-          <h2 class="section-label" id="posts-label">All articles</h2>
-          <div class="archive-toolbar">
-            <label class="search" for="post-search">
-              <span class="visually-hidden">Search articles</span>
-              <svg class="search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-              </svg>
-              <input class="search__input" id="post-search" type="search" autocomplete="off"
-                     placeholder="Search by title, topic or series" aria-describedby="result-count">
-              <kbd class="search__kbd" aria-hidden="true">/</kbd>
-            </label>
-            <p class="archive-toolbar__count" id="result-count" role="status" aria-live="polite"></p>
+          <div class="side-group side-group--tags">
+            <h2 class="side-label" id="side-topics-label">Topics</h2>
+            <ul class="side-tags" id="side-tags" aria-labelledby="side-topics-label"></ul>
           </div>
-          <ul class="tags archive-filter" id="tag-filter" aria-label="Filter by topic"></ul>
-          <p class="status" id="list-status" role="status" aria-live="polite">Loading posts…</p>
-          <ol class="post-grid" id="post-list"></ol>
-        </section>
+        </aside>
+
+        <div class="dash-main" id="dash-main" tabindex="-1">
+          <header class="dash-head" id="dash-head">
+            <h1 class="dash-title">Engineering Notes</h1>
+            <p class="dash-lead">In-depth technical writing on AI architecture, large language models and deep learning systems, organised as a learning path.</p>
+          </header>
+          <div class="dash-view" id="dash-view">
+<!-- #region generated:blog-index -->
+<div class="static-index">
+<section class="panel">
+<h2 class="panel-title"><span>Orientation · Module 01 · The Big Picture</span></h2>
+<p class="dash-lead">See how an LLM works end to end in one sitting; the deep-dive modules then open up each part of this map.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=how-llms-work"><span class="post-row__body"><span class="post-row__title">An LLM, End to End — tokens, transformer, training, inference, and why it makes things up</span><span class="post-row__teaser">Every part of an LLM in one read, from tokens and attention to training, inference and why models make things up.</span></span><span class="post-row__meta"><time datetime="2026-08-29">29 Aug 2026</time><span>16 min read</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Foundations · Module 02 · Building Blocks of Neural Networks</span></h2>
+<p class="dash-lead">The five pieces that make a neural network trainable: activations, losses, backpropagation, optimizers and normalization.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=inside-activation-functions"><span class="post-row__body"><span class="post-row__title">Activation Functions — the geometry of non-linearity, vanishing gradients, and the SwiGLU revolution</span><span class="post-row__teaser">Why layers collapse into a single matrix without non-linearity, and the road from ReLU to SwiGLU.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Oct 2026</time><span>18 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-loss-functions"><span class="post-row__body"><span class="post-row__title">Loss Functions — the geometry of error, Log-Sum-Exp stability, and the Cross-Entropy simplification</span><span class="post-row__teaser">Why MSE fails for classification, how the Cross-Entropy gradient simplifies to p − y, and the Log-Sum-Exp trick that keeps it stable.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Oct 2026</time><span>20 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-backpropagation-and-autodiff"><span class="post-row__body"><span class="post-row__title">Backpropagation and Autodiff — computational graphs, activation memory, and chain rule anatomy</span><span class="post-row__teaser">How the chain rule runs over a computation graph, and why backpropagation fills memory with activations.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Oct 2026</time><span>20 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-optimization-algorithms"><span class="post-row__body"><span class="post-row__title">Optimization Algorithms — SGD oscillations, the AdamW paradox, and the Muon revolution</span><span class="post-row__teaser">Why SGD oscillates in narrow ravines, why AdamW decouples weight decay and what Muon changes, worked out step by step.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Oct 2026</time><span>22 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-initialization-and-normalization"><span class="post-row__body"><span class="post-row__title">Weight Initialization and Normalization — Xavier, Kaiming, LayerNorm, and RMSNorm mathematics</span><span class="post-row__teaser">How Xavier and Kaiming initialization, LayerNorm and RMSNorm keep the signal alive through a deep network, shown with the variance arithmetic.</span></span><span class="post-row__meta"><time datetime="2026-10-01">1 Oct 2026</time><span>20 min read</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Architecture · Module 03 · A Prompt&#x27;s Journey</span></h2>
+<p class="dash-lead">Follow a prompt step by step, from the tokenizer to the output of a transformer block.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=how-tokenization-works"><span class="post-row__body"><span class="post-row__title">Tokenization — from text to integers, BPE mechanics, and fertility</span><span class="post-row__teaser">How text becomes integers before it reaches the model, how BPE builds its vocabulary, and why some languages spend more tokens.</span></span><span class="post-row__meta"><time datetime="2026-09-19">19 Sep 2026</time><span>12 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-the-embedding-layer"><span class="post-row__body"><span class="post-row__title">The Embedding Layer — from token IDs to continuous vectors, lookup tables, and RoPE</span><span class="post-row__teaser">The lookup table that turns token IDs into vectors, the weights it shares with lm_head, and where RoPE comes in.</span></span><span class="post-row__meta"><time datetime="2026-09-20">20 Sep 2026</time><span>16 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=how-embeddings-work"><span class="post-row__body"><span class="post-row__title">Semantic Embeddings — the coordinates of meaning, cosine distance, and HNSW search space</span><span class="post-row__teaser">How a sentence becomes a single point in meaning space, what cosine similarity really tells you, and how HNSW finds neighbours fast.</span></span><span class="post-row__meta"><time datetime="2026-09-21">21 Sep 2026</time><span>11 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-self-attention"><span class="post-row__body"><span class="post-row__title">Inside Self-Attention — Q, K, V mechanics, step-by-step matrix arithmetic, and context vectors</span><span class="post-row__teaser">Why Q, K and V are kept separate, computed by hand on a three-word example without skipping a step.</span></span><span class="post-row__meta"><time datetime="2026-09-26">26 Sep 2026</time><span>18 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-causal-attention"><span class="post-row__body"><span class="post-row__title">Inside Causal Attention — The Arrow of Time, Lower Triangular Matrices, and the Math of the Void</span><span class="post-row__teaser">How the mask matrix lets each token look only at the past, and why training depends on it.</span></span><span class="post-row__meta"><time datetime="2026-09-28">28 Sep 2026</time><span>22 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-multi-head-attention"><span class="post-row__body"><span class="post-row__title">Inside Multi-Head Attention — subspaces, symmetry breaking, and head pruning</span><span class="post-row__teaser">How heads split the model dimension into subspaces to track different relationships in parallel, and which of them can be pruned.</span></span><span class="post-row__meta"><time datetime="2026-09-29">29 Sep 2026</time><span>18 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=inside-the-transformer-block"><span class="post-row__body"><span class="post-row__title">The Transformer Block — the gradient highway, the convex hull, and FFN associative memory</span><span class="post-row__teaser">How residual connections, normalization and the FFN work together inside a single transformer block.</span></span><span class="post-row__meta"><time datetime="2026-09-30">30 Sep 2026</time><span>22 min read</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Systems · Module 04 · LLM Systems in Production</span></h2>
+<p class="dash-lead">What it takes to keep an LLM fast and affordable in production, from cost and latency down to the vLLM engine.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=optimizing-llm-cost-and-latency"><span class="post-row__body"><span class="post-row__title">Cost &amp; Latency Anatomy — TTFT, TPOT, prompt caching, and model routing</span><span class="post-row__teaser">How to bring down the bill and the latency of LLM calls with TTFT and TPOT metrics, prompt caching and model routing.</span></span><span class="post-row__meta"><time datetime="2026-09-04">4 Sep 2026</time><span>18 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=vllm-from-paper-to-production"><span class="post-row__body"><span class="post-row__title">Inside the vLLM Engine — continuous batching, prefix caching, and KV memory management</span><span class="post-row__teaser">How vLLM pages KV memory into blocks, and how continuous batching and the prefix cache work, traced from inside the engine.</span></span><span class="post-row__meta"><time datetime="2026-09-05">5 Sep 2026</time><span>14 min read</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Systems · Module 05 · From Prompting to Autonomous Agents</span></h2>
+<p class="dash-lead">From prompting techniques to an agent&#x27;s system prompt and its long-term memory.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=prompting-techniques"><span class="post-row__body"><span class="post-row__title">Reasoning &amp; Prompting — Chain-of-Thought, ReAct, and the era of reasoning models</span><span class="post-row__teaser">Where techniques such as Chain-of-Thought and ReAct still earn their place now that models reason on their own.</span></span><span class="post-row__meta"><time datetime="2026-09-03">3 Sep 2026</time><span>6 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=anatomy-of-an-agent-prompt"><span class="post-row__body"><span class="post-row__title">Anatomy of an Agent Prompt — system contracts, tool boundaries, and 8 building blocks</span><span class="post-row__teaser">Building an agent&#x27;s system prompt as a contract of eight blocks, from its role to its tool boundaries.</span></span><span class="post-row__meta"><time datetime="2026-09-04">4 Sep 2026</time><span>11 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=how-ai-agent-memory-works"><span class="post-row__body"><span class="post-row__title">Agent Memory — write and read paths, supersession, dreaming, and multi-agent scope</span><span class="post-row__teaser">The system around a stateless model that decides what to remember, what to update and what to forget.</span></span><span class="post-row__meta"><time datetime="2026-09-27">27 Sep 2026</time><span>35 min read</span></span></a></li></ol>
+</section>
+<section class="panel">
+<h2 class="panel-title"><span>Systems · Module 06 · RAG &amp; Retrieval Architecture</span></h2>
+<p class="dash-lead">The retrieval layer, from inside the vector database to RAG patterns that survive production.</p>
+<ol class="post-rows"><li><a class="post-row" href="/en/blog/post.html?slug=what-a-vector-database-actually-does"><span class="post-row__body"><span class="post-row__title">Vector Database Architecture — from ANN indexing to metadata filtering and live data</span><span class="post-row__teaser">What a vector database builds around its ANN index to handle deletes, metadata filtering and live data.</span></span><span class="post-row__meta"><time datetime="2026-09-02">2 Sep 2026</time><span>11 min read</span></span></a></li><li><a class="post-row" href="/en/blog/post.html?slug=which-rag-pattern-do-you-need"><span class="post-row__body"><span class="post-row__title">Production RAG Patterns — diagnosing 4 root failures, HyDE, hybrid search, and reranking</span><span class="post-row__teaser">RAG failures fall into four families; this guide picks the fix by symptom, from HyDE to hybrid search and reranking.</span></span><span class="post-row__meta"><time datetime="2026-09-03">3 Sep 2026</time><span>8 min read</span></span></a></li></ol>
+</section>
+</div>
+<!-- #endregion generated:blog-index -->
+          </div>
+          <p class="status" id="list-status" role="status" aria-live="polite">Loading articles…</p>
+        </div>
       </div>
-    </section>
+    </div>
   </main>
 <!-- #region shared:footer v2 -->
   <footer class="site-footer">

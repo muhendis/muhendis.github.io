@@ -18,12 +18,14 @@
           jekyll: 'Content failed to load. (Is .nojekyll present at repo root?)',
           min: ' min read', by: 'By Engin Bozaba', noTrans: 'This post is not available in English.',
           noTransNotice: 'This post has no English version yet.',
-          allPosts: 'All English posts' },
+          allPosts: 'All English posts',
+          markRead: 'Mark as read', isRead: '✓ Read · mark as unread' },
     tr: { notFound: 'Yazı bulunamadı.', failIndex: 'Yazı dizini yüklenemedi.',
           jekyll: 'İçerik yüklenemedi. (.nojekyll deposu kökünde var mı?)',
           min: ' dk okuma', by: 'Yazan: Engin Bozaba', noTrans: 'Bu yazı Türkçe olarak mevcut değil.',
           noTransNotice: 'Bu yazının henüz Türkçe çevirisi yok.',
-          allPosts: 'Tüm Türkçe yazılar' }
+          allPosts: 'Tüm Türkçe yazılar',
+          markRead: 'Okundu olarak işaretle', isRead: '✓ Okundu · okunmadı yap' }
   };
   var t = T[LANG];
   var tOther = T[OTHER];
@@ -111,6 +113,61 @@
     document.head.appendChild(s);
   }
 
+  /* Per-browser reading state for the blog index. 'lastOpened' powers
+     "continue reading"; 'readPosts' only gains a slug once the reader
+     reaches the end of the article (or marks it by hand), so module
+     progress reflects reading rather than clicking. Storage can be
+     blocked, so all of it is best-effort. */
+  function loadRead() {
+    try {
+      var r = JSON.parse(localStorage.getItem('readPosts') || '[]');
+      return Array.isArray(r) ? r : [];
+    } catch (e) { return []; }
+  }
+
+  function saveRead(read) {
+    try { localStorage.setItem('readPosts', JSON.stringify(read)); } catch (e) {}
+  }
+
+  function trackReading(slug) {
+    try { localStorage.setItem('lastOpened', slug); } catch (e) {}
+
+    var btn = document.getElementById('read-toggle');
+    var end = document.getElementById('post-end');
+
+    function isRead() { return loadRead().indexOf(slug) !== -1; }
+    function setRead(on) {
+      var read = loadRead().filter(function (s) { return s !== slug; });
+      if (on) read.push(slug);
+      saveRead(read);
+      sync();
+    }
+    function sync() {
+      if (!btn) return;
+      var on = isRead();
+      btn.textContent = on ? t.isRead : t.markRead;
+      btn.setAttribute('aria-pressed', String(on));
+    }
+
+    if (btn) {
+      btn.hidden = false;
+      btn.addEventListener('click', function () { setRead(!isRead()); });
+      sync();
+    }
+
+    /* Reaching the end marks the post read once; un-marking by hand later
+       sticks for this page view. */
+    if (end && 'IntersectionObserver' in window && !isRead()) {
+      var io = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        io.disconnect();
+        if (!isRead()) setRead(true);
+      });
+      /* Wait a tick so the observer does not fire before the body renders. */
+      setTimeout(function () { io.observe(end); }, 1500);
+    }
+  }
+
   function run() {
     var slug = new URLSearchParams(location.search).get('slug') || '';
     if (!SLUG_RE.test(slug)) return fail(t.notFound);
@@ -137,15 +194,7 @@
 
             document.getElementById('post-title').textContent = meta.title;
 
-            /* Per-browser read marker; the blog index turns it into series
-               progress. Storage can be blocked, so it is best-effort only. */
-            try {
-              var read = JSON.parse(localStorage.getItem('readPosts') || '[]');
-              if (read.indexOf(slug) === -1) {
-                read.push(slug);
-                localStorage.setItem('readPosts', JSON.stringify(read));
-              }
-            } catch (e) {}
+            trackReading(slug);
 
             var eyebrow = document.getElementById('post-eyebrow');
             if (eyebrow) {
@@ -159,7 +208,7 @@
                 eyebrow.textContent = sTitle + (meta.seriesPart ? ' · ' + (LANG === 'tr' ? 'Bölüm ' : 'Part ') + meta.seriesPart : '');
                 eyebrow.hidden = false;
               } else if ((meta.tags || []).length) {
-                eyebrow.textContent = meta.tags[0];
+                eyebrow.textContent = meta.tags[0].replace(/-/g, ' ');
                 eyebrow.hidden = false;
               }
             }
@@ -179,7 +228,7 @@
               var li = document.createElement('li');
               var span = document.createElement('span');
               span.className = 'tag';
-              span.textContent = tag;
+              span.textContent = tag.replace(/-/g, ' ');
               li.appendChild(span);
               tagsEl.appendChild(li);
             });

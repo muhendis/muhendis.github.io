@@ -69,8 +69,9 @@ flowchart TD
 5. **Sayısal Hesabı Python ile Doğrula:**
    - Makaledeki tüm matris çarpımları, softmax değerleri ve varyans hesapları bağımsız Python scripti ile çalıştırılıp konsol çıktısı alınarak teyit edilir.
 6. **İndeksleri Güncelle:**
-   - `tr/blog/posts.json` ve `en/blog/posts.json` dosyalarına 5N1K formatında özet eklenir.
+   - `tr/blog/posts.json` ve `en/blog/posts.json` dosyalarına 5N1K formatında özet ve tek cümlelik `tagline` eklenir.
    - `sitemap.xml` dosyasına iki dilli URL çifti eklenir.
+   - `python3 .github/scripts/build_blog_index.py` ile blog ana sayfasının statik yedek listesi yeniden üretilir.
 7. **Otomatik Doğrulamaları Koş:**
    - `./.agents/skills/makale/scripts/validate_post.sh <slug>` komutuyla tüm testler koşturulur (0 hata şart).
 8. **Commit ve Push Disiplini:**
@@ -145,6 +146,10 @@ Her makale istisnasız şu üç bölümle biter:
   - **Nerede:** Vaka çalışması yapılan somut model (örn. Gemma 3).
   - **Kim için:** Hedef mühendislik profili.
   - **Ne zaman:** Hangi mimari karar ya da üretim darboğazı anında.
+
+- **`tagline` (zorunlu):** Kartlarda, modül sayfasında ve "kaldığınız yerden" kutusunda görünen tek cümle. Tam cümle yazılır (telgraf üslubu yok), 5N1K'nın "Ne"sini okurun diliyle söyler, ~25 kelimeyi geçmez; EN ve TR birbirinin çevirisi değil, kendi dilinde doğal olur.
+- **Etiketler:** Tireli küçük harf, Türkçe karakterler korunur (`derin-öğrenme`, `derin-ogrenme` değil). Yeni etiket açmadan önce mevcut listeye bakılır; eş anlamlı ikiz açılmaz (EN'de `fundamentals` kullanılır, `foundations` değil; `transformer`, `transformers` değil).
+- **Yeni seri:** `series` girdisi `stage` (`stages` id'lerinden biri: orientation / foundations / architecture / systems) ve `tagline` taşır. Seri sırası `posts.json`'daki sıradır; modül numaraları aşama sırasına göre otomatik verilir.
 
 ### 5.3. sitemap.xml Sözleşmesi
 - Her makale için `en` ve `tr` olmak üzere iki `<url>` bloğu eklenir; üçlü hreflang (en, tr, x-default=en), `priority` 0.7 ve `lastmod` girilir.
