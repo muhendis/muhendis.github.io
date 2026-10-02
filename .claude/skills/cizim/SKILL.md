@@ -21,9 +21,9 @@ Makale metni yazılıyorsa önce `makale` skill'i geçerlidir; bu skill onun fig
 - Kavram **önce metinde** kurulur; figür hemen ardından gelir ve metne yeni bir şey ekler
   (sıra, paralellik, döngü, karşılaştırma). Figürden önceki cümle iki noktayla biter.
 - Bir bölüme en fazla 3 figür.
-- **Blogda tek çizim biçimi inline SVG'dir.** Yeni Mermaid veya ASCII çizim eklenmez. Mevcut
-  olanlar bu skill'le SVG'ye çevrilir (bkz. §3.1). Seri seri gidilir; ilk çevrilen seri
-  Prompt'un Yolculuğu'dur.
+- **Blogda tek çizim biçimi inline SVG'dir.** Yeni Mermaid veya ASCII çizim eklenmez. 2026-10-02
+  itibarıyla blogdaki bütün Mermaid ve ASCII çizimler SVG'ye çevrildi (0 Mermaid). Kalan
+  ` ```text ` blokları bilerek bırakılmış sayısal yürüyüşler ve matrislerdir (bkz. §3.1).
 - **Dış görselleri (X, blog, makale) kopyalama.** İçeriği anla, kendi stilinde yeniden çiz;
   kaynağı `## Going deeper` / `## Daha derine inmek için` listesine "diyagramlara ilham veren"
   notuyla ekle. X/Medium vb. olgu kaynağı sayılmaz (makale skill §1.1).
@@ -95,6 +95,14 @@ yenisiyle** değiştir (eski JSON'u sakla ki tam eşleşme yapılabilsin).
   Prompt'un Yolculuğu Part 4'te `v_2` yanlıştı ve hata Part 7'ye kadar taşınmıştı; figür
   üreteci sayıları yeniden hesaplayınca ortaya çıktı. Çelişki bulursan metni de düzelt ve
   `grep -rn` ile serinin diğer bölümlerini tara.
+- **Çevirirken figürdeki sayıyı metinle karşılaştır.** Kayıp makalesindeki Mermaid `p=0.0001` diyordu,
+  metin ise `z=−10 → p≈0.000045` üzerinden yürüyordu; figür metnin (numpy ile doğrulanmış)
+  sayılarını aldı. Figür ile metin aynı örneği anlatmalı.
+- **`preview.py`'ye mutlak `--out` ver** (script artık kendisi mutlaklaştırıyor). Göreli yol `file://`
+  URL'sini bozup boş sayfa render ediyordu ve checker yine de "0 sorun" diyordu; artık rapor
+  bulunamazsa hata verip çıkıyor. "0 sorun"dan sonra ekran görüntüsüne yine de bak.
+- **Uzun ekran görüntüsünü kırp** (PIL ile 1100–1200 px'lik parçalar): 8+ figürlük önizleme küçültülüp
+  okunmaz hâle gelir, ok başı/etiket çakışmaları gözden kaçar.
 - **Mevcut mermaid'i okurken geçerliliğine bak.** Birleştirme artığı (aynı `subgraph` id'si
   iki kez, kapanmamış blok) sessizce render olmaz; böyle bir bloğu SVG ile değiştir.
 
@@ -121,3 +129,8 @@ yenisiyle** değiştir (eski JSON'u sakla ki tam eşleşme yapılabilsin).
 - `examples/prefill_decode.py` — üç figürlük tam örnek (pipeline, döngü, yan yana karşılaştırma).
 - `examples/flow_conversions.py` — Mermaid/ASCII'den çevrilmiş dokuz figür: iki panelli karşılaştırma,
   kartlar, fan-out/fan-in, iki satırlı yılan akış, iki sütunlu tensör-şekli akışı, atlama yaylı blok akışı.
+- `examples/agent_memory.py` — silindir depo (`cyl`), okuma/yazma döngüsü, dört dallı karar kapısı
+  (state diagram yerine), kapsam katmanları.
+- `examples/training_diagrams.py` — kontur + zigzag (kötü koşullu vadi), çip içi / HBM şeritli kernel
+  akışı (`hbm_bar`), residual toplama zinciri, Post-LN/Pre-LN yan yana, LayerNorm/RMSNorm hizalı
+  iki satır. Eğri gerekiyorsa (ör. GELU'daki Φ(x)) elle çizme, `math.erf` gibi formülden nokta üret.

@@ -82,6 +82,7 @@ def run(args):
 
 
 def preview(figs_path, out):
+    out = os.path.abspath(out)  # file:// URL'leri mutlak yol ister; göreli yol boş sayfa + sahte "0 sorun" verir
     os.makedirs(out, exist_ok=True)
     figs = json.load(open(figs_path))
     css = open(TOKENS).read()
@@ -99,7 +100,9 @@ def preview(figs_path, out):
             if theme == "light":  # metin ölçüleri temadan bağımsız; raporu bir kez al
                 dom = run(["--dump-dom", "file://" + page])
                 start = dom.find('<pre id="cizim-report">')
-                raw = dom[start:].split(">", 1)[1].split("</pre>", 1)[0] if start >= 0 else "[]"
+                if start < 0:
+                    sys.exit(f"HATA: {page} render edilmedi (rapor yok) — kontrol yapılamadı")
+                raw = dom[start:].split(">", 1)[1].split("</pre>", 1)[0]
                 issues = json.loads(html.unescape(raw))
                 total += len(issues)
                 for i in issues:
