@@ -430,6 +430,84 @@ processes all input tokens simultaneously across the layer stack.
   tensors for every token in the prompt, writing them into memory as the
   initial **KV cache**.
 
+Parallel does not mean every token sees every other token. The rows of the
+prompt matrix are computed together, but the causal mask still lets
+position $i$ attend only to positions $1 \ldots i$: the computation is
+parallel, the flow of information is not. And the first output token is not
+a separate step; it falls out of the last position's logits at the end of
+this same pass:
+
+<svg viewBox="0 0 560 345" role="img" aria-label="Prefill. Six prompt tokens, Why is the sky blue question mark, are all known up front and enter transformer layer 1 together as one matrix. Each of the N layers runs self-attention plus MLP over all six positions at once and writes the keys and values of all six tokens into that layer&#x27;s KV cache. The last position&#x27;s logits over the vocabulary pick the first output token, Sunlight; that one pass is the bulk of time to first token." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="pf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Prompt — all 6 tokens are known up front</text>
+<rect x="16" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="44.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Why</text>
+<line x1="44" y1="58" x2="44" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="80" y="30" width="56" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="108.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> is</text>
+<line x1="108" y1="58" x2="108" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="144" y="30" width="56" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="172.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> the</text>
+<line x1="172" y1="58" x2="172" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<rect x="208" y="30" width="56" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/><text x="236.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> sky</text>
+<line x1="236" y1="58" x2="236" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="272" y="30" width="56" height="26" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/><text x="300.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> blue</text>
+<line x1="300" y1="58" x2="300" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="336" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="364.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">?</text>
+<line x1="364" y1="58" x2="364" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="410" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">processed together,</text>
+<text x="410" y="56" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">in one pass</text>
+<rect x="16" y="80" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="204" y="101" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer 1: self-attention + MLP</text>
+<text x="204" y="119" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">6 positions as one matrix → GEMM</text>
+<line x1="392" y1="105" x2="420" y2="105" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="80" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="432" y="96" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · layer 1</text>
+<rect x="432" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="450" y="104" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<rect x="468" y="104" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<rect x="486" y="104" width="14" height="18" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<rect x="504" y="104" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="522" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="16" y="168" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="204" y="189" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer N: self-attention + MLP</text>
+<text x="204" y="207" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">causal mask: position i sees only 1…i</text>
+<line x1="392" y1="193" x2="420" y2="193" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="168" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="432" y="184" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · layer N</text>
+<rect x="432" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="450" y="192" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<rect x="468" y="192" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<rect x="486" y="192" width="14" height="18" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<rect x="504" y="192" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="522" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="204" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
+<text x="216" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">same for every layer</text>
+<text x="483" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
+<line x1="204" y1="218" x2="204" y2="240" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="242" width="376" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">logits over the vocabulary (last position only)</text>
+<rect x="40" y="286" width="14" height="6" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="64" y="283" width="14" height="9" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="88" y="287" width="14" height="5" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="112" y="280" width="14" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="136" y="285" width="14" height="7" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="160" y="288" width="14" height="4" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="184" y="282" width="14" height="10" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="208" y="266" width="14" height="26" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<rect x="232" y="284" width="14" height="8" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="256" y="287" width="14" height="5" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="280" y="281" width="14" height="11" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="304" y="286" width="14" height="6" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="328" y="288" width="14" height="4" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="352" y="285" width="14" height="7" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<line x1="392" y1="270" x2="420" y2="270" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="242" width="122" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="483" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">first output token</text>
+<rect x="438" y="266" width="90" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="483.0" y="282.6" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Sunlight</text>
+<text x="16" y="324" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The first token falls out of the prefill pass itself, so this pass is most of TTFT:</text>
+<text x="16" y="340" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">a longer prompt means more rows in every matrix multiply, and a longer wait.</text>
+</svg>
+
 ### Decode: sequential loop and ITL
 
 Once the first token is emitted, the engine enters the **decode** phase.
@@ -443,6 +521,136 @@ Generating token 50 requires knowing token 49; therefore, decode proceeds
   idle while waiting on memory transfers.
 - **Key metric:** **Inter-Token Latency (ITL)** — the time required to emit
   each subsequent token, which dictates perceived streaming speed.
+
+Each step feeds exactly one new token through the stack, reading the cache
+that prefill (and every earlier step) left behind:
+
+<svg viewBox="0 0 560 330" role="img" aria-label="Decode. The KV cache holds keys and values for the six prompt tokens. One new token, Sunlight, enters the layer stack alone. In each layer, self-attention compares the new token&#x27;s query against all cached keys and mixes the cached values, then appends the new token&#x27;s own key and value to the cache; the MLP runs for the new token only. The logits pick the next token, scatters, which loops back as the next input until an end-of-sequence token." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="dc-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="dc-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="16" width="180" height="256" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="26" y="36" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">KV cache</text>
+<text x="26" y="52" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">from prefill + past steps</text>
+<text x="104" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">K</text>
+<text x="158" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">V</text>
+<text x="26" y="94" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Why</text>
+<rect x="82" y="80" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="136" y="80" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="26" y="120" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">is</text>
+<rect x="82" y="106" width="44" height="18" rx="4" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<rect x="136" y="106" width="44" height="18" rx="4" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="26" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">the</text>
+<rect x="82" y="132" width="44" height="18" rx="4" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="136" y="132" width="44" height="18" rx="4" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="26" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">sky</text>
+<rect x="82" y="158" width="44" height="18" rx="4" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<rect x="136" y="158" width="44" height="18" rx="4" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="26" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">blue</text>
+<rect x="82" y="184" width="44" height="18" rx="4" style="fill:var(--c-text-mute);fill-opacity:.2;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<rect x="136" y="184" width="44" height="18" rx="4" style="fill:var(--c-text-mute);fill-opacity:.2;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="26" y="224" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">?</text>
+<rect x="82" y="210" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="136" y="210" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="26" y="250" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Sunlight</text>
+<rect x="82" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="136" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<text x="320" y="14" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">one new token per step</text>
+<rect x="270" y="20" width="100" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="320.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Sunlight</text>
+<line x1="320" y1="46" x2="320" y2="66" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="216" y="68" width="188" height="204" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="310" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">each of the N layers</text>
+<rect x="228" y="96" width="164" height="80" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="310" y="114" text-anchor="middle" style="fill:var(--c-text);font-size:13px">self-attention</text>
+<text x="310" y="132" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">q of the new token only</text>
+<text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">vs. every cached K</text>
+<text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ mix of cached V</text>
+<line x1="196" y1="120" x2="226" y2="120" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="211" y="112" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<path d="M228 166 H208 V245 H182" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">append k, v</text>
+<line x1="310" y1="176" x2="310" y2="188" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="228" y="190" width="164" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="310" y="208" text-anchor="middle" style="fill:var(--c-text);font-size:13px">MLP</text>
+<text x="310" y="225" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">new token only</text>
+<text x="310" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">full forward pass, 1 position</text>
+<line x1="404" y1="150" x2="432" y2="150" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="434" y="68" width="110" height="132" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="489" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">logits</text>
+<rect x="444" y="98" width="80" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<rect x="444" y="116" width="52" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="134" width="30" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="152" width="20" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="170" width="12" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<line x1="489" y1="200" x2="489" y2="222" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="434" y="224" width="110" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="489" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">next token</text>
+<rect x="446" y="246" width="86" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="489.0" y="260.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> scatters</text>
+<path d="M544 248 H553 V33 H374" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="550" y="26" text-anchor="end" style="fill:var(--c-accent-2);font-size:12px">repeat until &lt;eos&gt;</text>
+<text x="16" y="298" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Nothing is skipped for the new token: it still runs every attention and MLP block. What the cache</text>
+<text x="16" y="314" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">saves is re-running the old tokens. Each step re-reads all weights + the KV cache for one token.</text>
+</svg>
+
+A common misreading of "the KV cache saves compute" is that decode somehow
+skips part of the network. It does not: the new token still passes through
+every attention block and every MLP of every layer. What the cache saves is
+re-running the *old* tokens: their keys and values are read, not recomputed,
+and the MLP never sees them again.
+
+Same weights, same layers, yet two very different workloads for the GPU:
+
+<svg viewBox="0 0 560 290" role="img" aria-label="Side by side. Prefill: many known tokens enter the model in parallel, the weights are read once and reused across all of them, the first token comes out at the end; matrix-matrix work, compute-bound. Decode: one new token per step, the model reads and appends to the KV cache, one token comes out and loops back; matrix-vector work, memory-bandwidth bound. Batching many requests restores parallelism in decode." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="cmp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="cmp-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<rect x="288" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="32" y="40" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">PREFILL</text>
+<rect x="33" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<line x1="49" y1="78" x2="49" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="71" y="54" width="32" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<line x1="87" y1="78" x2="87" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="109" y="54" width="32" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<line x1="125" y1="78" x2="125" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<rect x="147" y="54" width="32" height="22" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<line x1="163" y1="78" x2="163" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="185" y="54" width="32" height="22" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="201" y1="78" x2="201" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="223" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<line x1="239" y1="78" x2="239" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="33" y="98" width="222" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model · weights read once</text>
+<line x1="144" y1="138" x2="144" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="99" y="158" width="90" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="144.0" y="173.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">1st token</text>
+<text x="32" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">S known tokens share one weight read</text>
+<text x="32" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">matrix × matrix (GEMM) → compute-bound</text>
+<text x="304" y="40" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">DECODE</text>
+<rect x="356" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<line x1="372" y1="78" x2="372" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="304" y="98" width="136" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="372" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model</text>
+<rect x="458" y="98" width="72" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="494" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:12px">KV cache</text>
+<line x1="458" y1="112" x2="442" y2="112" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="440" y1="126" x2="456" y2="126" marker-end="url(#cmp-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="372" y1="138" x2="372" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="332" y="158" width="80" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="372.0" y="173.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">1 token</text>
+<path d="M332 169 C 292 169, 292 65, 352 65" marker-end="url(#cmp-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="296" y="192" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">repeat</text>
+<text x="304" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">1 new token per weight read</text>
+<text x="304" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">matrix × vector (GEMV) → memory-bound</text>
+<text x="16" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">One request&#x27;s decode is strictly sequential; parallelism comes back across requests.</text>
+<text x="16" y="282" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Batching B decode streams turns that 1 token per weight read into B.</text>
+</svg>
+
+The asymmetry is in how much work each byte of weights buys. In prefill, one
+read of a weight matrix is multiplied against all $S$ prompt rows; in decode,
+the same read serves a single row per request. That is why serving engines
+work so hard to batch decode steps across many users, the core idea behind
+[continuous batching in vLLM](post.html?slug=vllm-from-paper-to-production).
 
 ### The true size of the KV cache and the memory wall
 
@@ -591,6 +799,7 @@ next token.
 
 - Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — the foundational transformer paper.
 - Modular, [How does an LLM work?](https://handbook.modular.com/llms.txt) — inference lifecycle and system architecture handbook.
+- Abhinandan, [Prefill & Decode made Crystal Clear](https://x.com/abhibuilds/status/2106006454046216461) (2026) — a first-principles walkthrough whose figures inspired the prefill and decode diagrams in section 7.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — classic visual guide to attention mechanics.
 - Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — building a transformer from first principles in code.
 - Related deep dives on this blog:

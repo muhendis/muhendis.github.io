@@ -431,6 +431,83 @@ Model bu token'ların tamamını devasa tensör matrisleriyle **aynı anda
   Değer (V) vektörlerini hesaplar ve bir sonraki aşama için **KV cache**
   alanına kaydeder.
 
+Paralel olmak, her token'ın her token'ı gördüğü anlamına gelmez. Prompt
+matrisinin satırları birlikte hesaplanır ama causal mask, $i$. pozisyonun
+yalnızca $1 \ldots i$ pozisyonlarına bakmasına izin vermeye devam eder:
+hesaplama paraleldir, bilgi akışı değil. İlk çıktı token'ı da ayrı bir adım
+değildir; aynı geçişin sonunda, son pozisyonun logit'lerinden düşer:
+
+<svg viewBox="0 0 560 345" role="img" aria-label="Prefill. Gökyüzü neden mavi görünür soru işareti prompt&#x27;unun altı token&#x27;ının hepsi baştan bilinir ve tek bir matris olarak birlikte 1. transformer katmanına girer. N katmanın her biri altı pozisyonun hepsi için aynı anda self-attention ve MLP çalıştırır ve altı token&#x27;ın anahtar ile değerlerini o katmanın KV cache&#x27;ine yazar. Son pozisyonun sözlük üzerindeki logit&#x27;leri ilk çıktı token&#x27;ı Güneş&#x27;i seçer; bu tek geçiş TTFT&#x27;nin büyük kısmıdır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="pf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Prompt — 6 token&#x27;ın hepsi baştan belli</text>
+<rect x="16" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="44.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Gök</text>
+<line x1="44" y1="58" x2="44" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="80" y="30" width="56" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="108.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">yüzü</text>
+<line x1="108" y1="58" x2="108" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="144" y="30" width="56" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="172.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> neden</text>
+<line x1="172" y1="58" x2="172" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<rect x="208" y="30" width="56" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/><text x="236.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> mavi</text>
+<line x1="236" y1="58" x2="236" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="272" y="30" width="56" height="26" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/><text x="300.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> görünür</text>
+<line x1="300" y1="58" x2="300" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="336" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="364.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">?</text>
+<line x1="364" y1="58" x2="364" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="410" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">hepsi birlikte,</text>
+<text x="410" y="56" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tek geçişte işlenir</text>
+<rect x="16" y="80" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="204" y="101" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Katman 1: self-attention + MLP</text>
+<text x="204" y="119" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">6 pozisyon tek matris → GEMM</text>
+<line x1="392" y1="105" x2="420" y2="105" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="80" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="432" y="96" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV · katman 1</text>
+<rect x="432" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="450" y="104" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<rect x="468" y="104" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<rect x="486" y="104" width="14" height="18" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<rect x="504" y="104" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="522" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="16" y="168" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="204" y="189" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Katman N: self-attention + MLP</text>
+<text x="204" y="207" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">causal mask: i. pozisyon yalnız 1…i&#x27;yi görür</text>
+<line x1="392" y1="193" x2="420" y2="193" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="168" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="432" y="184" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV · katman N</text>
+<rect x="432" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<rect x="450" y="192" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<rect x="468" y="192" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<rect x="486" y="192" width="14" height="18" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<rect x="504" y="192" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="522" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="204" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
+<text x="216" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her katmanda aynısı</text>
+<text x="483" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
+<line x1="204" y1="218" x2="204" y2="240" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="242" width="376" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sözlük üzerinde logit&#x27;ler (yalnız son pozisyon)</text>
+<rect x="40" y="286" width="14" height="6" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="64" y="283" width="14" height="9" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="88" y="287" width="14" height="5" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="112" y="280" width="14" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="136" y="285" width="14" height="7" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="160" y="288" width="14" height="4" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="184" y="282" width="14" height="10" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="208" y="266" width="14" height="26" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<rect x="232" y="284" width="14" height="8" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="256" y="287" width="14" height="5" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="280" y="281" width="14" height="11" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="304" y="286" width="14" height="6" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="328" y="288" width="14" height="4" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="352" y="285" width="14" height="7" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<line x1="392" y1="270" x2="420" y2="270" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="242" width="122" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="483" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">ilk çıktı token&#x27;ı</text>
+<rect x="438" y="266" width="90" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="483.0" y="282.6" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Güneş</text>
+<text x="16" y="324" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İlk token prefill geçişinin kendisinden çıkar; bu yüzden TTFT&#x27;nin çoğu bu geçiştir:</text>
+<text x="16" y="340" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prompt uzadıkça her matris çarpımında satır sayısı, dolayısıyla bekleme artar.</text>
+</svg>
+
 ### Decode: seri döngü ve ITL
 
 İlk token ekrana düştükten sonra model **decode** aşamasına geçer. Burada
@@ -445,6 +522,139 @@ için 49. kelimenin üretilmiş olması gerekir. Üretim otoregresif olarak,
   gelmesini bekleyerek boş yatar.
 - **Kritik metrik:** **Inter-Token Latency (ITL)** — Art arda gelen iki token
   arasında geçen süre (kullanıcının hissettiği akış hızı).
+
+Her adımda katman yığınından tam olarak bir yeni token geçer ve prefill'in
+(ve önceki her adımın) bıraktığı önbelleği okur:
+
+<svg viewBox="0 0 560 330" role="img" aria-label="Decode. KV cache altı prompt token&#x27;ının anahtar ve değerlerini tutar. Tek yeni token, Güneş, katman yığınına tek başına girer. Her katmanda self-attention yeni token&#x27;ın sorgusunu önbellekteki tüm anahtarlarla karşılaştırıp önbellekteki değerleri karıştırır, ardından yeni token&#x27;ın kendi anahtar ve değerini önbelleğe ekler; MLP yalnız yeni token için çalışır. Logit&#x27;ler sıradaki token&#x27;ı, ışığı, seçer; o da dizi sonu token&#x27;ı gelene kadar bir sonraki girdi olarak döngüye döner." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="dc-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="dc-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="16" width="180" height="256" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="26" y="36" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">KV cache</text>
+<text x="26" y="52" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill + önceki adımlar</text>
+<text x="104" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">K</text>
+<text x="158" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">V</text>
+<text x="26" y="94" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Gök</text>
+<rect x="82" y="80" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="136" y="80" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="26" y="120" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">yüzü</text>
+<rect x="82" y="106" width="44" height="18" rx="4" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<rect x="136" y="106" width="44" height="18" rx="4" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="26" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">neden</text>
+<rect x="82" y="132" width="44" height="18" rx="4" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="136" y="132" width="44" height="18" rx="4" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="26" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">mavi</text>
+<rect x="82" y="158" width="44" height="18" rx="4" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<rect x="136" y="158" width="44" height="18" rx="4" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="26" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">görünür</text>
+<rect x="82" y="184" width="44" height="18" rx="4" style="fill:var(--c-text-mute);fill-opacity:.2;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<rect x="136" y="184" width="44" height="18" rx="4" style="fill:var(--c-text-mute);fill-opacity:.2;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="26" y="224" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">?</text>
+<rect x="82" y="210" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="136" y="210" width="44" height="18" rx="4" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="26" y="250" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Güneş</text>
+<rect x="82" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="136" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<text x="320" y="14" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">her adımda tek yeni token</text>
+<rect x="270" y="20" width="100" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="320.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Güneş</text>
+<line x1="320" y1="46" x2="320" y2="66" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="216" y="68" width="188" height="204" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="310" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">N katmanın her biri</text>
+<rect x="228" y="96" width="164" height="80" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="310" y="114" text-anchor="middle" style="fill:var(--c-text);font-size:13px">self-attention</text>
+<text x="310" y="132" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">yalnız yeni token&#x27;ın q&#x27;su</text>
+<text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">önbellekteki tüm K&#x27;lerle</text>
+<text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ önbellekteki V karışımı</text>
+<line x1="196" y1="120" x2="226" y2="120" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="211" y="112" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">oku</text>
+<path d="M228 166 H208 V245 H182" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">k, v ekle</text>
+<line x1="310" y1="176" x2="310" y2="188" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="228" y="190" width="164" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="310" y="208" text-anchor="middle" style="fill:var(--c-text);font-size:13px">MLP</text>
+<text x="310" y="225" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">yalnız yeni token</text>
+<text x="310" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">tam ileri geçiş, 1 pozisyon</text>
+<line x1="404" y1="150" x2="432" y2="150" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="434" y="68" width="110" height="132" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="489" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">logits</text>
+<rect x="444" y="98" width="80" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<rect x="444" y="116" width="52" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="134" width="30" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="152" width="20" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<rect x="444" y="170" width="12" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
+<line x1="489" y1="200" x2="489" y2="222" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="434" y="224" width="110" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="489" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">sıradaki token</text>
+<rect x="446" y="246" width="86" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="489.0" y="260.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> ışığı</text>
+<path d="M544 248 H553 V33 H374" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="550" y="26" text-anchor="end" style="fill:var(--c-accent-2);font-size:12px">&lt;eos&gt; gelene kadar tekrar</text>
+<text x="16" y="298" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Yeni token için hiçbir blok atlanmaz: her attention ve MLP yine çalışır. Önbelleğin kurtardığı şey</text>
+<text x="16" y="314" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">eski token&#x27;ları yeniden işlemektir. Her adım tek token için bütün ağırlıkları + KV cache&#x27;i okur.</text>
+</svg>
+
+"KV cache hesaplamadan tasarruf ettirir" cümlesi sık sık yanlış okunur:
+sanki decode sırasında ağın bir kısmı atlanıyormuş gibi. Atlanmaz. Yeni
+token her katmanın attention bloğundan da MLP'sinden de geçer. Önbelleğin
+kurtardığı şey *eski* token'ları yeniden işlemektir: onların anahtar ve
+değerleri yeniden hesaplanmaz, okunur; MLP de onları bir daha hiç görmez.
+
+Aynı ağırlıklar, aynı katmanlar; ama GPU açısından birbirine hiç benzemeyen
+iki iş yükü:
+
+<svg viewBox="0 0 560 290" role="img" aria-label="Yan yana. Prefill: baştan bilinen çok sayıda token modele paralel girer, ağırlıklar bir kez okunup hepsi için kullanılır, ilk token sonda çıkar; matris-matris işi, hesaplama-bağımlı. Decode: her adımda tek yeni token, model KV cache&#x27;i okur ve ona ekler, tek token çıkar ve döngüye döner; matris-vektör işi, bellek-bant-genişliği bağımlı. Çok sayıda isteği gruplamak decode&#x27;a paralelliği geri getirir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="cmp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="cmp-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<rect x="288" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="32" y="40" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">PREFILL</text>
+<rect x="33" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<line x1="49" y1="78" x2="49" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="71" y="54" width="32" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<line x1="87" y1="78" x2="87" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="109" y="54" width="32" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<line x1="125" y1="78" x2="125" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<rect x="147" y="54" width="32" height="22" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<line x1="163" y1="78" x2="163" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="185" y="54" width="32" height="22" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="201" y1="78" x2="201" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="223" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<line x1="239" y1="78" x2="239" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="33" y="98" width="222" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model · ağırlıklar bir kez</text>
+<line x1="144" y1="138" x2="144" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="99" y="158" width="90" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="144.0" y="173.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">ilk token</text>
+<text x="32" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">S token tek ağırlık okumasını paylaşır</text>
+<text x="32" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">GEMM (matris × matris) → hesap-bağımlı</text>
+<text x="304" y="40" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">DECODE</text>
+<rect x="356" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<line x1="372" y1="78" x2="372" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="304" y="98" width="136" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="372" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model</text>
+<rect x="458" y="98" width="72" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="494" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:12px">KV cache</text>
+<line x1="458" y1="112" x2="442" y2="112" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="440" y1="126" x2="456" y2="126" marker-end="url(#cmp-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="372" y1="138" x2="372" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="332" y="158" width="80" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="372.0" y="173.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">1 token</text>
+<path d="M332 169 C 292 169, 292 65, 352 65" marker-end="url(#cmp-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="296" y="192" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">tekrar</text>
+<text x="304" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">her ağırlık okumasına 1 yeni token</text>
+<text x="304" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">GEMV (matris × vektör) → bellek-bağımlı</text>
+<text x="16" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Tek isteğin decode&#x27;u kesinlikle seridir; paralellik istekler arasından geri gelir.</text>
+<text x="16" y="282" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">B decode akışını gruplamak, ağırlık okuması başına 1 token&#x27;ı B&#x27;ye çıkarır.</text>
+</svg>
+
+Fark, ağırlıkların her baytının ne kadar iş satın aldığında. Prefill'de bir
+ağırlık matrisi bir kez okunur ve prompt'un $S$ satırının hepsiyle çarpılır;
+decode'da aynı okuma istek başına tek bir satıra hizmet eder. Çıkarım
+motorlarının decode adımlarını çok sayıda kullanıcı arasında gruplamak için
+bu kadar uğraşmasının nedeni budur;
+[vLLM'deki continuous batching (sürekli gruplama)](post.html?slug=vllm-derinlemesine)
+fikrinin özü de bu.
 
 ### KV cache'in gerçek boyutu ve bellek duvarı
 
@@ -590,6 +800,7 @@ yerden başlayın: sıradaki token'dan.
 
 - Vaswani vd., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — orijinal Transformer makalesi.
 - Modular, [How does an LLM work?](https://handbook.modular.com/llms.txt) — çıkarım fazları ve sistem mimarisi el kitabı.
+- Abhinandan, [Prefill & Decode made Crystal Clear](https://x.com/abhibuilds/status/2106006454046216461) (2026) — 7. bölümdeki prefill ve decode diyagramlarına ilham veren, ilk prensiplerden giden bir anlatım.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) — klasikleşmiş görsel anlatım.
 - Andrej Karpathy, [Let's build GPT from scratch](https://www.youtube.com/watch?v=kCc8FmEb1nY) — bütün makinenin sıfırdan Python ile inşası.
 - Bu blogda birbiriyle konuşan diğer derinlemesine incelemeler:
