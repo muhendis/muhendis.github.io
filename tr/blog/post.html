@@ -103,11 +103,18 @@
 
         <p class="notice" id="translation-notice" hidden></p>
 
-        <div class="post-body" id="post-body"></div>
+        <div class="post-layout">
+          <aside class="post-aside" id="post-aside" hidden></aside>
+          <div class="post-main">
+            <div class="post-body" id="post-body"></div>
 
-        <div class="post-end" id="post-end">
-          <a class="btn btn--ghost" href="./">← Tüm yazılar</a>
-          <button class="btn btn--ghost read-toggle" id="read-toggle" type="button" aria-pressed="false" hidden>Okundu olarak işaretle</button>
+            <nav class="series-nav" id="series-nav" hidden></nav>
+
+            <div class="post-end" id="post-end">
+              <a class="btn btn--ghost" href="./">← Tüm yazılar</a>
+              <button class="btn btn--ghost read-toggle" id="read-toggle" type="button" aria-pressed="false" hidden>Okundu olarak işaretle</button>
+            </div>
+          </div>
         </div>
       </article>
     </div>

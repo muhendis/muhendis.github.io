@@ -19,13 +19,25 @@
           min: ' min read', by: 'By Engin Bozaba', noTrans: 'This post is not available in English.',
           noTransNotice: 'This post has no English version yet.',
           allPosts: 'All English posts',
-          markRead: 'Mark as read', isRead: '✓ Read · mark as unread' },
+          markRead: 'Mark as read', isRead: '✓ Read · mark as unread',
+          toc: 'Contents', tocNav: 'Table of contents', inArticle: 'In this article',
+          pct: function (p) { return p + '% read'; },
+          left: function (m) { return '~' + m + ' min left'; },
+          top: '↑ Back to top', part: function (n, m) { return 'Part ' + n + ' of ' + m; },
+          prev: '← Previous', next: 'Next →', seriesNav: 'Series navigation',
+          copyLink: 'Copy link to this section', copied: 'Link copied', close: 'Close' },
     tr: { notFound: 'Yazı bulunamadı.', failIndex: 'Yazı dizini yüklenemedi.',
           jekyll: 'İçerik yüklenemedi. (.nojekyll deposu kökünde var mı?)',
           min: ' dk okuma', by: 'Yazan: Engin Bozaba', noTrans: 'Bu yazı Türkçe olarak mevcut değil.',
           noTransNotice: 'Bu yazının henüz Türkçe çevirisi yok.',
           allPosts: 'Tüm Türkçe yazılar',
-          markRead: 'Okundu olarak işaretle', isRead: '✓ Okundu · okunmadı yap' }
+          markRead: 'Okundu olarak işaretle', isRead: '✓ Okundu · okunmadı yap',
+          toc: 'İçindekiler', tocNav: 'İçindekiler', inArticle: 'Bu yazıda',
+          pct: function (p) { return '%' + p + ' okundu'; },
+          left: function (m) { return '~' + m + ' dk kaldı'; },
+          top: '↑ Başa dön', part: function (n, m) { return 'Bölüm ' + n + ' / ' + m; },
+          prev: '← Önceki', next: 'Sonraki →', seriesNav: 'Seri gezintisi',
+          copyLink: 'Bu bölümün bağlantısını kopyala', copied: 'Bağlantı kopyalandı', close: 'Kapat' }
   };
   var t = T[LANG];
   var tOther = T[OTHER];
@@ -168,6 +180,273 @@
     }
   }
 
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* This post's place in its module: the ordered, published parts. */
+  function seriesInfo(meta, idx) {
+    if (!meta.seriesId) return null;
+    var s = (idx.series || []).filter(function (x) { return x.id === meta.seriesId; })[0];
+    if (!s) return null;
+    var bySlug = {};
+    (idx.posts || []).forEach(function (p) { if (!p.draft) bySlug[p.slug] = p; });
+    var parts = (s.posts || []).map(function (sl) { return bySlug[sl]; }).filter(Boolean);
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].slug === meta.slug) return { series: s, parts: parts, i: i };
+    }
+    return null;
+  }
+
+  function postHref(p) { return 'post.html?slug=' + encodeURIComponent(p.slug); }
+
+  function buildSeriesNav(info) {
+    var nav = document.getElementById('series-nav');
+    if (!nav || !info || info.parts.length < 2) return;
+    nav.setAttribute('aria-label', t.seriesNav);
+    [[info.parts[info.i - 1], t.prev, 'prev'], [info.parts[info.i + 1], t.next, 'next']].forEach(function (x) {
+      if (!x[0]) { nav.appendChild(el('span', 'series-nav__gap')); return; }
+      var a = el('a', 'series-nav__link series-nav__link--' + x[2]);
+      a.href = postHref(x[0]);
+      a.appendChild(el('span', 'series-nav__dir', x[1]));
+      a.appendChild(el('span', 'series-nav__title', x[0].title));
+      nav.appendChild(a);
+    });
+    nav.hidden = false;
+  }
+
+  /* Reading navigation: a sticky contents rail on wide screens, a floating
+     button + sheet on narrow ones, and a progress bar on both. All of it is
+     built from the rendered headings, so it never drifts from the body. */
+  function buildReadingNav(meta, idx) {
+    var body = document.getElementById('post-body');
+    var aside = document.getElementById('post-aside');
+    var heads = [].slice.call(body.querySelectorAll('h2, h3')).filter(function (h) { return h.id; });
+
+    /* The hand-written "In this article" list duplicates the rail. */
+    [].slice.call(body.querySelectorAll(':scope > p')).forEach(function (p) {
+      var next = p.nextElementSibling;
+      if (p.textContent.trim() === t.inArticle && next && next.tagName === 'UL') {
+        p.classList.add('inline-toc');
+        next.classList.add('inline-toc');
+      }
+    });
+
+    var info = seriesInfo(meta, idx);
+    buildSeriesNav(info);
+    if (heads.length < 3) return;
+
+    /* Entries keep a clone of the heading so inline math renders in the list. */
+    var entries = heads.map(function (h) {
+      var label = document.createElement('span');
+      [].slice.call(h.childNodes).forEach(function (n) { label.appendChild(n.cloneNode(true)); });
+      return { h: h, level: h.tagName === 'H2' ? 2 : 3, label: label, links: [] };
+    });
+    var parentOf = [];
+    var lastH2 = -1;
+    entries.forEach(function (e, i) {
+      if (e.level === 2) lastH2 = i;
+      parentOf[i] = e.level === 2 ? i : lastH2;
+    });
+
+    function tocList() {
+      var ol = el('ol', 'toc');
+      var cur = null;
+      entries.forEach(function (e) {
+        var li = el('li', 'toc__item toc__item--h' + e.level);
+        var a = el('a', 'toc__link');
+        a.href = '#' + e.h.id;
+        a.appendChild(e.links.length ? e.label.cloneNode(true) : e.label);
+        e.links.push(a);
+        li.appendChild(a);
+        if (e.level === 2 || !cur) {
+          ol.appendChild(li);
+          cur = li;
+        } else {
+          var sub = cur.querySelector('.toc__sub');
+          if (!sub) { sub = el('ol', 'toc__sub'); cur.appendChild(sub); }
+          sub.appendChild(li);
+        }
+      });
+      return ol;
+    }
+
+    function progressBlock() {
+      var p = el('p', 'toc-progress');
+      p.setAttribute('aria-live', 'off');
+      return p;
+    }
+
+    /* Wide screens: the rail. */
+    var asideProgress = progressBlock();
+    aside.setAttribute('aria-label', t.tocNav);
+    if (info) {
+      var card = el('a', 'toc-series');
+      card.href = './?module=' + encodeURIComponent(info.series.id);
+      card.appendChild(el('span', 'toc-series__title', info.series.title));
+      if (info.parts.length > 1) {
+        card.appendChild(el('span', 'toc-series__part', t.part(info.i + 1, info.parts.length)));
+        var dots = el('span', 'toc-series__dots');
+        dots.setAttribute('aria-hidden', 'true');
+        info.parts.forEach(function (_, k) {
+          dots.appendChild(el('span', 'toc-series__dot' + (k < info.i ? ' is-done' : k === info.i ? ' is-current' : '')));
+        });
+        card.appendChild(dots);
+      }
+      aside.appendChild(card);
+    }
+    aside.appendChild(el('p', 'toc-heading', t.toc));
+    var asideScroll = el('div', 'toc-scroll');
+    asideScroll.appendChild(tocList());
+    aside.appendChild(asideScroll);
+    var asideFoot = el('div', 'toc-foot');
+    asideFoot.appendChild(asideProgress);
+    var topBtn = el('button', 'toc-top', t.top);
+    topBtn.type = 'button';
+    topBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0 });
+      history.replaceState(null, '', location.pathname + location.search);
+    });
+    asideFoot.appendChild(topBtn);
+    aside.appendChild(asideFoot);
+    aside.hidden = false;
+    document.getElementById('post-article').classList.add('has-aside');
+
+    /* Narrow screens: floating button + modal sheet. */
+    var R = 9, C = 2 * Math.PI * R;
+    var fab = el('button', 'toc-fab');
+    fab.type = 'button';
+    fab.setAttribute('aria-haspopup', 'dialog');
+    fab.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">' +
+      '<circle cx="11" cy="11" r="' + R + '" class="toc-fab__track"/>' +
+      '<circle cx="11" cy="11" r="' + R + '" class="toc-fab__ring" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/></svg>';
+    fab.appendChild(el('span', 'toc-fab__label', t.toc));
+    var ring = fab.querySelector('.toc-fab__ring');
+
+    var sheet = el('dialog', 'toc-sheet');
+    sheet.setAttribute('aria-label', t.tocNav);
+    var sheetHead = el('div', 'toc-sheet__head');
+    sheetHead.appendChild(el('p', 'toc-heading', t.toc));
+    var closeBtn = el('button', 'toc-sheet__close', '×');
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('aria-label', t.close);
+    closeBtn.addEventListener('click', function () { sheet.close(); });
+    sheetHead.appendChild(closeBtn);
+    sheet.appendChild(sheetHead);
+    var sheetScroll = el('div', 'toc-scroll');
+    sheetScroll.appendChild(tocList());
+    sheet.appendChild(sheetScroll);
+    var sheetProgress = progressBlock();
+    sheet.appendChild(sheetProgress);
+    /* Close before the jump so the page is no longer inert when it scrolls. */
+    sheet.addEventListener('click', function (ev) {
+      if (ev.target === sheet) { sheet.close(); return; }
+      if (ev.target.closest && ev.target.closest('a.toc__link')) sheet.close();
+    });
+    fab.addEventListener('click', function () {
+      if (typeof sheet.showModal !== 'function') return;
+      sheet.showModal();
+      var on = sheet.querySelector('.toc__link[aria-current]');
+      if (on) keepVisible(sheetScroll, on);
+    });
+    document.body.appendChild(fab);
+    document.body.appendChild(sheet);
+
+    var bar = el('div', 'read-progress');
+    bar.setAttribute('aria-hidden', 'true');
+    bar.appendChild(el('span', 'read-progress__fill'));
+    document.body.appendChild(bar);
+    var fill = bar.firstChild;
+
+    function keepVisible(box, link) {
+      var b = box.getBoundingClientRect(), r = link.getBoundingClientRect();
+      if (r.top < b.top + 8) box.scrollTop -= (b.top + 8 - r.top);
+      else if (r.bottom > b.bottom - 8) box.scrollTop += (r.bottom - b.bottom + 8);
+    }
+
+    var active = -2;
+    var OFFSET = 110; /* sticky header + breathing room */
+    function update() {
+      var i = -1;
+      for (var k = 0; k < entries.length; k++) {
+        if (entries[k].h.getBoundingClientRect().top <= OFFSET) i = k; else break;
+      }
+      if (i !== active) {
+        active = i;
+        var open = i === -1 ? -1 : parentOf[i];
+        entries.forEach(function (e, k) {
+          e.links.forEach(function (a) {
+            if (k === i) a.setAttribute('aria-current', 'location');
+            else a.removeAttribute('aria-current');
+            var li = a.parentNode;
+            if (e.level === 2) li.classList.toggle('is-open', k === open);
+            a.classList.toggle('is-past', k < i);
+          });
+        });
+        if (i !== -1) keepVisible(asideScroll, entries[i].links[0]);
+      }
+
+      var r = body.getBoundingClientRect();
+      var span = Math.max(1, r.height - innerHeight);
+      var p = Math.min(1, Math.max(0, -r.top / span));
+      fill.style.transform = 'scaleX(' + p + ')';
+      ring.setAttribute('stroke-dashoffset', String(C * (1 - p)));
+      var pct = Math.round(p * 100);
+      var txt = t.pct(pct);
+      if (meta.readingMinutes && pct < 98) txt += ' · ' + t.left(Math.max(1, Math.ceil(meta.readingMinutes * (1 - p))));
+      asideProgress.textContent = txt;
+      sheetProgress.textContent = txt;
+      fab.classList.toggle('is-visible', r.top < 0);
+    }
+
+    var queued = false;
+    function onScroll() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; update(); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
+  }
+
+  /* Section links: hover "#" that also copies the full URL. Added after the
+     contents are built so the "#" never leaks into a contents label. */
+  function addHeadingAnchors() {
+    document.querySelectorAll('#post-body h2[id], #post-body h3[id]').forEach(function (h) {
+      var a = el('a', 'heading-anchor', '#');
+      a.href = '#' + h.id;
+      a.setAttribute('aria-label', t.copyLink);
+      a.addEventListener('click', function () {
+        var url = location.origin + location.pathname + location.search + '#' + h.id;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            a.dataset.copied = t.copied;
+            setTimeout(function () { delete a.dataset.copied; }, 1600);
+          }, function () {});
+        }
+      });
+      h.appendChild(a);
+    });
+  }
+
+  /* The body renders after load, so the browser's own jump to #section has
+     already missed. Redo it, and again once math has reflowed the page,
+     unless the reader has started scrolling by then. */
+  var readerMoved = false;
+  ['wheel', 'touchmove', 'keydown', 'mousedown'].forEach(function (ev) {
+    window.addEventListener(ev, function () { readerMoved = true; }, { passive: true, once: true });
+  });
+  function jumpToHash() {
+    if (readerMoved || location.hash.length < 2) return;
+    var target;
+    try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { return; }
+    if (target) target.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }
+
   function run() {
     var slug = new URLSearchParams(location.search).get('slug') || '';
     if (!SLUG_RE.test(slug)) return fail(t.notFound);
@@ -276,8 +555,11 @@
                 .replace(/\s+/g, '-');
             });
 
+            buildReadingNav(meta, idx);
+            addHeadingAnchors();
+
             /* KaTeX: lazy-load stylesheet and renderer only when a post has math. */
-            var mathNodes = document.querySelectorAll('#post-body .math-block, #post-body .math-inline');
+            var mathNodes = document.querySelectorAll('#post-body .math-block, #post-body .math-inline, .toc .math-inline');
             if (mathNodes.length) {
               var kcss = document.createElement('link');
               kcss.rel = 'stylesheet';
@@ -297,6 +579,7 @@
                     });
                   } catch (e) { /* leave the LaTeX source visible as text */ }
                 });
+                jumpToHash();
               };
               document.head.appendChild(kjs);
             }
@@ -341,6 +624,7 @@
 
             statusEl.hidden = true;
             articleEl.hidden = false;
+            jumpToHash();
           });
       })
       .catch(function (err) {
