@@ -54,31 +54,32 @@ tek bir vektöre indirger (çoğunlukla ortalamalarını alır — mean pooling)
 normalizasyon ise bu vektörü uzunluğu 1 olacak şekilde birim küreye
 ölçekler — derlemdeki her metin artık aynı kürenin yüzeyinde yaşar:
 
-<svg viewBox="0 0 560 160" role="img" aria-label="Bir cümleden tek bir noktaya. bulaşık makinem alttan su sızdırıyor metni token&#x27;lara bölünür. Bir encoder bütün token&#x27;ları attention ile birlikte okur. Pooling token başına çok sayıda vektörü teke indirir. Normalizasyon uzunluğu 1 olan 1.024 sayı bırakır: birim küre üzerinde bir nokta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 160" role="img" aria-label="Bir cümleden tek bir noktaya. bulaşık makinem alttan su sızdırıyor metni token'lara bölünür. Bir encoder bütün token'ları attention ile birlikte okur. Pooling token başına çok sayıda vektörü teke indirir. Normalizasyon uzunluğu 1 olan 1.024 sayı bırakır: birim küre üzerinde bir nokta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="en-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">“bulaşık makinem alttan su sızdırıyor”</text>
 <path d="M40 30 V48" marker-end="url(#en-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="74.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token&#x27;lar</text>
-<text x="74.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">metin → parçalar</text>
+<text x="74.0" y="80.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Tokenizasyon</text>
+<text x="74.0" y="96.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">BPE ön bölücü</text>
+<text x="74.0" y="110.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">N adet token</text>
 <line x1="132" y1="87" x2="152" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="154" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="212.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">encoder</text>
-<text x="212.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tüm token&#x27;ları</text>
-<text x="212.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">birlikte okur</text>
+<text x="212.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Encoder</text>
+<text x="212.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Bidirectional Attn</text>
+<text x="212.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hᵢ ∈ ℝᵈ (tüm dizi)</text>
 <line x1="270" y1="87" x2="290" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="292" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="350.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">pooling</text>
-<text x="350.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">çok vektörden</text>
-<text x="350.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tek vektör</text>
+<text x="350.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Pooling</text>
+<text x="350.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Ortalama (Mean)</text>
+<text x="350.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">N × d → 1 × d</text>
 <line x1="408" y1="87" x2="428" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="430" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="488.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embedding</text>
-<text x="488.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1.024 sayı,</text>
-<text x="488.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">uzunluk 1</text>
-<text x="16" y="150" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İçeri bir cümle girer, dışarı birim küre üzerinde tek bir nokta çıkar.</text>
+<text x="488.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Embedding</text>
+<text x="488.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">u = v / ‖v‖₂</text>
+<text x="488.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">‖u‖₂ = 1 (d=1.024)</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Değişken uzunlukta metin girer; birim küre üzerinde (‖u‖₂ = 1) tek bir nokta çıkar.</text>
 </svg>
 
 Bir cümle girer, bir nokta çıkar. İlginç soru mekanikte değil —
@@ -105,9 +106,9 @@ pasajlara doğru çekilmiştir.
 
 Tek bir eğitim adımının gerçekte neyi optimize ettiği ve bu adımların binlercesinin geride bıraktığı harita:
 
-<svg viewBox="0 0 560 300" role="img" aria-label="Üç çiftlik tek bir batch üzerinde contrastive eğitim: q1 sızıntı sorusu ile p1 tahliye hortumu pasajı, q2 wifi sıfırlama sorusu ile p2 modem kılavuzu, q3 hello ile p3 merhaba. Solda batch&#x27;in sorgulara karşı pasajlardan oluşan 3&#x27;e 3 benzerlik ızgarası: köşegendeki üç hücre, yani gerçek çiftler, yukarı itilir; köşegen dışındaki altı hücre, yani batch&#x27;teki diğer her pasaj, aşağı itilir. Sağda ortaya çıkan harita, birim küre üzerinde: her soru artık kendi pasajının yanında ve diğer çiftlerden uzakta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">tek bir eğitim batch&#x27;i</text>
-<text x="16" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her q&#x27;nun her p ile benzerliği</text>
+<svg viewBox="0 0 560 300" role="img" aria-label="Üç çiftlik tek bir batch üzerinde contrastive eğitim: q1 sızıntı sorusu ile p1 tahliye hortumu pasajı, q2 wifi sıfırlama sorusu ile p2 modem kılavuzu, q3 hello ile p3 merhaba. Solda batch'in sorgulara karşı pasajlardan oluşan 3'e 3 benzerlik ızgarası: köşegendeki üç hücre, yani gerçek çiftler, yukarı itilir; köşegen dışındaki altı hücre, yani batch'teki diğer her pasaj, aşağı itilir. Sağda ortaya çıkan harita, birim küre üzerinde: her soru artık kendi pasajının yanında ve diğer çiftlerden uzakta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Eğitim Batch'i: InfoNCE Kaybı</text>
+<text x="16" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">3×3 Benzerlik Matrisi (q · pᵀ / τ)</text>
 <rect x="92" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="108.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p1</text>
 <rect x="140" y="52" width="32" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="156.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p2</text>
 <rect x="188" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="204.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p3</text>
@@ -133,11 +134,11 @@ Tek bir eğitim adımının gerçekte neyi optimize ettiği ve bu adımların bi
 <rect x="180" y="180" width="44" height="44" rx="4" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success);stroke-width:1.2"/>
 <text x="202.0" y="208" text-anchor="middle" style="fill:var(--c-success);font-size:16px;font-weight:700">↑</text>
 <rect x="32" y="236" width="12" height="12" rx="2" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success)"/>
-<text x="50" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gerçek çift: yaklaştır</text>
+<text x="50" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Pozitif çift (qᵢ·pᵢ): yaklaştır (↑)</text>
 <rect x="32" y="256" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger)"/>
-<text x="50" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">batch&#x27;in geri kalanı: uzaklaştır</text>
-<text x="300" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">geride bıraktığı harita</text>
-<text x="300" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">birim küre üzerinde normalize noktalar</text>
+<text x="50" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">In-batch negatif: uzaklaştır (↓)</text>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Öğrenilen Geometri</text>
+<text x="300" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Birim küre üzerinde dağılım (Sᵈ⁻¹)</text>
 <circle cx="420" cy="136" r="66" style="fill:none;stroke:var(--c-border);stroke-width:1.2;stroke-dasharray:4 4"/>
 <circle cx="362.8" cy="103.0" r="5.5" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:1.5"/>
 <text x="349.0" y="99.0" text-anchor="end" style="fill:var(--c-text);font-size:12px">q1</text>
@@ -152,12 +153,12 @@ Tek bir eğitim adımının gerçekte neyi optimize ettiği ve bu adımların bi
 <circle cx="414.2" cy="201.7" r="5.5" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:1.5"/>
 <text x="412.9" y="221.7" text-anchor="middle" style="fill:var(--c-text);font-size:12px">p3</text>
 <circle cx="306" cy="232" r="4.5" style="fill:var(--c-accent)"/>
-<text x="316" y="236" text-anchor="start" style="fill:var(--c-text);font-size:12px">q1 sızıntı?  ↔  p1 hortum</text>
+<text x="316" y="236" text-anchor="start" style="fill:var(--c-text);font-size:12px">q1 sızıntı?  ↔  p1 tahliye hortumu</text>
 <circle cx="306" cy="250" r="4.5" style="fill:var(--c-warn)"/>
 <text x="316" y="254" text-anchor="start" style="fill:var(--c-text);font-size:12px">q2 wifi?  ↔  p2 modem kılavuzu</text>
 <circle cx="306" cy="268" r="4.5" style="fill:var(--c-accent-2)"/>
-<text x="316" y="272" text-anchor="start" style="fill:var(--c-text);font-size:12px">q3 hello  ↔  p3 merhaba</text>
-<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Eksenleri kimse etiketlemez. 1,17 milyar çiftte &#x27;birbirine ait&#x27; &#x27;yakında&#x27; demek olur.</text>
+<text x="316" y="272" text-anchor="start" style="fill:var(--c-text);font-size:12px">q3 hello  ↔  p3 merhaba (çapraz dil)</text>
+<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Eksenler etiketlenmez. Milyarlarca çiftle optimizasyon anlamsal yakınlığı açısal mesafeye çevirir.</text>
 </svg>
 
 Bu eğitim tarifinin içinde üç pratik sonuç saklı:
@@ -208,23 +209,26 @@ Görmek için iki boyut yeter. Üç metni haritaya birim vektör olarak
 koyalım — sızıntı sorusu **a = (0,6; 0,8)**, hortum paragrafı
 **b = (0,8; 0,6)**, bir tarif sayfası **c = (−0,8; 0,6)**:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="Tek orijinden çizilmiş üç birim vektör: 0,6 - 0,8 koordinatındaki sızıntı sorusu a; 0,8 - 0,6 koordinatındaki hortum paragrafı b; eksi 0,8 - 0,6 koordinatındaki tarif sayfası c. a ile b arasındaki küçük yay kosinüs 0,96 etiketini, a ile c arasındaki geniş yay kosinüs 0, doksan derece etiketini taşıyor" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 300" role="img" aria-label="Tek orijinden çizilmiş üç birim vektör: 0,6 - 0,8 koordinatındaki sızıntı sorusu a; 0,8 - 0,6 koordinatındaki hortum paragrafı b; eksi 0,8 - 0,6 koordinatındaki tarif sayfası c. a ile b arasındaki küçük yay kosinüs 0,96 etiketini, a ile c arasındaki geniş yay kosinüs 0, doksan derece etiketini taşıyor" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="cos-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 <marker id="cos-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
-<line x1="30" y1="260" x2="450" y2="260" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="240" y1="300" x2="240" y2="40" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="240" y1="260" x2="360" y2="100" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
-<line x1="240" y1="260" x2="400" y2="140" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
-<line x1="240" y1="260" x2="80" y2="140" marker-end="url(#cos-arr2)" style="stroke:var(--c-accent-2);stroke-width:2"/>
-<path d="M 294 188 A 90 90 0 0 1 312 206" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<path d="M 210 220 A 50 50 0 0 1 270 220" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 4"/>
-<text x="330" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px">cos = 0,96</text>
-<text x="240" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">cos = 0 (90°)</text>
-<text x="366" y="92" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">a — sızıntı sorusu (0,6; 0,8)</text>
-<text x="406" y="136" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">b — hortum paragrafı (0,8; 0,6)</text>
-<text x="74" y="132" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">c — tarif sayfası (−0,8; 0,6)</text>
+<line x1="20" y1="250" x2="540" y2="250" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="280" y1="285" x2="280" y2="35" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="280" y1="250" x2="376" y2="122" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
+<line x1="280" y1="250" x2="408" y2="154" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
+<line x1="280" y1="250" x2="152" y2="154" marker-end="url(#cos-arr2)" style="stroke:var(--c-accent-2);stroke-width:2"/>
+<path d="M 328 186 A 80 80 0 0 1 344 202" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M 252 216 A 45 45 0 0 1 312 216" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 4"/>
+<text x="354" y="194" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">cos(a, b) = 0,96 (dar açı)</text>
+<text x="280" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cos(a, c) = 0,00 (90° dik açı)</text>
+<text x="382" y="112" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">a: "su sızdırıyor"</text>
+<text x="382" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(0,6; 0,8)</text>
+<text x="416" y="152" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">b: "tahliye hortumu"</text>
+<text x="416" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(0,8; 0,6)</text>
+<text x="144" y="152" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-weight:600">c: "çikolatalı kek"</text>
+<text x="144" y="168" text-anchor="end" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(−0,8; 0,6)</text>
 </svg>
 
 Resmi formülle, her seferinde aynı sırayla sağlayın — önce dot
@@ -290,11 +294,14 @@ katman aşağı iner:
 <line x1="390" y1="156" x2="398" y2="234" marker-end="url(#hnsw-arr)" style="stroke:var(--c-accent);stroke-width:2.5;stroke-dasharray:6 5"/>
 <circle cx="90" cy="60" r="5" style="fill:var(--c-accent)"/>
 <circle cx="400" cy="240" r="6.5" style="fill:var(--c-accent-2)"/>
-<text x="90" y="42" text-anchor="middle" style="fill:var(--c-text);font-size:12px">giriş noktası</text>
-<text x="400" y="266" text-anchor="middle" style="fill:var(--c-text);font-size:12px">en yakın komşu</text>
-<text x="452" y="64" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">otoyollar</text>
-<text x="452" y="130" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">caddeler</text>
-<text x="452" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">sokaklar — bütün vektörler</text>
+<text x="90" y="42" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Giriş Noktası</text>
+<text x="400" y="266" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">En Yakın Komşu</text>
+<text x="472" y="54" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Katman 2</text>
+<text x="472" y="68" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Otoyol (seyrek)</text>
+<text x="472" y="144" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Katman 1</text>
+<text x="472" y="158" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Caddeler</text>
+<text x="472" y="234" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Katman 0</text>
+<text x="472" y="248" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Tüm Vektörler</text>
 </svg>
 
 Bir milyon karşılaştırma yerine arama birkaç bine dokunur — yaklaşık
@@ -344,28 +351,28 @@ Qwen3-Embedding 1.024'ten 32'ye kadar iner.
 
 İki düğme yan yana, aynı bir milyon vektör için:
 
-<svg viewBox="0 0 560 290" role="img" aria-label="Bir milyon adet 1.024 boyutlu vektör için iki maliyet düğmesi. Hassasiyet: float32 4,1 GB, float16 2,0 GB, int8 1,0 GB tutar ve erişim kalitesinin yaklaşık %99&#x27;unu korur, binary 128 MB tutar ve yaklaşık %96&#x27;sını korur; ikisi de tam hassasiyetli yeniden puanlamayla. Boyut: Matryoshka embedding bilgiyi öne yığar; aynı 1.024 boyutlu vektör yeniden eğitim olmadan ilk 512, 256 ya da 128 sayısına kısaltılabilir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 290" role="img" aria-label="Bir milyon adet 1.024 boyutlu vektör için iki maliyet düğmesi. Hassasiyet: float32 4,1 GB, float16 2,0 GB, int8 1,0 GB tutar ve erişim kalitesinin yaklaşık %99'unu korur, binary 128 MB tutar ve yaklaşık %96'sını korur; ikisi de tam hassasiyetli yeniden puanlamayla. Boyut: Matryoshka embedding bilgiyi öne yığar; aynı 1.024 boyutlu vektör yeniden eğitim olmadan ilk 512, 256 ya da 128 sayısına kısaltılabilir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <rect x="16" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <rect x="288" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">hassasiyet</text>
-<text x="30" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1M vektör × 1.024 boyut</text>
+<text x="30" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">1. Düğme: Nicemleme</text>
+<text x="30" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Hassasiyet (1M vektör × 1.024d)</text>
 <text x="30" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float32</text>
 <rect x="90" y="70" width="168.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="102" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4,1 GB</text>
+<text x="30" y="102" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4,1 GB (1× baz)</text>
 <text x="30" y="121" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float16</text>
 <rect x="90" y="108" width="84.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">2,0 GB</text>
+<text x="30" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">2,0 GB (2× küçük)</text>
 <text x="30" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">int8</text>
 <rect x="90" y="146" width="42.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1,0 GB</text>
-<text x="258" y="178" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%99 kalite</text>
+<text x="30" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1,0 GB (4× küçük)</text>
+<text x="258" y="178" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%99 recall</text>
 <text x="30" y="197" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">binary</text>
 <rect x="90" y="184" width="5.2" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="216" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 MB · 32× küçük</text>
-<text x="258" y="216" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%96 kalite</text>
-<text x="30" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kalite, tam hassasiyetli yeniden puanlamayla</text>
-<text x="302" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">boyut (Matryoshka)</text>
-<text x="302" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bilgi önde yığılı; koyu = daha çok</text>
+<text x="30" y="216" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 MB (32× küçük)</text>
+<text x="258" y="216" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%96 recall</text>
+<text x="30" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">recall, float32 reranking sonrasıdır</text>
+<text x="302" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">2. Düğme: Matryoshka</text>
+<text x="302" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Bilgi önde yığılı (koyu = yüksek önem)</text>
 <rect x="304" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.85"/>
 <rect x="311" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.83"/>
 <rect x="318" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.80"/>
@@ -399,15 +406,15 @@ Qwen3-Embedding 1.024'ten 32'ye kadar iner.
 <rect x="514" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.12"/>
 <rect x="521" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.10"/>
 <path d="M304 112 V118 H527.0 V112" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="415.5" y="132" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ilk 1.024</text>
+<text x="415.5" y="132" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1.024d (%100 baz)</text>
 <path d="M304 138 V144 H415.0 V138" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="423.0" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 512</text>
+<text x="423.0" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px">512d (%99+ recall)</text>
 <path d="M304 164 V170 H359.0 V164" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="367.0" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 256</text>
+<text x="367.0" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px">256d (%98+ recall)</text>
 <path d="M304 190 V196 H331.0 V190" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="339.0" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 128</text>
-<text x="302" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kuyruğu kes; yeniden eğitim yok</text>
-<text x="16" y="274" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İki düğme de baytı küçültür; kalite modelde yaşar, önce güçlü modeli seçin.</text>
+<text x="339.0" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px">128d (ön filtre)</text>
+<text x="302" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kuyruğu kes; yeniden eğitim gerekmez</text>
+<text x="16" y="274" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İki düğme birlikte çalışır: binary + 256d ile hızlı ön eleme yapılıp float32 ile yeniden puanlanır.</text>
 </svg>
 
 İki düğme artık büyük API'lerin arkasında da duruyor. OpenAI'ın
@@ -465,9 +472,9 @@ okula ayırır:
 
 İki okulu bulaşık makinesi örneğine koyunca kör noktaları tam ters yerlere düşer:
 
-<svg viewBox="0 0 560 250" role="img" aria-label="Yoğun bir vektörün yanında seyrek bir vektör. Dense embedding 1.024 hücresinin her birini öğrenilmiş bir değerle doldurur: sızdırıyor ile damlatıyor&#x27;un aynı şikâyet olduğunu görür ama E24&#x27;ü E25&#x27;ten ayıramaz. Sparse vektörde sözcük dağarcığındaki her kelimeye bir hücre vardır ve neredeyse hepsi sıfırdır; yalnızca hata, E24 ve bulaşık hücreleri yanar: E24 ile E25&#x27;i asla karıştırmaz ama sızdırıyor ile damlatıyor arasında bağ görmez." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="26" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">dense</text>
-<text x="16" y="42" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1.024 hücre, hepsi öğrenilmiş değer</text>
+<svg viewBox="0 0 560 250" role="img" aria-label="Yoğun bir vektörün yanında seyrek bir vektör. Dense embedding 1.024 hücresinin her birini öğrenilmiş bir değerle doldurur: sızdırıyor ile damlatıyor'un aynı şikâyet olduğunu görür ama E24'ü E25'ten ayıramaz. Sparse vektörde sözcük dağarcığındaki her kelimeye bir hücre vardır ve neredeyse hepsi sıfırdır; yalnızca hata, E24 ve bulaşık hücreleri yanar: E24 ile E25'i asla karıştırmaz ama sızdırıyor ile damlatıyor arasında bağ görmez." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="26" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Dense Vektör (Yoğun Embedding)</text>
+<text x="16" y="42" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1.024 boyutun tamamı öğrenilmiş sürekli değerlerle dolu (semantik uzay)</text>
 <rect x="64" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
 <rect x="76" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
 <rect x="88" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
@@ -508,10 +515,10 @@ okula ayırır:
 <rect x="508" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
 <rect x="520" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
 <rect x="532" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
-<text x="16" y="98" text-anchor="start" style="fill:var(--c-success);font-size:12px">görür: sızdırıyor ≈ damlatıyor</text>
-<text x="544" y="98" text-anchor="end" style="fill:var(--c-danger);font-size:12px">karıştırır: E24 ≈ E25</text>
-<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">sparse</text>
-<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kelime başına bir hücre, neredeyse hepsi sıfır</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">Görür: sızdırıyor ≈ damlatıyor (anlam)</text>
+<text x="544" y="98" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">Körlük: E24 ≈ E25 (kodları karıştırır)</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Sparse Vektör (Sözcüksel Arama: BM25 / SPLADE)</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Sözlükteki kelime başına bir hücre; yalnızca geçen terimler pozitif ağırlık alır</text>
 <rect x="64" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
 <rect x="76" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
 <rect x="88" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
@@ -555,9 +562,9 @@ okula ayırır:
 <text x="141" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">hata</text>
 <text x="297" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">E24</text>
 <text x="441" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">bulaşık</text>
-<text x="16" y="216" text-anchor="start" style="fill:var(--c-success);font-size:12px">ayırır: E24 / E25</text>
-<text x="544" y="216" text-anchor="end" style="fill:var(--c-danger);font-size:12px">kaçırır: sızdırıyor ≈ damlatıyor</text>
-<text x="16" y="242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her biri tam da diğerinin gördüğü yerde kördür; hibrit arama bu yüzden ikisini birlikte koşar.</text>
+<text x="16" y="216" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">Ayırır: E24 ≠ E25 (birebir eşleşme)</text>
+<text x="544" y="216" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">Kaçırır: sızdırıyor ≠ damlatıyor (eş anlam)</text>
+<text x="16" y="242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her biri diğerinin kör olduğu yerde güçlüdür; hibrit arama (RRF / Cross-Encoder) ikisini birleştirir.</text>
 </svg>
 
 Bu yazıdaki her şey dense okuldur. Sparse okul E24 ile E25'i asla

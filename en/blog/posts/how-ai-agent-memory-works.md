@@ -70,36 +70,36 @@ Consider an intuitive physical analogy: Imagine a brilliant management consultan
 
 Whether the consultant behaves as a coherent, context-aware partner depends entirely on the discipline of the librarian and filing clerk.
 
-<svg viewBox="0 0 560 268" role="img" aria-label="The runtime execution loop of agent memory. The user input q_t enters the read path, which also reads the persistent memory store M and runs a need gate, query rewrite, hybrid search, RRF and filtering. The read path builds a dynamic prompt: system prompt plus relevant memories plus history plus q_t. The stateless LLM produces the response a_t. The LLM and the response feed the write path, which extracts facts, applies bi-temporal updates and passes a PII gate, then writes back to the store." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 268" role="img" aria-label="The runtime execution loop of agent memory: User query q_t enters the read path, which queries the persistent memory store M through need detection, query rewriting, hybrid retrieval, and bi-temporal filtering. The read path assembles a dynamic context (system instructions, relevant memories, short-term history, and q_t) for the stateless foundation LLM. The model response a_t flows into the write path, which extracts atomic propositions, applies bi-temporal updates, checks PII policies, and consolidates new facts back into the persistent store." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="aml-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="aml-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 <marker id="aml-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
 </defs>
-<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Runtime execution loop</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Runtime Execution Architecture</text>
 <rect x="16" y="30" width="104" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="68.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User input</text>
-<text x="68.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">q_t</text>
+<text x="68.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User Input</text>
+<text x="68.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">turn q_t</text>
 <rect x="140" y="30" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="237.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Read path</text>
-<text x="237.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">need gate · rewrite · hybrid</text>
-<text x="237.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">search · RRF · filter</text>
+<text x="237.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Read Pipeline</text>
+<text x="237.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">need detection · query rewrite</text>
+<text x="237.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">hybrid search · RRF · temporal filter</text>
 <rect x="354" y="30" width="190" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="449.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dynamic prompt</text>
-<text x="449.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">system + relevant memories</text>
-<text x="449.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ history + q_t</text>
+<text x="449.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dynamic Prompt Assembly</text>
+<text x="449.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">system prompt + memories</text>
+<text x="449.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ recent dialog history + q_t</text>
 <rect x="354" y="116" width="190" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="449.0" y="140.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Stateless LLM</text>
+<text x="449.0" y="140.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Stateless Foundation LLM</text>
 <rect x="354" y="192" width="190" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="449.0" y="216.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Response a_t</text>
 <rect x="140" y="186" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="237.0" y="202.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Write path</text>
-<text x="237.0" y="218.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">extraction · bi-temporal</text>
-<text x="237.0" y="234.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">update · PII gate</text>
+<text x="237.0" y="202.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Write Pipeline</text>
+<text x="237.0" y="218.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">fact extraction · bi-temporal log</text>
+<text x="237.0" y="234.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">PII guardrails · consolidation</text>
 <path d="M16 111 V161 A52.0 7 0 0 0 120 161 V111" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
 <ellipse cx="68.0" cy="111" rx="52.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="68.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Memory</text>
-<text x="68.0" y="152.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">store M</text>
+<text x="68.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Persistent Store</text>
+<text x="68.0" y="152.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">vector + graph (M)</text>
 <line x1="120" y1="58" x2="138" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="334" y1="58" x2="352" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="449" y1="86" x2="449" y2="114" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -108,7 +108,7 @@ Whether the consultant behaves as a coherent, context-aware partner depends enti
 <line x1="354" y1="212" x2="336" y2="212" marker-end="url(#aml-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
 <path d="M354 136 H300 V184" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
 <path d="M140 214 H68 V170" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The model stays stateless; memory lives in the store and the two paths around it.</text>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">The model is stateless; memory lives in the persistent store and the pipelines around it.</text>
 </svg>
 
 Mathematically, agent interaction at step $t$ begins with the retrieval function assembling the context:
@@ -229,20 +229,21 @@ The write pipeline converts turns into **atomic facts**. **Mem0 (Chhikara et al.
 1. **Extraction:** An auxiliary model parses dialogue turns to generate candidate propositions.
 2. **State Transition:** The candidate proposition is compared against the top-$k$ nearest neighbors in storage, triggering one of four operations:
 
-<svg viewBox="0 0 560 300" role="img" aria-label="How a write decides what to do. A raw turn, q_t and a_t, goes to extraction, which produces a candidate proposition. Similarity search compares it against the top-k existing records. A decision gate then picks one of four operations. ADD when no equivalent record is found: insert a new vector and metadata. UPDATE when it refines or extends an existing record: enrich the existing entity. DELETE when it directly contradicts an existing record: mark the old one superseded, bi-temporally. NOOP when the information is already stored identically: no operation. ADD, UPDATE and DELETE write to the store." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 300" role="img" aria-label="Memory write decision engine: A raw turn (q_t, a_t) undergoes fact extraction to isolate standalone atomic propositions. Semantic search compares candidate facts against top-k existing records. The decision gate selects one of four operations: ADD when no equivalent record exists; UPDATE when new details enrich an existing entity; SUPERSEDE when the new fact directly contradicts prior knowledge; or NOOP when identical data is already stored." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="amo-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">raw turn (q_t, a_t)</text>
 <line x1="60" y1="24" x2="60" y2="38" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="96.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Extraction</text>
-<text x="96.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">candidate proposition</text>
+<text x="96.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Fact Extraction</text>
+<text x="96.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">atomic proposition</text>
 <rect x="200" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Similarity search</text>
-<text x="280.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">vs top-k existing</text>
+<text x="280.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Semantic Search</text>
+<text x="280.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">compare vs top-k</text>
+<text x="280.0" y="86.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">existing memories</text>
 <rect x="384" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="464.0" y="70.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decision gate</text>
+<text x="464.0" y="70.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decision Gate</text>
 <line x1="176" y1="66" x2="198" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="360" y1="66" x2="382" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M464 92 V108 H78 V122" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -253,33 +254,33 @@ The write pipeline converts turns into **atomic facts**. **Mem0 (Chhikara et al.
 <rect x="16" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="78" y="141" text-anchor="middle" style="fill:var(--c-success);font-size:13px;font-weight:700;font-family:var(--font-mono)">ADD</text>
 <text x="78" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">no equivalent</text>
-<text x="78" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">record found</text>
-<text x="78" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">insert new</text>
-<text x="78" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">vector &amp; meta</text>
+<text x="78" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">record exists</text>
+<text x="78" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">insert vector</text>
+<text x="78" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">&amp; metadata</text>
 <line x1="78" y1="230" x2="78" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="148" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="210" y="141" text-anchor="middle" style="fill:var(--c-accent);font-size:13px;font-weight:700;font-family:var(--font-mono)">UPDATE</text>
-<text x="210" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">refines or extends</text>
-<text x="210" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">an existing record</text>
-<text x="210" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">enrich existing</text>
-<text x="210" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">entity</text>
+<text x="210" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">enriches existing</text>
+<text x="210" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">knowledge record</text>
+<text x="210" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">expand entity</text>
+<text x="210" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">attributes</text>
 <line x1="210" y1="230" x2="210" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="280" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="342" y="141" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700;font-family:var(--font-mono)">DELETE</text>
-<text x="342" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">directly contradicts</text>
-<text x="342" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">an existing record</text>
+<text x="342" y="141" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700;font-family:var(--font-mono)">SUPERSEDE</text>
+<text x="342" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">contradicts prior</text>
+<text x="342" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">memory record</text>
 <text x="342" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">mark superseded</text>
 <text x="342" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">(bi-temporal)</text>
 <line x1="342" y1="230" x2="342" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="412" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.2"/>
 <text x="474" y="141" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700;font-family:var(--font-mono)">NOOP</text>
-<text x="474" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">already stored</text>
-<text x="474" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">identically</text>
+<text x="474" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">identical fact</text>
+<text x="474" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">already stored</text>
 <text x="474" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">no operation</text>
-<text x="474" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px"></text>
+<text x="474" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">(drop duplicate)</text>
 <path d="M16 257 V285 A194.0 7 0 0 0 404 285 V257" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
 <ellipse cx="210.0" cy="257" rx="194.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="210.0" y="279.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Memory store</text>
+<text x="210.0" y="279.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Persistent Memory Store (Vector, Relational &amp; Graph)</text>
 <circle cx="474" cy="268" r="9" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <circle cx="474" cy="268" r="4.5" style="fill:var(--c-text-mute)"/>
 <line x1="474" y1="230" x2="474" y2="256" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -384,58 +385,58 @@ Architectures balance latency against consistency:
 
 In production, memory retrieval is an orchestrator pipeline executing across multiple stages:
 
-<svg viewBox="0 0 560 392" role="img" aria-label="The read path, step by step. User input q_t meets a need detection gate. If no memory is needed, the request goes straight to the LLM with zero added latency. If memory is required, the query is rewritten, with HyDE. Three searches run in parallel: dense vector search by cosine, sparse keyword search with BM25, and a temporal knowledge graph walk. Reciprocal rank fusion merges their lists. Multi-signal scoring combines recency, importance and relevance. A scope and bi-temporal validity filter drops what does not apply. Cache-aware prompt packaging assembles the result, which becomes the LLM context." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 392" role="img" aria-label="Step-by-step memory retrieval pipeline: User input q_t first passes a memory need classifier. If no memory is needed, the query bypasses retrieval directly to the LLM with +0 ms added latency. When required, the query is expanded with HyDE. Three retrieval modes run concurrently: dense cosine vector search, sparse BM25 keyword search, and a temporal knowledge graph walk. Reciprocal rank fusion (RRF) merges candidate lists, followed by multi-signal scoring (recency, importance, relevance) and bi-temporal validity filtering. Prefix-cache-aware packaging builds the final prompt context for the LLM." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="amr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="amr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="8" width="130" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="81.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User input q_t</text>
+<text x="81.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User Input q_t</text>
 <rect x="170" y="8" width="160" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="250.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · Need detection</text>
+<text x="250.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · Need Classifier</text>
 <rect x="410" y="8" width="134" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="477.0" y="28.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Direct to LLM</text>
-<text x="477.0" y="44.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+0 ms latency</text>
+<text x="477.0" y="44.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+0 ms added latency</text>
 <line x1="146" y1="32" x2="168" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="330" y1="32" x2="408" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="370" y="26" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">not needed</text>
+<text x="370" y="26" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">memory not needed</text>
 <line x1="250" y1="56" x2="250" y2="86" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="258" y="75" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">memory required</text>
 <rect x="150" y="88" width="200" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="250.0" y="114.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · Query rewrite &amp; HyDE</text>
+<text x="250.0" y="114.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · Query Rewrite &amp; HyDE</text>
 <path d="M250 132 V146 M100 146 H460" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="100" y1="146" x2="100" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="100.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dense vector search</text>
-<text x="100.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cosine</text>
+<text x="100.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dense Vector Search</text>
+<text x="100.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cosine similarity</text>
 <line x1="280" y1="146" x2="280" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="196" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Sparse keyword search</text>
-<text x="280.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">BM25</text>
+<text x="280.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Sparse Text Search</text>
+<text x="280.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">BM25 keyword</text>
 <line x1="460" y1="146" x2="460" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="376" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="460.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Temporal graph walk</text>
-<text x="460.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">knowledge graph</text>
+<text x="460.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Temporal Graph Walk</text>
+<text x="460.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">entity graph traversal</text>
 <path d="M280 210 V224 M460 210 V224 H100" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="100" y1="210" x2="100" y2="240" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="100.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · RRF</text>
+<text x="100.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · RRF Fusion</text>
 <text x="100.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reciprocal rank fusion</text>
 <line x1="184" y1="271" x2="194" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="196" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="259.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5 · Multi-signal score</text>
-<text x="280.0" y="275.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">recency + importance</text>
-<text x="280.0" y="291.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ relevance</text>
+<text x="280.0" y="259.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5 · Multi-Signal Score</text>
+<text x="280.0" y="275.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">recency decay + importance</text>
+<text x="280.0" y="291.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ semantic relevance</text>
 <line x1="364" y1="271" x2="374" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="376" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="460.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6 · Validity filter</text>
-<text x="460.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">scope + bi-temporal</text>
+<text x="460.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6 · Validity Filter</text>
+<text x="460.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">scope &amp; bi-temporal window</text>
 <line x1="460" y1="300" x2="460" y2="326" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="376" y="328" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="460.0" y="353.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">7 · Prompt packaging</text>
-<text x="460.0" y="369.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cache-aware</text>
+<text x="460.0" y="353.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">7 · Prompt Packaging</text>
+<text x="460.0" y="369.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">prefix-cache optimized</text>
 <rect x="196" y="336" width="152" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="272.0" y="361.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LLM context</text>
+<text x="272.0" y="361.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LLM Context Window</text>
 <line x1="376" y1="357" x2="350" y2="357" marker-end="url(#amr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
 </svg>
 
@@ -618,41 +619,41 @@ While single-agent memory addresses *"What do I remember?"*, multi-agent swarms 
 
 A shared, unstructured global memory pool inevitably causes catastrophic data contamination.
 
-<svg viewBox="0 0 560 364" role="img" aria-label="Memory scopes in a multi-agent system. At the top, the organization scope holds global policies and company runbooks in the organization store. Below it, the project scope holds architectural decisions and code standards in the project store; the project reads the organization store as a read-only reference. The private agent working memory holds scratchpads for a researcher agent, a coder agent and a security auditor; the agents make explicit scoped writes to the project store. At the bottom, the user profile scope holds personal preferences and style in a store partitioned by user_id, which the researcher and coder agents read through a strict authenticated filter." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 364" role="img" aria-label="Hierarchical memory scopes in a multi-agent system: At the top level, organization scope stores enterprise governance policies and runbooks in the organization store. Project scope manages shared architectural decisions and code standards, reading organization records via read-only reference. Agent-private working memory provides isolated scratchpads for specialized agents (Researcher, Coder, Auditor), each performing authorized scoped writes to the project store. At the base, user profile scope manages individualized preferences in a user_id-partitioned store accessed through strict authenticated filters." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="ams-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="ams-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 </defs>
 <rect x="16" y="8" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="30" y="29" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Organization scope</text>
-<text x="30" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">global policies, company runbooks</text>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Organization Scope (Global)</text>
+<text x="30" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">governance policies, enterprise runbooks</text>
 <path d="M330 24 V46 A101.0 7 0 0 0 532 46 V24" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
 <ellipse cx="431.0" cy="24" rx="101.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="431.0" y="43.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Organization store</text>
+<text x="431.0" y="43.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Organization Store</text>
 <rect x="16" y="96" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="30" y="117" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Project scope</text>
+<text x="30" y="117" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Project Scope (Shared)</text>
 <text x="30" y="134" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">architectural decisions, code standards</text>
 <path d="M330 112 V134 A101.0 7 0 0 0 532 134 V112" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
 <ellipse cx="431.0" cy="112" rx="101.0" ry="7" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
-<text x="431.0" y="131.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Project store</text>
+<text x="431.0" y="131.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Project Store</text>
 <line x1="280" y1="96" x2="280" y2="62" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
-<text x="288" y="84" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">read-only reference</text>
+<text x="288" y="84" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">read-only reference access</text>
 <rect x="16" y="184" width="528" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="30" y="203" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Private agent working memory (scratchpads)</text>
+<text x="30" y="203" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Agent-Private Working Memory (Isolated Scratchpads)</text>
 <rect x="32" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="110.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Researcher agent</text>
+<text x="110.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Researcher Agent</text>
 <rect x="202" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Coder agent</text>
+<text x="280.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Coder Agent</text>
 <rect x="372" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="450.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Security auditor</text>
+<text x="450.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Security Auditor</text>
 <line x1="450" y1="184" x2="450" y2="150" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
-<text x="442" y="172" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">explicit scoped writes</text>
+<text x="442" y="172" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">authorized scoped writes</text>
 <rect x="16" y="304" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="30" y="325" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">User profile scope</text>
-<text x="30" y="342" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">personal preferences, style</text>
+<text x="30" y="325" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">User Profile Scope (Tenant-Isolated)</text>
+<text x="30" y="342" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">personal preferences, interaction style</text>
 <path d="M330 320 V342 A101.0 7 0 0 0 532 342 V320" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
 <ellipse cx="431.0" cy="320" rx="101.0" ry="7" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
-<text x="431.0" y="339.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">User store (by user_id)</text>
+<text x="431.0" y="339.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">User Store (user_id)</text>
 <line x1="110" y1="304" x2="110" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
 <line x1="280" y1="304" x2="280" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
 <text x="122" y="288" text-anchor="start" style="fill:var(--c-text);font-size:11px">strict authenticated filter</text>

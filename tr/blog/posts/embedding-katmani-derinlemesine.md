@@ -90,27 +90,27 @@ $d_{\text{model}}$ ise gizli katman boyutudur (hidden dimension):
 <defs>
 <marker id="lk-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="90" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">girdi tensörü</text>
+<text x="90" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Girdi Tensörü</text>
 <rect x="16" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="90.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token ID&#x27;leri</text>
-<text x="90.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq_len]</text>
+<text x="90.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Token ID'leri</text>
+<text x="90.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[batch, seq_len]</text>
 <text x="90.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">örn. [1, 6]</text>
-<text x="280" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">ağırlık belleği</text>
+<text x="280" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Ağırlık Tablosu</text>
 <rect x="206" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embed_tokens</text>
-<text x="280.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">V × d_model</text>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-accent);font-size:13px;font-weight:600">embed_tokens</text>
+<text x="280.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">V × d_model</text>
 <text x="280.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">262.144 × 1.152</text>
-<text x="470" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">gömme çıktısı</text>
+<text x="470" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Gömme Çıktısı</text>
 <rect x="396" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="470.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">yoğun tensör</text>
-<text x="470.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq, d_model]</text>
+<text x="470.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Yoğun Tensör</text>
+<text x="470.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[batch, seq, d_model]</text>
 <text x="470.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">örn. [1, 6, 1.152]</text>
 <line x1="164" y1="67" x2="204" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
-<text x="184.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">O(1) gather</text>
-<text x="184.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(satır okuma)</text>
+<text x="184.0" y="122" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">O(1) gather</text>
+<text x="184.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">satır okuma</text>
 <line x1="354" y1="67" x2="394" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="374.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">0 FLOP</text>
-<text x="374.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(aritmetik yok)</text>
+<text x="374.0" y="122" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">0 FLOP</text>
+<text x="374.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">aritmetik yok</text>
 </svg>
 
 - **Arama tablosu ($O(1)$) mantığı.** Bir matris çarpımı yapmak yerine
@@ -501,9 +501,9 @@ Cümlemizin altı pozisyonunu her çiftten geçirince dört hız gözle görün�
 <line x1="82" y1="112" x2="36.0" y2="98.4" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <text x="19.7" y="97.6" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">5</text>
 <circle cx="82" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="82" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">1. çift</text>
-<text x="82" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 1,0 rad</text>
-<text x="82" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">saniye ibresi</text>
+<text x="82" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">1. Çift (j=1)</text>
+<text x="82" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₁ = 1,0 rad</text>
+<text x="82" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Saniye (Hızlı)</text>
 <circle cx="214" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="214" y1="112" x2="214.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="214" y1="112" x2="218.8" y2="64.2" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -512,9 +512,9 @@ Cümlemizin altı pozisyonunu her çiftten geçirince dört hız gözle görün�
 <line x1="214" y1="112" x2="232.7" y2="67.8" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="214" y1="112" x2="237.0" y2="69.9" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="214" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="214" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">2. çift</text>
-<text x="214" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0,1 rad</text>
-<text x="214" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">hızlı yelkovan</text>
+<text x="214" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">2. Çift (j=2)</text>
+<text x="214" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₂ = 0,1 rad</text>
+<text x="214" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Hızlı Yelkovan</text>
 <circle cx="346" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="346" y1="112" x2="346.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="346" y1="112" x2="346.5" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -523,9 +523,9 @@ Cümlemizin altı pozisyonunu her çiftten geçirince dört hız gözle görün�
 <line x1="346" y1="112" x2="347.9" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="346" y1="112" x2="348.4" y2="64.1" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="346" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="346" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">3. çift</text>
-<text x="346" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0,01 rad</text>
-<text x="346" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">yavaş yelkovan</text>
+<text x="346" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">3. Çift (j=3)</text>
+<text x="346" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₃ = 0,01 rad</text>
+<text x="346" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Yavaş Yelkovan</text>
 <circle cx="478" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -534,11 +534,11 @@ Cümlemizin altı pozisyonunu her çiftten geçirince dört hız gözle görün�
 <line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="478" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="478" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">4. çift</text>
-<text x="478" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0,001 rad</text>
-<text x="478" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">akrep</text>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">m = 0 … 5 için ibre konumları (base = 10.000, d = 8); m = 5 mor</text>
-<text x="16" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Aynı altı adım, dört hız: 1. çift kadranı neredeyse dolaşırken 4. çift gözle görülür kıpırdamaz.</text>
+<text x="478" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">4. Çift (j=4)</text>
+<text x="478" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₄ = 0,001 rad</text>
+<text x="478" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Akrep (Yavaş)</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">RoPE Frekans Saatleri: m = 0 … 5 pozisyon açıları (base = 10.000, d = 8)</text>
+<text x="16" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Hızlı çiftler ardışık komşuları ayırır; yavaş çiftler uzak pozisyon sırasını korur.</text>
 </svg>
 
 **`rope_theta` Neden 10.000'den 1 Milyona Çıkarıldı?**
@@ -782,7 +782,7 @@ Tablodaki norm satırları, her token'ın ham normuyla birlikte çizildiğinde:
 <text x="44" y="113.33333333333333" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2</text>
 <line x1="52" y1="46.0" x2="544" y2="46.0" style="stroke:var(--c-border);stroke-width:1"/>
 <text x="44" y="50.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">3</text>
-<text x="16" y="30" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">vektör normu ‖x‖</text>
+<text x="16" y="30" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Vektör Normu ‖x‖</text>
 <rect x="62.0" y="144.2" width="18" height="91.8" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
 <rect x="84.0" y="59.3" width="18" height="176.7" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
 <rect x="106.0" y="156.2" width="18" height="79.8" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
@@ -820,14 +820,14 @@ Tablodaki norm satırları, her token'ın ham normuyla birlikte çizildiğinde:
 <text x="503.0" y="63.43333333333334" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2,63</text>
 <text x="503.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">cat</text>
 <rect x="16" y="262" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
-<text x="34" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">öğrenilmiş mutlak</text>
-<rect x="150" y="262" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
-<text x="168" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sinüzoidal</text>
-<rect x="246" y="262" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
-<text x="264" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">RoPE</text>
-<line x1="312" y1="268" x2="330" y2="268" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
-<text x="336" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ham norm</text>
-<text x="16" y="294" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Pozisyon vektörü eklemek token&#x27;ı uzatır; döndürmek uzatmaz. The ile the eşit başlar.</text>
+<text x="34" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">öğrenilmiş mutlak (kayma)</text>
+<rect x="190" y="262" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<text x="208" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sinüzoidal (&gt;2× şişme)</text>
+<rect x="336" y="262" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<text x="354" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">RoPE (korur)</text>
+<line x1="432" y1="268" x2="450" y2="268" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="456" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ham norm (taban)</text>
+<text x="16" y="294" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Vektör ekleme (A, B) normu bozar; RoPE (C) ise izometrik döndürmeyle ham normu birebir korur.</text>
 </svg>
 
 **Vektör boyu neden bozulmamalı (norm koruma).** Dikkat puanı iç çarpımla
@@ -865,23 +865,23 @@ dengesizlikleriyle yakından ilişkilidir.
 <marker id="sp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="76.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">residual ölçekleme</text>
-<text x="76.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1/√(2N)</text>
+<text x="76.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">residual ölçek</text>
+<text x="76.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">1/√(2N)</text>
 <line x1="136" y1="51" x2="150" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="152" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="212.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normlar küçülür</text>
-<text x="212.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖W_d‖ ≈ 0,002</text>
+<text x="212.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">norm küçülür</text>
+<text x="212.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">‖W_d‖ ≈ 0,002</text>
 <line x1="272" y1="51" x2="286" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="348.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">bağıl güncelleme</text>
-<text x="348.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖ΔW‖ / ‖W‖</text>
-<text x="348.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">adımda %5 → %50</text>
+<text x="348.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">bağıl güncelleme</text>
+<text x="348.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">‖ΔW‖ / ‖W‖</text>
+<text x="348.0" y="71.5" text-anchor="middle" style="fill:var(--c-warn);font-size:11.5px;font-weight:600">adımda %5 → %50</text>
 <line x1="408" y1="51" x2="422" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="424" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="484.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LOSS SPIKE</text>
-<text x="484.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">aşırı duyarlılık</text>
-<text x="16" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adam&#x27;ın adımı ağırlık ölçeğinden bağımsız olarak 0,001 civarında kalır;</text>
-<text x="16" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">küçük bir ağırlık bu yüzden oransal olarak dev bir adım atar.</text>
+<text x="484.0" y="47.5" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700">KAYIP SIÇRAMASI</text>
+<text x="484.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">loss spike patlaması</text>
+<text x="16" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adam güncelleme adımı ağırlık ölçeğinden bağımsız sabit kalır (~0,001);</text>
+<text x="16" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">normu küçülen ağırlık oransal olarak dev bir sarsıntı (%50 bağıl adım) yaşar.</text>
 </svg>
 
 **Neden gerçekleşir (norm dengesizliği).** Derin ağlarda patlayan
@@ -983,17 +983,17 @@ Asimetri, tek matrisin iki rolü yan yana konunca en net görünür:
 <line x1="230" y1="186" x2="330" y2="186" style="stroke:var(--c-border);stroke-width:1"/>
 <line x1="230" y1="194" x2="330" y2="194" style="stroke:var(--c-border);stroke-width:1"/>
 <line x1="230" y1="202" x2="330" y2="202" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="280" y="30" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">tek matris E</text>
+<text x="280" y="30" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Tek Matris E (Paylaşılan)</text>
 <text x="280" y="228" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">262.144 × 1.152</text>
-<text x="280" y="244" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">aynı data_ptr() iki kez</text>
+<text x="280" y="244" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">aynı data_ptr() bellekte tek kopya</text>
 <text x="16" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">GİRİŞ · embed_tokens</text>
 <rect x="16" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="51.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">ID k</text>
 <line x1="86" y1="87" x2="220" y2="87" marker-end="url(#ty-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <rect x="224" y="82" width="112" height="10" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <text x="150" y="78" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">k. satırı oku</text>
-<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:12px">tek satır gather</text>
-<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0 FLOP, bir bellek okuması</text>
-<text x="16" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">(Gemma&#x27;da sonra × √1152)</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Tek Satır Gather</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0 FLOP, bellek okuması</text>
+<text x="16" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">(Gemma: ardından × √1.152)</text>
 <text x="544" y="30" text-anchor="end" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">ÇIKIŞ · lm_head</text>
 <rect x="474" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="509.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">h</text>
 <path d="M474 87 H406 V125 H342" marker-end="url(#ty-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
@@ -1017,9 +1017,9 @@ Asimetri, tek matrisin iki rolü yan yana konunca en net görünür:
 <line x1="338" y1="186" x2="352" y2="186" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
 <line x1="338" y1="194" x2="352" y2="194" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
 <line x1="338" y1="202" x2="352" y2="202" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
-<text x="472" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">h · her satır</text>
+<text x="472" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">h · her satırla çarpım</text>
 <line x1="352" y1="180" x2="470" y2="180" marker-end="url(#ty-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<text x="544" y="176" text-anchor="end" style="fill:var(--c-text);font-size:12px">262.144 logit</text>
+<text x="544" y="176" text-anchor="end" style="fill:var(--c-text);font-size:12px;font-weight:600">262.144 logit</text>
 <text x="544" y="196" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2 × d × V ≈ 0,60 GFLOP</text>
 <text x="544" y="212" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">üretilen token başına (1B)</text>
 </svg>

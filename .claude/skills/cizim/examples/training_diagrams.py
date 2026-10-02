@@ -276,168 +276,161 @@ EN = dict(
              "lambda max, curvature is steep and plain SGD bounces in violent transverse oscillations. Along the floor "
              "direction, lambda min, curvature is flat and forward progress is near zero. SGD is stuck: with a step size "
              "above 2 over lambda max it diverges; below it, it crawls along the floor. Three algorithmic fixes: momentum "
-             "cancels the oscillations, since alternating gradients sum to about zero, and accumulates velocity along the "
-             "floor; AdamW normalizes the step size per coordinate with an RMS; Muon orthogonalizes the whole 2D update "
-             "matrix with Newton-Schulz iterations."),
-    rv_title="The ravine dilemma (κ ≫ 10⁴)",
+             "dampens transverse oscillations and builds speed along the floor; AdamW equalizes step scales per coordinate "
+             "with an RMS estimate; Muon orthogonalizes the whole 2D update matrix with Newton-Schulz iterations."),
+    rv_title="The Ravine Dilemma (κ ≫ 10⁴)",
     rv_min="minimum",
     rv_wall=["wall · λ_max", "steep curvature:", "violent oscillations"],
     rv_floor="floor · λ_min · flat curvature: near-zero forward progress",
     rv_sgd="SGD: η > 2/λ_max → diverges;  η < 2/λ_max → crawls along the floor",
     rv_sol="Algorithmic solutions",
-    rv_cards=[("Momentum", "cancels oscillations", "(Σ ±g ≈ 0), builds speed"),
+    rv_cards=[("Momentum", "dampens oscillations", "(Σ ±g ≈ 0), builds speed"),
               ("AdamW", "normalizes step size", "per-coordinate RMS"),
-              ("Muon", "orthogonalizes the 2D", "matrix (Newton–Schulz)")],
-    aw_aria=("Adam with L2 regularization versus AdamW. In Adam with L2, the decay term lambda times w is added to the "
+              ("Muon", "orthogonalizes 2D", "matrix (Newton–Schulz)")],
+    aw_aria=("Adam with L2 regularization versus AdamW. In Adam with L2, the weight decay term lambda times w is added to the "
              "gradient, fed into the first and second moments, and divided by the square root of v, so weights with large "
-             "gradient history are barely decayed. In AdamW, decoupled weight decay, the plain gradient g goes through "
-             "the moments to a standard Adam step, and the weight decay, minus eta times lambda times w, bypasses the "
-             "moments and is subtracted from the weights directly."),
-    aw_rows=[("Adam + L2 regularization", "decay distorted"), ("AdamW (decoupled weight decay)", "decay intact")],
+             "gradient history are barely decayed while rare features over-decay. In AdamW (decoupled weight decay), the pure "
+             "gradient g goes through the moments to a standard Adam step, while the weight decay minus eta lambda w bypasses "
+             "the moments and is subtracted from the weights directly."),
+    aw_rows=[("Adam + L2 Regularization", "decay distorted"), ("AdamW (Decoupled Weight Decay)", "decay intact")],
     aw_mom="1st & 2nd moments", aw_div="divided by √v",
-    aw_bad="the decay term is rescaled per coordinate along with the gradient",
+    aw_bad="decay couples with gradient scale: rare coordinates over-decay",
     aw_mom2="moments m, v", aw_step="standard step",
-    aw_sub="subtract from w", aw_bypass="bypasses the moments",
-    mu_aria=("Muon's update in five steps. Start from the raw momentum matrix G of a 2D hidden weight. Divide by its "
-             "Frobenius norm: X0 equals G over the norm of G. Run five Newton-Schulz iterations: X k plus 1 equals one "
-             "half X k times 3 I minus X k transpose X k. The result is an orthogonal update matrix: X transpose X is "
-             "approximately the identity, all singular values equal 1. Update the weights: W becomes W minus eta X, a "
-             "uniform spectral step."),
-    mu_steps=[("Raw momentum G (2D weight)", "G"), ("Normalize energy", "X₀ = G / ‖G‖_F"),
-              ("5× Newton–Schulz", "X_k+1 = ½·X_k(3I − X_kᵀX_k)"), ("Orthogonal update", "XᵀX ≈ I (all σᵢ = 1)"),
+    aw_sub="subtract from w", aw_bypass="bypasses moments",
+    mu_aria=("Muon update in five steps: Start from the raw momentum matrix G of a 2D hidden weight. Divide by its Frobenius "
+             "norm: X0 equals G over the Frobenius norm. Run five Newton-Schulz iterations: X k plus 1 equals one half X k "
+             "times 3 I minus X k transpose X k. The result is an orthogonal update matrix where X transpose X is approximately "
+             "the identity and all singular values equal 1. Update the weights with a uniform spectral step W becomes W minus eta X."),
+    mu_steps=[("Raw 2D momentum matrix", "G"), ("Frobenius normalization", "X₀ = G / ‖G‖_F"),
+              ("5× Newton–Schulz iterations", "X_k+1 = ½·X_k(3I − X_kᵀX_k)"), ("Orthogonal update tensor", "XᵀX ≈ I (all σᵢ ≈ 1)"),
               ("Uniform spectral step", "W ← W − η·X")],
-    ch_aria=("A deep linear chain at initialization. x0, drawn from a standard normal, passes through W1 to give x1, "
-             "through W2, and so on through W L to give x L. Every weight matrix has variance sigma squared, so each "
-             "layer multiplies the signal's variance by the same factor, and over L layers that factor compounds."),
-    ch_n1="Every W has Var(W) = σ²; each layer rescales the variance by the same factor.",
-    ch_n2="Over L layers the factor compounds: it explodes above 1 and vanishes below 1.",
-    sy_aria=("Why symmetric initialization fails. The same input x reaches neurons 1, 2 and 3. With identical weights, "
-             "their pre-activations z, activations a and gradients dL/dz are identical, so every update keeps them "
-             "identical. The network's rank collapses to a single effective neuron."),
+    ch_aria=("Deep linear chain variance compounding at initialization. x0 drawn from a standard normal passes through W1 to give x1, "
+             "through W2, and so on through W L to give x L. Every weight matrix has variance sigma squared, so each layer multiplies "
+             "the signal variance by the same factor; over L layers that factor compounds exponentially."),
+    ch_n1="Every weight has Var(W) = σ²; each layer rescales signal variance.",
+    ch_n2="Over L layers the factor compounds: exploding if > 1, vanishing if < 1.",
+    sy_aria=("Why symmetric initialization fails: The same input x reaches neurons 1, 2 and 3. With identical weights, "
+             "their pre-activations z, activations a and gradients dL/dz are identical, so every update keeps them identical. "
+             "The network rank collapses to a single effective neuron."),
     sy_in="input x",
     sy_n="Neuron {}",
-    sy_res=["all identical:", "rank collapses to", "one effective neuron"],
+    sy_res=["all neurons identical:", "rank collapses to", "one effective neuron"],
     sy_foot="Same weights → same outputs → same gradients → same updates, forever.",
-    rs_aria=("Variance growth along the residual stream. x0 has variance 1. Each block adds F of x, whose variance is "
-             "1.0, so x1 has variance 2, and after L blocks x L has variance 1 plus L."),
-    rs_note="each block adds a variance-1 branch",
-    lr_aria=("LayerNorm versus RMSNorm. LayerNorm computes the mean mu in pass 1 over x, centers x minus mu in pass 2, "
-             "computes the variance sigma squared in pass 3, then normalizes and applies the affine gamma and beta. "
-             "RMSNorm computes the root mean square of x in a single pass, then normalizes and applies gamma only."),
-    lr_rows=[("LayerNorm", [("mean μ", "pass 1"), ("x − μ", "pass 2"), ("variance σ²", "pass 3"), ("normalize", None), ("affine", "γ, β")]),
-             ("RMSNorm", [("RMS = √(Σx²/D)", "one pass over x"), ("normalize", None), ("affine", "γ only")])],
-    lr_foot="Three reads of x become one, and the mean and β disappear.",
-    pp_aria=("Post-LN versus Pre-LN. In Post-LN, the original 2017 Transformer, x l goes both into the sublayer and along "
-             "the residual path; the two are added, and LayerNorm sits on the main path after the addition, producing x "
-             "l plus 1, so every gradient must pass through a normalization. In Pre-LN, the modern standard from 2019 to "
-             "2023, the branch first applies LayerNorm or RMSNorm and then the sublayer; the result is added to the "
-             "untouched residual path, giving x l plus 1, so the residual highway stays clean."),
-    pp_panels=[("Post-LN", "original Transformer, 2017"), ("Pre-LN", "modern standard, 2019–2023")],
+    rs_aria=("Variance growth along the residual stream: x0 has variance 1. Each residual block adds F(x) with variance 1.0, "
+             "so x1 has variance 2, and after L blocks x L has compounded variance 1 plus L."),
+    rs_note="each residual block adds a variance-1 branch to the stream",
+    lr_aria=("LayerNorm versus RMSNorm architectural comparison: LayerNorm computes the mean mu in pass 1 over x, centers x minus mu "
+             "in pass 2, computes the variance sigma squared in pass 3, then standardizes and applies affine gamma and beta. "
+             "RMSNorm computes the root mean square of x in a single pass, then standardizes and applies gamma only."),
+    lr_rows=[("LayerNorm", [("mean μ", "pass 1"), ("centering x−μ", "pass 2"), ("variance σ²", "pass 3"), ("standardize", None), ("affine γ, β", "scale & shift")]),
+             ("RMSNorm", [("RMS = √(Σx²/D)", "one pass sum-squares"), ("normalize", None), ("affine γ only", "scale only")])],
+    lr_foot="Three reads of x become one, and the mean and β parameter disappear.",
+    pp_aria=("Post-LN versus Pre-LN: In Post-LN (original 2017 Transformer), x l goes into the sublayer and along the residual path; "
+             "the two are added, and LayerNorm sits directly on the main highway after the addition, so every gradient must pass "
+             "through normalization. In Pre-LN (modern standard), the branch first applies normalization and then the sublayer; "
+             "the result is added to the untouched residual path, leaving the highway clean."),
+    pp_panels=[("Post-LN (2017)", "original Transformer"), ("Pre-LN (Modern)", "Llama, Mistral, Gemma")],
     pp_norm="LN / RMSNorm",
     pp_hw="residual",
-    pp_warn=["norm sits on the", "highway itself"],
-    pp_ok=["highway stays", "untouched"],
-    uf_aria=("Unfused normalization. The residual addition writes its result to HBM; the mean reduction reads it back "
-             "and writes; the variance reduction reads and writes; standardization plus affine reads and writes; the "
-             "QKV GEMM finally reads the normalized tensor. Four HBM round trips for one normalization."),
-    uf_sm="separate kernels",
+    pp_warn=["norm sits on highway,", "warmup required"],
+    pp_ok=["highway untouched,", "clean identity path"],
+    uf_aria=("Unfused normalization memory bottleneck: The residual addition writes to HBM; mean reduction reads and writes back; "
+             "variance reduction reads and writes; standardization plus affine reads and writes; finally QKV GEMM reads the tensor. "
+             "Four round trips to off-chip HBM for a single normalization."),
+    uf_sm="separate CUDA kernels",
     uf_k=[("residual", "addition"), ("mean", "reduction"), ("variance", "reduction"), ("standardize", "+ affine"), ("QKV GEMM", None)],
     uf_hbm="HBM (off-chip)",
     uf_w="write", uf_r="read",
-    uf_foot="4 HBM round trips for a single normalization.",
-    fu_aria=("Fused RMSNorm kernel. Inside one GPU streaming multiprocessor, in SRAM and registers: the residual input is "
-             "summed in registers, a warp-shuffle reduction computes the RMS, the result is multiplied by gamma, and the "
-             "scaled output is ready. One single HBM write sends it directly into the GEMM input buffer."),
-    fu_sm="GPU streaming multiprocessor (SM) · SRAM / registers",
-    fu_top=["residual in", "in-register sum", "warp-shuffle RMS"],
-    fu_bot=["scaled output", "multiply by γ"],
-    fu_reg="nothing leaves the chip until the end",
-    fu_hbm="HBM · GEMM input buffer",
-    fu_one="single HBM write",
+    uf_foot="Each op reads and writes HBM: 4 round trips for one normalization.",
+    fu_aria=("Fused RMSNorm kernel: Inside one GPU streaming multiprocessor (SM), in registers and SRAM: residual input is summed, "
+             "a warp-shuffle reduction computes RMS, the result is multiplied by gamma, and a single HBM write delivers the output "
+             "directly into the GEMM input buffer."),
+    fu_sm="GPU Streaming Multiprocessor (SM) · SRAM / Registers",
+    fu_top=["residual input", "in-register add", "warp-shuffle RMS"],
+    fu_bot=["scaled tensor", "multiply by γ"],
+    fu_reg="intermediate tensors never leave chip registers/SRAM",
+    fu_hbm="HBM · QKV GEMM input buffer",
+    fu_one="single HBM write to GEMM buffer",
 )
 
 TR = dict(
-    rv_aria=("Kötü koşullu vadi, koşul sayısı kappa 10 üzeri 4'ün çok üstünde. Yamaç yönünde, lambda max, eğrilik diktir "
-             "ve düz SGD şiddetli enine salınımlarla sekip durur. Taban yönünde, lambda min, eğrilik düzdür ve ileri "
-             "ilerleme neredeyse sıfırdır. SGD sıkışmıştır: adım boyu 2 bölü lambda max'ın üstündeyse patlar, altındaysa "
-             "taban boyunca sürünür. Üç algoritmik çözüm: momentum salınımları sönümler, çünkü yön değiştiren gradyanların "
-             "toplamı sıfıra yakındır, ve taban boyunca hız biriktirir; AdamW adım boyutunu koordinat bazlı RMS ile "
-             "eşitler; Muon tüm 2D güncelleme matrisini Newton-Schulz yinelemeleriyle ortogonalize eder."),
-    rv_title="Kötü koşullu vadi çıkmazı (κ ≫ 10⁴)",
+    rv_aria=("Kötü koşullu vadi çıkmazı, koşul sayısı kappa 10 üzeri 4&#x27;ün çok üstünde. Yamaç doğrultusunda (lambda max) "
+             "eğrilik diktir ve düz SGD şiddetli enine salınımlarla sekip durur. Vadi tabanı doğrultusunda (lambda min) eğrilik "
+             "düzdür ve ileri ilerleme neredeyse sıfırdır. SGD sıkışmıştır: Adım boyu 2 bölü lambda max&#x27;ın üstündeyse patlar, "
+             "altındaysa tabanda sürünür. Üç algoritmik çözüm: Momentum enine salınımları sönümler (Σ ±g ≈ 0) ve taban boyunca hız "
+             "biriktirir; AdamW koordinat bazlı RMS ile adım boyunu eşitler; Muon tüm 2D momentum matrisini Newton-Schulz ile "
+             "ortogonalize eder."),
+    rv_title="Kötü Koşullu Vadi Çıkmazı (κ ≫ 10⁴)",
     rv_min="minimum",
-    rv_wall=["yamaç · λ_max", "dik eğrilik:", "şiddetli salınım"],
+    rv_wall=["yamaç · λ_max", "dik eğrilik:", "şiddetli salınımlar"],
     rv_floor="taban · λ_min · düz eğrilik: neredeyse sıfır ilerleme",
     rv_sgd="SGD: η > 2/λ_max → patlar;  η < 2/λ_max → taban boyunca sürünür",
     rv_sol="Algoritmik çözümler",
     rv_cards=[("Momentum", "salınımları sönümler", "(Σ ±g ≈ 0), hız biriktirir"),
               ("AdamW", "adım boyunu eşitler", "koordinat bazlı RMS"),
-              ("Muon", "2D matrisi ortogonalize", "eder (Newton–Schulz)")],
-    aw_aria=("L2 regülarizasyonlu Adam ile AdamW. L2'li Adam'da sönümleme terimi lambda çarpı w gradyana eklenir, birinci "
-             "ve ikinci momentlere girer ve v'nin kareköküne bölünür; büyük gradyan geçmişi olan ağırlıklar neredeyse hiç "
-             "sönümlenmez. Ayrıştırılmış sönümlemeli AdamW'de saf gradyan g momentlerden geçip standart Adam adımına "
-             "gider; ağırlık sönümleme, eksi eta çarpı lambda çarpı w, momentleri atlar ve ağırlıklardan doğrudan "
-             "çıkarılır."),
-    aw_rows=[("Adam + L2 regülarizasyonu", "sönümleme BOZULUR"), ("AdamW (ayrıştırılmış sönümleme)", "sönümleme KORUNUR")],
-    aw_mom="momentlere girer", aw_div="√v ile bölünür",
-    aw_bad="sönümleme terimi gradyanla birlikte koordinat bazında yeniden ölçeklenir",
-    aw_mom2="momentler m, v", aw_step="standart adım",
-    aw_sub="w'den çıkar", aw_bypass="momentleri atlar",
-    mu_aria=("Muon güncellemesi beş adımda. 2D gizli bir ağırlığın ham momentum matrisi G'den başla. Frobenius normuna böl: "
-             "X0, G bölü G'nin normu. Beş Newton-Schulz yinelemesi çalıştır: X k artı 1, yarım çarpı X k çarpı 3 I eksi X k "
-             "devrik X k. Sonuç ortogonal bir güncelleme matrisidir: X devrik X yaklaşık birim matristir, tüm tekil "
-             "değerler 1'dir. Ağırlığı güncelle: W, W eksi eta X olur; eşit bir spektral adım."),
-    mu_steps=[("Ham momentum G (2D ağırlık)", "G"), ("Enerjiyi normalle", "X₀ = G / ‖G‖_F"),
-              ("5× Newton–Schulz", "X_k+1 = ½·X_k(3I − X_kᵀX_k)"), ("Ortogonal güncelleme", "XᵀX ≈ I (tüm σᵢ = 1)"),
+              ("Muon", "2D matrisi ortogonal", "yapar (Newton–Schulz)")],
+    aw_aria=("L2 regülarizasyonlu Adam ile AdamW karşılaştırması: L2&#x27;li Adam&#x27;da ağırlık sönümleme terimi lambda çarpı w gradyana "
+             "eklenir, birinci ve ikinci momentlere girer ve v&#x27;nin kareköküne bölünür; seyrek güncellenen ağırlıklar aşırı sönümlenirken "
+             "sık güncellenenler sönümlenmez. Ayrıştırılmış sönümlemeli AdamW&#x27;de saf gradyan g momentlerden geçip standart Adam adımına "
+             "gider; ağırlık sönümleme (eksi eta lambda w) momentleri tamamen atlayarak doğrudan ağırlıklardan çıkarılır."),
+    aw_rows=[("Adam + L2 Regülarizasyonu", "sönümleme BOZULUR"), ("AdamW (Ayrıştırılmış Sönümleme)", "sönümleme KORUNUR")],
+    aw_mom="momentlere girer (m, v)", aw_div="√v ile bölünür",
+    aw_bad="sönümleme gradyana bağlanır; seyrek koordinatlar aşırı sönümlenir",
+    aw_mom2="saf gradyan g", aw_step="standart adaptif adım",
+    aw_sub="doğrudan w&#x27;den çıkar", aw_bypass="momentleri atlar",
+    mu_aria=("Muon optimizasyon güncellemesi beş adımda: 2D gizli ağırlıkların ham momentum matrisi G&#x27;den başlanır. Frobenius normuna "
+             "bölünerek enerji normalizasyonu yapılır: X0 = G / ‖G‖_F. Beş Newton-Schulz yinelemesi çalıştırılır: X_k+1 = 1/2 X_k (3I − X_k^T X_k). "
+             "Sonuç ortogonal bir güncelleme tensörüdür (X^T X ≈ I, tüm tekil değerler 1&#x27;e eşitlenir). Ağırlıklar eşit spektral adımla "
+             "güncellenir: W = W − eta X."),
+    mu_steps=[("Ham 2D momentum matrisi", "G"), ("Frobenius normalizasyonu", "X₀ = G / ‖G‖_F"),
+              ("5× Newton–Schulz yinelemesi", "X_k+1 = ½·X_k(3I − X_kᵀX_k)"), ("Ortogonal güncelleme tensörü", "XᵀX ≈ I (tüm σᵢ ≈ 1)"),
               ("Eşit spektral adım", "W ← W − η·X")],
-    ch_aria=("Başlatma anında derin, doğrusal bir zincir. Standart normalden çekilen x0, W1'den geçip x1'i, W2'den geçip "
-             "sonrakini verir ve W L'den geçip x L'ye ulaşır. Her ağırlık matrisinin varyansı sigma karedir; her katman "
-             "sinyalin varyansını aynı katsayıyla çarpar ve L katmanda bu katsayı katlanarak büyür."),
-    ch_n1="Her W için Var(W) = σ²; her katman varyansı aynı katsayıyla ölçekler.",
-    ch_n2="L katmanda katsayı katlanır: 1'in üstündeyse patlar, altındaysa söner.",
-    sy_aria=("Simetrik başlatma neden çöker. Aynı girdi x 1, 2 ve 3 numaralı nöronlara ulaşır. Ağırlıklar aynıysa z "
-             "ön-aktivasyonları, a aktivasyonları ve dL/dz gradyanları da aynıdır; her güncelleme onları aynı tutar. "
-             "Ağın rankı tek bir etkin nörona çöker."),
+    ch_aria=("Başlatma anında derin doğrusal zincirde varyans yayılımı: Standart normalden çekilen x0, W1&#x27;den geçip x1&#x27;i, W2&#x27;den "
+             "geçip sonrakini verir ve W L&#x27;den geçip x L&#x27;ye ulaşır. Her ağırlık matrisinin varyansı sigma karedir; her katman sinyal "
+             "varyansını aynı katsayıyla çarpar ve L katmanda bu katsayı katlanarak ya patlar ya da söner."),
+    ch_n1="Her W matrisi için Var(W) = σ²; katman varyansı bu katsayıyla çarpar.",
+    ch_n2="L katmanda katsayı katlanır: 1&#x27;den büyükse patlar, küçükse söner.",
+    sy_aria=("Simetrik başlatmanın çöküşü: Aynı girdi x 1, 2 ve 3 numaralı nöronlara ulaşır. Ağırlıklar özdeşse z ön-aktivasyonları, "
+             "a aktivasyonları ve dL/dz gradyanları da tamamen aynıdır; her güncelleme onları özdeş tutar. Ağın rankı tek bir etkin "
+             "nörona çöker ve simetri kırılamaz."),
     sy_in="girdi x",
     sy_n="Nöron {}",
-    sy_res=["tamamen özdeş:", "rank tek etkin", "nörona çöker"],
-    sy_foot="Aynı ağırlık → aynı çıktı → aynı gradyan → aynı güncelleme, sonsuza dek.",
-    rs_aria=("Residual akış boyunca varyansın büyümesi. x0'ın varyansı 1'dir. Her blok varyansı 1,0 olan F(x)'i ekler; "
-             "x1'in varyansı 2 olur ve L bloktan sonra x L'nin varyansı 1 artı L'dir."),
-    rs_note="her blok varyansı 1 olan bir kol ekler",
-    lr_aria=("LayerNorm ile RMSNorm. LayerNorm x üzerinde 1. geçişte ortalama mu'yu hesaplar, 2. geçişte x eksi mu ile "
-             "merkezler, 3. geçişte varyans sigma kareyi hesaplar, sonra normalize eder ve gamma ile beta afinini "
-             "uygular. RMSNorm x'in karelerinin ortalamasının karekökünü tek geçişte hesaplar, sonra normalize eder ve "
-             "yalnızca gamma uygular."),
-    lr_rows=[("LayerNorm", [("ortalama μ", "1. geçiş"), ("x − μ", "2. geçiş"), ("varyans σ²", "3. geçiş"), ("normalize", None), ("afin", "γ, β")]),
-             ("RMSNorm", [("RMS = √(Σx²/D)", "x üzerinde TEK geçiş"), ("normalize", None), ("afin", "yalnız γ")])],
-    lr_foot="x üç kez yerine bir kez okunur; ortalama ve β ortadan kalkar.",
-    pp_aria=("Post-LN ile Pre-LN. Orijinal 2017 Transformer'ı olan Post-LN'de x l hem alt katmana hem residual yola gider; "
-             "ikisi toplanır ve LayerNorm toplamadan sonra ana yolun üstünde durur, x l artı 1'i üretir; her gradyan bir "
-             "normalizasyondan geçmek zorundadır. 2019-2023'ün modern standardı Pre-LN'de kol önce LayerNorm ya da "
-             "RMSNorm'u, sonra alt katmanı uygular; sonuç el değmemiş residual yola eklenir ve x l artı 1 çıkar; "
-             "residual otoyolu temiz kalır."),
-    pp_panels=[("Post-LN", "orijinal Transformer, 2017"), ("Pre-LN", "modern standart, 2019–2023")],
+    sy_res=["tüm nöronlar özdeş:", "rank tek etkin nörona", "çöker (simetri kırılmaz)"],
+    sy_foot="Aynı ağırlık → aynı çıktı → aynı gradyan → aynı güncelleme; simetri kilitlenir.",
+    rs_aria=("Residual akış boyunca varyansın büyümesi: x0&#x27;ın varyansı 1&#x27;dir. Her residual blok varyansı 1,0 olan F(x) kolunu "
+             "ekler; x1&#x27;in varyansı 2 olur ve L bloktan sonra x L&#x27;nin toplam varyansı 1 artı L&#x27;ye ulaşır."),
+    rs_note="her residual blok akışa varyansı 1 olan bir kol ekler",
+    lr_aria=("LayerNorm ile RMSNorm mimari karşılaştırması: LayerNorm x üzerinde 1. geçişte ortalama mu&#x27;yu hesaplar, 2. geçişte x eksi "
+             "mu ile merkezler, 3. geçişte varyans sigma kareyi hesaplar, sonra normalize eder ve afin gamma ile beta uygular. RMSNorm "
+             "karelerin ortalamasının karekökünü tek geçişte hesaplar, normalize eder ve yalnızca gamma afinini uygular."),
+    lr_rows=[("LayerNorm", [("ortalama μ", "1. geçiş"), ("merkezleme x−μ", "2. geçiş"), ("varyans σ²", "3. geçiş"), ("standartlaş.", None), ("afin γ, β", "ölçek &amp; kaydır")]),
+             ("RMSNorm", [("RMS = √(Σx²/D)", "tek geçişte kareler"), ("normalize et", None), ("afin yalnız γ", "yalnızca ölçekle")])],
+    lr_foot="x üç kez yerine bir kez okunur; ortalama ve β parametresi ortadan kalkar.",
+    pp_aria=("Post-LN ile Pre-LN normalizasyon düzeni: Orijinal 2017 Transformer&#x27;ı olan Post-LN&#x27;de x l hem alt katmana hem residual "
+             "yola gider; ikisi toplanır ve LayerNorm toplamadan sonra ana yolun üstünde durur, x l artı 1&#x27;i üretir; her gradyan "
+             "normalizasyondan geçmek zorundadır ve warmup şarttır. Pre-LN&#x27;de kol önce normalizasyonu, sonra alt katmanı uygular; "
+             "sonuç el değmemiş residual yola eklenir ve otoyol temiz kalır."),
+    pp_panels=[("Post-LN (2017)", "orijinal Transformer"), ("Pre-LN (Modern)", "Llama, Mistral, Gemma")],
     pp_norm="LN / RMSNorm",
     pp_hw="residual",
-    pp_warn=["norm otoyolun", "tam üstünde"],
-    pp_ok=["otoyol el", "değmeden kalır"],
-    uf_aria=("Birleştirilmemiş normalizasyon. Residual toplama sonucunu HBM'e yazar; ortalama indirgemesi onu geri okur "
-             "ve yazar; varyans indirgemesi okur ve yazar; standartlaştırma ve afin okur ve yazar; QKV GEMM en sonunda "
-             "normalize tensörü okur. Tek bir normalizasyon için dört HBM gidiş-dönüşü."),
-    uf_sm="ayrı kernel'ler",
+    pp_warn=["norm otoyol üstünde,", "warmup şarttır"],
+    pp_ok=["otoyol el değmeden kalır,", "saf ekspres hat"],
+    uf_aria=("Ayrık kernel&#x27;lerin bellek darboğazı: Residual toplama sonucunu HBM&#x27;e yazar; ortalama indirgemesi onu geri okur ve "
+             "yazar; varyans indirgemesi okur ve yazar; standartlaştırma ve afin okur ve yazar; QKV GEMM en sonunda normalize tensörü okur. "
+             "Tek bir normalizasyon için dört HBM gidiş-dönüşü gerekir."),
+    uf_sm="ayrık CUDA kernel&#x27;leri",
     uf_k=[("residual", "toplama"), ("ortalama", "indirgeme"), ("varyans", "indirgeme"), ("standartlaş.", "+ afin"), ("QKV GEMM", None)],
     uf_hbm="HBM (çip dışı)",
     uf_w="yaz", uf_r="oku",
-    uf_foot="Tek bir normalizasyon için 4 HBM gidiş-dönüşü.",
-    fu_aria=("Birleştirilmiş RMSNorm kernel'i. Tek bir GPU streaming multiprocessor içinde, SRAM ve yazmaçlarda: residual "
-             "girdi yazmaçlarda toplanır, warp-shuffle indirgemesi RMS'i hesaplar, sonuç gamma ile çarpılır ve ölçekli "
-             "çıktı hazır olur. Tek bir HBM yazımı onu doğrudan GEMM girdi tamponuna gönderir."),
-    fu_sm="GPU streaming multiprocessor (SM) · SRAM / yazmaçlar",
-    fu_top=["residual girdi", "yazmaç içi toplam", "warp-shuffle RMS"],
-    fu_bot=["ölçekli çıktı", "γ ile çarp"],
-    fu_reg="sonuna kadar hiçbir şey çipten çıkmaz",
-    fu_hbm="HBM · GEMM girdi tamponu",
-    fu_one="TEK HBM yazımı",
+    uf_foot="Her işlem ara tensörü HBM&#x27;e yazar ve okur: 4 HBM gidiş-dönüşü.",
+    fu_aria=("Birleştirilmiş RMSNorm kernel&#x27;i: Tek bir GPU streaming multiprocessor (SM) içinde, SRAM ve yazmaçlarda residual girdi "
+             "toplanır, warp-shuffle ile RMS hesaplanır, sonuç gamma ile çarpılır ve tek bir HBM yazımı onu doğrudan GEMM girdi tamponuna gönderir."),
+    fu_sm="GPU Streaming Multiprocessor (SM) · SRAM / Yazmaçlar",
+    fu_top=["residual girdi", "yazmaçta toplama", "warp-shuffle RMS"],
+    fu_bot=["ölçekli tensör", "γ ile çarpım"],
+    fu_reg="ara tensörler asla çipten çıkmaz (SRAM içinde kalır)",
+    fu_hbm="HBM · QKV GEMM girdi tamponu",
+    fu_one="tek bir HBM yazımı",
 )
 
 out = {}

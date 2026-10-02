@@ -245,7 +245,7 @@ document through twenty retrieved ones; accuracy traced a U — strong
 at the edges, collapsing in the middle, at the dip *worse than giving
 the model no documents at all*:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="U-shaped curve of answer accuracy versus the position of the correct document among 20 retrieved documents: about 75 percent at position 1, dipping to about 54 percent in the middle, recovering to about 63 percent at position 20. A dashed horizontal line at about 56 percent marks closed-book accuracy with no documents at all" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 480 320" role="img" aria-label="U-shaped performance curve of answer accuracy as a function of the gold document position among 20 retrieved chunks (Lost in the Middle, Liu et al. 2023): Retrieval placed at the very start yields ~75% accuracy (primacy bias), but drops sharply to ~54% when buried in the middle (falling below the ~56% closed-book baseline without documents), before recovering to ~63% at the end (recency bias)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <line x1="50" y1="260" x2="460" y2="260" style="stroke:var(--c-border);stroke-width:1.5"/>
 <line x1="50" y1="260" x2="50" y2="20" style="stroke:var(--c-border);stroke-width:1.5"/>
 <g style="stroke:var(--c-border);stroke-width:1">
@@ -258,17 +258,17 @@ the model no documents at all*:
 <g style="fill:var(--c-text-mute);font-size:11px" text-anchor="end">
 <text x="40" y="64">75%</text><text x="40" y="144">65%</text><text x="40" y="224">55%</text>
 </g>
-<text x="455" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">position of the correct document among 20</text>
-<text x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">answer accuracy</text>
+<text x="455" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">gold document rank among 20 retrieved chunks (1 → 20)</text>
+<text x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">answer accuracy (%)</text>
 <line x1="50" y1="212" x2="450" y2="212" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
-<text x="160" y="204" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">no documents at all (closed-book)</text>
+<text x="160" y="204" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">closed-book baseline (no context: ~56%)</text>
 <path d="M 50 60 C 90 130, 110 196, 134 196 C 170 224, 205 228, 239 228 C 280 224, 315 218, 345 212 C 390 198, 425 172, 450 156" fill="none" style="stroke:var(--c-accent);stroke-width:2.5"/>
 <circle cx="50" cy="60" r="4.5" style="fill:var(--c-text)"/>
 <circle cx="239" cy="228" r="4.5" style="fill:var(--c-text)"/>
 <circle cx="450" cy="156" r="4.5" style="fill:var(--c-text)"/>
-<text x="62" y="52" text-anchor="start" style="fill:var(--c-text);font-size:13px">≈75%</text>
-<text x="239" y="250" text-anchor="middle" style="fill:var(--c-text);font-size:13px">≈54%</text>
-<text x="444" y="146" text-anchor="end" style="fill:var(--c-text);font-size:13px">≈63%</text>
+<text x="62" y="52" text-anchor="start" style="fill:var(--c-text);font-size:12.5px">≈75% (primacy)</text>
+<text x="239" y="250" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">≈54% (lost in the middle)</text>
+<text x="444" y="146" text-anchor="end" style="fill:var(--c-text);font-size:12.5px">≈63% (recency)</text>
 </svg>
 
 (Redrawn, approximate, from Liu et al. 2023 — "lost in the middle".)

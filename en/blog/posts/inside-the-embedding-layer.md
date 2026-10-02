@@ -85,27 +85,27 @@ $V$ is the vocabulary size and $d_{\text{model}}$ is the hidden dimension:
 <defs>
 <marker id="lk-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="90" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">input tensor</text>
+<text x="90" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Input Tensor</text>
 <rect x="16" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="90.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token IDs</text>
-<text x="90.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq_len]</text>
+<text x="90.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Token IDs</text>
+<text x="90.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[batch, seq_len]</text>
 <text x="90.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">e.g. [1, 6]</text>
-<text x="280" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">weight memory</text>
+<text x="280" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Weight Table</text>
 <rect x="206" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embed_tokens</text>
-<text x="280.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">V × d_model</text>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-accent);font-size:13px;font-weight:600">embed_tokens</text>
+<text x="280.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">V × d_model</text>
 <text x="280.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">262,144 × 1,152</text>
-<text x="470" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">embedding output</text>
+<text x="470" y="22" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Embedding Output</text>
 <rect x="396" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="470.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">dense tensor</text>
-<text x="470.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq, d_model]</text>
+<text x="470.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Dense Tensor</text>
+<text x="470.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[batch, seq, d_model]</text>
 <text x="470.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">e.g. [1, 6, 1,152]</text>
 <line x1="164" y1="67" x2="204" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
-<text x="184.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">O(1) gather</text>
-<text x="184.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(row read)</text>
+<text x="184.0" y="122" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">O(1) gather</text>
+<text x="184.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">row read</text>
 <line x1="354" y1="67" x2="394" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="374.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">0 FLOPs</text>
-<text x="374.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(no arithmetic)</text>
+<text x="374.0" y="122" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">0 FLOPs</text>
+<text x="374.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">zero arithmetic</text>
 </svg>
 
 - **Lookup table ($O(1)$) logic.** Rather than performing a matrix
@@ -518,9 +518,9 @@ Run the six positions of our sentence through each pair and the four speeds beco
 <line x1="82" y1="112" x2="36.0" y2="98.4" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <text x="19.7" y="97.6" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">5</text>
 <circle cx="82" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="82" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 1</text>
-<text x="82" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 1.0 rad</text>
-<text x="82" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">second hand</text>
+<text x="82" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Pair 1 (j=1)</text>
+<text x="82" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₁ = 1.0 rad</text>
+<text x="82" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Second Hand (fast)</text>
 <circle cx="214" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="214" y1="112" x2="214.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="214" y1="112" x2="218.8" y2="64.2" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -529,9 +529,9 @@ Run the six positions of our sentence through each pair and the four speeds beco
 <line x1="214" y1="112" x2="232.7" y2="67.8" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="214" y1="112" x2="237.0" y2="69.9" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="214" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="214" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 2</text>
-<text x="214" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.1 rad</text>
-<text x="214" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">fast minute</text>
+<text x="214" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Pair 2 (j=2)</text>
+<text x="214" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₂ = 0.1 rad</text>
+<text x="214" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Fast Minute Hand</text>
 <circle cx="346" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="346" y1="112" x2="346.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="346" y1="112" x2="346.5" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -540,9 +540,9 @@ Run the six positions of our sentence through each pair and the four speeds beco
 <line x1="346" y1="112" x2="347.9" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="346" y1="112" x2="348.4" y2="64.1" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="346" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="346" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 3</text>
-<text x="346" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.01 rad</text>
-<text x="346" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">slow minute</text>
+<text x="346" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Pair 3 (j=3)</text>
+<text x="346" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₃ = 0.01 rad</text>
+<text x="346" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Slow Minute Hand</text>
 <circle cx="478" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
 <line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
@@ -551,11 +551,11 @@ Run the six positions of our sentence through each pair and the four speeds beco
 <line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
 <line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
 <circle cx="478" cy="112" r="3" style="fill:var(--c-text)"/>
-<text x="478" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 4</text>
-<text x="478" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.001 rad</text>
-<text x="478" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">hour hand</text>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">needle positions for m = 0 … 5 (base = 10,000, d = 8); m = 5 in purple</text>
-<text x="16" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Same six steps, four speeds: pair 1 nearly laps the dial while pair 4 has not visibly moved.</text>
+<text x="478" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Pair 4 (j=4)</text>
+<text x="478" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-family:var(--font-mono)">θ₄ = 0.001 rad</text>
+<text x="478" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Hour Hand (slow)</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">RoPE Frequency Clocks: Needle angles for positions m = 0 … 5 (base = 10,000, d = 8)</text>
+<text x="16" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Fast pairs distinguish local neighbours; slow pairs preserve long-range order across the context.</text>
 </svg>
 
 **Why `rope_theta` Was Scaled to 1,000,000:**
@@ -811,7 +811,7 @@ The norm rows of that table, drawn against each token's raw norm:
 <text x="44" y="113.33333333333333" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2</text>
 <line x1="52" y1="46.0" x2="544" y2="46.0" style="stroke:var(--c-border);stroke-width:1"/>
 <text x="44" y="50.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">3</text>
-<text x="16" y="30" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">vector norm ‖x‖</text>
+<text x="16" y="30" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Vector Norm ‖x‖</text>
 <rect x="62.0" y="144.2" width="18" height="91.8" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
 <rect x="84.0" y="59.3" width="18" height="176.7" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
 <rect x="106.0" y="156.2" width="18" height="79.8" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
@@ -849,14 +849,14 @@ The norm rows of that table, drawn against each token's raw norm:
 <text x="503.0" y="63.43333333333334" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.63</text>
 <text x="503.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">cat</text>
 <rect x="16" y="262" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
-<text x="34" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">learned absolute</text>
-<rect x="144" y="262" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
-<text x="162" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sinusoidal</text>
-<rect x="240" y="262" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
-<text x="258" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">RoPE</text>
-<line x1="306" y1="268" x2="324" y2="268" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
-<text x="330" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">raw norm</text>
-<text x="16" y="294" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adding a position vector stretches the token; rotating it does not. The and the start equal.</text>
+<text x="34" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">learned absolute (drift)</text>
+<rect x="175" y="262" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<text x="193" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">sinusoidal (&gt;2× inflation)</text>
+<rect x="330" y="262" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<text x="348" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">RoPE (exact)</text>
+<line x1="430" y1="268" x2="448" y2="268" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="454" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">raw norm (baseline)</text>
+<text x="16" y="294" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Vector addition (A, B) distorts token norms; RoPE (C) preserves raw norms exactly via rotation.</text>
 </svg>
 
 **Why vector length must not distort (norm preservation).** Attention scores
@@ -892,23 +892,23 @@ deep layers.
 <marker id="sp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="76.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">residual scaling</text>
-<text x="76.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1/√(2N)</text>
+<text x="76.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">residual scaling</text>
+<text x="76.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">1/√(2N)</text>
 <line x1="136" y1="51" x2="150" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="152" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="212.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">norms shrink</text>
-<text x="212.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖W_d‖ ≈ 0.002</text>
+<text x="212.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">norms shrink</text>
+<text x="212.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">‖W_d‖ ≈ 0.002</text>
 <line x1="272" y1="51" x2="286" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="348.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">update ratio jumps</text>
-<text x="348.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖ΔW‖ / ‖W‖</text>
-<text x="348.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">5% → 50% per step</text>
+<text x="348.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">relative update</text>
+<text x="348.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">‖ΔW‖ / ‖W‖</text>
+<text x="348.0" y="71.5" text-anchor="middle" style="fill:var(--c-warn);font-size:11.5px;font-weight:600">5% → 50% per step</text>
 <line x1="408" y1="51" x2="422" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="424" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="484.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LOSS SPIKE</text>
-<text x="484.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">extreme instability</text>
-<text x="16" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adam&#x27;s step stays near 0.001 whatever the weight scale,</text>
-<text x="16" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">so a small weight takes a proportionally huge step.</text>
+<text x="484.0" y="47.5" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700">LOSS SPIKE</text>
+<text x="484.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sudden divergence</text>
+<text x="16" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adam update steps stay near 0.001 regardless of weight scale;</text>
+<text x="16" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">shrunken weights suffer an explosive 50% relative perturbation, destabilizing training.</text>
 </svg>
 
 **Why it happens (norm imbalance).** To stabilize gradients in very deep
@@ -1005,17 +1005,17 @@ The asymmetry is easiest to see with both roles of the one matrix side by side:
 <line x1="230" y1="186" x2="330" y2="186" style="stroke:var(--c-border);stroke-width:1"/>
 <line x1="230" y1="194" x2="330" y2="194" style="stroke:var(--c-border);stroke-width:1"/>
 <line x1="230" y1="202" x2="330" y2="202" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="280" y="30" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">one matrix E</text>
+<text x="280" y="30" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Single Matrix E (Shared)</text>
 <text x="280" y="228" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">262,144 × 1,152</text>
-<text x="280" y="244" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">same data_ptr() twice</text>
+<text x="280" y="244" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">same data_ptr() single memory buffer</text>
 <text x="16" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">INPUT · embed_tokens</text>
 <rect x="16" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="51.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">ID k</text>
 <line x1="86" y1="87" x2="220" y2="87" marker-end="url(#ty-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <rect x="224" y="82" width="112" height="10" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <text x="150" y="78" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">read row k</text>
-<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:12px">gather one row</text>
-<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0 FLOPs, a memory read</text>
-<text x="16" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">(then × √1152 in Gemma)</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Single-Row Gather</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0 FLOPs, memory read</text>
+<text x="16" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">(Gemma: then × √1,152)</text>
 <text x="544" y="30" text-anchor="end" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">OUTPUT · lm_head</text>
 <rect x="474" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="509.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">h</text>
 <path d="M474 87 H406 V125 H342" marker-end="url(#ty-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
@@ -1039,9 +1039,9 @@ The asymmetry is easiest to see with both roles of the one matrix side by side:
 <line x1="338" y1="186" x2="352" y2="186" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
 <line x1="338" y1="194" x2="352" y2="194" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
 <line x1="338" y1="202" x2="352" y2="202" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
-<text x="472" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">h · every row</text>
+<text x="472" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">h · dot product with every row</text>
 <line x1="352" y1="180" x2="470" y2="180" marker-end="url(#ty-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<text x="544" y="176" text-anchor="end" style="fill:var(--c-text);font-size:12px">262,144 logits</text>
+<text x="544" y="176" text-anchor="end" style="fill:var(--c-text);font-size:12px;font-weight:600">262,144 logits</text>
 <text x="544" y="196" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2 × d × V ≈ 0.60 GFLOP</text>
 <text x="544" y="212" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">per generated token (1B)</text>
 </svg>

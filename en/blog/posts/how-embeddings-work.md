@@ -60,24 +60,25 @@ every text in your corpus lives on the surface of the same sphere:
 <text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">“my dishwasher is leaking underneath”</text>
 <path d="M40 30 V48" marker-end="url(#en-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="74.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">tokens</text>
-<text x="74.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">text → pieces</text>
+<text x="74.0" y="80.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Tokenization</text>
+<text x="74.0" y="96.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">BPE tokenizer</text>
+<text x="74.0" y="110.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">N subwords</text>
 <line x1="132" y1="87" x2="152" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="154" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="212.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">encoder</text>
-<text x="212.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reads all tokens</text>
-<text x="212.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">together</text>
+<text x="212.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Encoder</text>
+<text x="212.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Bidirectional Attn</text>
+<text x="212.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hᵢ ∈ ℝᵈ (full context)</text>
 <line x1="270" y1="87" x2="290" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="292" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="350.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">pooling</text>
-<text x="350.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">many vectors</text>
-<text x="350.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">become one</text>
+<text x="350.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Pooling</text>
+<text x="350.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Mean Pooling</text>
+<text x="350.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">N × d → 1 × d</text>
 <line x1="408" y1="87" x2="428" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="430" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="488.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embedding</text>
-<text x="488.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1,024 numbers,</text>
-<text x="488.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">length 1</text>
-<text x="16" y="150" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">One sentence in, one point on the unit sphere out.</text>
+<text x="488.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Embedding</text>
+<text x="488.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">u = v / ‖v‖₂</text>
+<text x="488.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">‖u‖₂ = 1 (d=1,024)</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Variable-length text in; a single point on the unit hypersphere (‖u‖₂ = 1) out.</text>
 </svg>
 
 One sentence in, one point out. The interesting question is not the
@@ -104,9 +105,9 @@ answered them.
 
 Here is what one training step actually optimizes, and the map that many such steps leave behind:
 
-<svg viewBox="0 0 560 300" role="img" aria-label="Contrastive training on one batch of three pairs: q1 leak question with p1 drain-hose passage, q2 wifi reset question with p2 router guide, q3 hello with p3 merhaba. Left, the batch&#x27;s 3 by 3 similarity grid of queries against passages: the three diagonal cells, the true pairs, are pushed up; the six off-diagonal cells, every other passage in the batch, are pushed down. Right, the resulting map on the unit sphere: each question now sits beside its own passage and away from the other pairs." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">one training batch</text>
-<text x="16" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">similarity of every q with every p</text>
+<svg viewBox="0 0 560 300" role="img" aria-label="Contrastive training on one batch of three pairs: q1 leak question with p1 drain-hose passage, q2 wifi reset question with p2 router guide, q3 hello with p3 merhaba. Left, the batch's 3 by 3 similarity grid of queries against passages: the three diagonal cells, the true pairs, are pushed up; the six off-diagonal cells, every other passage in the batch, are pushed down. Right, the resulting map on the unit sphere: each question now sits beside its own passage and away from the other pairs." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Training Batch: InfoNCE Loss</text>
+<text x="16" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">3×3 Similarity Matrix (q · pᵀ / τ)</text>
 <rect x="92" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="108.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p1</text>
 <rect x="140" y="52" width="32" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="156.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p2</text>
 <rect x="188" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="204.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p3</text>
@@ -132,11 +133,11 @@ Here is what one training step actually optimizes, and the map that many such st
 <rect x="180" y="180" width="44" height="44" rx="4" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success);stroke-width:1.2"/>
 <text x="202.0" y="208" text-anchor="middle" style="fill:var(--c-success);font-size:16px;font-weight:700">↑</text>
 <rect x="32" y="236" width="12" height="12" rx="2" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success)"/>
-<text x="50" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">true pair: pull together</text>
+<text x="50" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">True pair (qᵢ·pᵢ): pull together (↑)</text>
 <rect x="32" y="256" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger)"/>
-<text x="50" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">rest of the batch: push apart</text>
-<text x="300" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">the map it leaves behind</text>
-<text x="300" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">normalized points on the unit sphere</text>
+<text x="50" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">In-batch negative: push apart (↓)</text>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Learned Geometry</text>
+<text x="300" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Normalized points on the unit sphere (Sᵈ⁻¹)</text>
 <circle cx="420" cy="136" r="66" style="fill:none;stroke:var(--c-border);stroke-width:1.2;stroke-dasharray:4 4"/>
 <circle cx="362.8" cy="103.0" r="5.5" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:1.5"/>
 <text x="349.0" y="99.0" text-anchor="end" style="fill:var(--c-text);font-size:12px">q1</text>
@@ -155,8 +156,8 @@ Here is what one training step actually optimizes, and the map that many such st
 <circle cx="306" cy="250" r="4.5" style="fill:var(--c-warn)"/>
 <text x="316" y="254" text-anchor="start" style="fill:var(--c-text);font-size:12px">q2 wifi reset?  ↔  p2 router guide</text>
 <circle cx="306" cy="268" r="4.5" style="fill:var(--c-accent-2)"/>
-<text x="316" y="272" text-anchor="start" style="fill:var(--c-text);font-size:12px">q3 hello  ↔  p3 merhaba</text>
-<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Nobody labels axes. Repeat over 1.17B pairs and &#x27;belongs together&#x27; becomes &#x27;is nearby&#x27;.</text>
+<text x="316" y="272" text-anchor="start" style="fill:var(--c-text);font-size:12px">q3 hello  ↔  p3 merhaba (cross-lingual)</text>
+<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Nobody labels axes. Repeat over 1.17B pairs and InfoNCE turns meaning into angular distance.</text>
 </svg>
 
 Three practical consequences hide in that training recipe:
@@ -206,23 +207,26 @@ Two dimensions are enough to see it. Put three texts on the map as
 unit vectors — the leak question **a = (0.6, 0.8)**, the drain-hose
 paragraph **b = (0.8, 0.6)**, a recipe page **c = (−0.8, 0.6)**:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="Three unit vectors drawn from one origin: the leak question a at coordinates 0.6, 0.8; the drain-hose paragraph b at 0.8, 0.6; a recipe page c at minus 0.8, 0.6. A small arc between a and b is labeled cosine 0.96; a wider arc between a and c is labeled cosine 0, ninety degrees" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 300" role="img" aria-label="Three unit vectors drawn from one origin: the leak question a at coordinates 0.6, 0.8; the drain-hose paragraph b at 0.8, 0.6; a recipe page c at minus 0.8, 0.6. A small arc between a and b is labeled cosine 0.96; a wider arc between a and c is labeled cosine 0, ninety degrees" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="cos-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 <marker id="cos-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
-<line x1="30" y1="260" x2="450" y2="260" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="240" y1="300" x2="240" y2="40" style="stroke:var(--c-border);stroke-width:1.5"/>
-<line x1="240" y1="260" x2="360" y2="100" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
-<line x1="240" y1="260" x2="400" y2="140" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
-<line x1="240" y1="260" x2="80" y2="140" marker-end="url(#cos-arr2)" style="stroke:var(--c-accent-2);stroke-width:2"/>
-<path d="M 294 188 A 90 90 0 0 1 312 206" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<path d="M 210 220 A 50 50 0 0 1 270 220" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 4"/>
-<text x="330" y="192" text-anchor="start" style="fill:var(--c-text);font-size:13px">cos = 0.96</text>
-<text x="240" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">cos = 0 (90°)</text>
-<text x="366" y="92" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">a — leak question (0.6, 0.8)</text>
-<text x="406" y="136" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">b — drain-hose ¶ (0.8, 0.6)</text>
-<text x="74" y="132" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">c — recipe page (−0.8, 0.6)</text>
+<line x1="20" y1="250" x2="540" y2="250" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="280" y1="285" x2="280" y2="35" style="stroke:var(--c-border);stroke-width:1.5"/>
+<line x1="280" y1="250" x2="376" y2="122" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
+<line x1="280" y1="250" x2="408" y2="154" marker-end="url(#cos-arr)" style="stroke:var(--c-accent);stroke-width:2.5"/>
+<line x1="280" y1="250" x2="152" y2="154" marker-end="url(#cos-arr2)" style="stroke:var(--c-accent-2);stroke-width:2"/>
+<path d="M 328 186 A 80 80 0 0 1 344 202" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M 252 216 A 45 45 0 0 1 312 216" fill="none" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 4"/>
+<text x="354" y="194" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">cos(a, b) = 0.96 (acute angle)</text>
+<text x="280" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cos(a, c) = 0.00 (90° right angle)</text>
+<text x="382" y="112" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">a: "water leak"</text>
+<text x="382" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(0.6, 0.8)</text>
+<text x="416" y="152" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">b: "drain hose"</text>
+<text x="416" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(0.8, 0.6)</text>
+<text x="144" y="152" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-weight:600">c: "chocolate cake"</text>
+<text x="144" y="168" text-anchor="end" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">(−0.8, 0.6)</text>
 </svg>
 
 Check the picture with the formula, in the same order every time —
@@ -285,11 +289,14 @@ each time it can't improve:
 <line x1="390" y1="156" x2="398" y2="234" marker-end="url(#hnsw-arr)" style="stroke:var(--c-accent);stroke-width:2.5;stroke-dasharray:6 5"/>
 <circle cx="90" cy="60" r="5" style="fill:var(--c-accent)"/>
 <circle cx="400" cy="240" r="6.5" style="fill:var(--c-accent-2)"/>
-<text x="90" y="42" text-anchor="middle" style="fill:var(--c-text);font-size:12px">enter here</text>
-<text x="400" y="266" text-anchor="middle" style="fill:var(--c-text);font-size:12px">nearest neighbor</text>
-<text x="452" y="64" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">motorways</text>
-<text x="452" y="130" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">avenues</text>
-<text x="452" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">streets — every vector</text>
+<text x="90" y="42" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Entry Point</text>
+<text x="400" y="266" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">Nearest Neighbor</text>
+<text x="472" y="54" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Layer 2</text>
+<text x="472" y="68" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Motorways (sparse)</text>
+<text x="472" y="144" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Layer 1</text>
+<text x="472" y="158" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Avenues</text>
+<text x="472" y="234" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-weight:600">Layer 0</text>
+<text x="472" y="248" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">All Vectors</text>
 </svg>
 
 Instead of a million comparisons, the search touches a few thousand —
@@ -342,25 +349,25 @@ Both dials side by side, for the same million vectors:
 <svg viewBox="0 0 560 290" role="img" aria-label="The two cost dials for one million 1,024-dimension vectors. Precision: float32 takes 4.1 GB, float16 2.0 GB, int8 1.0 GB and keeps about 99% of retrieval quality, binary 128 MB and keeps about 96%, both with a full-precision rescoring pass. Dimensions: a Matryoshka embedding front-loads information, so the same 1,024-dimension vector can be truncated to its first 512, 256 or 128 numbers without retraining." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <rect x="16" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <rect x="288" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">precision</text>
-<text x="30" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1M vectors × 1,024 dims</text>
+<text x="30" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">1. Dial: Quantization</text>
+<text x="30" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Precision (1M vectors × 1,024d)</text>
 <text x="30" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float32</text>
 <rect x="90" y="70" width="168.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="102" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4.1 GB</text>
+<text x="30" y="102" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4.1 GB (1× base)</text>
 <text x="30" y="121" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float16</text>
 <rect x="90" y="108" width="84.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">2.0 GB</text>
+<text x="30" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">2.0 GB (2× smaller)</text>
 <text x="30" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">int8</text>
 <rect x="90" y="146" width="42.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1.0 GB</text>
-<text x="258" y="178" text-anchor="end" style="fill:var(--c-success);font-size:12px">~99% quality</text>
+<text x="30" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1.0 GB (4× smaller)</text>
+<text x="258" y="178" text-anchor="end" style="fill:var(--c-success);font-size:12px">~99% recall</text>
 <text x="30" y="197" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">binary</text>
 <rect x="90" y="184" width="5.2" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="30" y="216" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 MB · 32× smaller</text>
-<text x="258" y="216" text-anchor="end" style="fill:var(--c-success);font-size:12px">~96% quality</text>
-<text x="30" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">quality kept with full-precision rescoring</text>
-<text x="302" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">dimensions (Matryoshka)</text>
-<text x="302" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">information front-loaded, darker = more</text>
+<text x="30" y="216" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 MB (32× smaller)</text>
+<text x="258" y="216" text-anchor="end" style="fill:var(--c-success);font-size:12px">~96% recall</text>
+<text x="30" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">recall reflects full-precision reranking</text>
+<text x="302" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">2. Dial: Matryoshka</text>
+<text x="302" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Front-loaded dims (darker = core info)</text>
 <rect x="304" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.85"/>
 <rect x="311" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.83"/>
 <rect x="318" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.80"/>
@@ -394,15 +401,15 @@ Both dials side by side, for the same million vectors:
 <rect x="514" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.12"/>
 <rect x="521" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.10"/>
 <path d="M304 112 V118 H527.0 V112" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="415.5" y="132" text-anchor="middle" style="fill:var(--c-text);font-size:11px">first 1,024</text>
+<text x="415.5" y="132" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1,024d (100% base)</text>
 <path d="M304 138 V144 H415.0 V138" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="423.0" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px">first 512</text>
+<text x="423.0" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px">512d (99%+ recall)</text>
 <path d="M304 164 V170 H359.0 V164" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="367.0" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px">first 256</text>
+<text x="367.0" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px">256d (98%+ recall)</text>
 <path d="M304 190 V196 H331.0 V190" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="339.0" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px">first 128</text>
-<text x="302" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">truncate the tail; no retraining</text>
-<text x="16" y="274" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Both dials shrink the bytes; quality lives in the model, so turn them after picking a strong one.</text>
+<text x="339.0" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px">128d (pre-filter)</text>
+<text x="302" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">truncate the tail; no retraining required</text>
+<text x="16" y="274" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Both dials work together: fast binary + 256d pre-filtering, rescored with full float32.</text>
 </svg>
 
 Both dials now ship behind the big APIs too. OpenAI's
@@ -457,8 +464,8 @@ retrieval into two schools:
 Put the two schools on the dishwasher example and their blind spots line up exactly opposite:
 
 <svg viewBox="0 0 560 250" role="img" aria-label="A dense vector next to a sparse one. The dense embedding fills every one of its 1,024 slots with a learned value: it sees that leaking and dripping mean the same, but cannot tell E24 from E25. The sparse vector has one slot per vocabulary word and almost all are zero; only error, E24 and dishwasher are lit: it never confuses E24 with E25, but sees no link between leaking and dripping." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="26" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">dense</text>
-<text x="16" y="42" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1,024 slots, all learned values</text>
+<text x="16" y="26" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Dense Vector (Continuous Embedding)</text>
+<text x="16" y="42" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">All 1,024 dimensions hold learned continuous values (semantic space)</text>
 <rect x="64" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
 <rect x="76" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
 <rect x="88" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
@@ -499,10 +506,10 @@ Put the two schools on the dishwasher example and their blind spots line up exac
 <rect x="508" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
 <rect x="520" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
 <rect x="532" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
-<text x="16" y="98" text-anchor="start" style="fill:var(--c-success);font-size:12px">sees: leaking ≈ dripping</text>
-<text x="544" y="98" text-anchor="end" style="fill:var(--c-danger);font-size:12px">blurs: E24 ≈ E25</text>
-<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">sparse</text>
-<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one slot per word, almost all zero</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">Sees: leaking ≈ dripping (semantic)</text>
+<text x="544" y="98" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">Blind to: E24 vs E25 (error codes)</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Sparse Vector (Lexical Search: BM25 / SPLADE)</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">One slot per vocabulary token; only present terms carry non-zero weights</text>
 <rect x="64" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
 <rect x="76" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
 <rect x="88" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
@@ -546,9 +553,9 @@ Put the two schools on the dishwasher example and their blind spots line up exac
 <text x="141" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">error</text>
 <text x="297" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">E24</text>
 <text x="441" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">dishwasher</text>
-<text x="16" y="216" text-anchor="start" style="fill:var(--c-success);font-size:12px">separates: E24 / E25</text>
-<text x="544" y="216" text-anchor="end" style="fill:var(--c-danger);font-size:12px">misses: leaking ≈ dripping</text>
-<text x="16" y="242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Each is blind exactly where the other sees, which is why hybrid search runs both.</text>
+<text x="16" y="216" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">Separates: E24 ≠ E25 (exact match)</text>
+<text x="544" y="216" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">Misses: leaking ≠ dripping (synonyms)</text>
+<text x="16" y="242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Each is strongest where the other fails; hybrid search (RRF / Cross-Encoder) fuses both.</text>
 </svg>
 
 Everything in this article is the dense school. The sparse school

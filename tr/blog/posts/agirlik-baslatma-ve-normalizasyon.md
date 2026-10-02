@@ -32,7 +32,7 @@ $$
 
 Girdi vektörü $x_0 \in \mathbb{R}^d$, sıfır ortalamaya ve bileşen başına birim varyansa sahip olsun: $\mathbb{E}[x_0] = 0$, $\text{Var}(x_0) = 1$. Tüm ağırlık matrislerinin $W_l \in \mathbb{R}^{d \times d}$ bağımsız ve $\mathcal{N}(0, \sigma_w^2)$ dağılımından örneklendiğini varsayalım.
 
-<svg viewBox="0 0 560 110" role="img" aria-label="Başlatma anında derin, doğrusal bir zincir. Standart normalden çekilen x0, W1&#x27;den geçip x1&#x27;i, W2&#x27;den geçip sonrakini verir ve W L&#x27;den geçip x L&#x27;ye ulaşır. Her ağırlık matrisinin varyansı sigma karedir; her katman sinyalin varyansını aynı katsayıyla çarpar ve L katmanda bu katsayı katlanarak büyür." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 110" role="img" aria-label="Başlatma anında derin doğrusal zincirde varyans yayılımı: Standart normalden çekilen x0, W1&amp;#x27;den geçip x1&amp;#x27;i, W2&amp;#x27;den geçip sonrakini verir ve W L&amp;#x27;den geçip x L&amp;#x27;ye ulaşır. Her ağırlık matrisinin varyansı sigma karedir; her katman sinyal varyansını aynı katsayıyla çarpar ve L katmanda bu katsayı katlanarak ya patlar ya da söner." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="ch-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
@@ -55,8 +55,8 @@ Girdi vektörü $x_0 \in \mathbb{R}^d$, sıfır ortalamaya ve bileşen başına 
 <line x1="470.0" y1="39" x2="502.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="504.0" y="24" width="40" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="524.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_L</text>
-<text x="16" y="80" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her W için Var(W) = σ²; her katman varyansı aynı katsayıyla ölçekler.</text>
-<text x="16" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">L katmanda katsayı katlanır: 1&#x27;in üstündeyse patlar, altındaysa söner.</text>
+<text x="16" y="80" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her W matrisi için Var(W) = σ²; katman varyansı bu katsayıyla çarpar.</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">L katmanda katsayı katlanır: 1&amp;#x27;den büyükse patlar, küçükse söner.</text>
 </svg>
 
 İlk katmanın herhangi bir $i$ koordinatındaki çıktısı, bağımsız rastgele değişkenlerin doğrusal bir kombinasyonudur:
@@ -145,7 +145,7 @@ $$
 
 Eğer tüm başlangıç ağırlıkları $W^{(2)}_{k, i}$ sıfıra (veya aynı sabite) eşitse, her gizli nöron tam olarak aynı geri yayılan hata sinyalini $\delta^{(1)}_i$ alır.
 
-<svg viewBox="0 0 560 190" role="img" aria-label="Simetrik başlatma neden çöker. Aynı girdi x 1, 2 ve 3 numaralı nöronlara ulaşır. Ağırlıklar aynıysa z ön-aktivasyonları, a aktivasyonları ve dL/dz gradyanları da aynıdır; her güncelleme onları aynı tutar. Ağın rankı tek bir etkin nörona çöker." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 190" role="img" aria-label="Simetrik başlatmanın çöküşü: Aynı girdi x 1, 2 ve 3 numaralı nöronlara ulaşır. Ağırlıklar özdeşse z ön-aktivasyonları, a aktivasyonları ve dL/dz gradyanları da tamamen aynıdır; her güncelleme onları özdeş tutar. Ağın rankı tek bir etkin nörona çöker ve simetri kırılamaz." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="sy-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
@@ -167,10 +167,10 @@ Eğer tüm başlangıç ağırlıkları $W^{(2)}_{k, i}$ sıfıra (veya aynı sa
 <text x="166" y="154" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">z₃, a₃, ∂L/∂z₃</text>
 <text x="380" y="146" text-anchor="end" style="fill:var(--c-text-mute);font-size:14px">=</text>
 <path d="M400 12 Q410 12 410 24 V76 Q410 88 420 88 Q410 88 410 100 V152 Q410 164 400 164" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="428" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">tamamen özdeş:</text>
-<text x="428" y="92" text-anchor="start" style="fill:var(--c-text);font-size:12px">rank tek etkin</text>
-<text x="428" y="108" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">nörona çöker</text>
-<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Aynı ağırlık → aynı çıktı → aynı gradyan → aynı güncelleme, sonsuza dek.</text>
+<text x="428" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">tüm nöronlar özdeş:</text>
+<text x="428" y="92" text-anchor="start" style="fill:var(--c-text);font-size:12px">rank tek etkin nörona</text>
+<text x="428" y="108" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">çöker (simetri kırılmaz)</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Aynı ağırlık → aynı çıktı → aynı gradyan → aynı güncelleme; simetri kilitlenir.</text>
 </svg>
 
 İstediğiniz kadar gradyan inişi adımı atın:
@@ -359,7 +359,7 @@ $$
 
 $L = 64$ katmanlı derin bir modelde residual akıştaki aktivasyon varyansı 65 katına çıkar!
 
-<svg viewBox="0 0 560 184" role="img" aria-label="Residual akış boyunca varyansın büyümesi. x0&#x27;ın varyansı 1&#x27;dir. Her blok varyansı 1,0 olan F(x)&#x27;i ekler; x1&#x27;in varyansı 2 olur ve L bloktan sonra x L&#x27;nin varyansı 1 artı L&#x27;dir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 184" role="img" aria-label="Residual akış boyunca varyansın büyümesi: x0&amp;#x27;ın varyansı 1&amp;#x27;dir. Her residual blok varyansı 1,0 olan F(x) kolunu ekler; x1&amp;#x27;in varyansı 2 olur ve L bloktan sonra x L&amp;#x27;nin toplam varyansı 1 artı L&amp;#x27;ye ulaşır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="rs-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="rs-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
@@ -398,7 +398,7 @@ $L = 64$ katmanlı derin bir modelde residual akıştaki aktivasyon varyansı 65
 <line x1="273" y1="39" x2="296" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="314" y1="39" x2="399" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="423" y1="39" x2="442" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="16" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her blok varyansı 1 olan bir kol ekler</text>
+<text x="16" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her residual blok akışa varyansı 1 olan bir kol ekler</text>
 </svg>
 
 ### $1/\sqrt{2L}$ Ölçekleme Kuralı (GPT-2)
@@ -582,7 +582,7 @@ Buradaki iki kritik yapısal değişime dikkat edin:
 1. **Ortalama çıkarma adımı yok:** Pay doğrudan $x_i$ değeridir.
 2. **Kaydırma parametresi $\beta$ yok:** Afin ölçekleme yalnızca $\gamma_i$ ile yapılır, $\beta \in \mathbb{R}^D$ parametresi mimariden tamamen atılmıştır.
 
-<svg viewBox="0 0 560 210" role="img" aria-label="LayerNorm ile RMSNorm. LayerNorm x üzerinde 1. geçişte ortalama mu&#x27;yu hesaplar, 2. geçişte x eksi mu ile merkezler, 3. geçişte varyans sigma kareyi hesaplar, sonra normalize eder ve gamma ile beta afinini uygular. RMSNorm x&#x27;in karelerinin ortalamasının karekökünü tek geçişte hesaplar, sonra normalize eder ve yalnızca gamma uygular." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 210" role="img" aria-label="LayerNorm ile RMSNorm mimari karşılaştırması: LayerNorm x üzerinde 1. geçişte ortalama mu&amp;#x27;yu hesaplar, 2. geçişte x eksi mu ile merkezler, 3. geçişte varyans sigma kareyi hesaplar, sonra normalize eder ve afin gamma ile beta uygular. RMSNorm karelerin ortalamasının karekökünü tek geçişte hesaplar, normalize eder ve yalnızca gamma afinini uygular." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="lr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
@@ -594,7 +594,7 @@ Buradaki iki kritik yapısal değişime dikkat edin:
 <text x="104.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1. geçiş</text>
 <line x1="46" y1="56" x2="58" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="158" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="202.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">x − μ</text>
+<text x="202.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">merkezle x−μ</text>
 <text x="202.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">2. geçiş</text>
 <line x1="148" y1="56" x2="156" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="256" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
@@ -602,27 +602,27 @@ Buradaki iki kritik yapısal değişime dikkat edin:
 <text x="300.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">3. geçiş</text>
 <line x1="246" y1="56" x2="254" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="354" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="398.0" y="60.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normalize</text>
+<text x="398.0" y="60.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">standartlaş.</text>
 <line x1="344" y1="56" x2="352" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="452" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="496.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">afin</text>
-<text x="496.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">γ, β</text>
+<text x="496.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">afin γ, β</text>
+<text x="496.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ölçek + kaydır</text>
 <line x1="442" y1="56" x2="450" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="16" y="120" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">RMSNorm</text>
 <rect x="16" y="138" width="30" height="36" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="31.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x</text>
 <rect x="60" y="130" width="284" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="202.0" y="152.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">RMS = √(Σx²/D)</text>
-<text x="202.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">x üzerinde TEK geçiş</text>
+<text x="202.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tek geçişte kareler</text>
 <line x1="46" y1="156" x2="58" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="354" y="130" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="398.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normalize</text>
+<text x="398.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normalize et</text>
 <line x1="344" y1="156" x2="352" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="452" y="130" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="496.0" y="152.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">afin</text>
-<text x="496.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">yalnız γ</text>
+<text x="496.0" y="152.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">afin yalnız γ</text>
+<text x="496.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">yalnızca ölçekle</text>
 <line x1="442" y1="156" x2="450" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="16" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">x üç kez yerine bir kez okunur; ortalama ve β ortadan kalkar.</text>
+<text x="16" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">x üç kez yerine bir kez okunur; ortalama ve β parametresi ortadan kalkar.</text>
 </svg>
 
 ### Donanımsal ve Hesaplamalı Üstünlük
@@ -642,14 +642,14 @@ RMSNorm, modelin yakınsama hızından ve doğruluk başarımından hiçbir şey
 
 Normalizasyonun residual toplama işlemine göre nereye yerleştirildiği, derin Transformer blokları boyunca gradyan akışını kökünden değiştirir.
 
-<svg viewBox="0 0 560 318" role="img" aria-label="Post-LN ile Pre-LN. Orijinal 2017 Transformer&#x27;ı olan Post-LN&#x27;de x l hem alt katmana hem residual yola gider; ikisi toplanır ve LayerNorm toplamadan sonra ana yolun üstünde durur, x l artı 1&#x27;i üretir; her gradyan bir normalizasyondan geçmek zorundadır. 2019-2023&#x27;ün modern standardı Pre-LN&#x27;de kol önce LayerNorm ya da RMSNorm&#x27;u, sonra alt katmanı uygular; sonuç el değmemiş residual yola eklenir ve x l artı 1 çıkar; residual otoyolu temiz kalır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 318" role="img" aria-label="Post-LN ile Pre-LN normalizasyon düzeni: Orijinal 2017 Transformer&amp;#x27;ı olan Post-LN&amp;#x27;de x l hem alt katmana hem residual yola gider; ikisi toplanır ve LayerNorm toplamadan sonra ana yolun üstünde durur, x l artı 1&amp;#x27;i üretir; her gradyan normalizasyondan geçmek zorundadır ve warmup şarttır. Pre-LN&amp;#x27;de kol önce normalizasyonu, sonra alt katmanı uygular; sonuç el değmemiş residual yola eklenir ve otoyol temiz kalır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="pp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="pp-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="8" width="256" height="302" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="30" text-anchor="start" style="fill:var(--c-warn);font-size:15px;font-weight:700;letter-spacing:.06em">Post-LN</text>
-<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">orijinal Transformer, 2017</text>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-warn);font-size:15px;font-weight:700;letter-spacing:.06em">Post-LN (2017)</text>
+<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">orijinal Transformer</text>
 <rect x="52" y="60" width="68" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="86.0" y="78.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l</text>
 <circle cx="86" cy="214" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -666,12 +666,12 @@ Normalizasyonun residual toplama işlemine göre nereye yerleştirildiği, derin
 <rect x="52" y="276" width="68" height="26" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="86.0" y="293.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l+1</text>
 <line x1="86" y1="268" x2="86" y2="274" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="144" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">norm otoyolun</text>
-<text x="144" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">tam üstünde</text>
+<text x="144" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">norm otoyol üstünde,</text>
+<text x="144" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">warmup şarttır</text>
 <text x="78" y="160" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px"transform="rotate(-90 78 160)">residual</text>
 <rect x="288" y="8" width="256" height="302" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="302" y="30" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Pre-LN</text>
-<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">modern standart, 2019–2023</text>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Pre-LN (Modern)</text>
+<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Llama, Mistral, Gemma</text>
 <rect x="324" y="60" width="68" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="358.0" y="78.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l</text>
 <circle cx="358" cy="214" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -688,8 +688,8 @@ Normalizasyonun residual toplama işlemine göre nereye yerleştirildiği, derin
 <rect x="324" y="250" width="68" height="26" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="358.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l+1</text>
 <line x1="358" y1="225" x2="358" y2="248" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="416" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">otoyol el</text>
-<text x="416" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">değmeden kalır</text>
+<text x="416" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">otoyol el değmeden kalır,</text>
+<text x="416" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">saf ekspres hat</text>
 <text x="350" y="160" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px"transform="rotate(-90 350 160)">residual</text>
 </svg>
 
@@ -979,12 +979,12 @@ Normalizasyon katmanları parametre sayısı bakımından küçüktür; buna kar
 
 Derin öğrenme çatılarının naif uygulamalarında Pre-LayerNorm kullanan bir attention bloğu birden fazla bağımsız GPU çekirdeği (kernel) fırlatır:
 
-<svg viewBox="0 0 560 190" role="img" aria-label="Birleştirilmemiş normalizasyon. Residual toplama sonucunu HBM&#x27;e yazar; ortalama indirgemesi onu geri okur ve yazar; varyans indirgemesi okur ve yazar; standartlaştırma ve afin okur ve yazar; QKV GEMM en sonunda normalize tensörü okur. Tek bir normalizasyon için dört HBM gidiş-dönüşü." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 190" role="img" aria-label="Ayrık kernel&amp;#x27;lerin bellek darboğazı: Residual toplama sonucunu HBM&amp;#x27;e yazar; ortalama indirgemesi onu geri okur ve yazar; varyans indirgemesi okur ve yazar; standartlaştırma ve afin okur ve yazar; QKV GEMM en sonunda normalize tensörü okur. Tek bir normalizasyon için dört HBM gidiş-dönüşü gerekir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="uf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="uf-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
 </defs>
-<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ayrı kernel&#x27;ler</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ayrık CUDA kernel&amp;#x27;leri</text>
 <rect x="16" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="64.0" y="48.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">residual</text>
 <text x="64.0" y="64.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">toplama</text>
@@ -1017,7 +1017,7 @@ Derin öğrenme çatılarının naif uygulamalarında Pre-LayerNorm kullanan bir
 <line x1="474" y1="130" x2="474" y2="80" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
 <text x="415" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">yaz</text>
 <text x="469" y="118" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">oku</text>
-<text x="16" y="182" text-anchor="start" style="fill:var(--c-text);font-size:12px">Tek bir normalizasyon için 4 HBM gidiş-dönüşü.</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her işlem ara tensörü HBM&amp;#x27;e yazar ve okur: 4 HBM gidiş-dönüşü.</text>
 </svg>
 
 Normalizasyon işlemleri hesaplama-yoğun değil bellek-yoğun işlemler olduğundan (aritmetik yoğunluk $< 2 \text{ FLOP/byte}$), aktivasyonların GPU çip-içi SRAM'i ile HBM arasında sürekli gidip gelmesi katman süresinin %40'ını boşa harcar.
@@ -1027,32 +1027,32 @@ Modern eğitim motorları **Kaynaşmış Çekirdekler (Fused Kernels)** kullanı
 2. Kareler toplamı $\sum x_i^2$, GPU warp-shuffle buyruklarıyla (`__shfl_xor_sync`) çip içinde birkaç saat çevriminde tamamlanır.
 3. Normalize edilen vektör $\gamma$ ile çarpılıp HBM'e hiç yazılmadan doğrudan QKV GEMM matris çarpımının girdi tamponuna teslim edilir.
 
-<svg viewBox="0 0 560 236" role="img" aria-label="Birleştirilmiş RMSNorm kernel&#x27;i. Tek bir GPU streaming multiprocessor içinde, SRAM ve yazmaçlarda: residual girdi yazmaçlarda toplanır, warp-shuffle indirgemesi RMS&#x27;i hesaplar, sonuç gamma ile çarpılır ve ölçekli çıktı hazır olur. Tek bir HBM yazımı onu doğrudan GEMM girdi tamponuna gönderir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 236" role="img" aria-label="Birleştirilmiş RMSNorm kernel&amp;#x27;i: Tek bir GPU streaming multiprocessor (SM) içinde, SRAM ve yazmaçlarda residual girdi toplanır, warp-shuffle ile RMS hesaplanır, sonuç gamma ile çarpılır ve tek bir HBM yazımı onu doğrudan GEMM girdi tamponuna gönderir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="fu-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="fu-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
 </defs>
 <rect x="16" y="8" width="528" height="150" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="30" y="28" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">GPU streaming multiprocessor (SM) · SRAM / yazmaçlar</text>
+<text x="30" y="28" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">GPU Streaming Multiprocessor (SM) · SRAM / Yazmaçlar</text>
 <rect x="32" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="102.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">residual girdi</text>
 <line x1="172" y1="57" x2="208" y2="57" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="210" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">yazmaç içi toplam</text>
+<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">yazmaçta toplama</text>
 <line x1="350" y1="57" x2="386" y2="57" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="388" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="458.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">warp-shuffle RMS</text>
 <path d="M458 74 V115 H352" marker-end="url(#fu-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="32" y="98" width="140" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="102.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">ölçekli çıktı</text>
+<text x="102.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">ölçekli tensör</text>
 <rect x="210" y="98" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">γ ile çarp</text>
+<text x="280.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">γ ile çarpım</text>
 <line x1="210" y1="115" x2="174" y2="115" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="530" y="150" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">sonuna kadar hiçbir şey çipten çıkmaz</text>
+<text x="530" y="150" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">ara tensörler asla çipten çıkmaz (SRAM içinde kalır)</text>
 <rect x="16" y="198" width="528" height="30" rx="6" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="280" y="217.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">HBM · GEMM girdi tamponu</text>
+<text x="280" y="217.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">HBM · QKV GEMM girdi tamponu</text>
 <line x1="102" y1="132" x2="102" y2="196" marker-end="url(#fu-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="112" y="176" text-anchor="start" style="fill:var(--c-text);font-size:12px">TEK HBM yazımı</text>
+<text x="112" y="176" text-anchor="start" style="fill:var(--c-text);font-size:12px">tek bir HBM yazımı</text>
 </svg>
 
 ### 2. Çıkarım Sistemleri: Ağırlık Katlama (Weight Folding) ve Sıfır Ek Yük

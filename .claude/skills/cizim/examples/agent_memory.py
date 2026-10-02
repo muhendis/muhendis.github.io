@@ -145,130 +145,125 @@ def scopes(L):
 
 
 EN = dict(
-    lp_aria=("The runtime execution loop of agent memory. The user input q_t enters the read path, which also reads the "
-             "persistent memory store M and runs a need gate, query rewrite, hybrid search, RRF and filtering. The read "
-             "path builds a dynamic prompt: system prompt plus relevant memories plus history plus q_t. The stateless LLM "
-             "produces the response a_t. The LLM and the response feed the write path, which extracts facts, applies "
-             "bi-temporal updates and passes a PII gate, then writes back to the store."),
-    lp_title="Runtime execution loop",
-    lp_u=("User input", "q_t"),
-    lp_rp=("Read path", "need gate · rewrite · hybrid", "search · RRF · filter"),
-    lp_pr=("Dynamic prompt", "system + relevant memories", "+ history + q_t"),
-    lp_llm="Stateless LLM",
+    lp_aria=("The runtime execution loop of agent memory: User query q_t enters the read path, which queries the persistent "
+             "memory store M through need detection, query rewriting, hybrid retrieval, and bi-temporal filtering. The read path "
+             "assembles a dynamic context (system instructions, relevant memories, short-term history, and q_t) for the stateless "
+             "foundation LLM. The model response a_t flows into the write path, which extracts atomic propositions, applies "
+             "bi-temporal updates, checks PII policies, and consolidates new facts back into the persistent store."),
+    lp_title="Runtime Execution Architecture",
+    lp_u=("User Input", "turn q_t"),
+    lp_rp=("Read Pipeline", "need detection · query rewrite", "hybrid search · RRF · temporal filter"),
+    lp_pr=("Dynamic Prompt Assembly", "system prompt + retrieved memories", "+ recent dialog history + q_t"),
+    lp_llm="Stateless Foundation LLM",
     lp_resp="Response a_t",
-    lp_wp=("Write path", "extraction · bi-temporal", "update · PII gate"),
-    lp_store=("Memory", "store M"),
-    lp_foot="The model stays stateless; memory lives in the store and the two paths around it.",
-    op_aria=("How a write decides what to do. A raw turn, q_t and a_t, goes to extraction, which produces a candidate "
-             "proposition. Similarity search compares it against the top-k existing records. A decision gate then picks "
-             "one of four operations. ADD when no equivalent record is found: insert a new vector and metadata. UPDATE "
-             "when it refines or extends an existing record: enrich the existing entity. DELETE when it directly "
-             "contradicts an existing record: mark the old one superseded, bi-temporally. NOOP when the information is "
-             "already stored identically: no operation. ADD, UPDATE and DELETE write to the store."),
+    lp_wp=("Write Pipeline", "fact extraction · bi-temporal log", "PII guardrails · consolidation"),
+    lp_store=("Persistent Store", "vector + graph (M)"),
+    lp_foot="The model remains strictly stateless; memory lives in the persistent store and the pipelines around it.",
+    op_aria=("Memory write decision engine: A raw turn (q_t, a_t) undergoes fact extraction to isolate standalone atomic "
+             "propositions. Semantic search compares candidate facts against top-k existing records. The decision gate selects "
+             "one of four operations: ADD when no equivalent record exists; UPDATE when new details enrich an existing entity; "
+             "SUPERSEDE when the new fact directly contradicts prior knowledge; or NOOP when identical data is already stored."),
     op_in="raw turn (q_t, a_t)",
-    op_ex=("Extraction", "candidate proposition"),
-    op_ss=("Similarity search", "vs top-k existing"),
-    op_gate="Decision gate",
-    op_ops=[("ADD", ["no equivalent", "record found"], ["insert new", "vector & meta"]),
-            ("UPDATE", ["refines or extends", "an existing record"], ["enrich existing", "entity"]),
-            ("DELETE", ["directly contradicts", "an existing record"], ["mark superseded", "(bi-temporal)"]),
-            ("NOOP", ["already stored", "identically"], ["no operation", ""])],
-    op_store="Memory store",
-    rp_aria=("The read path, step by step. User input q_t meets a need detection gate. If no memory is needed, the "
-             "request goes straight to the LLM with zero added latency. If memory is required, the query is rewritten, "
-             "with HyDE. Three searches run in parallel: dense vector search by cosine, sparse keyword search with BM25, "
-             "and a temporal knowledge graph walk. Reciprocal rank fusion merges their lists. Multi-signal scoring "
-             "combines recency, importance and relevance. A scope and bi-temporal validity filter drops what does not "
-             "apply. Cache-aware prompt packaging assembles the result, which becomes the LLM context."),
-    rp_q="User input q_t",
-    rp_gate="1 · Need detection",
-    rp_by=("Direct to LLM", "+0 ms latency"),
-    rp_no="not needed",
+    op_ex=("Fact Extraction", "atomic proposition"),
+    op_ss=("Semantic Search", "compare vs top-k", "existing memories"),
+    op_gate="Decision Gate",
+    op_ops=[("ADD", ["no equivalent", "record exists"], ["insert vector", "& metadata"]),
+            ("UPDATE", ["enriches existing", "knowledge record"], ["expand entity", "attributes"]),
+            ("SUPERSEDE", ["contradicts prior", "memory record"], ["mark superseded", "(bi-temporal)"]),
+            ("NOOP", ["identical fact", "already stored"], ["no operation", "(drop duplicate)"])],
+    op_store="Persistent Memory Store (Vector, Relational & Graph)",
+    rp_aria=("Step-by-step memory retrieval pipeline: User input q_t first passes a memory need classifier. If no memory is "
+             "needed, the query bypasses retrieval directly to the LLM with +0 ms added latency. When required, the query is "
+             "expanded with HyDE. Three retrieval modes run concurrently: dense cosine vector search, sparse BM25 keyword search, "
+             "and a temporal knowledge graph walk. Reciprocal rank fusion (RRF) merges candidate lists, followed by multi-signal "
+             "scoring (recency, importance, relevance) and bi-temporal validity filtering. Prefix-cache-aware packaging builds the "
+             "final prompt context for the LLM."),
+    rp_q="User Input q_t",
+    rp_gate="1 · Need Classifier",
+    rp_by=("Direct to LLM", "+0 ms added latency"),
+    rp_no="memory not needed",
     rp_yes="memory required",
-    rp_rw="2 · Query rewrite & HyDE",
-    rp_search=[("Dense vector search", "cosine"), ("Sparse keyword search", "BM25"), ("Temporal graph walk", "knowledge graph")],
-    rp_row=[("4 · RRF", "reciprocal rank fusion"), ("5 · Multi-signal score", ["recency + importance", "+ relevance"]),
-            ("6 · Validity filter", ["scope + bi-temporal"])],
-    rp_pack=("7 · Prompt packaging", "cache-aware"),
-    rp_llm="LLM context",
-    sc_aria=("Memory scopes in a multi-agent system. At the top, the organization scope holds global policies and company "
-             "runbooks in the organization store. Below it, the project scope holds architectural decisions and code "
-             "standards in the project store; the project reads the organization store as a read-only reference. The "
-             "private agent working memory holds scratchpads for a researcher agent, a coder agent and a security "
-             "auditor; the agents make explicit scoped writes to the project store. At the bottom, the user profile "
-             "scope holds personal preferences and style in a store partitioned by user_id, which the researcher and "
-             "coder agents read through a strict authenticated filter."),
-    sc_org=("Organization scope", "global policies, company runbooks", "Organization store"),
-    sc_prj=("Project scope", "architectural decisions, code standards", "Project store"),
-    sc_ro="read-only reference",
-    sc_ag="Private agent working memory (scratchpads)",
-    sc_agents=["Researcher agent", "Coder agent", "Security auditor"],
-    sc_w="explicit scoped writes",
-    sc_usr=("User profile scope", "personal preferences, style", "User store (by user_id)"),
+    rp_rw="2 · Query Rewrite & HyDE",
+    rp_search=[("Dense Vector Search", "cosine similarity"), ("Sparse Text Search", "BM25 keyword"), ("Temporal Graph Walk", "entity graph traversal")],
+    rp_row=[("4 · RRF Fusion", "reciprocal rank fusion"), ("5 · Multi-Signal Score", ["recency decay + importance", "+ semantic relevance"]),
+            ("6 · Validity Filter", ["scope & bi-temporal window"])],
+    rp_pack=("7 · Prompt Packaging", "prefix-cache optimized"),
+    rp_llm="LLM Context Window",
+    sc_aria=("Hierarchical memory scopes in a multi-agent system: At the top level, organization scope stores enterprise governance "
+             "policies and runbooks in the organization store. Project scope manages shared architectural decisions and code standards, "
+             "reading organization records via read-only reference. Agent-private working memory provides isolated scratchpads for "
+             "specialized agents (Researcher, Coder, Auditor), each performing authorized scoped writes to the project store. At the base, "
+             "user profile scope manages individualized preferences in a user_id-partitioned store accessed through strict authenticated filters."),
+    sc_org=("Organization Scope (Global)", "governance policies, enterprise runbooks", "Organization Store"),
+    sc_prj=("Project Scope (Shared)", "architectural decisions, code standards", "Project Store"),
+    sc_ro="read-only reference access",
+    sc_ag="Agent-Private Working Memory (Isolated Scratchpads)",
+    sc_agents=["Researcher Agent", "Coder Agent", "Security Auditor"],
+    sc_w="authorized scoped writes",
+    sc_usr=("User Profile Scope (Tenant-Isolated)", "personal preferences, interaction style", "User Store (user_id)"),
     sc_f="strict authenticated filter",
 )
 
 TR = dict(
-    lp_aria=("Ajan hafızasının çalışma zamanı döngüsü. Kullanıcı mesajı q_t okuma yoluna girer; okuma yolu uzun süreli "
-             "hafıza deposu M'yi de okur ve ihtiyaç tespiti, yeniden yazım, hibrit arama, RRF ve filtre adımlarını "
-             "çalıştırır. Okuma yolu dinamik bir prompt kurar: sistem prompt'u, ilgili anılar, son turlar ve q_t. "
-             "Durumsuz model cevabı, a_t'yi üretir. Model ve cevap yazma yoluna akar; yazma yolu olguları ayıklar, "
-             "bi-temporal güncelleme yapar, maskeler, PII kapısından geçirir ve depoya geri yazar."),
-    lp_title="Çalışma zamanı döngüsü",
-    lp_u=("Kullanıcı", "mesajı q_t"),
-    lp_rp=("Okuma yolu", "ihtiyaç · yeniden yazım ·", "hibrit arama · RRF · filtre"),
-    lp_pr=("Dinamik prompt", "sistem + ilgili anılar", "+ son turlar + q_t"),
-    lp_llm="Durumsuz model (LLM)",
-    lp_resp="Cevap a_t",
-    lp_wp=("Yazma yolu", "ayıkla · bi-temporal güncelle", "maskele · PII kapısı"),
-    lp_store=("Hafıza", "deposu M"),
-    lp_foot="Model durumsuz kalır; hafıza depoda ve onu saran iki yolda yaşar.",
-    op_aria=("Bir yazmanın ne yapacağına nasıl karar verdiği. Ham tur, q_t ve a_t, ayıklamaya gider ve aday bir atomik "
-             "olgu çıkar. Benzerlik araması onu mevcut en yakın anılarla kıyaslar. Karar kapısı dört işlemden birini "
-             "seçer. Eşdeğer kayıt yoksa ADD: yeni vektör ve kayıt eklenir. Mevcut bilgiyi zenginleştiriyorsa UPDATE: "
-             "bilgi genişletilir. Mevcut bilgiyle çelişiyorsa DELETE: eski kayıt geçersiz kılınır, supersede. Bilgi "
-             "zaten aynen mevcutsa NOOP: değişiklik yok. ADD, UPDATE ve DELETE depoya yazar."),
-    op_in="ham tur (q_t, a_t)",
-    op_ex=("Ayıklama", "aday atomik olgu"),
-    op_ss=("Benzerlik araması", "en yakın anılarla", "kıyasla"),
-    op_gate="Karar kapısı",
-    op_ops=[("ADD", ["eşdeğer", "kayıt yoksa"], ["yeni vektör", "& kayıt"]),
-            ("UPDATE", ["mevcut bilgiyi", "zenginleştiriyorsa"], ["bilgiyi", "genişlet"]),
-            ("DELETE", ["mevcut bilgiyle", "çelişiyorsa"], ["geçersiz kıl", "(supersede)"]),
-            ("NOOP", ["bilgi zaten", "aynen mevcutsa"], ["değişiklik yok", ""])],
-    op_store="Hafıza deposu",
-    rp_aria=("Okuma yolu adım adım. Kullanıcı girdisi q_t bir ihtiyaç tespiti kapısına gelir. Hafıza gerekmiyorsa istek "
-             "doğrudan LLM'e gider, ek gecikme sıfırdır. Hafıza gerekiyorsa sorgu HyDE ile yeniden yazılır. Üç arama "
-             "paralel çalışır: kosinüsle yoğun vektör araması, BM25 ile seyrek anahtar kelime araması ve zamansal "
-             "graf yürüyüşü. Karşılıklı sıra füzyonu, RRF, listeleri birleştirir. Çok sinyalli puanlama yakınlık, önem "
-             "ve ilgiyi birleştirir. Kapsam ve zaman geçerlilik filtresi geçersizleri atar. Önbellek dostu prompt "
-             "paketleme sonucu toplar ve sonuç LLM bağlamı olur."),
-    rp_q="Girdi q_t",
-    rp_gate="1 · İhtiyaç tespiti",
+    lp_aria=("Ajan hafızasının çalışma zamanı mimarisi: Kullanıcı mesajı q_t okuma hattına girer; okuma hattı kalıcı hafıza "
+             "deposu M&#x27;yi sorgulayarak ihtiyaç tespiti, sorgu yeniden yazımı, hibrit arama, RRF ve bi-temporal filtreleme uygular. "
+             "Okuma hattı dinamik bir prompt montajı yapar: sistem talimatı, ilgili anılar, yakın diyalog geçmişi ve q_t birleştirilir. "
+             "Durumsuz temel LLM modeli cevabı (a_t) üretir. Model ve cevap yazma hattına akar; yazma hattı atomik önermeleri ayıklar, "
+             "bi-temporal güncellemeleri işler, PII süzgecinden geçirir ve kalıcı depoya konsolide eder."),
+    lp_title="Çalışma Zamanı Mimarisi",
+    lp_u=("Kullanıcı Mesajı", "girdi q_t"),
+    lp_rp=("Okuma Hattı (Read Path)", "ihtiyaç tespiti · yeniden yazım", "hibrit arama · RRF · zaman süzgeci"),
+    lp_pr=("Dinamik Prompt Montajı", "sistem prompt&#x27;u + ilgili anılar", "+ diyalog geçmişi + q_t"),
+    lp_llm="Durumsuz Temel Model (LLM)",
+    lp_resp="Üretilen Yanıt a_t",
+    lp_wp=("Yazma Hattı (Write Path)", "önerme ayıklama · bi-temporal log", "PII maskeleme · kalıcı kayıt"),
+    lp_store=("Hafıza Deposu", "vektör &amp; graf (M)"),
+    lp_foot="Model her çağrıda tamamen durumsuz kalır; hafıza, depoda ve onu çevreleyen iki hatta yaşar.",
+    op_aria=("Hafıza yazma karar mekanizması: Ham diyalog turu (q_t, a_t) atomik önerme ayıklama adımına gider ve bağlamdan "
+             "bağımsız doğrulanabilir iddialar çıkarılır. Anlamsal benzerlik araması adayı mevcut top-k anılarla karşılaştırır. "
+             "Karar kapısı dört işlemden birini yürütür: Eşdeğer kayıt yoksa ADD ile yeni vektör ve metaveri eklenir; mevcut bilgiyi "
+             "zenginleştiriyorsa UPDATE ile kayıt genişletilir; önceki bilgiyle çelişiyorsa SUPERSEDE ile eski kayıt bi-temporal "
+             "olarak hükümsüz kılınır; bilgi zaten aynen mevcutsa NOOP ile mükerrer kayıt düşürülür."),
+    op_in="ham diyalog turu (q_t, a_t)",
+    op_ex=("Önerme Ayıklama", "bağımsız atomik olgu"),
+    op_ss=("Anlamsal Arama", "mevcut top-k anılarla", "kıyaslama"),
+    op_gate="Karar Kapısı",
+    op_ops=[("ADD", ["eşdeğer kayıt", "yoksa"], ["yeni vektör", "&amp; metaveri ekle"]),
+            ("UPDATE", ["mevcut bilgiyi", "derinleştiriyorsa"], ["kaydı genişlet", "ve zenginleştir"]),
+            ("SUPERSEDE", ["önceki bilgiyle", "çelişiyorsa"], ["hükümsüz kıl", "(bi-temporal)"]),
+            ("NOOP", ["bilgi depoda", "birebir varsa"], ["işlem yapma", "(kopya düşür)"])],
+    op_store="Kalıcı Hafıza Deposu (Vektör, İlişkisel &amp; Graf)",
+    rp_aria=("Adım adım hafıza okuma ve erişim hattı: Kullanıcı girdisi q_t önce ihtiyaç tespiti kapısına gelir. Hafıza gerekmiyorsa "
+             "istek doğrudan LLM&#x27;e aktarılır ve ek gecikme sıfırdır (+0 ms). Hafıza gerekiyorsa sorgu HyDE ile zenginleştirilerek "
+             "yeniden yazılır. Üç arama motoru paralel çalışır: kosinüs benzerliğiyle yoğun vektör araması, BM25 ile seyrek anahtar "
+             "kelime araması ve zamansal bilgi grafı yürüyüşü. Karşılıklı sıra füzyonu (RRF) listeleri birleştirir. Çok sinyalli puanlama "
+             "yakınlık, önem katsayısı ve anlamsal alakayı harmanlar. Kapsam ve bi-temporal geçerlilik filtresi süresi dolmuşları eler. "
+             "Prefix-cache dostu prompt paketleme nihai bağlamı hazırlar ve LLM çalışma penceresine iletir."),
+    rp_q="Kullanıcı Girdisi q_t",
+    rp_gate="1 · İhtiyaç Tespiti",
     rp_by=("Doğrudan LLM", "+0 ms ek gecikme"),
-    rp_no="gerekmiyor",
-    rp_yes="hafıza gerekiyor",
-    rp_rw="2 · Yeniden yazım & HyDE",
-    rp_search=[("Yoğun vektör arama", "dense cosine"), ("Seyrek arama", "BM25 keyword"), ("Zamansal graf", "graph walk")],
-    rp_row=[("4 · RRF", "karşılıklı sıra füzyonu"), ("5 · Çok sinyalli puan", ["yakınlık + önem", "+ ilgi"]),
-            ("6 · Geçerlilik filtresi", ["kapsam + zaman"])],
-    rp_pack=("7 · Prompt paketleme", "önbellek dostu"),
-    rp_llm="LLM bağlamı",
-    sc_aria=("Çok ajanlı bir sistemde hafıza kapsamları. En üstte organizasyon kapsamı, global kuralları ve şirket "
-             "runbook'larını organizasyon deposunda tutar. Altında proje kapsamı mimari kararları ve ortak kod "
-             "standartlarını proje deposunda tutar; proje, organizasyon deposunu salt okunur referans olarak okur. Ajan "
-             "özel bellekleri araştırmacı ajan, kodlayıcı ajan ve güvenlik denetçisi için geçici çalışma notlarını "
-             "tutar; ajanlar proje deposuna izin gerektiren kısıtlı yazmalar yapar. En altta kullanıcı profili kapsamı "
-             "kişisel tercihleri ve iletişim stilini user_id bazlı bir depoda tutar; araştırmacı ve kodlayıcı ajanlar "
-             "onu katı bir kimlik filtresiyle okur."),
-    sc_org=("Organizasyon kapsamı", "global kurallar, şirket runbook'ları", "Organizasyon deposu"),
-    sc_prj=("Proje kapsamı", "mimari kararlar, ortak kod standartları", "Proje deposu"),
-    sc_ro="salt okunur referans",
-    sc_ag="Ajan özel bellekleri (geçici çalışma notları)",
-    sc_agents=["Araştırmacı ajan", "Kodlayıcı ajan", "Güvenlik denetçisi"],
-    sc_w="kısıtlı yazma (izin gerekir)",
-    sc_usr=("Kullanıcı profili kapsamı", "kişisel tercihler, iletişim stili", "Kullanıcı deposu (user_id)"),
-    sc_f="katı kimlik filtresiyle okuma",
+    rp_no="hafıza gerekmiyor",
+    rp_yes="hafıza gerekli",
+    rp_rw="2 · Yeniden Yazım &amp; HyDE",
+    rp_search=[("Yoğun Vektör Arama", "kosinüs benzerliği"), ("Seyrek Metin Arama", "BM25 anahtar kelime"), ("Zamansal Bilgi Grafı", "ilişkisel graf yürüyüşü")],
+    rp_row=[("4 · RRF Birleştirme", "karşılıklı sıra füzyonu"), ("5 · Çok Sinyalli Skor", ["zamansal yakınlık + önem", "+ anlamsal alaka"]),
+            ("6 · Geçerlilik Süzgeci", ["kapsam &amp; bi-temporal zaman"])],
+    rp_pack=("7 · Prompt Paketleme", "prefix-cache dostu"),
+    rp_llm="LLM Çalışma Bağlamı",
+    sc_aria=("Çok ajanlı bir sistemde hiyerarşik hafıza kapsamları: En üstte organizasyon kapsamı kurumsal ilkeleri, güvenlik politikalarını "
+             "ve şirket runbook&#x27;larını global depoda tutar. Proje kapsamı mimari kararları, repo sözleşmelerini ve kodlama standartlarını "
+             "paylaşılan proje deposunda yönetir; organizasyon deposuna salt okunur referansla erişir. Ajan özel bellekleri uzman ajanlar "
+             "(Araştırmacı, Kodlayıcı, Güvenlik Denetçisi) için izole çalışma scratchpad&#x27;leri sağlar; ajanlar proje deposuna yetkili ve "
+             "denetimli yazma yapar. En altta kullanıcı profili kapsamı kişisel tercihleri, etkileşim stilini user_id bazlı kiracı-yalıtımlı "
+             "depoda saklar ve ajanlar buraya katı kimlik doğrulamalı güvenli filtreyle erişir."),
+    sc_org=("Organizasyon Kapsamı (Global)", "kurumsal ilkeler, şirket runbook&#x27;ları", "Organizasyon Deposu"),
+    sc_prj=("Proje Kapsamı (Paylaşılan)", "mimari kararlar, repo sözleşmeleri", "Proje Deposu"),
+    sc_ro="salt okunur referans erişimi",
+    sc_ag="Ajan Özel Bellekleri (İzole Scratchpad&#x27;ler)",
+    sc_agents=["Araştırmacı Ajan", "Kodlayıcı Ajan", "Güvenlik Denetçisi"],
+    sc_w="yetkili ve denetimli yazma",
+    sc_usr=("Kullanıcı Profili Kapsamı (Kiracı Yalıtımlı)", "bireysel tercihler, etkileşim dili", "Kullanıcı Deposu (user_id)"),
+    sc_f="kimlik doğrulamalı güvenli filtre",
 )
 
 out = {}

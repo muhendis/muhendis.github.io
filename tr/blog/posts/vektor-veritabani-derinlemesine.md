@@ -73,28 +73,29 @@ aşamadan geçirir: korpus önceden **dizinlenmiştir**, sorgu o dizinle
 **eşleştirilir** ve ham adaylar **son işlemden** geçip cevaba
 dönüşür.
 
-<svg viewBox="0 0 560 188" role="img" aria-label="Bir vektör veritabanında sorgu yolu. Sorgu metni, korpusu embed&#x27;leyen modelle embed&#x27;lenir. Filtre müşteri, tarih ve erişim kısıtlarını uygular. ANN dizini bir aday listesi döndürür. Son işlem son kontrolleri ve rerank&#x27;i yapar. Sonuç, metadata&#x27;sıyla birlikte top-k öğedir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 188" role="img" aria-label="Bir vektör veritabanında sorgu işleme hattı: Ham kullanıcı sorgusu korpusla özdeş embedding modeliyle vektörleştirilir; tenant ve erişim kısıtları için ön filtreleme uygulanır; HNSW veya ScaNN gibi ANN dizinlerinde yaklaşık en yakın komşu adayları taranır; adaylar cross-encoder ile yeniden sıralanır ve son kontrollerden geçer; nihai top-k bağlam zenginleştirilmiş metaveriyle birlikte uygulamaya iletilir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="vd-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="96.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">sorgu metni</text>
+<text x="96.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Kullanıcı Sorgusu</text>
+<text x="96.0" y="53.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">ham metin girdisi</text>
 <rect x="200" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="29.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embed</text>
-<text x="280.0" y="45.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">korpusu embed&#x27;leyen</text>
-<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">modelle</text>
+<text x="280.0" y="29.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Vektörleştirme</text>
+<text x="280.0" y="45.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">özdeş embedding modeli</text>
+<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(korpusla aynı uzay)</text>
 <rect x="384" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="464.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">filtre</text>
-<text x="464.0" y="53.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">müşteri, tarih, erişim</text>
+<text x="464.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Ön Filtreleme</text>
+<text x="464.0" y="53.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tenant, ACL, metaveri</text>
 <rect x="384" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="464.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ANN dizini</text>
-<text x="464.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">aday listesi</text>
+<text x="464.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ANN Dizin Taraması</text>
+<text x="464.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">HNSW / ScaNN yaklaşık komşu</text>
 <rect x="200" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">son işlem</text>
-<text x="280.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">son kontroller, rerank</text>
+<text x="280.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Son İşlem &amp; Rerank</text>
+<text x="280.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">cross-encoder &amp; eşik denetimi</text>
 <rect x="16" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="96.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">top-k</text>
-<text x="96.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ metadata</text>
+<text x="96.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Nihai Bağlam (Top-k)</text>
+<text x="96.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ zengin doküman metaverisi</text>
 <line x1="176" y1="41" x2="198" y2="41" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="360" y1="41" x2="382" y2="41" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="464" y1="74" x2="464" y2="106" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>

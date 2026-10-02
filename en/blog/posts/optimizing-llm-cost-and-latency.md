@@ -244,7 +244,7 @@ when someone quotes a tokens-per-second number at you.
 Here is the whole battlefield on one map — the life of a request,
 and where each family of optimizations attacks it:
 
-<svg viewBox="0 0 560 320" role="img" aria-label="Where each cost and latency lever acts. A request reaches a router or cascade, which sends easy queries to a small model and hard queries to a large model. Inside one call, prefill reads the prompt and sets time to first token, then decode writes token by token and sets almost everything else. Prompt caching skips re-reading the shared prefix during prefill. Speculative decoding produces several tokens per decode step. max_tokens and a thinking budget stop the decode meter earlier. Quantization makes weights smaller and memory reads faster for the whole call." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 320" role="img" aria-label="Architectural map of cost and latency levers: Incoming requests are dispatched by a model router to a lightweight model for routine queries or a reasoning model for complex analysis. Inside an individual call, the prefill phase processes the prompt in parallel to determine TTFT; the decode phase writes tokens autoregressively to govern TPOT streaming speed. Four levers target specific bottlenecks: Prompt caching avoids re-reading shared prefix KV blocks from HBM; quantization relieves memory bandwidth pressure; speculative decoding produces multiple tokens per verification step; and token &amp; thinking budgets enforce early exit to prevent runaway inference cost." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="co-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="co-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
@@ -252,51 +252,49 @@ and where each family of optimizations attacks it:
 <rect x="16" y="26" width="92" height="38" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="62.0" y="49.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Request</text>
 <rect x="128" y="20" width="116" height="50" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="186.0" y="41.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Router /</text>
-<text x="186.0" y="57.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cascade</text>
+<text x="186.0" y="41.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Model Router</text>
+<text x="186.0" y="57.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">complexity &amp; cascade</text>
 <line x1="108" y1="45" x2="126" y2="45" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="2" width="132" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="354.0" y="18.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Small model</text>
-<text x="354.0" y="34.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">easy query</text>
+<text x="354.0" y="18.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Lightweight Model</text>
+<text x="354.0" y="34.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">routine / simple query</text>
 <rect x="288" y="50" width="132" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="354.0" y="66.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Large model</text>
-<text x="354.0" y="82.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">hard query</text>
+<text x="354.0" y="66.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Reasoning Model</text>
+<text x="354.0" y="82.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">deep multi-step analysis</text>
 <path d="M244 45 H264 V22 H286" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M264 45 V70 H286" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M420 22 H480 V98" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M420 70 H480" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="100" width="528" height="98" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="119" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Inside one call</text>
-<rect x="32" y="128" width="168" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="116.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Prefill</text>
-<text x="116.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reads the prompt</text>
-<text x="116.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sets TTFT</text>
-<rect x="232" y="128" width="296" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="380.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decode</text>
-<text x="380.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">writes token by token</text>
-<text x="380.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sets almost everything else</text>
-<line x1="200" y1="158" x2="230" y2="158" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="30" y="119" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Lifecycle of a Single Invocation</text>
+<rect x="32" y="128" width="176" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="120.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Prefill Phase</text>
+<text x="120.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ingests prompt in parallel (GEMM)</text>
+<text x="120.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">determines first-token time (TTFT)</text>
+<rect x="224" y="128" width="304" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="376.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decode Phase</text>
+<text x="376.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">generates tokens sequentially (GEMV)</text>
+<text x="376.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">governs TPOT and streaming speed</text>
+<line x1="208" y1="158" x2="222" y2="158" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="78" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Prompt caching</text>
-<text x="78" y="269" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">skip re-reading</text>
-<text x="78" y="283" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">the shared prefix</text>
+<text x="78" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Prompt Caching</text>
+<text x="78" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">reuses cached prefix KV,</text>
+<text x="78" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">avoids HBM re-reads</text>
 <line x1="78" y1="236" x2="78" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="148" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="210" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Quantization</text>
-<text x="210" y="269" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">smaller weights,</text>
-<text x="210" y="283" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">faster memory reads</text>
+<text x="210" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Quantization</text>
+<text x="210" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">shrinks weight footprint,</text>
+<text x="210" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">speeds memory reads</text>
 <line x1="210" y1="236" x2="210" y2="200" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="280" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="342" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Speculative</text>
-<text x="342" y="269" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">decoding</text>
-<text x="342" y="284" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">several tokens</text>
-<text x="342" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">per step</text>
+<text x="342" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Speculative Decode</text>
+<text x="342" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">draft model proposes,</text>
+<text x="342" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">verifies in 1 pass</text>
 <line x1="342" y1="236" x2="342" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="412" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="474" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">max_tokens +</text>
-<text x="474" y="269" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">thinking budget</text>
-<text x="474" y="284" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">stop the meter</text>
-<text x="474" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">earlier</text>
+<text x="474" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Budgets &amp; Caps</text>
+<text x="474" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">early exit &amp; token limit</text>
+<text x="474" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">stops runaway costs</text>
 <line x1="474" y1="236" x2="474" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 </svg>
 

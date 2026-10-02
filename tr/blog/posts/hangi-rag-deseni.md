@@ -258,7 +258,7 @@ vd. (2023) cevabı içeren belgeyi yirmi belge arasında konumdan konuma
 taşıdı; doğruluk bir U çizdi — kenarlarda güçlü, ortada çöküyor,
 çukurun dibinde *hiç belge vermemekten bile kötü*:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="Cevap doğruluğunun, doğru belgenin 20 erişilmiş belge içindeki konumuna göre çizdiği U eğrisi: 1. konumda yaklaşık yüzde 75, ortada yaklaşık yüzde 54'e düşüyor, 20. konumda yaklaşık yüzde 63'e toparlıyor. Yüzde 56 civarındaki kesikli yatay çizgi, hiç belge verilmeyen kapalı-kitap doğruluğunu gösterir" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 480 320" role="img" aria-label="Doğru belgenin 20 erişilmiş belge içindeki konumuna göre cevap doğruluğunun çizdiği U eğrisi (Lost in the Middle, Liu vd. 2023): Başta konumlanan belgelerde doğruluk yaklaşık yüzde 75 (primacy bias) iken, ortaya gömülen belgelerde yaklaşık yüzde 54&#x27;e çökerek bağlamsız kapalı kitap taban çizgisinin (~yüzde 56) bile altına düşer; sonda ise yaklaşık yüzde 63&#x27;e toparlanır (recency bias)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <line x1="50" y1="260" x2="460" y2="260" style="stroke:var(--c-border);stroke-width:1.5"/>
 <line x1="50" y1="260" x2="50" y2="20" style="stroke:var(--c-border);stroke-width:1.5"/>
 <g style="stroke:var(--c-border);stroke-width:1">
@@ -271,17 +271,17 @@ taşıdı; doğruluk bir U çizdi — kenarlarda güçlü, ortada çöküyor,
 <g style="fill:var(--c-text-mute);font-size:11px" text-anchor="end">
 <text x="40" y="64">%75</text><text x="40" y="144">%65</text><text x="40" y="224">%55</text>
 </g>
-<text x="455" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">doğru belgenin 20 belge içindeki konumu</text>
-<text x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">cevap doğruluğu</text>
+<text x="455" y="296" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">doğru belgenin 20 parça içindeki sırası (1 → 20)</text>
+<text x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">cevap doğruluğu (%)</text>
 <line x1="50" y1="212" x2="450" y2="212" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
-<text x="160" y="204" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">hiç belge yokken (kapalı kitap)</text>
+<text x="160" y="204" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kapalı kitap taban çizgisi (bağlamsız: ~%56)</text>
 <path d="M 50 60 C 90 130, 110 196, 134 196 C 170 224, 205 228, 239 228 C 280 224, 315 218, 345 212 C 390 198, 425 172, 450 156" fill="none" style="stroke:var(--c-accent);stroke-width:2.5"/>
 <circle cx="50" cy="60" r="4.5" style="fill:var(--c-text)"/>
 <circle cx="239" cy="228" r="4.5" style="fill:var(--c-text)"/>
 <circle cx="450" cy="156" r="4.5" style="fill:var(--c-text)"/>
-<text x="62" y="52" text-anchor="start" style="fill:var(--c-text);font-size:13px">≈%75</text>
-<text x="239" y="250" text-anchor="middle" style="fill:var(--c-text);font-size:13px">≈%54</text>
-<text x="444" y="146" text-anchor="end" style="fill:var(--c-text);font-size:13px">≈%63</text>
+<text x="62" y="52" text-anchor="start" style="fill:var(--c-text);font-size:12.5px">≈%75 (başta)</text>
+<text x="239" y="250" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">≈%54 (ortada: lost in the middle)</text>
+<text x="444" y="146" text-anchor="end" style="fill:var(--c-text);font-size:12.5px">≈%63 (sonda)</text>
 </svg>
 
 (Liu vd. 2023'ten — "lost in the middle" — yeniden çizilmiş, yaklaşık

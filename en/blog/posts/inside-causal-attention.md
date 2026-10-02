@@ -68,31 +68,31 @@ This equation carries two profound mathematical implications:
 <marker id="bd-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Bidirectional</text>
-<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">unmasked: god&#x27;s eye view</text>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:14px;font-weight:700">Bidirectional Attention (BERT)</text>
+<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Unmasked: Full context (past + future)</text>
 <path d="M83 112 L125 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M163 112 L205 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M64 93 C 94 60, 194 60, 224 93" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <circle cx="64" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="64" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
-<text x="64" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
+<text x="64" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to all</text>
 <circle cx="144" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="144" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
-<text x="144" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
+<text x="144" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to all</text>
 <circle cx="224" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="224" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
-<text x="224" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
-<text x="144" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">every token sees the whole sequence</text>
+<text x="224" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to all</text>
+<text x="144" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">every token attends to the entire sequence</text>
 <rect x="288" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="302" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">Causal</text>
-<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">masked: the arrow of time</text>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:14px;font-weight:700">Causal Attention (GPT)</text>
+<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Masked: Arrow of time (strict past only)</text>
 <line x1="355" y1="112" x2="395" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
 <line x1="435" y1="112" x2="475" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
 <path d="M336 93 C 366 60, 466 60, 496 91" marker-end="url(#bd-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <circle cx="336" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="336" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
-<text x="336" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁</text>
+<text x="336" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to x₁</text>
 <circle cx="416" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="416" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
-<text x="416" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁, x₂</text>
+<text x="416" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to x₁, x₂</text>
 <circle cx="496" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="496" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
-<text x="496" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁–x₃</text>
-<text x="416" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">each token sees only itself and the past</text>
+<text x="496" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">attends to x₁–x₃</text>
+<text x="416" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">attends only to itself and past tokens</text>
 </svg>
 
 ### 2. Invariance of Past Representations and the Birth of KV Cache
@@ -143,24 +143,24 @@ In Part 4 of our series ([Inside Self-Attention](post.html?slug=inside-self-atte
 In bidirectional self-attention, every token shines its flashlight at every badge across the entire room. Now picture that same room participating in a **serialized murder mystery reading club**. Seated in order are our three core tokens: **"dog"** ($t=0$), **"cat"** ($t=1$), and **"chased"** ($t=2$).
 
 <svg viewBox="0 0 560 150" role="img" aria-label="A murder mystery with the pages glued. dog is at page 1 and must deduce clues with zero knowledge of the culprit. cat is at page 50: it remembers page 1, but the future pages stay sealed. chased reads the final chapter and holds the full context of the narrative." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">each token reads the book only up to its own page</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Each token can only read the book up to its current page:</text>
 <rect x="16" y="34" width="82" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="57.0" y="50.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">dog</text>
 <rect x="112" y="38" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="112" y="38" width="4.8" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
-<text x="194.39999999999998" y="50" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">sealed</text>
-<text x="288" y="43" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">page 1</text>
-<text x="288" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">no idea who the culprit is</text>
+<text x="194.4" y="50" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sealed</text>
+<text x="288" y="43" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Page 1</text>
+<text x="288" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">cannot know the killer's identity</text>
 <rect x="16" y="74" width="82" height="24" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="57.0" y="90.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">cat</text>
 <rect x="112" y="78" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="112" y="78" width="72.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
-<text x="228.0" y="90" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">sealed</text>
-<text x="288" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">page 50</text>
-<text x="288" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">remembers page 1, rest sealed</text>
+<text x="228.0" y="90" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sealed</text>
+<text x="288" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Page 50</text>
+<text x="288" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">remembers page 1; future pages are sealed</text>
 <rect x="16" y="114" width="82" height="24" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="57.0" y="130.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">chased</text>
 <rect x="112" y="118" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="112" y="118" width="160.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
-<text x="288" y="123" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">final chapter</text>
-<text x="288" y="138" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">the whole story is in view</text>
+<text x="288" y="123" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Final page</text>
+<text x="288" y="138" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">possesses full narrative context</text>
 </svg>
 
 If "dog" ($t=0$) is allowed to shine its Query flashlight ($Q_0$) at the Key badge of "chased" ($K_2$), the reader spots the revelation before the plot begins. True deduction vanishes; the reader merely copies the ending.
@@ -302,8 +302,8 @@ Both orders on our three-token example, side by side; watch the row sums:
 <text x="146" y="163" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">cat</text>
 <text x="146" y="191" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">chased</text>
 <path d="M200 140 C 230 140, 230 66, 262 66" marker-end="url(#or-ok)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
-<text x="300" y="22" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">mask, then softmax</text>
-<text x="300" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">add −∞ above the diagonal first</text>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-success);font-size:12.5px;font-weight:700">1. Correct: Mask (−∞), Then Softmax</text>
+<text x="300" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Preserves axiom: row sums = 1.000</text>
 <rect x="300" y="48" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.72;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="65.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.000</text>
 <rect x="342" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
 <rect x="384" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
@@ -314,8 +314,8 @@ Both orders on our three-token example, side by side; watch the row sums:
 <rect x="342" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
 <rect x="384" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.46;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.562</text>
 <path d="M200 170 C 230 170, 230 214, 262 214" marker-end="url(#or-bad)" style="fill:none;stroke:var(--c-danger);stroke-width:1.5"/>
-<text x="300" y="172" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">softmax, then zero</text>
-<text x="300" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">future already in the denominator</text>
+<text x="300" y="172" text-anchor="start" style="fill:var(--c-danger);font-size:12.5px;font-weight:700">2. Wrong: Softmax, Then Zero Out</text>
+<text x="300" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Future leaks into denominator: sums collapse</text>
 <rect x="300" y="198" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="215.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.266</text>
 <rect x="342" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
 <rect x="384" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
@@ -331,7 +331,7 @@ Both orders on our three-token example, side by side; watch the row sums:
 <text x="440" y="243" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-family:var(--font-mono)">Σ = 0.505</text>
 <text x="440" y="121" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
 <text x="440" y="271" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
-<text x="16" y="306" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Zeroing after softmax leaks the future through the denominator and starves every early row.</text>
+<text x="16" y="306" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Zeroing after softmax leaks future tokens through the denominator and starves early tokens.</text>
 </svg>
 
 ---
@@ -478,20 +478,20 @@ Mastering causal attention requires dissecting its computational profile across 
 
 <svg viewBox="0 0 560 180" role="img" aria-label="Causal attention in training and inference. Training, parallel with teacher forcing: the full sequence goes in at once, the causal mask is applied as a T by T matrix, the masked gradients are zero, and the work is a compute-bound dense GEMM. Inference splits in two: prefill ingests the whole prompt with the causal mask; decode generates token by token, a single query against a KV cache of past tokens, and since no future tokens exist, no mask is needed." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <rect x="16" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="32" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">TRAINING</text>
-<text x="30" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">parallel · teacher forcing · GEMM</text>
-<text x="30" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">full sequence passed at once</text>
-<text x="30" y="95" text-anchor="start" style="fill:var(--c-text);font-size:12px">causal mask as a T × T matrix</text>
-<text x="30" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">backward: masked dL/dS = 0</text>
-<text x="30" y="133" text-anchor="start" style="fill:var(--c-text);font-size:12px">compute-bound dense GEMM</text>
+<text x="30" y="32" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700">TRAINING</text>
+<text x="30" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Parallel · Teacher Forcing · Dense GEMM</text>
+<text x="30" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">• Full sequence ingested at once [T]</text>
+<text x="30" y="95" text-anchor="start" style="fill:var(--c-text);font-size:12px">• Causal mask: [T × T] lower triangular</text>
+<text x="30" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">• Backward: Upper triangle ∂L/∂S ≡ 0</text>
+<text x="30" y="133" text-anchor="start" style="fill:var(--c-text);font-size:12px">• Hardware: Compute-bound GEMM</text>
 <rect x="288" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="302" y="32" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">INFERENCE</text>
-<text x="302" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill vs decode · GEMV</text>
-<text x="302" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">1. prefill: whole prompt ingested</text>
-<text x="302" y="95" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">causal mask across the prompt</text>
-<text x="302" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">2. decode: one token at a time</text>
-<text x="302" y="133" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">Q [1, d_k] vs KV cache [T, d_k]</text>
-<text x="302" y="152" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">no future tokens → no mask needed</text>
+<text x="302" y="32" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700">INFERENCE</text>
+<text x="302" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Prefill vs Decode · GEMV Bottleneck</text>
+<text x="302" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">1. Prefill: Full prompt processed [T_p]</text>
+<text x="302" y="95" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">   Causal mask required only in this phase</text>
+<text x="302" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">2. Decode: Token-by-token generation loop</text>
+<text x="302" y="133" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">   Q [1, d_k] vs KV Cache [T_past, d_k]</text>
+<text x="302" y="152" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">No future exists → No mask needed</text>
 </svg>
 
 ### 1. The Training Lens: Teacher Forcing, Parallel GEMM, and Gradient Isolation
@@ -543,11 +543,11 @@ Drawn as a timeline, the difference between the two schedulers is the shape of t
 <defs>
 <marker id="bb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="16" y="66" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">monolithic</text>
-<text x="16" y="82" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one pass for the whole prompt</text>
+<text x="16" y="66" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Monolithic Prefill</text>
+<text x="16" y="82" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">entire prompt processed in one giant pass</text>
 <line x1="204" y1="86" x2="544" y2="86" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="16" y="152" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">chunked</text>
-<text x="16" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one chunk per step</text>
+<text x="16" y="152" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Chunked Prefill (vLLM / Sarathi)</text>
+<text x="16" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">fixed-budget chunk + concurrent decodes</text>
 <line x1="204" y1="172" x2="544" y2="172" style="stroke:var(--c-border);stroke-width:1"/>
 <rect x="204" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="220" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
@@ -555,9 +555,9 @@ Drawn as a timeline, the difference between the two schedulers is the shape of t
 <rect x="252" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="268" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="284" y="60" width="180" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="374" y="75" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">long prompt, one prefill pass</text>
+<text x="374" y="75" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">single prefill pass (~1500 ms)</text>
 <path d="M284 54 H464" style="stroke:var(--c-danger);stroke-width:1.5"/>
-<text x="374" y="48" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px">every decode stream waits</text>
+<text x="374" y="48" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px">all decode streams stall (75x latency jitter / freeze)</text>
 <rect x="468" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="484" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="500" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
@@ -585,13 +585,13 @@ Drawn as a timeline, the difference between the two schedulers is the shape of t
 <rect x="494" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="510" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <rect x="526" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
-<text x="389" y="136" text-anchor="middle" style="fill:var(--c-success);font-size:11.5px">decode slice + one chunk, every step</text>
+<text x="389" y="136" text-anchor="middle" style="fill:var(--c-success);font-size:11.5px">each step mixes decodes + single chunk (~30 ms)</text>
 <line x1="204" y1="214" x2="544" y2="214" marker-end="url(#bb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="544" y="208" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">time</text>
+<text x="544" y="208" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">time (ms)</text>
 <rect x="204" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
 <text x="222" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">decode step</text>
 <rect x="314" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="332" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill work</text>
+<text x="332" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill chunk</text>
 </svg>
 
 **The Architectural Remedy: Chunked Prefill (Sarathi-Serve / vLLM)**
@@ -638,8 +638,8 @@ Hybrid Attention Mask for Chunk 2 (Queries: q_4..q_7) given Chunk 1 in KV Cache:
 The same two iterations as allowed-cell grids (filled = attend, empty = masked):
 
 <svg viewBox="0 0 560 262" role="img" aria-label="Chunked prefill with an 8-token prompt and chunk size 4. Iteration 1 runs queries q0 to q3 against keys k0 to k3 with an ordinary lower-triangular causal mask and writes their keys and values to the KV cache. Iteration 2 runs queries q4 to q7: against the cached keys k0 to k3 every cell is allowed, a full rectangle; against the chunk&#x27;s own keys k4 to k7 only the lower triangle is allowed." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">iteration 1</text>
-<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">chunk q0–q3, causal</text>
+<text x="16" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Iteration 1 (Chunk 0)</text>
+<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">q₀–q₃ lower-triangular causal</text>
 <rect x="44" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
 <rect x="66" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="88" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
@@ -656,17 +656,17 @@ The same two iterations as allowed-cell grids (filled = attend, empty = masked):
 <rect x="66" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
 <rect x="88" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
 <rect x="110" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
-<text x="54" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
-<text x="76" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
-<text x="98" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
-<text x="120" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
-<text x="38" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q0</text>
-<text x="38" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q1</text>
-<text x="38" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q2</text>
-<text x="38" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q3</text>
-<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">→ K, V of 0–3 into the KV cache</text>
-<text x="200" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">iteration 2</text>
-<text x="200" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">chunk q4–q7 sees the cache + itself</text>
+<text x="54" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k0</text>
+<text x="76" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k1</text>
+<text x="98" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k2</text>
+<text x="120" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k3</text>
+<text x="38" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q0</text>
+<text x="38" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q1</text>
+<text x="38" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q2</text>
+<text x="38" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q3</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">→ K, V of 0–3 written to KV cache</text>
+<text x="220" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Iteration 2 (Chunk 1)</text>
+<text x="220" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">q₄–q₇: KV cache (free) + active chunk</text>
 <rect x="232" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="254" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="276" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
@@ -699,26 +699,26 @@ The same two iterations as allowed-cell grids (filled = attend, empty = masked):
 <rect x="342" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
 <rect x="364" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
 <rect x="386" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
-<text x="242" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
-<text x="264" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
-<text x="286" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
-<text x="308" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
-<text x="330" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k4</text>
-<text x="352" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k5</text>
-<text x="374" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k6</text>
-<text x="396" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k7</text>
-<text x="226" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q4</text>
-<text x="226" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q5</text>
-<text x="226" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q6</text>
-<text x="226" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q7</text>
+<text x="242" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k0</text>
+<text x="264" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k1</text>
+<text x="286" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k2</text>
+<text x="308" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k3</text>
+<text x="330" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k4</text>
+<text x="352" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k5</text>
+<text x="374" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k6</text>
+<text x="396" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">k7</text>
+<text x="226" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q4</text>
+<text x="226" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q5</text>
+<text x="226" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q6</text>
+<text x="226" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">q7</text>
 <path d="M232 168 V174 H318 V168" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="275.0" y="190" text-anchor="middle" style="fill:var(--c-accent);font-size:12px;font-weight:600">KV cache</text>
-<text x="275.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">full rectangle</text>
+<text x="275.0" y="188" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:600">KV Cache</text>
+<text x="275.0" y="202" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">unmasked (0.0)</text>
 <path d="M320 168 V174 H406 V168" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="363.0" y="190" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">this chunk</text>
-<text x="363.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">lower triangle</text>
-<text x="16" y="236" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Only the square inside the current chunk needs a causal check; everything already cached is</text>
-<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">past by construction. Kernels test col &gt; row in registers instead of storing a mask.</text>
+<text x="363.0" y="188" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:600">Active Chunk</text>
+<text x="363.0" y="202" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">causal (−∞)</text>
+<text x="16" y="236" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Causal check is only required within active chunk; cached keys are past by definition.</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Modern GPU kernels evaluate col &gt; row on registers without storing a mask matrix.</text>
 </svg>
 
 **Hardware Execution: Integration with FlashAttention and PagedAttention**

@@ -91,7 +91,7 @@ space encode semantic relationships. We can illustrate this on a toy
 two-dial coordinate system using four words: ***man* at (2, 1)**, ***woman*
 at (5, 4)**, ***king* at (3, 6)**, and ***queen* at (6, 9)**:
 
-<svg viewBox="0 0 480 320" role="img" aria-label="Four words as points on two dials: man at 2,1; woman at 5,4; king at 3,6; queen at 6,9. Solid parallel arrows man to woman and king to queen show the gender direction plus 3 plus 3; dashed parallel arrows man to king and woman to queen show the royalty direction plus 1 plus 5" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 500 320" role="img" aria-label="Vector geometry in a 2D embedding subspace: man (2,1), woman (5,4), king (3,6), queen (6,9). Solid arrows show the gender vector (+3,+3), and dashed arrows show the royalty vector (+1,+5). Vector arithmetic confirms king - man + woman = queen." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="emb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 <marker id="emb-arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
@@ -108,8 +108,8 @@ at (5, 4)**, ***king* at (3, 6)**, and ***queen* at (6, 9)**:
 <g style="fill:var(--c-text-mute);font-size:11px" text-anchor="end">
 <text x="30" y="232">2</text><text x="30" y="180">4</text><text x="30" y="128">6</text><text x="30" y="76">8</text><text x="30" y="24">10</text>
 </g>
-<text x="455" y="311" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">dial 1</text>
-<text x="18" y="150" transform="rotate(-90 18 150)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">dial 2</text>
+<text x="455" y="311" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">Dimension 1 (x₁)</text>
+<text x="18" y="150" transform="rotate(-90 18 150)" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Dimension 2 (x₂)</text>
 <line x1="120" y1="254" x2="160" y2="124" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
 <line x1="240" y1="176" x2="280" y2="46" marker-end="url(#emb-arr2)" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
 <line x1="120" y1="254" x2="240" y2="176" marker-end="url(#emb-arr)" style="stroke:var(--c-accent);stroke-width:2"/>
@@ -123,9 +123,9 @@ at (5, 4)**, ***king* at (3, 6)**, and ***queen* at (6, 9)**:
 <text x="148" y="118" text-anchor="end" style="fill:var(--c-text);font-size:13px;font-style:italic">king (3, 6)</text>
 <text x="280" y="32" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-style:italic">queen (6, 9)</text>
 <line x1="300" y1="116" x2="318" y2="116" style="stroke:var(--c-accent);stroke-width:2"/>
-<text x="324" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gender direction (+3, +3)</text>
+<text x="324" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gender direction: Δ = (+3, +3)</text>
 <line x1="300" y1="226" x2="318" y2="226" style="stroke:var(--c-accent-2);stroke-width:1.8;stroke-dasharray:6 5"/>
-<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">royalty direction (+1, +5)</text>
+<text x="324" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">royalty direction: Δ = (+1, +5)</text>
 </svg>
 
 Vector arithmetic emerges naturally from this geometry:
@@ -237,21 +237,21 @@ It is no longer an isolated dictionary definition; it is now
 
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
 
-<svg viewBox="0 0 560 300" role="img" aria-label="How self-attention updates fox. The embedding of fox is multiplied by three learned matrices: times W_Q gives Q, what am I looking for; times W_K gives K, how am I found; times W_V gives V, what do I hand over. Step 1 scores Q against every K with a dot product. Step 2 scales the scores by dividing by the square root of d_k. Step 3 turns them into percentages with softmax. Step 4 blends the V vectors, weighted by those percentages. The result is a new fox: this-particular-quick-brown-fox." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 300" role="img" aria-label="Self-attention mechanism: The input token embedding of 'fox' is projected by three learned matrices (W_Q, W_K, W_V) into Query (Q: what am I seeking?), Key (K: what do I offer?), and Value (V: what do I convey?). In four steps, dot-product attention computes Q·K^T, divides by sqrt(d_k) to stabilize variance, computes softmax probabilities, and aggregates the V vectors into a context-enriched representation." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="bpa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="190" y="8" width="180" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="280.0" y="32.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embedding of fox</text>
+<text x="280.0" y="32.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Input Embedding: x_fox</text>
 <rect x="16" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="91.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q</text>
-<text x="91.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">what am I looking for?</text>
+<text x="91.0" y="105.0" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Q (Query)</text>
+<text x="91.0" y="123.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">What am I seeking?</text>
 <rect x="196" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="271.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">K</text>
-<text x="271.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">how am I found?</text>
+<text x="271.0" y="105.0" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">K (Key)</text>
+<text x="271.0" y="123.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">What do I offer?</text>
 <rect x="394" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="469.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">V</text>
-<text x="469.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">what do I hand over?</text>
+<text x="469.0" y="105.0" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">V (Value)</text>
+<text x="469.0" y="123.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">What do I convey?</text>
 <path d="M280 48 V62 M91 62 H469" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="91" y1="62" x2="91" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="98" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_Q</text>
@@ -260,25 +260,25 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\rig
 <line x1="469" y1="62" x2="469" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="476" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_V</text>
 <rect x="16" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="76.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · score</text>
-<text x="76.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q · K</text>
+<text x="76.0" y="199.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">1 · Raw Score</text>
+<text x="76.0" y="217.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Q · Kᵀ (dot product)</text>
 <line x1="136" y1="204" x2="150" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="152" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="212.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · scale</text>
-<text x="212.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">÷ √dₖ</text>
+<text x="212.0" y="199.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">2 · Scaling</text>
+<text x="212.0" y="217.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">÷ √dₖ (variance)</text>
 <line x1="272" y1="204" x2="286" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="348.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3 · softmax</text>
-<text x="348.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ percentages</text>
+<text x="348.0" y="199.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">3 · Softmax</text>
+<text x="348.0" y="217.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Σ αᵢ = 1.0</text>
 <line x1="408" y1="204" x2="422" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="424" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="484.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · blend</text>
-<text x="484.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Σ weight × V</text>
+<text x="484.0" y="199.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">4 · Context Blend</text>
+<text x="484.0" y="217.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Σ αᵢ · Vᵢ (weights)</text>
 <line x1="76" y1="136" x2="76" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M240 136 V156 H110 V174" marker-end="url(#bpa-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="484" y1="136" x2="484" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="254" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="278.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">new fox — this-particular-quick-brown-fox</text>
+<text x="280.0" y="278.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Context-Enriched Representation: fox (&quot;quick brown fox&quot;)</text>
 <line x1="484" y1="232" x2="484" y2="252" marker-end="url(#bpa-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
 </svg>
 
@@ -388,32 +388,32 @@ whereas assigning 20% incurs a loss of $\approx 1.60$. **Gradient descent**
 computes the partial derivatives of this loss with respect to all parameters,
 nudging weights downhill across trillions of iterations.
 
-<svg viewBox="0 0 560 136" role="img" aria-label="The pre-training loop. Stream real training text, hide the next token, let the model predict logits, compute the loss as minus log of the probability given to the true token, and let gradient descent update the weights. The loop repeats trillions of times." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 136" role="img" aria-label="The pre-training loop: Streaming tokens from a massive text corpus are causally masked to conceal token t+1. The model performs a forward pass to predict vocabulary logits; cross-entropy loss (−log p) is calculated against the target token, and backpropagation with AdamW updates all model weights. The loop runs continuously over trillions of tokens." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="bpt-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="bpt-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="64.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">data</text>
-<text x="64.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">stream tokens</text>
+<text x="64.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Data Stream</text>
+<text x="64.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Raw Corpus</text>
 <line x1="112" y1="43" x2="122" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="124" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="172.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">hide</text>
-<text x="172.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">the next token</text>
+<text x="172.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Masking</text>
+<text x="172.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Hide token t+1</text>
 <line x1="220" y1="43" x2="230" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="232" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">predict</text>
-<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">logits</text>
+<text x="280.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Forward Pass</text>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Predict Logits</text>
 <line x1="328" y1="43" x2="338" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="340" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="388.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">loss</text>
-<text x="388.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">−log p(true)</text>
+<text x="388.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Loss Function</text>
+<text x="388.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">−log p(target)</text>
 <line x1="436" y1="43" x2="446" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="448" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="496.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">update</text>
-<text x="496.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">gradient step</text>
+<text x="496.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Backprop</text>
+<text x="496.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Weight Update</text>
 <path d="M496 72 V100 H64 V74" marker-end="url(#bpt-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
-<text x="280" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">repeat trillions of times</text>
+<text x="280" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Repeated continuously across trillions of tokens</text>
 </svg>
 
 Scaling behavior is governed by empirical laws. The Kaplan and Chinchilla
@@ -447,31 +447,31 @@ When an aligned model serves user requests in production, it operates in
 **inference mode**. Serving workloads differ fundamentally from training,
 dividing into **two distinct execution phases**.
 
-<svg viewBox="0 0 560 236" role="img" aria-label="The two phases of inference on a time axis. Prefill, compute-bound: all prompt tokens are processed in parallel and the KV cache is filled; it ends by emitting the first token, and the time from the request to that token is TTFT, time to first token. Decode, memory-bound: one token per step, each step reads the whole prior KV cache; the gap between two consecutive tokens is ITL, inter-token latency. After every token the model checks for a stop token: if not, it runs another step; if so, the output is complete." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<text x="16" y="20" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">1 · Prefill</text>
-<text x="216" y="20" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2 · Decode</text>
-<text x="16" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">compute-bound</text>
-<text x="216" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">memory-bound</text>
+<svg viewBox="0 0 560 236" role="img" aria-label="The two phases of inference on a timeline: 1. Prefill (compute-bound, GEMM): All prompt tokens are processed concurrently across GPU Tensor Cores to initialize the KV cache; this phase concludes when the first output token is generated (TTFT). 2. Decode (memory-bound, GEMV): Sequential execution generates one token per step, streaming the existing KV cache from HBM memory with an inter-token latency (ITL) penalty per step until an &lt;eos&gt; token is emitted." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">1 · Prefill Phase</text>
+<text x="216" y="20" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2 · Decode Phase</text>
+<text x="16" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">compute-bound (GEMM)</text>
+<text x="216" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">memory-bound (GEMV)</text>
 <rect x="16" y="46" width="184" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="108" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:12px">all prompt tokens</text>
-<text x="108" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:12px">in parallel</text>
-<text x="108" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:12px">→ KV cache filled</text>
+<text x="108" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">All prompt tokens</text>
+<text x="108" y="84" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">processed in parallel</text>
+<text x="108" y="100" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">→ KV cache populated</text>
 <rect x="216" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="244" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
-<text x="244" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
-<text x="244" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<text x="244" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="244" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">reads KV</text>
+<text x="244" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">+ appends</text>
 <rect x="284" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="312" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
-<text x="312" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
-<text x="312" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<text x="312" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="312" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">reads KV</text>
+<text x="312" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">+ appends</text>
 <rect x="352" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="380" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
-<text x="380" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
-<text x="380" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<text x="380" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="380" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">reads KV</text>
+<text x="380" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">+ appends</text>
 <rect x="420" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="448" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
-<text x="448" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
-<text x="448" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<text x="448" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="448" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">reads KV</text>
+<text x="448" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">+ appends</text>
 <text x="504" y="80" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">…</text>
 <rect x="163" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="180.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₁</text>
 <rect x="227" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="244.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₂</text>
@@ -479,14 +479,14 @@ dividing into **two distinct execution phases**.
 <rect x="363" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="380.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₄</text>
 <rect x="431" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="448.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₅</text>
 <rect x="512" y="116" width="32" height="22" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/><text x="528.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:10px;font-family:var(--font-mono)">■</text>
-<text x="16" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">request in</text>
-<text x="528" y="151" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">stop</text>
+<text x="16" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">request arrives</text>
+<text x="528" y="151" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">&lt;eos&gt; stop</text>
 <path d="M16 157 V162 H180 V157" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="98.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">TTFT</text>
+<text x="98.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">TTFT (Time to First Token)</text>
 <path d="M312 157 V162 H380 V157" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="346.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">ITL</text>
-<text x="16" y="206" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">After each token: stop token? No → another decode step. Yes → output complete.</text>
-<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">TTFT is set by prefill; every later token costs one ITL.</text>
+<text x="346.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">ITL (Inter-Token Latency)</text>
+<text x="16" y="206" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">After each token: stop token (&lt;eos&gt;)? No → another decode step; Yes → completion done.</text>
+<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">TTFT is dictated by the parallel prefill pass; subsequent tokens each incur one ITL step latency.</text>
 </svg>
 
 ### Prefill: parallel computation and TTFT
@@ -510,11 +510,11 @@ parallel, the flow of information is not. And the first output token is not
 a separate step; it falls out of the last position's logits at the end of
 this same pass:
 
-<svg viewBox="0 0 560 345" role="img" aria-label="Prefill. Six prompt tokens, Why is the sky blue question mark, are all known up front and enter transformer layer 1 together as one matrix. Each of the N layers runs self-attention plus MLP over all six positions at once and writes the keys and values of all six tokens into that layer&#x27;s KV cache. The last position&#x27;s logits over the vocabulary pick the first output token, Sunlight; that one pass is the bulk of time to first token." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 345" role="img" aria-label="Prefill phase: S = 6 prompt tokens enter transformer layers as a unified matrix. In each layer, causal self-attention and MLP blocks process all sequence positions concurrently using high-throughput GEMM operations, storing the resulting K and V vectors directly into that layer's KV cache in GPU HBM memory. Vocabulary logits from the terminal position (i=6) emit the initial token (Sunlight)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="pf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="16" y="20" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Prompt — all 6 tokens are known up front</text>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Input Prompt — S = 6 tokens enter simultaneously as a matrix</text>
 <rect x="16" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="44.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Why</text>
 <line x1="44" y1="58" x2="44" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <rect x="80" y="30" width="56" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="108.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> is</text>
@@ -527,14 +527,14 @@ this same pass:
 <line x1="300" y1="58" x2="300" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="336" y="30" width="56" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="364.0" y="47.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">?</text>
 <line x1="364" y1="58" x2="364" y2="77" marker-end="url(#pf-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
-<text x="410" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">processed together,</text>
-<text x="410" y="56" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">in one pass</text>
+<text x="410" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Processed together,</text>
+<text x="410" y="56" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">in a single pass</text>
 <rect x="16" y="80" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="204" y="101" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer 1: self-attention + MLP</text>
-<text x="204" y="119" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">6 positions as one matrix → GEMM</text>
+<text x="204" y="101" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer 1: Causal Self-Attention + MLP</text>
+<text x="204" y="119" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">6 positions evaluated in parallel via GEMM</text>
 <line x1="392" y1="105" x2="420" y2="105" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="422" y="80" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="432" y="96" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · layer 1</text>
+<text x="432" y="96" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · Layer 1</text>
 <rect x="432" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <rect x="450" y="104" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
 <rect x="468" y="104" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
@@ -542,11 +542,11 @@ this same pass:
 <rect x="504" y="104" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
 <rect x="522" y="104" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <rect x="16" y="168" width="376" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="204" y="189" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer N: self-attention + MLP</text>
-<text x="204" y="207" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">causal mask: position i sees only 1…i</text>
+<text x="204" y="189" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer N: Causal Self-Attention + MLP</text>
+<text x="204" y="207" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Causal mask: Position i attends only to 1…i</text>
 <line x1="392" y1="193" x2="420" y2="193" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="422" y="168" width="122" height="50" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="432" y="184" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · layer N</text>
+<text x="432" y="184" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache · Layer N</text>
 <rect x="432" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <rect x="450" y="192" width="14" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
 <rect x="468" y="192" width="14" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
@@ -554,11 +554,11 @@ this same pass:
 <rect x="504" y="192" width="14" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/>
 <rect x="522" y="192" width="14" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <text x="204" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
-<text x="216" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">same for every layer</text>
+<text x="216" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Identical pipeline across all N layers</text>
 <text x="483" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">⋮</text>
 <line x1="204" y1="218" x2="204" y2="240" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="242" width="376" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">logits over the vocabulary (last position only)</text>
+<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Vocabulary logits: Projected from final sequence position (i=6)</text>
 <rect x="40" y="286" width="14" height="6" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
 <rect x="64" y="283" width="14" height="9" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
 <rect x="88" y="287" width="14" height="5" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
@@ -575,10 +575,10 @@ this same pass:
 <rect x="352" y="285" width="14" height="7" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
 <line x1="392" y1="270" x2="420" y2="270" marker-end="url(#pf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="422" y="242" width="122" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="483" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">first output token</text>
+<text x="483" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">First Output Token (t₁)</text>
 <rect x="438" y="266" width="90" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="483.0" y="282.6" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Sunlight</text>
-<text x="16" y="324" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The first token falls out of the prefill pass itself, so this pass is most of TTFT:</text>
-<text x="16" y="340" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">a longer prompt means more rows in every matrix multiply, and a longer wait.</text>
+<text x="16" y="324" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">The initial token is produced by this single prefill pass, dominating Time to First Token (TTFT).</text>
+<text x="16" y="340" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">All computed Keys and Values are retained in GPU HBM to accelerate sequential decode steps.</text>
 </svg>
 
 ### Decode: sequential loop and ITL
@@ -598,13 +598,13 @@ Generating token 50 requires knowing token 49; therefore, decode proceeds
 Each step feeds exactly one new token through the stack, reading the cache
 that prefill (and every earlier step) left behind:
 
-<svg viewBox="0 0 560 330" role="img" aria-label="Decode. The KV cache holds keys and values for the six prompt tokens. One new token, Sunlight, enters the layer stack alone. In each layer, self-attention compares the new token&#x27;s query against all cached keys and mixes the cached values, then appends the new token&#x27;s own key and value to the cache; the MLP runs for the new token only. The logits pick the next token, scatters, which loops back as the next input until an end-of-sequence token." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 330" role="img" aria-label="Decode phase: The KV cache maintains Key and Value tensors for all 6 prompt tokens in GPU HBM memory. Exactly one new token (Sunlight) enters the transformer stack per step. In each layer, self-attention matches the new token's query (q) against all cached Keys via GEMV, blending cached Values. It appends its own k and v to the cache, passes through the MLP, and projects logits to produce the next token (scatters)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="dc-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="dc-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="16" width="180" height="256" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="26" y="36" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">KV cache</text>
+<text x="26" y="36" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">KV Cache (HBM)</text>
 <text x="26" y="52" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">from prefill + past steps</text>
 <text x="104" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">K</text>
 <text x="158" y="72" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">V</text>
@@ -629,28 +629,28 @@ that prefill (and every earlier step) left behind:
 <text x="26" y="250" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Sunlight</text>
 <rect x="82" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
 <rect x="136" y="236" width="44" height="18" rx="4" style="fill:var(--c-accent-2);fill-opacity:.08;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
-<text x="320" y="14" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">one new token per step</text>
+<text x="320" y="14" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">One new token per step</text>
 <rect x="270" y="20" width="100" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="320.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Sunlight</text>
 <line x1="320" y1="46" x2="320" y2="66" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="216" y="68" width="188" height="204" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="310" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">each of the N layers</text>
+<text x="310" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">N Transformer Layers</text>
 <rect x="228" y="96" width="164" height="80" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="310" y="114" text-anchor="middle" style="fill:var(--c-text);font-size:13px">self-attention</text>
-<text x="310" y="132" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">q of the new token only</text>
-<text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">vs. every cached K</text>
-<text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ mix of cached V</text>
+<text x="310" y="114" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Self-Attention (GEMV)</text>
+<text x="310" y="132" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">New token query (1×d) only</text>
+<text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">vs. all cached K tensors</text>
+<text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ blend of cached V</text>
 <line x1="196" y1="120" x2="226" y2="120" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="205" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px" transform="rotate(-90 205 100)">read</text>
+<text x="205" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px" transform="rotate(-90 205 100)">Read KV</text>
 <path d="M228 166 H208 V245 H182" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
-<text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">append k, v</text>
+<text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">Append k, v</text>
 <line x1="310" y1="176" x2="310" y2="188" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="228" y="190" width="164" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="310" y="208" text-anchor="middle" style="fill:var(--c-text);font-size:13px">MLP</text>
-<text x="310" y="225" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">new token only</text>
-<text x="310" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">full forward pass, 1 position</text>
+<text x="310" y="208" text-anchor="middle" style="fill:var(--c-text);font-size:13px">MLP Forward Pass</text>
+<text x="310" y="225" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">New token only</text>
+<text x="310" y="258" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Full forward pass, 1 position</text>
 <line x1="404" y1="150" x2="432" y2="150" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="434" y="68" width="110" height="132" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="489" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">logits</text>
+<text x="489" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Vocabulary Logits</text>
 <rect x="444" y="98" width="80" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
 <rect x="444" y="116" width="52" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
 <rect x="444" y="134" width="30" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
@@ -658,7 +658,7 @@ that prefill (and every earlier step) left behind:
 <rect x="444" y="170" width="12" height="12" rx="2" style="fill:var(--c-text-mute);fill-opacity:.35"/>
 <line x1="489" y1="200" x2="489" y2="222" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="434" y="224" width="110" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="489" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">next token</text>
+<text x="489" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">Next Token (t₂)</text>
 <rect x="446" y="246" width="86" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="489.0" y="260.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)"> scatters</text>
 <path d="M544 248 H553 V33 H374" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <text x="550" y="26" text-anchor="end" style="fill:var(--c-accent-2);font-size:12px">repeat until &lt;eos&gt;</text>
@@ -674,14 +674,14 @@ and the MLP never sees them again.
 
 Same weights, same layers, yet two very different workloads for the GPU:
 
-<svg viewBox="0 0 560 290" role="img" aria-label="Side by side. Prefill: many known tokens enter the model in parallel, the weights are read once and reused across all of them, the first token comes out at the end; matrix-matrix work, compute-bound. Decode: one new token per step, the model reads and appends to the KV cache, one token comes out and loops back; matrix-vector work, memory-bandwidth bound. Batching many requests restores parallelism in decode." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 290" role="img" aria-label="Side-by-side hardware profile comparison: Prefill processes S known prompt tokens concurrently, reading weights once from HBM to compute across the entire sequence (GEMM: compute-bound). Decode reads entire model weights to generate a single token per step (GEMV: memory-bandwidth bound). Dynamic batching aggregates multiple decode streams to recover hardware parallelism." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="cmp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="cmp-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <rect x="288" y="16" width="256" height="226" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="32" y="40" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">PREFILL</text>
+<text x="32" y="40" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">PREFILL (Parallel Pass)</text>
 <rect x="33" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <line x1="49" y1="78" x2="49" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <rect x="71" y="54" width="32" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
@@ -695,18 +695,18 @@ Same weights, same layers, yet two very different workloads for the GPU:
 <rect x="223" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
 <line x1="239" y1="78" x2="239" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <rect x="33" y="98" width="222" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model · weights read once</text>
+<text x="144" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Model Weights (Read Once)</text>
 <line x1="144" y1="138" x2="144" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="99" y="158" width="90" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="144.0" y="173.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">1st token</text>
 <text x="32" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">S known tokens share one weight read</text>
-<text x="32" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">matrix × matrix (GEMM) → compute-bound</text>
-<text x="304" y="40" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">DECODE</text>
+<text x="32" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">GEMM (matrix × matrix) → Compute-bound</text>
+<text x="304" y="40" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">DECODE (Autoregressive)</text>
 <rect x="356" y="54" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/>
 <line x1="372" y1="78" x2="372" y2="96" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="304" y="98" width="136" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="372" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">model</text>
+<text x="372" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Model Weights</text>
 <rect x="458" y="98" width="72" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="494" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:12px">KV cache</text>
+<text x="494" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:12px">KV Cache</text>
 <line x1="458" y1="112" x2="442" y2="112" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="440" y1="126" x2="456" y2="126" marker-end="url(#cmp-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
 <line x1="372" y1="138" x2="372" y2="156" marker-end="url(#cmp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
@@ -714,7 +714,7 @@ Same weights, same layers, yet two very different workloads for the GPU:
 <path d="M332 169 C 292 169, 292 65, 352 65" marker-end="url(#cmp-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <text x="296" y="192" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">repeat</text>
 <text x="304" y="206" text-anchor="start" style="fill:var(--c-text);font-size:12px">1 new token per weight read</text>
-<text x="304" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">matrix × vector (GEMV) → memory-bound</text>
+<text x="304" y="224" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">GEMV (matrix × vector) → Memory-bound</text>
 <text x="16" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">One request&#x27;s decode is strictly sequential; parallelism comes back across requests.</text>
 <text x="16" y="282" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Batching B decode streams turns that 1 token per weight read into B.</text>
 </svg>

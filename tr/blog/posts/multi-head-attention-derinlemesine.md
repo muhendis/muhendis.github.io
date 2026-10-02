@@ -88,44 +88,44 @@ Profesyonel bir tiyatro sahnesi bu sorunu tek bir dev ampulü imkânsız biçiml
 <marker id="bn-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="bn-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
-<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">tek kafa</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Tek Kafa (Single-Head Dikkat)</text>
 <rect x="16" y="28" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="54.0" y="53.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
 <line x1="92" y1="49" x2="110" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="112" y="28" width="200" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="212.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">tek çift doğrusal eşleme</text>
-<text x="212.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">M = W_Q W_Kᵀ</text>
+<text x="212.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Tek Çift-Doğrusal Eşleme</text>
+<text x="212.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">M = W_Q W_Kᵀ [d × d]</text>
 <line x1="312" y1="49" x2="330" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="332" y="28" width="212" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="438.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">uzlaşma çıkmazı</text>
-<text x="438.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">bulanık, ortalama dikkat</text>
-<text x="16" y="104" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">multi-head alt uzayları</text>
+<text x="438.0" y="45.5" text-anchor="middle" style="fill:var(--c-danger);font-size:12.5px;font-weight:600">Uzlaşma Çıkmazı (Rank Kaybı)</text>
+<text x="438.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Bulanık, ortalama dikkat dağılımı</text>
+<text x="16" y="104" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Multi-Head Alt Uzayları (H Bağımsız Harita)</text>
 <rect x="16" y="160" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="54.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
 <path d="M92 181 C 102 181, 102 127, 112 127" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="114" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="131" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">1. kafa: fiil / eylem odağı</text>
+<text x="124" y="131" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">1. Kafa: Özne-Fiil İlişkisi</text>
 <path d="M314 127 C 322 127, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 159, 112 159" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="146" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="163" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">2. kafa: yerel komşuluk</text>
+<text x="124" y="163" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">2. Kafa: Yerel Komşuluk / n-gram</text>
 <path d="M314 159 C 322 159, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 191, 112 191" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="178" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="195" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">3. kafa: sözdizimsel uyum</text>
+<text x="124" y="195" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">3. Kafa: Nesne / Sözdizimsel Uyum</text>
 <path d="M314 191 C 322 191, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 223, 112 223" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="210" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="227" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">4. kafa: uzun menzilli zamir</text>
+<text x="124" y="227" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">4. Kafa: Uzun Menzilli Koreferans</text>
 <path d="M314 223 C 322 223, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="332" y="150" width="96" height="62" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="380.0" y="177.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Concat</text>
-<text x="380.0" y="193.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ Wᴼ</text>
+<text x="380.0" y="177.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Concat</text>
+<text x="380.0" y="193.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">× W_O</text>
 <line x1="428" y1="181" x2="442" y2="181" marker-end="url(#bn-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<rect x="444" y="150" width="100" height="62" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="494.0" y="169.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">zengin</text>
-<text x="494.0" y="185.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">katmanlı</text>
-<text x="494.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">nihai temsil</text>
+<rect x="440" y="150" width="108" height="62" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="494.0" y="169.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:600">Zengin &amp; Katmanlı</text>
+<text x="494.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Hiyerarşik Çıktı</text>
+<text x="494.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, T, d_model]</text>
 </svg>
 
 İnsan dilindeki her cümle de böylesine katmanlı bir sahnedir. Aynı anda gerçekleşen ilişki ağlarını düşünün:
@@ -224,42 +224,42 @@ Donanım seviyesindeki hesaplama sırası şu şekilde akar:
 <marker id="pl-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="64.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">girdi Z</text>
+<text x="64.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Girdi Z [N, d]</text>
 <line x1="112" y1="50" x2="123" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="124" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="172.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q, K, V</text>
-<text x="172.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">izdüşümleri</text>
+<text x="172.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Q, K, V Proj.</text>
+<text x="172.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">W_Q, W_K, W_V</text>
 <line x1="220" y1="50" x2="231" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="232" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ayrıştır</text>
-<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">H kafaya</text>
+<text x="280.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Kafalara Böl</text>
+<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">[H, N, d_k]</text>
 <line x1="328" y1="50" x2="339" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="340" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="388.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1. skorlar</text>
-<text x="388.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">QₕKₕᵀ / √d_k</text>
+<text x="388.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">1. Skorlar (Sₕ)</text>
+<text x="388.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">QₕKₕᵀ / √d_k</text>
 <line x1="436" y1="50" x2="447" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="448" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2. maske</text>
-<text x="496.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Sₕ + M (−∞)</text>
+<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">2. Causal Mask</text>
+<text x="496.0" y="62.5" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px;font-family:var(--font-mono)">Sₕ + M (−∞)</text>
 <path d="M496.0 74 V92 H64.0 V108" marker-end="url(#pl-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="64.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3. softmax</text>
-<text x="64.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ</text>
+<text x="64.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">3. Softmax</text>
+<text x="64.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Aₕ = σ(S̃ₕ)</text>
 <line x1="112" y1="134" x2="123" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="124" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="172.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4. bağlam</text>
-<text x="172.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ Vₕ</text>
+<text x="172.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-weight:600">4. Bağlam</text>
+<text x="172.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">headₕ = AₕVₕ</text>
 <line x1="220" y1="134" x2="231" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="232" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5. birleştir</text>
-<text x="280.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">head₁ … head_H</text>
+<text x="280.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">5. Birleştir</text>
+<text x="280.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">[head₁…head_H]</text>
 <line x1="328" y1="134" x2="339" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="340" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="388.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6. Wᴼ</text>
-<text x="388.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ O</text>
+<text x="388.0" y="130.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:600">6. Çıktı Proj.</text>
+<text x="388.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">Concat · W_O</text>
 <rect x="16" y="170" width="12" height="12" rx="2" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="34" y="180" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kafa başına, paralel</text>
-<text x="16" y="200" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Maske her kafada softmax&#x27;tan önce uygulanır; kafalar birleştirmeye kadar birbirini görmez.</text>
+<text x="34" y="180" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">H kafa bağımsız ve eşzamanlı (paralel) çalışır.</text>
+<text x="16" y="200" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Maske her kafada Softmax'tan önce eklenir; kafalar Concat adımına kadar birbirini etkilemez.</text>
 </svg>
 
 > [!IMPORTANT]
@@ -520,37 +520,37 @@ Bütün argüman tek resimde: bir bütçeye karşı iki bütçe ve her kafanın 
 <defs>
 <marker id="bg-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">3. satır (kovaladı): %100 nereye gidiyor</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her kafaya bir softmax bütçesi</text>
-<text x="16" y="70" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:600">tek kafa</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">"kovaladı" Satırı: %100 Dikkat Bütçesi Dağılımı</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Her kafa için bağımsız Softmax normalizasyonu</text>
+<text x="16" y="70" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:600">Tek Kafa</text>
 <rect x="76.0" y="54" width="12.2" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="89.2" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="138.37" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46,8%</text>
+<text x="138.37" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">46,8%</text>
 <rect x="187.5" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="236.64999999999998" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46,8%</text>
-<text x="16" y="110" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:600">1. kafa</text>
+<text x="236.65" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">46,8%</text>
+<text x="16" y="110" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:600">1. Kafa</text>
 <rect x="76.0" y="94" width="39.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
-<text x="96.265" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">19,3%</text>
+<text x="96.265" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">19,3%</text>
 <rect x="116.5" y="94" width="50.7" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="142.36" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">24,6%</text>
+<text x="142.36" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">24,6%</text>
 <rect x="168.2" y="94" width="116.8" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="227.095" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">56,1%</text>
-<text x="16" y="150" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">2. kafa</text>
+<text x="227.095" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">56,1%</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">2. Kafa</text>
 <rect x="76.0" y="134" width="9.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="86.5" y="134" width="156.5" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="165.25" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">75,0%</text>
+<text x="165.25" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">75,0%</text>
 <rect x="244.0" y="134" width="41.0" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="265.0" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">20,0%</text>
+<text x="265.0" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">20,0%</text>
 <rect x="76" y="178" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <text x="92" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">köpek</text>
 <rect x="142" y="178" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
 <text x="158" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">kediyi</text>
 <rect x="208" y="178" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
 <text x="224" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">kovaladı</text>
-<text x="16" y="214" text-anchor="start" style="fill:var(--c-danger);font-size:12px">tek kafa %56,1 + %75,0 = %131,1 isterdi</text>
-<text x="16" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">iki hedef de %46,8&#x27;e bulanır; iki kafa iki bütçe alır</text>
-<text x="316" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Concat → Wᴼ</text>
-<text x="316" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her kafa kendi çekmecesine yazar</text>
+<text x="16" y="214" text-anchor="start" style="fill:var(--c-danger);font-size:11.5px">Tek kafa: %56,1 (eylem) + %75,0 (nesne) = %131,1 isterdi!</text>
+<text x="16" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Ortak payda iki sinyali de %46,8'e bastırır; 2 kafa 2 tam bütçe verir.</text>
+<text x="316" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Concat → W_O İzdüşümü</text>
+<text x="316" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Her kafa kendi alt uzay çekmecesine yazar</text>
 <rect x="316" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
 <text x="342" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1,064</text>
 <rect x="372" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
@@ -559,10 +559,10 @@ Bütün argüman tek resimde: bir bütçeye karşı iki bütçe ve her kafanın 
 <text x="454" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,637</text>
 <rect x="484" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent-2);fill-opacity:.25;stroke:var(--c-accent-2);stroke-width:1.4"/>
 <text x="510" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1,157</text>
-<text x="370" y="98" text-anchor="middle" style="fill:var(--c-accent);font-size:11px">1. kafa: eylem</text>
-<text x="482" y="98" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px">2. kafa: nesne</text>
+<text x="370" y="98" text-anchor="middle" style="fill:var(--c-accent);font-size:11px;font-weight:600">1. Kafa (Eylem)</text>
+<text x="482" y="98" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px;font-weight:600">2. Kafa (Nesne)</text>
 <line x1="426" y1="106" x2="426" y2="136" marker-end="url(#bg-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="436" y="125" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">× Wᴼ</text>
+<text x="436" y="125" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">× W_O</text>
 <rect x="316" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
 <text x="342" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1,382</text>
 <rect x="372" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
@@ -571,8 +571,8 @@ Bütün argüman tek resimde: bir bütçeye karşı iki bütçe ve her kafanın 
 <text x="454" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1,169</text>
 <rect x="484" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
 <text x="510" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1,709</text>
-<text x="426" y="186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">O[3], iki sinyal karışık</text>
-<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Ayrı bütçeler, iki bağımlılığın tek softmax paydasını yamyamlaştırmasını önler.</text>
+<text x="426" y="186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">O[2]: İki zengin anlamsal sinyal birleşti</text>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Bağımsız bütçeler, iki farklı dilsel hedefin tek Softmax paydasında birbirini yok etmesini önler.</text>
 </svg>
 
 > [!IMPORTANT]
@@ -605,37 +605,37 @@ Böyle bir döngüyü modern bir GPU'da çalıştırmak tam anlamıyla bir siste
 <marker id="gp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">girdi Z</text>
-<text x="144.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<text x="144.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Girdi Z (Gömme Tensörü)</text>
+<text x="144.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, d_model]</text>
 <line x1="144.0" y1="52" x2="144.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="144.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">tek kaynaşık GEMM</text>
-<text x="144.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">W_qkv: (d_model, 3·d_model)</text>
+<text x="144.0" y="83.5" text-anchor="middle" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">Tek Kaynaşık GEMM (Fused Projection)</text>
+<text x="144.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">W_qkv: [d_model, 3·d_model]</text>
 <line x1="144.0" y1="108" x2="144.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">paketlenmiş QKV</text>
-<text x="144.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, 3, H, d_k)</text>
+<text x="144.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Paketlenmiş QKV Tensörü</text>
+<text x="144.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, 3, H, d_k]</text>
 <line x1="144.0" y1="164" x2="144.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ayrıştır ve transpoze</text>
-<text x="144.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<text x="144.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Sıfır-Kopya Permute &amp; Split</text>
+<text x="144.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Q, K, V her biri: [B, H, N, d_k]</text>
 <rect x="288" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="416.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">yığın GEMM (bmm)</text>
-<text x="416.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q @ Kᵀ → softmax → @ V</text>
+<text x="416.0" y="27.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12.5px;font-weight:600">Yığın GEMM (Batched Attention)</text>
+<text x="416.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">σ(Q Kᵀ / √d_k + M) · V</text>
 <line x1="416.0" y1="52" x2="416.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="416.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">kafa çıktıları</text>
-<text x="416.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<text x="416.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Eşzamanlı Kafa Çıktıları</text>
+<text x="416.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, H, N, d_k]</text>
 <line x1="416.0" y1="108" x2="416.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="416.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">transpose(1, 2).view</text>
-<text x="416.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<text x="416.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">transpose(1, 2).contiguous().view</text>
+<text x="416.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, H·d_k = d_model]</text>
 <line x1="416.0" y1="164" x2="416.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="416.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">nihai GEMM W_o</text>
-<text x="416.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ çıktı (B, N, d_model)</text>
+<text x="416.0" y="195.5" text-anchor="middle" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">Nihai GEMM (W_O İzdüşümü)</text>
+<text x="416.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Çıktı O: [B, N, d_model]</text>
 <path d="M144.0 220 V230 H280 V6 H416.0 V9" marker-end="url(#gp-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="16" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İki büyük GEMM ve tek bir yığın attention çağrısı: kafalar üzerinde hiçbir Python döngüsü yok.</text>
+<text x="16" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">İki büyük GEMM ve tek bir yığın attention çekirdeği: kafalar üzerinde hiçbir Python döngüsü yok.</text>
 </svg>
 
 ### Üretim kodunun dört kritik tensör hilesi:
@@ -839,12 +839,12 @@ Yapay zekâ endüstrisi, bu donanımsal tıkanıklığı aşmak için MHA'dan ba
 <rect x="109.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
 <line x1="129" y1="74" x2="129.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="123.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="26" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 32 : 32</text>
+<text x="25" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · KV:32</text>
 <rect x="25" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="25" y="166" width="108.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="26" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">%100</text>
-<text x="26" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache</text>
-<text x="26" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPT-3</text>
+<text x="26" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache boyutu</text>
+<text x="26" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPT-3, Llama 1</text>
 <rect x="150" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <text x="160" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">MQA</text>
 <text x="160" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Shazeer 2019</text>
@@ -865,11 +865,11 @@ Yapay zekâ endüstrisi, bu donanımsal tıkanıklığı aşmak için MHA'dan ba
 <line x1="249" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="263" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="201.0" y="112" width="26" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="160" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 1 : 1</text>
+<text x="160" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · K:1 · V:1</text>
 <rect x="159" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="159" y="166" width="3.4" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="160" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">%3,1</text>
-<text x="160" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">32× küçük</text>
+<text x="160" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">32× tasarruf</text>
 <text x="160" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PaLM, Falcon</text>
 <rect x="284" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <text x="294" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">GQA</text>
@@ -892,11 +892,11 @@ Yapay zekâ endüstrisi, bu donanımsal tıkanıklığı aşmak için MHA'dan ba
 <line x1="383" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="397" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="364.0" y="112" width="24" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="294" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 8 : 8</text>
+<text x="294" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · K:8 · V:8</text>
 <rect x="293" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="293" y="166" width="27.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="294" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">%25</text>
-<text x="294" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4× küçük</text>
+<text x="294" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4× tasarruf</text>
 <text x="294" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Llama 2/3, Mistral</text>
 <rect x="418" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <text x="428" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">MLA</text>
@@ -910,7 +910,7 @@ Yapay zekâ endüstrisi, bu donanımsal tıkanıklığı aşmak için MHA'dan ba
 <rect x="511" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <rect x="525" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <rect x="427" y="112" width="110" height="22" rx="3" style="fill:var(--c-accent-2);fill-opacity:.55"/>
-<text x="482" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px">gizil cₜ</text>
+<text x="482" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px">gizil c_t</text>
 <line x1="433" y1="74" x2="433" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="447" y1="74" x2="447" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="461" y1="74" x2="461" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
@@ -919,17 +919,17 @@ Yapay zekâ endüstrisi, bu donanımsal tıkanıklığı aşmak için MHA'dan ba
 <line x1="503" y1="74" x2="503" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="517" y1="74" x2="517" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="531" y1="74" x2="531" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<text x="428" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">512 + 64 / token</text>
+<text x="426" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">c:512 + k_R:64</text>
 <rect x="427" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="427" y="166" width="2.0" height="10" rx="2" style="fill:var(--c-accent-2);fill-opacity:.8"/>
 <text x="428" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">%1,8</text>
-<text x="428" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">≈57× küçük</text>
+<text x="428" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">≈57× tasarruf</text>
 <text x="428" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DeepSeek-V2/V3</text>
 <rect x="16" y="254" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="34" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">query kafaları</text>
-<rect x="130" y="254" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="148" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">saklanan K/V kafaları</text>
-<text x="16" y="288" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 query kafasıyla çizildi; oranlar 32 kafa için. MLA, kendi 128 kafalı MHA&#x27;sına göre ölçülür.</text>
+<text x="34" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Query kafaları (Q)</text>
+<rect x="148" y="254" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="166" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Saklanan Key/Value (KV)</text>
+<text x="16" y="288" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Diyagram 8 query kafasıyla sadeleştirilmiştir. Oranlar 32 kafalık standarda (MLA için 128 kafa) göredir.</text>
 </svg>
 
 #### 1. MHA (Multi-Head Attention - Vaswani ve ark., 2017)

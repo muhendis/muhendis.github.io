@@ -44,12 +44,12 @@ $$\kappa = \frac{\lambda_{\max}}{\lambda_{\min}} = \frac{L}{1} = L$$
 
 Derin yapay sinir ağlarında koşul sayısı sıklıkla $\kappa \ge 10^4 - 10^6$ seviyelerine fırlar.
 
-<svg viewBox="0 0 560 330" role="img" aria-label="Kötü koşullu vadi, koşul sayısı kappa 10 üzeri 4&#x27;ün çok üstünde. Yamaç yönünde, lambda max, eğrilik diktir ve düz SGD şiddetli enine salınımlarla sekip durur. Taban yönünde, lambda min, eğrilik düzdür ve ileri ilerleme neredeyse sıfırdır. SGD sıkışmıştır: adım boyu 2 bölü lambda max&#x27;ın üstündeyse patlar, altındaysa taban boyunca sürünür. Üç algoritmik çözüm: momentum salınımları sönümler, çünkü yön değiştiren gradyanların toplamı sıfıra yakındır, ve taban boyunca hız biriktirir; AdamW adım boyutunu koordinat bazlı RMS ile eşitler; Muon tüm 2D güncelleme matrisini Newton-Schulz yinelemeleriyle ortogonalize eder." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 330" role="img" aria-label="Kötü koşullu vadi çıkmazı, koşul sayısı kappa 10 üzeri 4&amp;#x27;ün çok üstünde. Yamaç doğrultusunda (lambda max) eğrilik diktir ve düz SGD şiddetli enine salınımlarla sekip durur. Vadi tabanı doğrultusunda (lambda min) eğrilik düzdür ve ileri ilerleme neredeyse sıfırdır. SGD sıkışmıştır: Adım boyu 2 bölü lambda max&amp;#x27;ın üstündeyse patlar, altındaysa tabanda sürünür. Üç algoritmik çözüm: Momentum enine salınımları sönümler (Σ ±g ≈ 0) ve taban boyunca hız biriktirir; AdamW koordinat bazlı RMS ile adım boyunu eşitler; Muon tüm 2D momentum matrisini Newton-Schulz ile ortogonalize eder." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="rv-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="rv-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
 </defs>
-<text x="16" y="20" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Kötü koşullu vadi çıkmazı (κ ≫ 10⁴)</text>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Kötü Koşullu Vadi Çıkmazı (κ ≫ 10⁴)</text>
 <ellipse cx="230" cy="100" rx="200" ry="62" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <ellipse cx="230" cy="100" rx="140" ry="43" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <ellipse cx="230" cy="100" rx="80" ry="25" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
@@ -60,7 +60,7 @@ Derin yapay sinir ağlarında koşul sayısı sıklıkla $\kappa \ge 10^4 - 10^6
 <path d="M448 60 V140" marker-start="url(#rv-arr)" marker-end="url(#rv-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="458" y="84" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">yamaç · λ_max</text>
 <text x="458" y="99" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">dik eğrilik:</text>
-<text x="458" y="113" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">şiddetli salınım</text>
+<text x="458" y="113" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">şiddetli salınımlar</text>
 <path d="M150 178 H310" marker-start="url(#rv-arr)" marker-end="url(#rv-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <text x="230" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">taban · λ_min · düz eğrilik: neredeyse sıfır ilerleme</text>
 <rect x="16" y="206" width="528" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
@@ -76,8 +76,8 @@ Derin yapay sinir ağlarında koşul sayısı sıklıkla $\kappa \ge 10^4 - 10^6
 <text x="280.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">koordinat bazlı RMS</text>
 <rect x="376" y="268" width="168" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="460.0" y="284.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Muon</text>
-<text x="460.0" y="300.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">2D matrisi ortogonalize</text>
-<text x="460.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">eder (Newton–Schulz)</text>
+<text x="460.0" y="300.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">2D matrisi ortogonal</text>
+<text x="460.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">yapar (Newton–Schulz)</text>
 </svg>
 
 ### Klasik SGD'nin Kararlılık Tavanı
@@ -238,37 +238,37 @@ Loshchilov ve Hutter, ağırlık sönümlemesini gradyan momentlerinden tamamen 
 
 $$\theta_t = \theta_{t-1} - \eta \lambda \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$$
 
-<svg viewBox="0 0 560 230" role="img" aria-label="L2 regülarizasyonlu Adam ile AdamW. L2&#x27;li Adam&#x27;da sönümleme terimi lambda çarpı w gradyana eklenir, birinci ve ikinci momentlere girer ve v&#x27;nin kareköküne bölünür; büyük gradyan geçmişi olan ağırlıklar neredeyse hiç sönümlenmez. Ayrıştırılmış sönümlemeli AdamW&#x27;de saf gradyan g momentlerden geçip standart Adam adımına gider; ağırlık sönümleme, eksi eta çarpı lambda çarpı w, momentleri atlar ve ağırlıklardan doğrudan çıkarılır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 230" role="img" aria-label="L2 regülarizasyonlu Adam ile AdamW karşılaştırması: L2&amp;#x27;li Adam&amp;#x27;da ağırlık sönümleme terimi lambda çarpı w gradyana eklenir, birinci ve ikinci momentlere girer ve v&amp;#x27;nin kareköküne bölünür; seyrek güncellenen ağırlıklar aşırı sönümlenirken sık güncellenenler sönümlenmez. Ayrıştırılmış sönümlemeli AdamW&amp;#x27;de saf gradyan g momentlerden geçip standart Adam adımına gider; ağırlık sönümleme (eksi eta lambda w) momentleri tamamen atlayarak doğrudan ağırlıklardan çıkarılır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="aw-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="8" width="528" height="96" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="29" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Adam + L2 regülarizasyonu</text>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Adam + L2 Regülarizasyonu</text>
 <text x="530" y="29" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">sönümleme BOZULUR</text>
 <rect x="16" y="120" width="528" height="100" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="141" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">AdamW (ayrıştırılmış sönümleme)</text>
+<text x="30" y="141" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">AdamW (Ayrıştırılmış Sönümleme)</text>
 <text x="530" y="141" text-anchor="end" style="fill:var(--c-success);font-size:12px;font-weight:600">sönümleme KORUNUR</text>
 <rect x="30" y="40" width="150" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
 <text x="105.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">g + λ·w</text>
 <rect x="206" y="40" width="150" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="281.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">momentlere girer</text>
+<text x="281.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">momentlere girer (m, v)</text>
 <rect x="382" y="40" width="148" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="456.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">√v ile bölünür</text>
 <line x1="180" y1="57" x2="204" y2="57" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="356" y1="57" x2="380" y2="57" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="30" y="92" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">sönümleme terimi gradyanla birlikte koordinat bazında yeniden ölçeklenir</text>
+<text x="30" y="92" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">sönümleme gradyana bağlanır; seyrek koordinatlar aşırı sönümlenir</text>
 <rect x="30" y="152" width="150" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="105.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">g</text>
 <rect x="206" y="152" width="150" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="281.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">momentler m, v</text>
+<text x="281.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">saf gradyan g</text>
 <rect x="382" y="152" width="148" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="456.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">standart adım</text>
+<text x="456.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">standart adaptif adım</text>
 <line x1="180" y1="167" x2="204" y2="167" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <line x1="356" y1="167" x2="380" y2="167" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="30" y="190" width="150" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="105.0" y="209.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">−η·λ·w</text>
 <rect x="382" y="190" width="148" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="456.0" y="209.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">w&#x27;den çıkar</text>
+<text x="456.0" y="209.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">w&#x27;den çıkar</text>
 <line x1="180" y1="205" x2="380" y2="205" marker-end="url(#aw-arr)" style="stroke:var(--c-success);stroke-width:1.5;stroke-dasharray:5 4"/>
 <text x="280" y="199" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">momentleri atlar</text>
 </svg>
@@ -317,25 +317,25 @@ Muon bu hesaplama darboğazını yalnızca matris çarpımlarına (GEMM) dayanan
 
 Bu yineleme yalnızca matris çarpımları ve toplamalardan oluştuğu için modern GPU Tensor Çekirdekleri 5 adımı bir milisaniyenin altında, tepe donanım verimiyle tamamlar.
 
-<svg viewBox="0 0 560 270" role="img" aria-label="Muon güncellemesi beş adımda. 2D gizli bir ağırlığın ham momentum matrisi G&#x27;den başla. Frobenius normuna böl: X0, G bölü G&#x27;nin normu. Beş Newton-Schulz yinelemesi çalıştır: X k artı 1, yarım çarpı X k çarpı 3 I eksi X k devrik X k. Sonuç ortogonal bir güncelleme matrisidir: X devrik X yaklaşık birim matristir, tüm tekil değerler 1&#x27;dir. Ağırlığı güncelle: W, W eksi eta X olur; eşit bir spektral adım." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 270" role="img" aria-label="Muon optimizasyon güncellemesi beş adımda: 2D gizli ağırlıkların ham momentum matrisi G&amp;#x27;den başlanır. Frobenius normuna bölünerek enerji normalizasyonu yapılır: X0 = G / ‖G‖_F. Beş Newton-Schulz yinelemesi çalıştırılır: X_k+1 = 1/2 X_k (3I − X_k^T X_k). Sonuç ortogonal bir güncelleme tensörüdür (X^T X ≈ I, tüm tekil değerler 1&amp;#x27;e eşitlenir). Ağırlıklar eşit spektral adımla güncellenir: W = W − eta X." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="mu-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="8" width="528" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="33" text-anchor="start" style="fill:var(--c-text);font-size:13px">Ham momentum G (2D ağırlık)</text>
+<text x="30" y="33" text-anchor="start" style="fill:var(--c-text);font-size:13px">Ham 2D momentum matrisi</text>
 <text x="530" y="33" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">G</text>
 <line x1="60" y1="48" x2="60" y2="58" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="60" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="30" y="85" text-anchor="start" style="fill:var(--c-text);font-size:13px">Enerjiyi normalle</text>
+<text x="30" y="85" text-anchor="start" style="fill:var(--c-text);font-size:13px">Frobenius normalizasyonu</text>
 <text x="530" y="85" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">X₀ = G / ‖G‖_F</text>
 <line x1="60" y1="100" x2="60" y2="110" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="112" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="30" y="137" text-anchor="start" style="fill:var(--c-text);font-size:13px">5× Newton–Schulz</text>
+<text x="30" y="137" text-anchor="start" style="fill:var(--c-text);font-size:13px">5× Newton–Schulz yinelemesi</text>
 <text x="530" y="137" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">X_k+1 = ½·X_k(3I − X_kᵀX_k)</text>
 <line x1="60" y1="152" x2="60" y2="162" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="164" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="30" y="189" text-anchor="start" style="fill:var(--c-text);font-size:13px">Ortogonal güncelleme</text>
-<text x="530" y="189" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">XᵀX ≈ I (tüm σᵢ = 1)</text>
+<text x="30" y="189" text-anchor="start" style="fill:var(--c-text);font-size:13px">Ortogonal güncelleme tensörü</text>
+<text x="530" y="189" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">XᵀX ≈ I (tüm σᵢ ≈ 1)</text>
 <line x1="60" y1="204" x2="60" y2="214" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="216" width="528" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="30" y="241" text-anchor="start" style="fill:var(--c-text);font-size:13px">Eşit spektral adım</text>

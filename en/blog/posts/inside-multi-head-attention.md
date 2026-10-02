@@ -88,44 +88,44 @@ A professional stage does not solve this by attempting to bend a single bulb int
 <marker id="bn-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="bn-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
-<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">single head</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Single-Head Attention</text>
 <rect x="16" y="28" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="54.0" y="53.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
 <line x1="92" y1="49" x2="110" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="112" y="28" width="200" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="212.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">one bilinear map</text>
-<text x="212.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">M = W_Q W_Kᵀ</text>
+<text x="212.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Single Bilinear Map</text>
+<text x="212.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">M = W_Q W_Kᵀ [d × d]</text>
 <line x1="312" y1="49" x2="330" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="332" y="28" width="212" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="438.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">compromise trap</text>
-<text x="438.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">blurred, averaged attention</text>
-<text x="16" y="104" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">multi-head subspaces</text>
+<text x="438.0" y="45.5" text-anchor="middle" style="fill:var(--c-danger);font-size:12.5px;font-weight:600">Compromise Trap (Rank Collapse)</text>
+<text x="438.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Blurred, averaged attention profile</text>
+<text x="16" y="104" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Multi-Head Subspaces (H Independent Maps)</text>
 <rect x="16" y="160" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="54.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
 <path d="M92 181 C 102 181, 102 127, 112 127" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="114" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="131" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 1: verb / predicate</text>
+<text x="124" y="131" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">Head 1: Subject-Verb Dependency</text>
 <path d="M314 127 C 322 127, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 159, 112 159" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="146" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="163" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 2: local adjacency, syntax</text>
+<text x="124" y="163" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">Head 2: Local Adjacency / n-gram</text>
 <path d="M314 159 C 322 159, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 191, 112 191" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="178" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="195" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 3: syntactic agreement</text>
+<text x="124" y="195" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">Head 3: Direct Object / Syntax</text>
 <path d="M314 191 C 322 191, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M92 181 C 102 181, 102 223, 112 223" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <rect x="114" y="210" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="124" y="227" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 4: long-range coreference</text>
+<text x="124" y="227" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">Head 4: Long-Range Coreference</text>
 <path d="M314 223 C 322 223, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="332" y="150" width="96" height="62" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="380.0" y="177.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Concat</text>
-<text x="380.0" y="193.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ Wᴼ</text>
+<text x="380.0" y="177.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Concat</text>
+<text x="380.0" y="193.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">× W_O</text>
 <line x1="428" y1="181" x2="442" y2="181" marker-end="url(#bn-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<rect x="444" y="150" width="100" height="62" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="494.0" y="169.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">rich</text>
-<text x="494.0" y="185.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">multi-layered</text>
-<text x="494.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">representation</text>
+<rect x="440" y="150" width="108" height="62" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="494.0" y="169.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12.5px;font-weight:600">Rich &amp; Layered</text>
+<text x="494.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Hierarchical Output</text>
+<text x="494.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, T, d_model]</text>
 </svg>
 
 Every human sentence is an equally layered stage. Consider the concurrent webs of relationships:
@@ -222,42 +222,42 @@ Notice the chronological execution sequence in hardware:
 <marker id="pl-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="64.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">input Z</text>
+<text x="64.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Input Z [N, d]</text>
 <line x1="112" y1="50" x2="123" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="124" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="172.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q, K, V</text>
-<text x="172.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">projections</text>
+<text x="172.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Q, K, V Proj.</text>
+<text x="172.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">W_Q, W_K, W_V</text>
 <line x1="220" y1="50" x2="231" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="232" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">split</text>
-<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">into H heads</text>
+<text x="280.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Split into Heads</text>
+<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">[H, N, d_k]</text>
 <line x1="328" y1="50" x2="339" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="340" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="388.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1. scores</text>
-<text x="388.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">QₕKₕᵀ / √d_k</text>
+<text x="388.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">1. Scores (Sₕ)</text>
+<text x="388.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">QₕKₕᵀ / √d_k</text>
 <line x1="436" y1="50" x2="447" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="448" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2. mask</text>
-<text x="496.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Sₕ + M (−∞)</text>
+<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">2. Causal Mask</text>
+<text x="496.0" y="62.5" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px;font-family:var(--font-mono)">Sₕ + M (−∞)</text>
 <path d="M496.0 74 V92 H64.0 V108" marker-end="url(#pl-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="64.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3. softmax</text>
-<text x="64.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ</text>
+<text x="64.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">3. Softmax</text>
+<text x="64.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Aₕ = σ(S̃ₕ)</text>
 <line x1="112" y1="134" x2="123" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="124" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="172.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4. context</text>
-<text x="172.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ Vₕ</text>
+<text x="172.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-weight:600">4. Context</text>
+<text x="172.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">headₕ = AₕVₕ</text>
 <line x1="220" y1="134" x2="231" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="232" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="280.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5. concat</text>
-<text x="280.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">head₁ … head_H</text>
+<text x="280.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">5. Concat</text>
+<text x="280.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">[head₁…head_H]</text>
 <line x1="328" y1="134" x2="339" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="340" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="388.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6. Wᴼ</text>
-<text x="388.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ O</text>
+<text x="388.0" y="130.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:600">6. Linear Proj.</text>
+<text x="388.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">Concat · W_O</text>
 <rect x="16" y="170" width="12" height="12" rx="2" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="34" y="180" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">per head, in parallel</text>
-<text x="16" y="200" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The mask is applied in every head before softmax; heads never see each other until the concat.</text>
+<text x="34" y="180" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">H heads execute independently and concurrently (in parallel).</text>
+<text x="16" y="200" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Mask is applied in every head before Softmax; heads never influence each other until Concat.</text>
 </svg>
 
 The causal masking step is inserted **strictly between scaled dot-product scores and the Softmax function**. Because $e^{-\infty} = 0$, all future token logits vanish in the exponential, ensuring that zero future information can leak into the head outputs.
@@ -513,37 +513,37 @@ The whole argument on one picture: one budget versus two, and where each head's 
 <defs>
 <marker id="bg-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">row 3 (chased): where the 100% goes</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one softmax budget per head</text>
-<text x="16" y="70" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:600">one head</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">"chased" Row Attention Budget (100%)</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Independent Softmax normalization per head</text>
+<text x="16" y="70" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:600">Single Head</text>
 <rect x="76.0" y="54" width="12.2" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="89.2" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="138.37" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46.8%</text>
+<text x="138.37" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">46.8%</text>
 <rect x="187.5" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="236.64999999999998" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46.8%</text>
-<text x="16" y="110" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:600">head 1</text>
+<text x="236.65" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">46.8%</text>
+<text x="16" y="110" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:600">Head 1</text>
 <rect x="76.0" y="94" width="39.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
-<text x="96.265" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">19.3%</text>
+<text x="96.265" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">19.3%</text>
 <rect x="116.5" y="94" width="50.7" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="142.36" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">24.6%</text>
+<text x="142.36" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">24.6%</text>
 <rect x="168.2" y="94" width="116.8" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="227.095" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">56.1%</text>
-<text x="16" y="150" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">head 2</text>
+<text x="227.095" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">56.1%</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">Head 2</text>
 <rect x="76.0" y="134" width="9.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <rect x="86.5" y="134" width="156.5" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
-<text x="165.25" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">75.0%</text>
+<text x="165.25" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">75.0%</text>
 <rect x="244.0" y="134" width="41.0" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
-<text x="265.0" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">20.0%</text>
+<text x="265.0" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">20.0%</text>
 <rect x="76" y="178" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
 <text x="92" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">dog</text>
 <rect x="136" y="178" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
 <text x="152" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">cat</text>
 <rect x="192" y="178" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
 <text x="208" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">chased</text>
-<text x="16" y="214" text-anchor="start" style="fill:var(--c-danger);font-size:12px">one head would need 56.1% + 75.0% = 131.1%</text>
-<text x="16" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">so both targets blur to 46.8%; two heads get two budgets</text>
-<text x="316" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Concat → Wᴼ</text>
-<text x="316" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">each head writes its own drawer</text>
+<text x="16" y="214" text-anchor="start" style="fill:var(--c-danger);font-size:11.5px">Single head: 56.1% (action) + 75.0% (object) = 131.1% needed!</text>
+<text x="16" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Shared denominator flattens both to 46.8%; 2 heads provide 2 full budgets.</text>
+<text x="316" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Concat → W_O Projection</text>
+<text x="316" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Each head writes to its own subspace</text>
 <rect x="316" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
 <text x="342" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.064</text>
 <rect x="372" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
@@ -552,10 +552,10 @@ The whole argument on one picture: one budget versus two, and where each head's 
 <text x="454" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.637</text>
 <rect x="484" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent-2);fill-opacity:.25;stroke:var(--c-accent-2);stroke-width:1.4"/>
 <text x="510" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.157</text>
-<text x="370" y="98" text-anchor="middle" style="fill:var(--c-accent);font-size:11px">head 1: action</text>
-<text x="482" y="98" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px">head 2: object</text>
+<text x="370" y="98" text-anchor="middle" style="fill:var(--c-accent);font-size:11px;font-weight:600">Head 1 (Action)</text>
+<text x="482" y="98" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px;font-weight:600">Head 2 (Object)</text>
 <line x1="426" y1="106" x2="426" y2="136" marker-end="url(#bg-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="436" y="125" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">× Wᴼ</text>
+<text x="436" y="125" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">× W_O</text>
 <rect x="316" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
 <text x="342" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.382</text>
 <rect x="372" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
@@ -564,8 +564,8 @@ The whole argument on one picture: one budget versus two, and where each head's 
 <text x="454" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.169</text>
 <rect x="484" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
 <text x="510" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.709</text>
-<text x="426" y="186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">O[3], both signals mixed</text>
-<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Separate budgets stop the two dependencies from cannibalizing one softmax denominator.</text>
+<text x="426" y="186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">O[2]: Two rich semantic signals unified</text>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Independent budgets prevent competing dependencies from diluting a single Softmax denominator.</text>
 </svg>
 
 > [!IMPORTANT]
@@ -598,37 +598,37 @@ In production engines (PyTorch, Hugging Face, vLLM), Multi-Head Attention is exe
 <marker id="gp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">input Z</text>
-<text x="144.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<text x="144.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Input Z (Embedding Tensor)</text>
+<text x="144.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, d_model]</text>
 <line x1="144.0" y1="52" x2="144.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="144.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">one fused GEMM</text>
-<text x="144.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">W_qkv: (d_model, 3·d_model)</text>
+<text x="144.0" y="83.5" text-anchor="middle" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">Single Fused GEMM (Projection)</text>
+<text x="144.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">W_qkv: [d_model, 3·d_model]</text>
 <line x1="144.0" y1="108" x2="144.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">packed QKV</text>
-<text x="144.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, 3, H, d_k)</text>
+<text x="144.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Packed QKV Tensor</text>
+<text x="144.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, 3, H, d_k]</text>
 <line x1="144.0" y1="164" x2="144.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">split &amp; permute</text>
-<text x="144.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<text x="144.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Zero-Copy Permute &amp; Split</text>
+<text x="144.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Q, K, V each: [B, H, N, d_k]</text>
 <rect x="288" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="416.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">batched GEMM (bmm)</text>
-<text x="416.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q @ Kᵀ → softmax → @ V</text>
+<text x="416.0" y="27.5" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12.5px;font-weight:600">Batched GEMM (Attention)</text>
+<text x="416.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">σ(Q Kᵀ / √d_k + M) · V</text>
 <line x1="416.0" y1="52" x2="416.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="416.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">head outputs</text>
-<text x="416.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<text x="416.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Concurrent Head Outputs</text>
+<text x="416.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, H, N, d_k]</text>
 <line x1="416.0" y1="108" x2="416.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="416.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">transpose(1, 2).view</text>
-<text x="416.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<text x="416.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">transpose(1, 2).contiguous().view</text>
+<text x="416.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">[B, N, H·d_k = d_model]</text>
 <line x1="416.0" y1="164" x2="416.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="416.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">final GEMM W_o</text>
-<text x="416.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ output (B, N, d_model)</text>
+<text x="416.0" y="195.5" text-anchor="middle" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">Final GEMM (W_O Projection)</text>
+<text x="416.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">Output O: [B, N, d_model]</text>
 <path d="M144.0 220 V230 H280 V6 H416.0 V9" marker-end="url(#gp-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="16" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Two big GEMMs and one batched attention call: no Python loop over heads anywhere.</text>
+<text x="16" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">Two large GEMMs and one batched attention call: no Python loop over heads anywhere.</text>
 </svg>
 
 ### Four critical tensor tricks in production:
@@ -805,12 +805,12 @@ To dismantle this memory wall, the AI research community engineered a four-gener
 <rect x="109.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
 <line x1="129" y1="74" x2="129.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="123.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="26" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 32 : 32</text>
+<text x="25" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · KV:32</text>
 <rect x="25" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="25" y="166" width="108.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="26" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">100%</text>
-<text x="26" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache</text>
-<text x="26" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPT-3</text>
+<text x="26" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache footprint</text>
+<text x="26" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPT-3, Llama 1</text>
 <rect x="150" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
 <text x="160" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">MQA</text>
 <text x="160" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Shazeer 2019</text>
@@ -831,7 +831,7 @@ To dismantle this memory wall, the AI research community engineered a four-gener
 <line x1="249" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="263" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="201.0" y="112" width="26" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="160" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 1 : 1</text>
+<text x="160" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · K:1 · V:1</text>
 <rect x="159" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="159" y="166" width="3.4" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="160" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">3.1%</text>
@@ -858,7 +858,7 @@ To dismantle this memory wall, the AI research community engineered a four-gener
 <line x1="383" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="397" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <rect x="364.0" y="112" width="24" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="294" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 8 : 8</text>
+<text x="294" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Q:32 · K:8 · V:8</text>
 <rect x="293" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="293" y="166" width="27.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
 <text x="294" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">25%</text>
@@ -876,7 +876,7 @@ To dismantle this memory wall, the AI research community engineered a four-gener
 <rect x="511" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <rect x="525" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
 <rect x="427" y="112" width="110" height="22" rx="3" style="fill:var(--c-accent-2);fill-opacity:.55"/>
-<text x="482" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px">latent cₜ</text>
+<text x="482" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px">latent c_t</text>
 <line x1="433" y1="74" x2="433" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="447" y1="74" x2="447" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="461" y1="74" x2="461" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
@@ -885,17 +885,17 @@ To dismantle this memory wall, the AI research community engineered a four-gener
 <line x1="503" y1="74" x2="503" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="517" y1="74" x2="517" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
 <line x1="531" y1="74" x2="531" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<text x="428" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">512 + 64 / token</text>
+<text x="426" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">c:512 + k_R:64</text>
 <rect x="427" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
 <rect x="427" y="166" width="2.0" height="10" rx="2" style="fill:var(--c-accent-2);fill-opacity:.8"/>
 <text x="428" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">1.8%</text>
 <text x="428" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">≈57× smaller</text>
 <text x="428" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DeepSeek-V2/V3</text>
 <rect x="16" y="254" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
-<text x="34" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">query heads</text>
-<rect x="130" y="254" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
-<text x="148" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">cached K/V heads</text>
-<text x="16" y="288" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Drawn with 8 query heads; ratios use 32 heads. MLA is measured against an MHA with its own 128 heads.</text>
+<text x="34" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Query heads (Q)</text>
+<rect x="148" y="254" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="166" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Cached Key/Value (KV)</text>
+<text x="16" y="288" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Simplified with 8 query heads; ratios reflect a 32-head baseline (128 heads for MLA).</text>
 </svg>
 
 #### 1. MHA (Multi-Head Attention - Vaswani et al., 2017)

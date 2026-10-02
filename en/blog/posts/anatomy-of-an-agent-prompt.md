@@ -57,41 +57,41 @@ duties, boundaries, reporting format, escalation path — is what makes
 delegation safe. The eight sections of a well-built agent prompt are
 exactly that description, and they stack into four floors:
 
-<svg viewBox="0 0 560 336" role="img" aria-label="The eight sections of an agent prompt, grouped into four families read top to bottom. Identity, who the agent is: 1, role and mission; 2, scope and non-goals. Decisions, how it thinks: 3, operating principles; 4, workflow checklist. Interfaces, tools in and output out: 5, tool-use policy; 6, output format. Edges, when the plan breaks: 7, uncertainty and escalation; 8, few-shot examples." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 336" role="img" aria-label="The eight sections of an agent prompt, structured into four top-to-bottom architectural layers: 1. Identity &amp; authority (role charter, mission boundaries, and non-goals); 2. Decision engine (operating principles and workflow checklist); 3. Interface contracts (tool-use policy and structured delivery format); 4. Defensive boundaries (uncertainty handling, escalation protocols, and canonical few-shot examples)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="ap-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
 <rect x="16" y="8" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="29" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Identity</text>
-<text x="101.2" y="29" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">who the agent is</text>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">1. Identity &amp; Authority</text>
+<text x="185" y="29" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">role charter and mission scope</text>
 <rect x="30" y="39" width="246" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="153" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">1 · Role and mission</text>
+<text x="153" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">1 · Role &amp; mission charter</text>
 <rect x="284" y="39" width="246" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="407" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">2 · Scope and non-goals</text>
+<text x="407" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">2 · Scope &amp; non-goals</text>
 <line x1="280" y1="76" x2="280" y2="88" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="90" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="111" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">Decisions</text>
-<text x="108.35000000000001" y="111" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">how it thinks</text>
+<text x="30" y="111" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">2. Decision Engine</text>
+<text x="165" y="111" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">reasoning principles and step checklist</text>
 <rect x="30" y="121" width="246" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
-<text x="153" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">3 · Operating principles</text>
+<text x="153" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">3 · Operating principles</text>
 <rect x="284" y="121" width="246" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
-<text x="407" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">4 · Workflow checklist</text>
+<text x="407" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">4 · Workflow checklist</text>
 <line x1="280" y1="158" x2="280" y2="170" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="172" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="193" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Interfaces</text>
-<text x="115.5" y="193" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tools in, output out</text>
+<text x="30" y="193" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">3. Interface Contracts</text>
+<text x="180" y="193" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tool-use policy and structured delivery</text>
 <rect x="30" y="203" width="246" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="153" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">5 · Tool-use policy</text>
+<text x="153" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">5 · Tool-use policy</text>
 <rect x="284" y="203" width="246" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="407" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">6 · Output format</text>
+<text x="407" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">6 · Structured output format</text>
 <line x1="280" y1="240" x2="280" y2="252" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="254" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="275" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">Edges</text>
-<text x="79.75" y="275" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">when the plan breaks</text>
+<text x="30" y="275" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">4. Defensive Boundaries</text>
+<text x="195" y="275" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">uncertainty handling and escalation</text>
 <rect x="30" y="285" width="246" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
-<text x="153" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">7 · Uncertainty and escalation</text>
+<text x="153" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">7 · Uncertainty &amp; escalation</text>
 <rect x="284" y="285" width="246" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
-<text x="407" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">8 · Few-shot examples</text>
+<text x="407" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">8 · Canonical few-shot examples</text>
 </svg>
 
 The order is deliberate. Identity comes before decisions because

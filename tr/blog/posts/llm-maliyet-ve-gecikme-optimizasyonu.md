@@ -254,59 +254,57 @@ tutun.
 İşte bütün muharebe alanı tek haritada — bir isteğin yaşamı ve her
 optimizasyon ailesinin ona nereden saldırdığı:
 
-<svg viewBox="0 0 560 320" role="img" aria-label="Her maliyet ve gecikme kaldıracının nereye dokunduğu. İstek bir router&#x27;a ya da cascade&#x27;e gelir; kolay sorgular küçük modele, zor sorgular büyük modele gider. Tek bir çağrının içinde prefill prompt&#x27;u okur ve ilk token süresini, TTFT&#x27;yi belirler; ardından decode token token yazar ve geri kalan her şeyi belirler. Prompt caching prefill sırasında ortak prefix&#x27;i yeniden okumayı atlar. Speculative decoding decode adımı başına birden çok token üretir. max_tokens ve thinking bütçesi decode metresini daha erken durdurur. Quantization ağırlıkları küçültür ve bütün çağrı boyunca bellek okumalarını hızlandırır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 320" role="img" aria-label="Maliyet ve gecikme optimizasyonu kaldıraçlarının mimari haritası: Gelen istek model router tarafından karmaşıklığına göre hafif modele veya akıl yürütme modeline yönlendirilir. Tek çağrı içinde prefill fazı tüm prompt&#x27;u paralel işleyerek TTFT&#x27;yi belirler; decode fazı ise her adımda tek token üreterek TPOT akış hızını belirler. Dört temel kaldıraç sisteme müdahale eder: Prompt caching ortak prefix&#x27;i tekrar okumaz; ağırlık nicemleme bellek bant genişliği darboğazını hafifletir; spekülatif çıkarım adım başına birden fazla token üretir; jeton ve düşünme bütçesi sınırları ise gereksiz tüketimi erkenden keser." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="co-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="co-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <rect x="16" y="26" width="92" height="38" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="62.0" y="49.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">İstek</text>
+<text x="62.0" y="49.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Gelen İstek</text>
 <rect x="128" y="20" width="116" height="50" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="186.0" y="41.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Router /</text>
-<text x="186.0" y="57.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cascade</text>
+<text x="186.0" y="41.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Model Router</text>
+<text x="186.0" y="57.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">karmaşıklık analizi</text>
 <line x1="108" y1="45" x2="126" y2="45" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="288" y="2" width="132" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="354.0" y="18.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Küçük model</text>
-<text x="354.0" y="34.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">kolay sorgu</text>
+<text x="354.0" y="18.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Hafif Model</text>
+<text x="354.0" y="34.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">rutin / kolay sorgu</text>
 <rect x="288" y="50" width="132" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="354.0" y="66.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Büyük model</text>
-<text x="354.0" y="82.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">zor sorgu</text>
+<text x="354.0" y="66.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Akıl Yürütme Modeli</text>
+<text x="354.0" y="82.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">karmaşık derin analiz</text>
 <path d="M244 45 H264 V22 H286" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M264 45 V70 H286" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M420 22 H480 V98" marker-end="url(#co-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <path d="M420 70 H480" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="100" width="528" height="98" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
-<text x="30" y="119" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Tek çağrının içi</text>
-<rect x="32" y="128" width="168" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="116.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Prefill</text>
-<text x="116.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">prompt&#x27;u okur</text>
-<text x="116.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">TTFT&#x27;yi belirler</text>
-<rect x="232" y="128" width="296" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="380.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decode</text>
-<text x="380.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">token token yazar</text>
-<text x="380.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">geri kalan her şeyi belirler</text>
-<line x1="200" y1="158" x2="230" y2="158" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="30" y="119" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Tek Çağrının Yaşam Döngüsü</text>
+<rect x="32" y="128" width="176" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="120.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Prefill Fazı</text>
+<text x="120.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">prompt&#x27;u paralel işler (GEMM)</text>
+<text x="120.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ilk token süresini (TTFT) belirler</text>
+<rect x="224" y="128" width="304" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="376.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decode Fazı</text>
+<text x="376.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">otoregresif adım adım yazar (GEMV)</text>
+<text x="376.0" y="178.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">TPOT ve akış gecikmesini belirler</text>
+<line x1="208" y1="158" x2="222" y2="158" marker-end="url(#co-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="16" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="78" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Prompt caching</text>
-<text x="78" y="269" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ortak prefix&#x27;i</text>
-<text x="78" y="283" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">yeniden okumaz</text>
+<text x="78" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Prompt Caching</text>
+<text x="78" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ortak KV prefix&#x27;ini</text>
+<text x="78" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">HBM&#x27;den tekrar okumaz</text>
 <line x1="78" y1="236" x2="78" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="148" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="210" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Quantization</text>
-<text x="210" y="269" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">küçük ağırlıklar,</text>
-<text x="210" y="283" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hızlı bellek okuma</text>
+<text x="210" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Ağırlık Nicemleme</text>
+<text x="210" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">küçülen ağırlıklar,</text>
+<text x="210" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hızlı bellek transferi</text>
 <line x1="210" y1="236" x2="210" y2="200" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="280" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="342" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Speculative</text>
-<text x="342" y="269" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">decoding</text>
-<text x="342" y="284" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">adım başına</text>
-<text x="342" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">birden çok token</text>
+<text x="342" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Spekülatif Çıkarım</text>
+<text x="342" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">taslak modelle adımda</text>
+<text x="342" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çoklu token doğrulama</text>
 <line x1="342" y1="236" x2="342" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 <rect x="412" y="236" width="124" height="78" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="474" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">max_tokens +</text>
-<text x="474" y="269" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-weight:600">thinking bütçesi</text>
-<text x="474" y="284" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">metreyi daha</text>
-<text x="474" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">erken durdurur</text>
+<text x="474" y="254" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Jeton &amp; Bütçe Sınırı</text>
+<text x="474" y="270" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">erken durdurma ile</text>
+<text x="474" y="285" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gereksiz maliyeti keser</text>
 <line x1="474" y1="236" x2="474" y2="190" marker-end="url(#co-g)" style="stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
 </svg>
 
