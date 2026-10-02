@@ -20,7 +20,10 @@ Makale metni yazılıyorsa önce `makale` skill'i geçerlidir; bu skill onun fig
   ne tekrar ediyor. Süs, logo, ikon kalabalığı yok.
 - Kavram **önce metinde** kurulur; figür hemen ardından gelir ve metne yeni bir şey ekler
   (sıra, paralellik, döngü, karşılaştırma). Figürden önceki cümle iki noktayla biter.
-- Bir bölüme en fazla 3 figür. Varsa mevcut Mermaid'i silme; kullanıcı istemedikçe ekle.
+- Bir bölüme en fazla 3 figür.
+- **Blogda tek çizim biçimi inline SVG'dir.** Yeni Mermaid veya ASCII çizim eklenmez. Mevcut
+  olanlar bu skill'le SVG'ye çevrilir (bkz. §3.1). Seri seri gidilir; ilk çevrilen seri
+  Prompt'un Yolculuğu'dur.
 - **Dış görselleri (X, blog, makale) kopyalama.** İçeriği anla, kendi stilinde yeniden çiz;
   kaynağı `## Going deeper` / `## Daha derine inmek için` listesine "diyagramlara ilham veren"
   notuyla ekle. X/Medium vb. olgu kaynağı sayılmaz (makale skill §1.1).
@@ -67,10 +70,33 @@ Makale metni yazılıyorsa önce `makale` skill'i geçerlidir; bu skill onun fig
 8. Commit/push YOK — Engin "push" demeden.
 ```
 
+### 3.1. Mermaid ve ASCII çizimleri SVG'ye çevirmek
+
+- **Ne çevrilir:** her ` ```mermaid ` bloğu ve kutu/ok/ağaç karakterleriyle (─ │ ┌ ▼ → ──> ●)
+  çizilmiş ` ```text ` ya da etiketsiz bloklar. **Ne çevrilmez:** sayısal yürüyüşler, matrisler,
+  kod çıktısı, 2–3 satırlık düz karşılaştırmalar; bunlar veri, çizim değil.
+- **İçerik korunur, biçim değişir.** Kutudaki metinler ve oklar aynı bilgiyi taşır. Mermaid'deki
+  emoji ve `<br>` gibi süsler atılır. Bilgi eklemek serbest, ama çıkarmak değil.
+- **Kopya figürleri sil.** Yeni bir SVG aynı şeyi zaten anlatıyorsa eski ASCII/Mermaid bloğunu
+  kaldır, iki kez anlatma.
+- **Yerinde değiştir:** blok yalnızca SVG ile değiştirilir; hemen önceki tanıtım cümlesi
+  okumaya devam ediyorsa olduğu gibi kalır.
+- Akış diyagramları için `svgkit.node()` + `svgkit.link()` kullan; düzeni elle ver (Mermaid'in
+  otomatik düzenini taklit etme, mekanizmanın okuma yönünü seç: soldan sağa ya da yukarıdan aşağı).
+- Değiştirmeden önce bloğun EN ve TR'deki karşılığını eşleştir (sıra ve sayı aynı olmalı); TR
+  metinleri TR bloğundan alınır, çeviri yapılmaz.
+
 Sonradan değişiklik: üreteci düzenle → JSON'u yeniden üret → makaledeki **eski SVG string'ini
 yenisiyle** değiştir (eski JSON'u sakla ki tam eşleşme yapılabilsin).
 
 ## 4. Tuzaklar (yaşanmış)
+
+- **Figüre giren her sayıyı yeniden hesapla (numpy).** Makaledeki elle yürüyüşü kopyalama.
+  Prompt'un Yolculuğu Part 4'te `v_2` yanlıştı ve hata Part 7'ye kadar taşınmıştı; figür
+  üreteci sayıları yeniden hesaplayınca ortaya çıktı. Çelişki bulursan metni de düzelt ve
+  `grep -rn` ile serinin diğer bölümlerini tara.
+- **Mevcut mermaid'i okurken geçerliliğine bak.** Birleştirme artığı (aynı `subgraph` id'si
+  iki kez, kapanmamış blok) sessizce render olmaz; böyle bir bloğu SVG ile değiştir.
 
 - **marked HTML bloğu boş satırda biter.** SVG içinde tek bir boş satır figürü yarıdan keser,
   geri kalanı `<p>` içinde kaçışlı metin olarak basılır. `--page` kontrolü bunu `bozuk>0` diye yakalar.
@@ -88,8 +114,10 @@ yenisiyle** değiştir (eski JSON'u sakla ki tam eşleşme yapılabilsin).
 
 ## 5. Dosyalar
 
-- `scripts/svgkit.py` — `svg_open`, `marker`, `box`, `text`, `chip`, `arrow`, `path`,
+- `scripts/svgkit.py` — `svg_open`, `marker`, `box`, `text`, `chip`, `arrow`, `path`, `node` (başlık + alt satırlı akış kutusu), `link` (düz/kırık/eğri ok + etiket),
   `bars_v`, `bars_h`, `text_w` (genişlik tahmini), stil sabitleri (`PAL`, `GEN`, `MUTE`, `TXT`, `BOX`, `inner`).
 - `scripts/preview.py` — açık/koyu × EN/TR ekran görüntüsü; getBBox ile viewBox taşması,
   kutu taşması ve metin çakışması raporu; `--page` ile gerçek post sayfasında render kontrolü.
 - `examples/prefill_decode.py` — üç figürlük tam örnek (pipeline, döngü, yan yana karşılaştırma).
+- `examples/flow_conversions.py` — Mermaid/ASCII'den çevrilmiş dokuz figür: iki panelli karşılaştırma,
+  kartlar, fan-out/fan-in, iki satırlı yılan akış, iki sütunlu tensör-şekli akışı, atlama yaylı blok akışı.

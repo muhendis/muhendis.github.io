@@ -83,7 +83,8 @@ def decode(L):
     for j, s in enumerate(L["dc_attn_lines"]):
         o.append(text(310, 132 + j * 16, s, MUTE, "middle"))
     o.append(arrow(196, 120, 226, 120, "dc-arr"))
-    o.append(text(211, 112, L["dc_read"], "fill:var(--c-text-mute);font-size:11px", "middle"))
+    o.append(text(205, 100, L["dc_read"], "fill:var(--c-text-mute);font-size:11px", "middle",
+                  ' transform="rotate(-90 205 100)"'))
     o.append(path("M228 166 H208 V245 H182", "dc-arr-g", GEN))
     o.append(text(203, 210, L["dc_append"], f"fill:{GEN};font-size:11px", "middle",
                   ' transform="rotate(-90 203 210)"'))

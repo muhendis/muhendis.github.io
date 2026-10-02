@@ -113,6 +113,39 @@ def bars_h(x0, y0, widths, step=18, h=12, hot=0, hot_color=GEN):
     return "\n".join(out)
 
 
+def node(x, y, w, h, title, sub=None, color=None, mono=False):
+    """Akış diyagramı kutusu: başlık (13px) + isteğe bağlı alt satır(lar) (11.5px, mute).
+    sub bir str ya da str listesi olabilir. color verilirse kontur o renkte (vurgu)."""
+    style = inner(color) if color else BOX
+    subs = [] if sub is None else ([sub] if isinstance(sub, str) else list(sub))
+    n = 1 + len(subs)
+    top = y + h / 2 - (n - 1) * 8 + 4.5
+    ts = "fill:var(--c-text);font-size:13px" + (";font-family:var(--font-mono)" if mono else "")
+    out = [box(x, y, w, h, style), text(x + w / 2, top, title, ts, "middle")]
+    for k, s in enumerate(subs):
+        out.append(text(x + w / 2, top + 16 * (k + 1), s, "fill:var(--c-text-mute);font-size:11.5px", "middle"))
+    return "\n".join(out)
+
+
+def link(a, b, mid, color=MUTE_C, dash=False, label=None, bend=None):
+    """a, b: (x, y) noktaları. bend=None düz ok; 'h' önce yatay sonra dikey; 'v' önce dikey;
+    sayı verilirse o kadar yay yapan kübik eğri. label okun ortasına (11px) yazılır."""
+    (x1, y1), (x2, y2) = a, b
+    if bend is None:
+        s = arrow(x1, y1, x2, y2, mid, color, dash)
+        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+    elif bend == "h":
+        s = path(f"M{x1} {y1} H{x2} V{y2}", mid, color, dash); mx, my = (x1 + x2) / 2, y1
+    elif bend == "v":
+        s = path(f"M{x1} {y1} V{y2} H{x2}", mid, color, dash); mx, my = x1, (y1 + y2) / 2
+    else:
+        s = path(f"M{x1} {y1} C {x1 + bend} {y1}, {x2 + bend} {y2}, {x2} {y2}", mid, color, dash)
+        mx, my = max(x1, x2) + bend * 0.75, (y1 + y2) / 2
+    if label:
+        s += "\n" + text(mx + 4, my - 4, label, "fill:var(--c-text-mute);font-size:11px")
+    return s
+
+
 def text_w(s, size=12, mono=False):
     """Kaba genişlik tahmini (px). Yerleşim planlarken kullan; kesin kontrol preview.py'de."""
     return len(s) * size * (0.60 if mono else 0.55)

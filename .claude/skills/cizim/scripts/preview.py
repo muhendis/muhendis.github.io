@@ -43,6 +43,15 @@ window.addEventListener('load', () => {
                         .sort((a, c) => a.width * a.height - c.width * c.height)[0];
       if (host && (b.x < host.x - 1 || b.x + b.width > host.x + host.width + 1))
         issues.push(`${name}: "${s}" kutusundan taşıyor (${Math.round(b.width)}px metin, ${Math.round(host.width)}px kutu)`);
+      // bir kutuya kısmen giren metin (kutuyu tamamen içinde barındırmayan dikdörtgen kenarı kesiyor)
+      for (const r of rects) {
+        const ox = Math.min(b.x + b.width, r.x + r.width) - Math.max(b.x, r.x);
+        const oy = Math.min(b.y + b.height, r.y + r.height) - Math.max(b.y, r.y);
+        const inside = b.x >= r.x - 1 && b.x + b.width <= r.x + r.width + 1 && b.y >= r.y - 2 && b.y + b.height <= r.y + r.height + 2;
+        if (ox > 2 && oy > 4 && !inside && r !== host) {
+          issues.push(`${name}: "${s}" bir kutunun kenarına biniyor (x=${Math.round(r.x)}, y=${Math.round(r.y)})`); break;
+        }
+      }
       for (let j = i + 1; j < texts.length; j++) {
         const c = bbs[j];
         const ox = Math.min(b.x + b.width, c.x + c.width) - Math.max(b.x, c.x);
