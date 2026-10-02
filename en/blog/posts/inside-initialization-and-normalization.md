@@ -32,10 +32,32 @@ $$
 
 Let the input vector $x_0 \in \mathbb{R}^d$ have zero mean and unit variance per component: $\mathbb{E}[x_0] = 0$, $\text{Var}(x_0) = 1$. Assume all weight matrices $W_l \in \mathbb{R}^{d \times d}$ are initialized independently with elements sampled from $\mathcal{N}(0, \sigma_w^2)$.
 
-```
-x_0 ~ N(0, 1) ---> [ W_1 ] ---> x_1 ---> [ W_2 ] ---> ... ---> [ W_L ] ---> x_L
-                   Var(W) = sigma^2
-```
+<svg viewBox="0 0 560 110" role="img" aria-label="A deep linear chain at initialization. x0, drawn from a standard normal, passes through W1 to give x1, through W2, and so on through W L to give x L. Every weight matrix has variance sigma squared, so each layer multiplies the signal&#x27;s variance by the same factor, and over L layers that factor compounds." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ch-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="24" width="92" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="62.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x₀ ~ N(0,1)</text>
+<line x1="110" y1="39" x2="142.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="144.0" y="24" width="40" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="164.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W₁</text>
+<line x1="186.0" y1="39" x2="218.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="220.0" y="24" width="34" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="237.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x₁</text>
+<line x1="256.0" y1="39" x2="288.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="290.0" y="24" width="40" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="310.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W₂</text>
+<line x1="332.0" y1="39" x2="364.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="377.0" y="46" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">…</text>
+<line x1="390.0" y1="39" x2="422.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="424.0" y="24" width="44" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="446.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W_L</text>
+<line x1="470.0" y1="39" x2="502.0" y2="39" marker-end="url(#ch-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="504.0" y="24" width="40" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="524.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_L</text>
+<text x="16" y="80" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Every W has Var(W) = σ²; each layer rescales the variance by the same factor.</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Over L layers the factor compounds: it explodes above 1 and vanishes below 1.</text>
+</svg>
 
 The output of the first layer for an arbitrary coordinate $i$ is a linear combination of independent random variables:
 
@@ -123,12 +145,33 @@ $$
 
 If all initial weights $W^{(2)}_{k, i}$ are equal to zero (or identical constants), every hidden neuron receives the exact same backpropagated error signal $\delta^{(1)}_i$.
 
-```
-Input x ---> [ Neuron 1: z_1, a_1, dL/dz_1 ] (all identical)
-        ---> [ Neuron 2: z_2, a_2, dL/dz_2 ] (all identical)
-        ---> [ Neuron 3: z_3, a_3, dL/dz_3 ] (all identical)
-        Result: Network rank collapses to a single effective neuron!
-```
+<svg viewBox="0 0 560 190" role="img" aria-label="Why symmetric initialization fails. The same input x reaches neurons 1, 2 and 3. With identical weights, their pre-activations z, activations a and gradients dL/dz are identical, so every update keeps them identical. The network&#x27;s rank collapses to a single effective neuron." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="sy-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="66" width="90" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="61.0" y="92.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">input x</text>
+<path d="M106 88 H124 V33 H150" marker-end="url(#sy-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="12" width="240" height="42" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="166" y="30" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Neuron 1</text>
+<text x="166" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">z₁, a₁, ∂L/∂z₁</text>
+<text x="380" y="38" text-anchor="end" style="fill:var(--c-text-mute);font-size:14px">=</text>
+<path d="M106 88 H124 V87 H150" marker-end="url(#sy-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="66" width="240" height="42" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="166" y="84" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Neuron 2</text>
+<text x="166" y="100" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">z₂, a₂, ∂L/∂z₂</text>
+<text x="380" y="92" text-anchor="end" style="fill:var(--c-text-mute);font-size:14px">=</text>
+<path d="M106 88 H124 V141 H150" marker-end="url(#sy-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="120" width="240" height="42" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="166" y="138" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">Neuron 3</text>
+<text x="166" y="154" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px;font-family:var(--font-mono)">z₃, a₃, ∂L/∂z₃</text>
+<text x="380" y="146" text-anchor="end" style="fill:var(--c-text-mute);font-size:14px">=</text>
+<path d="M400 12 Q410 12 410 24 V76 Q410 88 420 88 Q410 88 410 100 V152 Q410 164 400 164" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="428" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">all identical:</text>
+<text x="428" y="92" text-anchor="start" style="fill:var(--c-text);font-size:12px">rank collapses to</text>
+<text x="428" y="108" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">one effective neuron</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Same weights → same outputs → same gradients → same updates, forever.</text>
+</svg>
 
 After an arbitrary number of gradient descent updates:
 
@@ -316,13 +359,47 @@ $$
 
 In a deep model with $L = 64$ layers, activation variance in the residual stream grows by a factor of 65!
 
-```
-x_0 (Var=1) ──(+)──> x_1 (Var=2) ──(+)──> ... ──(+)──> x_L (Var=1+L)
-               ^                    ^                    ^
-               |                    |                    |
-            F(x_0)               F(x_1)               F(x_L-1)
-          (Var=1.0)            (Var=1.0)            (Var=1.0)
-```
+<svg viewBox="0 0 560 184" role="img" aria-label="Variance growth along the residual stream. x0 has variance 1. Each block adds F of x, whose variance is 1.0, so x1 has variance 2, and after L blocks x L has variance 1 plus L." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="rs-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="rs-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="22" width="76" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="54.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x₀</text>
+<text x="54.0" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Var = 1</text>
+<rect x="150" y="22" width="76" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="188.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x₁</text>
+<text x="188.0" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Var = 2</text>
+<text x="306" y="48" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">…</text>
+<rect x="444" y="22" width="100" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="494.0" y="43.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_L</text>
+<text x="494.0" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Var = 1 + L</text>
+<circle cx="112" cy="39" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="112" y="44" text-anchor="middle" style="fill:var(--c-text);font-size:15px">+</text>
+<rect x="66" y="106" width="92" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="112.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">F(x₀)</text>
+<text x="112" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Var = 1.0</text>
+<line x1="112" y1="106" x2="112" y2="52" marker-end="url(#rs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<circle cx="262" cy="39" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="262" y="44" text-anchor="middle" style="fill:var(--c-text);font-size:15px">+</text>
+<rect x="216" y="106" width="92" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="262.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">F(x₁)</text>
+<text x="262" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Var = 1.0</text>
+<line x1="262" y1="106" x2="262" y2="52" marker-end="url(#rs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<circle cx="412" cy="39" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="412" y="44" text-anchor="middle" style="fill:var(--c-text);font-size:15px">+</text>
+<rect x="366" y="106" width="92" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="412.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">F(x_L−1)</text>
+<text x="412" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Var = 1.0</text>
+<line x1="412" y1="106" x2="412" y2="52" marker-end="url(#rs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="92" y1="39" x2="99" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="123" y1="39" x2="148" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="226" y1="39" x2="249" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="273" y1="39" x2="296" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="314" y1="39" x2="399" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="423" y1="39" x2="442" y2="39" marker-end="url(#rs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="16" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">each block adds a variance-1 branch</text>
+</svg>
 
 ### The $1/\sqrt{2L}$ Scaling Rule (GPT-2)
 
@@ -505,13 +582,48 @@ Notice two vital structural changes:
 1. **No mean $\mu$ subtraction:** The numerator is simply $x_i$.
 2. **No bias parameter $\beta$:** Affine scaling uses only $\gamma_i$, eliminating the parameter $\beta \in \mathbb{R}^D$.
 
-```
-LayerNorm:  x ──> [ Compute Mean mu ] ──> [ Center x-mu ] ──> [ Compute Var sigma^2 ] ──> Normalize ──> Affine (gamma, beta)
-                    (Pass 1 over x)         (Pass 2 over x)        (Pass 3 over x)
-
-RMSNorm:    x ──────────────────────────> [ Compute RMS: sum(x^2)/D ] ──────────────────> Normalize ──> Affine (gamma)
-                                            (Single Pass over x!)
-```
+<svg viewBox="0 0 560 210" role="img" aria-label="LayerNorm versus RMSNorm. LayerNorm computes the mean mu in pass 1 over x, centers x minus mu in pass 2, computes the variance sigma squared in pass 3, then normalizes and applies the affine gamma and beta. RMSNorm computes the root mean square of x in a single pass, then normalizes and applies gamma only." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="lr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-warn);font-size:15px;font-weight:700;letter-spacing:.06em">LayerNorm</text>
+<rect x="16" y="38" width="30" height="36" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="31.0" y="60.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x</text>
+<rect x="60" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="104.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">mean μ</text>
+<text x="104.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">pass 1</text>
+<line x1="46" y1="56" x2="58" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="158" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="202.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">x − μ</text>
+<text x="202.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">pass 2</text>
+<line x1="148" y1="56" x2="156" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="256" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="300.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">variance σ²</text>
+<text x="300.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">pass 3</text>
+<line x1="246" y1="56" x2="254" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="354" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="398.0" y="60.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normalize</text>
+<line x1="344" y1="56" x2="352" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="452" y="30" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="496.0" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">affine</text>
+<text x="496.0" y="68.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">γ, β</text>
+<line x1="442" y1="56" x2="450" y2="56" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="16" y="120" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">RMSNorm</text>
+<rect x="16" y="138" width="30" height="36" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="31.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x</text>
+<rect x="60" y="130" width="284" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="202.0" y="152.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">RMS = √(Σx²/D)</text>
+<text x="202.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">one pass over x</text>
+<line x1="46" y1="156" x2="58" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="354" y="130" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="398.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">normalize</text>
+<line x1="344" y1="156" x2="352" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="452" y="130" width="88" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="496.0" y="152.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">affine</text>
+<text x="496.0" y="168.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">γ only</text>
+<line x1="442" y1="156" x2="450" y2="156" marker-end="url(#lr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="16" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Three reads of x become one, and the mean and β disappear.</text>
+</svg>
 
 ### The Computational Advantage
 
@@ -530,21 +642,56 @@ RMSNorm reduces normalization compute time by **7% to 15%** while delivering ide
 
 Where normalization sits relative to the residual addition dramatically alters gradient propagation through deep Transformer stacks.
 
-```
-       Post-LN (Original Transformer, 2017)             Pre-LN (Modern Standard, 2019-2023)
-               x_l                                               x_l
-                |                                                 |──────┐
-                |──────┐                                          |      v
-                v      |                                          v   [ LayerNorm / RMSNorm ]
-           [ SubLayer ]|                                    [ SubLayer ] |
-                |      |                                          |      |
-                v      v                                          v      |
-               (+) <───┘                                         (+) <───┘
-                |                                                 |
-         [ LayerNorm ]                                           x_{l+1}
-                |
-             x_{l+1}
-```
+<svg viewBox="0 0 560 318" role="img" aria-label="Post-LN versus Pre-LN. In Post-LN, the original 2017 Transformer, x l goes both into the sublayer and along the residual path; the two are added, and LayerNorm sits on the main path after the addition, producing x l plus 1, so every gradient must pass through a normalization. In Pre-LN, the modern standard from 2019 to 2023, the branch first applies LayerNorm or RMSNorm and then the sublayer; the result is added to the untouched residual path, giving x l plus 1, so the residual highway stays clean." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="pp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="pp-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="302" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-warn);font-size:15px;font-weight:700;letter-spacing:.06em">Post-LN</text>
+<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">original Transformer, 2017</text>
+<rect x="52" y="60" width="68" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="86.0" y="78.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l</text>
+<circle cx="86" cy="214" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="86" y="219" text-anchor="middle" style="fill:var(--c-text);font-size:15px">+</text>
+<path d="M86 102 H192 V112" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="192" y1="112" x2="192" y2="114" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="86" y1="88" x2="86" y2="201" marker-end="url(#pp-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="138" y="116" width="108" height="32" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="192.0" y="136.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">SubLayer</text>
+<path d="M192 148 V214 H99" marker-end="url(#pp-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="36" y="238" width="100" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="86.0" y="257.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">LayerNorm</text>
+<line x1="86" y1="225" x2="86" y2="236" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="52" y="276" width="68" height="26" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="86.0" y="293.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l+1</text>
+<line x1="86" y1="268" x2="86" y2="274" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="144" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">norm sits on the</text>
+<text x="144" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">highway itself</text>
+<text x="78" y="160" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px"transform="rotate(-90 78 160)">residual</text>
+<rect x="288" y="8" width="256" height="302" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Pre-LN</text>
+<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">modern standard, 2019–2023</text>
+<rect x="324" y="60" width="68" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="358.0" y="78.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l</text>
+<circle cx="358" cy="214" r="11" style="fill:var(--c-surface-2);stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="358" y="219" text-anchor="middle" style="fill:var(--c-text);font-size:15px">+</text>
+<path d="M358 102 H464 V112" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="464" y1="112" x2="464" y2="114" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="358" y1="88" x2="358" y2="201" marker-end="url(#pp-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="410" y="116" width="108" height="32" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="464.0" y="136.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">LN / RMSNorm</text>
+<rect x="410" y="162" width="108" height="32" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="464.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">SubLayer</text>
+<line x1="464" y1="148" x2="464" y2="160" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M464 194 V214 H371" marker-end="url(#pp-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="324" y="250" width="68" height="26" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="358.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x_l+1</text>
+<line x1="358" y1="225" x2="358" y2="248" marker-end="url(#pp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="416" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">highway stays</text>
+<text x="416" y="276" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">untouched</text>
+<text x="350" y="160" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px"transform="rotate(-90 350 160)">residual</text>
+</svg>
 
 ### 1. Post-LN (Vaswani et al., 2017)
 
@@ -832,11 +979,46 @@ Normalization layers are tiny in parameter count, yet they disproportionately im
 
 In a naive deep learning framework implementation, an attention block with Pre-LayerNorm executes multiple distinct GPU kernels:
 
-```
-[ Residual Addition ] ──(HBM Write)──> [ HBM Read ] ──> [ Mean Reduction ]
-──(HBM Write)──> [ HBM Read ] ──> [ Variance Reduction ] ──(HBM Write)──>
-[ HBM Read ] ──> [ Standardization + Affine ] ──(HBM Write)──> [ QKV GEMM ]
-```
+<svg viewBox="0 0 560 190" role="img" aria-label="Unfused normalization. The residual addition writes its result to HBM; the mean reduction reads it back and writes; the variance reduction reads and writes; standardization plus affine reads and writes; the QKV GEMM finally reads the normalized tensor. Four HBM round trips for one normalization." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="uf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="uf-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">separate kernels</text>
+<rect x="16" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="64.0" y="48.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">residual</text>
+<text x="64.0" y="64.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">addition</text>
+<rect x="124" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="172.0" y="48.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">mean</text>
+<text x="172.0" y="64.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reduction</text>
+<rect x="232" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="48.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">variance</text>
+<text x="280.0" y="64.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reduction</text>
+<rect x="340" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="388.0" y="48.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">standardize</text>
+<text x="388.0" y="64.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ affine</text>
+<rect x="448" y="26" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="496.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">QKV GEMM</text>
+<rect x="16" y="130" width="528" height="30" rx="6" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="280" y="149.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">HBM (off-chip)</text>
+<line x1="86" y1="78" x2="86" y2="128" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<line x1="150" y1="130" x2="150" y2="80" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="91" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">write</text>
+<text x="145" y="118" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<line x1="194" y1="78" x2="194" y2="128" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<line x1="258" y1="130" x2="258" y2="80" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="199" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">write</text>
+<text x="253" y="118" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<line x1="302" y1="78" x2="302" y2="128" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<line x1="366" y1="130" x2="366" y2="80" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="307" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">write</text>
+<text x="361" y="118" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<line x1="410" y1="78" x2="410" y2="128" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<line x1="474" y1="130" x2="474" y2="80" marker-end="url(#uf-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="415" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">write</text>
+<text x="469" y="118" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text);font-size:12px">4 HBM round trips for a single normalization.</text>
+</svg>
 
 Because normalization operations are memory-bandwidth-bound rather than compute-bound (arithmetic intensity $< 2 \text{ FLOP/byte}$), transferring activations back and forth between GPU SRAM and HBM wastes up to 40% of total layer execution time.
 
@@ -845,17 +1027,33 @@ Modern training engines use **Fused Kernels** (implemented via OpenAI Triton or 
 2. The squared reduction $\sum x_i^2$ is performed using fast GPU warp-shuffle instructions (`__shfl_xor_sync`).
 3. The normalized vector is multiplied by $\gamma$ and immediately passed to the input of the QKV matrix multiplication, eliminating three entire HBM write/read roundtrips.
 
-```
-+-------------------------------------------------------------------+
-|               GPU Streaming Multiprocessor (SM) SRAM               |
-|                                                                   |
-| [ Residual In ] ─> [ In-Register Sum ] ─> [ Warp-Shuffle RMS ]    |
-|                                                     |             |
-| [ Scaled Output ] <── [ Multiply by Gamma ] <───────┘             |
-+-------------------------------------------------------------------+
-                 |
-                 v Single HBM Write directly to GEMM input buffer
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="Fused RMSNorm kernel. Inside one GPU streaming multiprocessor, in SRAM and registers: the residual input is summed in registers, a warp-shuffle reduction computes the RMS, the result is multiplied by gamma, and the scaled output is ready. One single HBM write sends it directly into the GEMM input buffer." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="fu-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="fu-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="150" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="30" y="28" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">GPU streaming multiprocessor (SM) · SRAM / registers</text>
+<rect x="32" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="102.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">residual in</text>
+<line x1="172" y1="57" x2="208" y2="57" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="210" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">in-register sum</text>
+<line x1="350" y1="57" x2="386" y2="57" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="388" y="40" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="458.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">warp-shuffle RMS</text>
+<path d="M458 74 V115 H352" marker-end="url(#fu-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="32" y="98" width="140" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="102.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">scaled output</text>
+<rect x="210" y="98" width="140" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="119.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">multiply by γ</text>
+<line x1="210" y1="115" x2="174" y2="115" marker-end="url(#fu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="530" y="150" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">nothing leaves the chip until the end</text>
+<rect x="16" y="198" width="528" height="30" rx="6" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="280" y="217.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">HBM · GEMM input buffer</text>
+<line x1="102" y1="132" x2="102" y2="196" marker-end="url(#fu-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="112" y="176" text-anchor="start" style="fill:var(--c-text);font-size:12px">single HBM write</text>
+</svg>
 
 ### 2. Inference Systems: Weight Folding and Zero-Overhead Normalization
 

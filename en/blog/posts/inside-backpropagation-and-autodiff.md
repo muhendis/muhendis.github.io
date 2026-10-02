@@ -34,22 +34,49 @@ If the detective only needed to report the outcome (inference), they could wash 
 
 To determine how a lever in Room 2 contributed to the final outcome, the detective must walk **in reverse**, from Room 100 back to Room 1. Critically, to calculate the lever's mechanical advantage during the crime, the detective must inspect the exact footprint left on that lever at the moment the crime occurred. If the floor was washed clean during the forward journey, attribution is impossible.
 
-```mermaid
-flowchart LR
-    subgraph Forward_Pass["Forward Pass (Accumulating Footprints)"]
-        direction LR
-        X["Input X"] --> L1["Layer 1: Save X"]
-        L1 --> L2["Layer 2: Save h1"]
-        L2 --> L3["Layer L: Save hL-1"]
-        L3 --> LOSS["Scalar Loss L"]
-    end
-    subgraph Backward_Pass["Backward Pass (Consuming Footprints)"]
-        direction RL
-        LOSS --> G3["dL/dhL-1 using Saved hL-1"]
-        G3 --> G2["dL/dh1 using Saved h1"]
-        G2 --> G1["dL/dX using Saved X"]
-    end
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="Forward and backward pass. Forward, accumulating footprints: input X goes into layer 1, which saves X; layer 2 saves h1; layer L saves h of L minus 1; the result is a scalar loss L. Backward, consuming footprints, runs right to left: from the loss, the gradient with respect to h of L minus 1 uses the saved h of L minus 1, the gradient with respect to h1 uses the saved h1, and the gradient with respect to X uses the saved X." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="fb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="fb-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Forward pass · accumulating footprints</text>
+<rect x="16" y="28" width="96" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="64.0" y="50.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Input</text>
+<text x="64.0" y="66.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">X</text>
+<line x1="112" y1="54" x2="122" y2="54" marker-end="url(#fb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="124" y="28" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="172.0" y="50.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer 1</text>
+<text x="172.0" y="66.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">save X</text>
+<line x1="220" y1="54" x2="230" y2="54" marker-end="url(#fb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="232" y="28" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="280.0" y="50.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer 2</text>
+<text x="280.0" y="66.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">save h₁</text>
+<line x1="328" y1="54" x2="338" y2="54" marker-end="url(#fb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="28" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="388.0" y="50.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Layer L</text>
+<text x="388.0" y="66.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">save h_L−1</text>
+<line x1="436" y1="54" x2="446" y2="54" marker-end="url(#fb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="448" y="28" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="496.0" y="50.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Loss</text>
+<text x="496.0" y="66.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">scalar L</text>
+<rect x="340" y="150" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="388.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">∂L/∂h_L−1</text>
+<text x="388.0" y="188.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">uses h_L−1</text>
+<line x1="388" y1="82" x2="388" y2="148" marker-end="url(#fb-arr)" style="stroke:var(--c-accent);stroke-width:1.5;stroke-dasharray:5 4"/>
+<line x1="340" y1="176" x2="330" y2="176" marker-end="url(#fb-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="232" y="150" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">∂L/∂h₁</text>
+<text x="280.0" y="188.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">uses h₁</text>
+<line x1="280" y1="82" x2="280" y2="148" marker-end="url(#fb-arr)" style="stroke:var(--c-accent);stroke-width:1.5;stroke-dasharray:5 4"/>
+<line x1="232" y1="176" x2="222" y2="176" marker-end="url(#fb-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="124" y="150" width="96" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="172.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">∂L/∂X</text>
+<text x="172.0" y="188.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">uses X</text>
+<line x1="172" y1="82" x2="172" y2="148" marker-end="url(#fb-arr)" style="stroke:var(--c-accent);stroke-width:1.5;stroke-dasharray:5 4"/>
+<path d="M496 80 V176 H438" marker-end="url(#fb-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="16" y="226" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">Backward pass · consuming footprints</text>
+<text x="544" y="226" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">dashed: a saved activation is read back</text>
+</svg>
 
 ### The Linear Layer Stash ($X^T dZ$)
 
@@ -136,11 +163,36 @@ When you compute `z = x @ w + b`, PyTorch executes the forward tensor kernels an
 2. The specific backward differentiation kernel associated with matrix multiplication and broadcasting addition.
 3. References to any intermediate tensors that must be saved for the backward phase (`node.save_for_backward`).
 
-```
-Forward Execution:
-  x, W  -----> [ MmBackward0 ] -----> a
-  a, b  -----> [ AddBackward0 ] ----> z -----> [ ReluBackward0 ] -----> h
-```
+<svg viewBox="0 0 560 214" role="img" aria-label="The autograd graph built during forward execution. x and W feed MmBackward0, which produces a. a and b feed AddBackward0, which produces z. z feeds ReluBackward0, which produces h. Each operation records its backward node so the gradient can later flow back through the same graph." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="gr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Forward execution: each result remembers the op that made it</text>
+<circle cx="40" cy="48" r="16" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.5"/><text x="40" y="52.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">x</text>
+<circle cx="40" cy="108" r="16" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.5"/><text x="40" y="112.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W</text>
+<rect x="84" y="62" width="128" height="32" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="148.0" y="82.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">MmBackward0</text>
+<path d="M56 48 H70 V72 H82" marker-end="url(#gr-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M56 108 H70 V84 H82" marker-end="url(#gr-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="250" cy="78" r="16" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.5"/><text x="250" y="82.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">a</text>
+<line x1="212" y1="78" x2="232" y2="78" marker-end="url(#gr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="290" y="62" width="128" height="32" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="354.0" y="82.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">AddBackward0</text>
+<line x1="266" y1="78" x2="288" y2="78" marker-end="url(#gr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="250" cy="138" r="16" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.5"/><text x="250" y="142.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">b</text>
+<path d="M266 138 H354 V96" marker-end="url(#gr-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="470" cy="78" r="16" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.5"/><text x="470" y="82.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">z</text>
+<line x1="418" y1="78" x2="452" y2="78" marker-end="url(#gr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="406" y="120" width="128" height="32" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="470.0" y="140.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">ReluBackward0</text>
+<line x1="470" y1="94" x2="470" y2="118" marker-end="url(#gr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="470" cy="186" r="16" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.5"/><text x="470" y="190.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">h</text>
+<line x1="470" y1="152" x2="470" y2="168" marker-end="url(#gr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="172" width="14" height="14" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="183" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">input / parameter</text>
+<rect x="16" y="194" width="14" height="14" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="36" y="205" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">recorded backward node (grad_fn)</text>
+</svg>
 
 ### Multivariable Chain Rule and Gradient Accumulation
 
@@ -264,18 +316,66 @@ Rather than stashing every intermediate activation across all $L$ layers:
 3. During the backward pass, when backpropagation reaches a block, the runtime **recomputes the forward pass of that single block from the saved checkpoint boundary**.
 4. The backward pass immediately consumes the newly regenerated activations, computes parameter gradients, and frees the activations once more.
 
-```
-Standard Backpropagation:
-  [Forward L1] ---> [Forward L2] ---> [Forward L3] ---> [Loss]
-  (Keep All)        (Keep All)        (Keep All)
-  [Backward L1] <--- [Backward L2] <--- [Backward L3]
-
-Gradient Checkpointing:
-  [Checkpt 1] ------> [Checkpt 2] ------> [Checkpt 3] ------> [Loss]
-  (Drop internals)    (Drop internals)    (Drop internals)
-                      Recompute L3 -------> Backward L3
-  Recompute L2 -------> Backward L2
-```
+<svg viewBox="0 0 560 340" role="img" aria-label="Standard backpropagation versus gradient checkpointing. Standard: forward L1, L2, L3, then the loss, keeping all intermediate activations; backward runs L3, L2, L1. Gradient checkpointing: checkpoints 1, 2 and 3 drop their internals during the forward pass; on the way back, L3 is recomputed and then its backward runs, then L2 is recomputed and its backward runs. Memory is traded for extra compute." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ck-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ck-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+<marker id="ck-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="140" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Standard backpropagation</text>
+<rect x="32" y="42" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="88.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Forward L1</text>
+<line x1="144" y1="57" x2="158" y2="57" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="88" y="88" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">keep all</text>
+<rect x="32" y="104" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="88.0" y="123.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Backward L1</text>
+<rect x="160" y="42" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="216.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Forward L2</text>
+<line x1="272" y1="57" x2="286" y2="57" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="216" y="88" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">keep all</text>
+<rect x="160" y="104" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="216.0" y="123.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Backward L2</text>
+<line x1="160" y1="119" x2="146" y2="119" marker-end="url(#ck-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="288" y="42" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="344.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Forward L3</text>
+<line x1="400" y1="57" x2="414" y2="57" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="344" y="88" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">keep all</text>
+<rect x="288" y="104" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="344.0" y="123.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Backward L3</text>
+<line x1="288" y1="119" x2="274" y2="119" marker-end="url(#ck-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="416" y="42" width="112" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="472.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Loss</text>
+<path d="M472 72 V119 H402" marker-end="url(#ck-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="16" y="160" width="528" height="172" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="182" text-anchor="start" style="fill:var(--c-warn);font-size:15px;font-weight:700;letter-spacing:.06em">Gradient checkpointing</text>
+<rect x="32" y="194" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="88.0" y="213.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Checkpoint 1</text>
+<line x1="144" y1="209" x2="158" y2="209" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="88" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">drop internals</text>
+<rect x="160" y="194" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="216.0" y="213.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Checkpoint 2</text>
+<line x1="272" y1="209" x2="286" y2="209" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="216" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">drop internals</text>
+<rect x="288" y="194" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="344.0" y="213.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Checkpoint 3</text>
+<line x1="400" y1="209" x2="414" y2="209" marker-end="url(#ck-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="344" y="240" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">drop internals</text>
+<rect x="416" y="194" width="112" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="472.0" y="213.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Loss</text>
+<rect x="160" y="252" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="160" y="252" width="112" height="30" rx="6" style="fill:none;stroke:var(--c-warn);stroke-width:1.2;stroke-dasharray:4 3"/>
+<text x="216" y="271.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Recompute L3</text>
+<line x1="272" y1="267" x2="286" y2="267" marker-end="url(#ck-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="288" y="252" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="344.0" y="271.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Backward L3</text>
+<rect x="32" y="292" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="32" y="292" width="112" height="30" rx="6" style="fill:none;stroke:var(--c-warn);stroke-width:1.2;stroke-dasharray:4 3"/>
+<text x="88" y="311.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Recompute L2</text>
+<line x1="144" y1="307" x2="158" y2="307" marker-end="url(#ck-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="160" y="292" width="112" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="216.0" y="311.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Backward L2</text>
+</svg>
 
 ### The Engineering Trade-off
 

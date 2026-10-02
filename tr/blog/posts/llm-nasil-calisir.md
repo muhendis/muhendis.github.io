@@ -241,19 +241,50 @@ Formülün meşhur tek satırlık özeti:
 
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
 
-```mermaid
-flowchart TD
-    E["tilki'nin embedding'i"] -->|"× W_Q"| Q["Q — ne arıyorum?"]
-    E -->|"× W_K"| K["K — nasıl bulunurum?"]
-    E -->|"× W_V"| V["V — ne devrederim?"]
-    Q --> S1["1. Adım · puan = Q · K"]
-    K --> S1
-    S1 --> S2["2. Adım · ölçek ÷ √dₖ"]
-    S2 --> S3["3. Adım · softmax → yüzdeler"]
-    S3 --> S4["4. Adım · karışım = Σ ağırlık × V"]
-    V --> S4
-    S4 --> OUT["yeni tilki — bu-belirli-hızlı-kahverengi-tilki"]
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="Self-attention tilkiyi nasıl günceller. tilki&#x27;nin embedding&#x27;i öğrenilmiş üç matrisle çarpılır: W_Q ile Q, ne arıyorum; W_K ile K, nasıl bulunurum; W_V ile V, ne devrederim. 1. adım Q&#x27;yu her K ile iç çarpımla puanlar. 2. adım puanları dₖ&#x27;nin kareköküne bölerek ölçekler. 3. adım softmax ile yüzdelere çevirir. 4. adım V vektörlerini bu yüzdelerle karıştırır. Sonuç yeni bir tilkidir: bu-belirli-hızlı-kahverengi-tilki." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bpa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="190" y="8" width="180" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="280.0" y="32.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">tilki&#x27;nin embedding&#x27;i</text>
+<rect x="16" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="91.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q</text>
+<text x="91.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">ne arıyorum?</text>
+<rect x="196" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="271.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">K</text>
+<text x="271.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">nasıl bulunurum?</text>
+<rect x="394" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="469.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">V</text>
+<text x="469.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">ne devrederim?</text>
+<path d="M280 48 V62 M91 62 H469" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="91" y1="62" x2="91" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="98" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_Q</text>
+<line x1="271" y1="62" x2="271" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="278" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_K</text>
+<line x1="469" y1="62" x2="469" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="476" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_V</text>
+<rect x="16" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="76.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · puan</text>
+<text x="76.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q · K</text>
+<line x1="136" y1="204" x2="150" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="212.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · ölçek</text>
+<text x="212.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">÷ √dₖ</text>
+<line x1="272" y1="204" x2="286" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="348.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3 · softmax</text>
+<text x="348.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ yüzdeler</text>
+<line x1="408" y1="204" x2="422" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="424" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="484.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · karışım</text>
+<text x="484.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Σ ağırlık × V</text>
+<line x1="76" y1="136" x2="76" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M240 136 V156 H110 V174" marker-end="url(#bpa-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="484" y1="136" x2="484" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="254" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="278.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">yeni tilki — bu-belirli-hızlı-kahverengi-tilki</text>
+<line x1="484" y1="232" x2="484" y2="252" marker-end="url(#bpa-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+</svg>
 
 ### Tek yön ve causal mask
 
@@ -358,14 +389,33 @@ Doğru cevaba %90 olasılık vermek $\approx 0{,}10$ kayba, %20 olasılık
 vermek $\approx 1{,}60$ kayba yol açar. **Gradyan inişi (gradient descent)**
 her parametreyi yokuş aşağı minicik bir adım kaydırarak modeli eğitir.
 
-```mermaid
-flowchart LR
-    A["gerçek metni göster"] --> B["sıradaki token'ı gizle"]
-    B --> C["model tahmin eder"]
-    C --> D["kayıp = doğrunun −log p'si"]
-    D --> E["gradyan inişi — minicik bir adım"]
-    E -->|"trilyonlarca kez tekrar"| A
-```
+<svg viewBox="0 0 560 136" role="img" aria-label="Ön eğitim döngüsü. Gerçek metni göster, sıradaki token&#x27;ı gizle, model logit&#x27;leri tahmin etsin, kaybı doğru token&#x27;a verilen olasılığın eksi logaritması olarak hesapla, gradyan inişi ağırlıkları minicik bir adımla güncellesin. Döngü trilyonlarca kez tekrarlanır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bpt-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bpt-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="64.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">veri</text>
+<text x="64.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">gerçek metin</text>
+<line x1="112" y1="43" x2="122" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="124" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="172.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">gizle</text>
+<text x="172.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sıradaki token</text>
+<line x1="220" y1="43" x2="230" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="232" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">tahmin</text>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">logit üretir</text>
+<line x1="328" y1="43" x2="338" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="388.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">kayıp</text>
+<text x="388.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">−log p(doğru)</text>
+<line x1="436" y1="43" x2="446" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="448" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="496.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">güncelle</text>
+<text x="496.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">minicik adım</text>
+<path d="M496 72 V100 H64 V74" marker-end="url(#bpt-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="280" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">trilyonlarca kez tekrar</text>
+</svg>
 
 Ölçeğin getirisi tahmin edilebilir yasalara tabidir. Kaplan ve Chinchilla
 **ölçekleme yasaları (scaling laws)**, model parametresi ile eğitim verisi
@@ -397,24 +447,47 @@ Bir model eğitildikten sonra kullanıcı isteklerine cevap verirken çalışan
 sürece **çıkarım (inference)** denir. Çıkarım, donanım kaynaklarını tüketim
 biçimi açısından birbirine zıt **iki ayrı aşamadan** oluşur.
 
-```mermaid
-flowchart LR
-    subgraph P["1. Prefill Aşaması (Compute-bound)"]
-        direction TB
-        PR["Prompt Token'ları"] --> PAR["Tüm token'lar paralel işlenir"]
-        PAR --> KVW["KV Cache doldurulur"]
-        KVW --> TTFT["İlk token üretilir (TTFT)"]
-    end
-    subgraph D["2. Decode Aşaması (Memory-bound)"]
-        direction TB
-        TTFT --> SEQ["Token t teker teker üretilir"]
-        SEQ --> KVR["Geçmiş KV Cache okunur"]
-        KVR --> ITL["Token arası gecikme (ITL)"]
-        ITL --> STOP{"Durdurma token'ı mı?"}
-        STOP -- Hayır --> SEQ
-        STOP -- Evet --> END["Metin tamamlandı"]
-    end
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="Çıkarımın iki aşaması bir zaman ekseninde. Prefill, compute-bound: prompt&#x27;un bütün token&#x27;ları paralel işlenir ve KV cache doldurulur; aşama ilk token&#x27;ın üretilmesiyle biter, istekten o token&#x27;a kadar geçen süre TTFT&#x27;dir, ilk token&#x27;a kadar geçen süre. Decode, memory-bound: her adımda tek token üretilir ve her adım geçmiş KV cache&#x27;in tamamını okur; art arda iki token arasındaki süre ITL&#x27;dir, token arası gecikme. Her token&#x27;dan sonra model durdurma token&#x27;ına bakar: değilse bir adım daha atar, öyleyse metin tamamlanır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">1 · Prefill</text>
+<text x="216" y="20" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2 · Decode</text>
+<text x="16" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">compute-bound</text>
+<text x="216" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">memory-bound</text>
+<rect x="16" y="46" width="184" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="108" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:12px">prompt&#x27;un tüm</text>
+<text x="108" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:12px">token&#x27;ları paralel</text>
+<text x="108" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:12px">→ KV cache dolar</text>
+<rect x="216" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="244" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="244" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV&#x27;yi</text>
+<text x="244" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">okur</text>
+<rect x="284" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="312" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="312" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV&#x27;yi</text>
+<text x="312" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">okur</text>
+<rect x="352" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="380" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="380" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV&#x27;yi</text>
+<text x="380" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">okur</text>
+<rect x="420" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="448" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="448" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV&#x27;yi</text>
+<text x="448" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">okur</text>
+<text x="504" y="80" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">…</text>
+<rect x="163" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="180.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₁</text>
+<rect x="227" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="244.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₂</text>
+<rect x="295" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="312.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₃</text>
+<rect x="363" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="380.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₄</text>
+<rect x="431" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="448.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₅</text>
+<rect x="512" y="116" width="32" height="22" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/><text x="528.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:10px;font-family:var(--font-mono)">■</text>
+<text x="16" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">istek gelir</text>
+<text x="528" y="151" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">dur</text>
+<path d="M16 157 V162 H180 V157" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="98.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">TTFT</text>
+<path d="M312 157 V162 H380 V157" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="346.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">ITL</text>
+<text x="16" y="206" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her token&#x27;dan sonra: durdurma token&#x27;ı mı? Hayır → bir decode adımı daha. Evet → bitti.</text>
+<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">TTFT&#x27;yi prefill belirler; sonraki her token bir ITL&#x27;ye mal olur.</text>
+</svg>
 
 ### Prefill: paralel hesaplama ve TTFT
 

@@ -216,19 +216,50 @@ H100'de online serving için 8.192, daha küçük GPU'larda 2.048
 seçiyor — blog yazılarına değil (buna da), çalıştırdığınız sürüme
 bakmak için bir neden daha.
 
-```mermaid
-flowchart TB
-  RQ["Yeni istek"] --> SCH{"Scheduler<br>adım başına tek<br>token bütçesi"}
-  SCH <--> KV["KV blok yöneticisi<br>blok tabloları + prefix cache"]
-  KV -->|"prefix isabeti:<br>blokları kullan, prefill'i atla"| SCH
-  KV -->|"havuz doldu:<br>bir isteği düşür"| PRE["Preemption<br>kuyruğa geri<br>(recompute)"]
-  PRE --> SCH
-  SCH -->|"önce tüm decode'lar<br>(dizi başına 1 token)"| BATCH["Tek birleşik batch"]
-  SCH -->|"kalan bütçe:<br>prefill parçaları"| BATCH
-  BATCH --> FWD["GPU ileri geçişi"]
-  FWD --> OUT["Akan token'lar"]
-  FWD --> SCH
-```
+<svg viewBox="0 0 560 400" role="img" aria-label="vLLM&#x27;de tek bir zamanlama adımı. Yeni istek, adım başına tek token bütçesi olan scheduler&#x27;a girer. Scheduler, blok tablolarını ve prefix cache&#x27;i tutan KV blok yöneticisiyle konuşur. Prefix isabetinde yönetici blokları yeniden kullanır ve istek prefill&#x27;i atlar. Blok havuzu dolunca yönetici bir isteği düşürür; istek kuyruğa geri döner ve sonra yeniden hesaplanır. Scheduler tek bir birleşik batch doldurur: önce bütün decode&#x27;lar, dizi başına bir token, sonra kalan bütçeyle prefill parçaları. GPU ileri geçişi çalıştırır, token&#x27;lar akar ve kontrol bir sonraki adım için scheduler&#x27;a döner." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="vl-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="vl-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="40" y="8" width="190" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="135.0" y="30.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Yeni istek</text>
+<line x1="135" y1="44" x2="135" y2="70" marker-end="url(#vl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="40" y="72" width="190" height="64" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="135.0" y="92.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Scheduler</text>
+<text x="135.0" y="108.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">adım başına tek</text>
+<text x="135.0" y="124.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">token bütçesi</text>
+<rect x="40" y="200" width="190" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="135.0" y="224.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">KV blok yöneticisi</text>
+<text x="135.0" y="240.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">blok tabloları + prefix cache</text>
+<rect x="40" y="312" width="190" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="135.0" y="336.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Preemption</text>
+<text x="135.0" y="352.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">kuyruğa geri (recompute)</text>
+<path d="M80 138 V198" marker-start="url(#vl-arr)" marker-end="url(#vl-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="150" y1="200" x2="150" y2="138" marker-end="url(#vl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="158" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">prefix isabeti:</text>
+<text x="158" y="170" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">blokları kullan,</text>
+<text x="158" y="184" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">prefill&#x27;i atla</text>
+<line x1="150" y1="256" x2="150" y2="310" marker-end="url(#vl-arr)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="158" y="278" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">havuz doldu:</text>
+<text x="158" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">bir isteği düşür</text>
+<path d="M40 340 H30 V112 H38" marker-end="url(#vl-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="372" y="72" width="172" height="64" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="458.0" y="108.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Tek birleşik batch</text>
+<line x1="230" y1="88" x2="370" y2="88" marker-end="url(#vl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="230" y1="122" x2="370" y2="122" marker-end="url(#vl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="301" y="66" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">önce tüm decode&#x27;lar</text>
+<text x="301" y="80" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(dizi başına 1 token)</text>
+<text x="301" y="138" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">kalan bütçe:</text>
+<text x="301" y="152" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">prefill parçaları</text>
+<rect x="372" y="196" width="172" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="458.0" y="224.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">GPU ileri geçişi</text>
+<line x1="458" y1="136" x2="458" y2="194" marker-end="url(#vl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="372" y="300" width="172" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="458.0" y="326.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Akan token&#x27;lar</text>
+<line x1="458" y1="244" x2="458" y2="298" marker-end="url(#vl-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M372 220 H300 V388 H18 V96 H38" marker-end="url(#vl-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="306" y="380" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">sonraki adım</text>
+</svg>
 
 Diyagramı tek bir isteğin yaşamı olarak okuyun, çünkü "bir
 isteğin yolculuğunu anlat" prova edilmeye değer bir sorudur: bir

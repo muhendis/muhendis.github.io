@@ -43,19 +43,46 @@ $$\frac{\partial \mathcal{L}_{\text{MSE}}}{\partial z} = (-0.999955) \times (0.0
 
 Gradyan neredeyse sıfırdır. Model *kendinden emin* bir şekilde yanıldığı için sigmoid türevi doymuş (saturation) ve ağırlıkları düzeltecek hata sinyalini yok etmiştir. MSE altında kayıp yüzeyi logit uzayında konveks değildir: en büyük hatalar dik vadiler yerine dümdüz, yatay platolara denk gelir.
 
-```mermaid
-flowchart TD
-    subgraph MSE_Failure["Kategorik Hedeflerde MSE İflası"]
-        E1["Vahim Hata: y=1, p=0.0001"] --> D1["Sigmoid / Softmax Türev Doyması: p(1-p) -> 0"]
-        D1 --> G1["Gradyan = Hata x Türev -> 0.0000"]
-        G1 --> P1["Optimizasyon Platoda Donup Kalır"]
-    end
-    subgraph CE_Success["Kategorik Hedeflerde Cross-Entropy Başarısı"]
-        E2["Vahim Hata: y=1, p=0.0001"] --> D2["Logaritma Softmax Paydasını Sadeleştirir"]
-        D2 --> G2["Doğrusal Gradyan = p - y -> -0.9999"]
-        G2 --> P2["Maksimum Şiddette Düzeltici İtiş"]
-    end
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="Emin bir hata üzerinde MSE ile cross-entropy. Hedef y eşittir 1, model ise logit eksi 10&#x27;da p yaklaşık 0,000045 veriyor. MSE&#x27;de sigmoid türevi p çarpı 1 eksi p sıfıra doyar; gradyan, yani hata çarpı türev, yaklaşık eksi 0,000045 olur ve optimizasyon platoda donup kalır. Cross-entropy&#x27;de logaritma softmax paydasını sadeleştirir, gradyan doğrusaldır, p eksi y, yaklaşık eksi 0,999955; model en güçlü düzeltici itişi alır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="mc-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
+<marker id="mc-o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">MSE</text>
+<rect x="30" y="44" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="63.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Vahim hata</text>
+<text x="144.0" y="79.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">y = 1, p ≈ 0,000045</text>
+<line x1="144" y1="90" x2="144" y2="104" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="106" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Türev doyar</text>
+<text x="144.0" y="141.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">p(1 − p) → 0</text>
+<line x1="144" y1="152" x2="144" y2="166" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="168" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="187.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Gradyan = hata × türev</text>
+<text x="144.0" y="203.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">≈ −0,000045</text>
+<line x1="144" y1="214" x2="144" y2="228" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="230" width="228" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="144.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Platoda donup kalır</text>
+<text x="144.0" y="265.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sinyal kayboldu</text>
+<rect x="288" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Cross-entropy</text>
+<rect x="302" y="44" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="63.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Vahim hata</text>
+<text x="416.0" y="79.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">y = 1, p ≈ 0,000045</text>
+<line x1="416" y1="90" x2="416" y2="104" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="106" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Logaritma softmax</text>
+<text x="416.0" y="141.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">paydasını sadeleştirir</text>
+<line x1="416" y1="152" x2="416" y2="166" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="168" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="187.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Doğrusal gradyan = p − y</text>
+<text x="416.0" y="203.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">≈ −0,999955</text>
+<line x1="416" y1="214" x2="416" y2="228" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="230" width="228" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="416.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">En güçlü düzeltici itiş</text>
+<text x="416.0" y="265.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">adımı hata sürer</text>
+</svg>
 
 ### Cross-Entropy Çözümü
 

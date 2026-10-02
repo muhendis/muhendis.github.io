@@ -43,19 +43,46 @@ $$\frac{\partial \mathcal{L}_{\text{MSE}}}{\partial z} = (-0.999955) \times (0.0
 
 The gradient is effectively zero. Because the model was *confidently* wrong, the sigmoid derivative saturated, extinguishing the error signal before it could adjust the weights. The loss surface under MSE is non-convex in logit space: extreme mistakes lie on flat, horizontal plateaus rather than steep descents.
 
-```mermaid
-flowchart TD
-    subgraph MSE_Failure["MSE on Categorical Targets"]
-        E1["Severe Error: y=1, p=0.0001"] --> D1["Sigmoid / Softmax Derivative Saturation: p(1-p) -> 0"]
-        D1 --> G1["Gradient = Error x Derivative -> 0.0000"]
-        G1 --> P1["Optimization Trapped on Plateau"]
-    end
-    subgraph CE_Success["Cross-Entropy on Categorical Targets"]
-        E2["Severe Error: y=1, p=0.0001"] --> D2["Logarithm Cancels Softmax Denominator"]
-        D2 --> G2["Linear Gradient = p - y -> -0.9999"]
-        G2 --> P2["Maximum Steep Corrective Pull"]
-    end
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="MSE versus cross-entropy on a confident mistake. The target is y equals 1 and the model gives p about 0.000045, at logit minus 10. Under MSE the sigmoid derivative p times 1 minus p saturates toward 0, so the gradient, error times derivative, is about minus 0.000045 and optimization is trapped on a plateau. Under cross-entropy the logarithm cancels the softmax denominator, the gradient is linear, p minus y, about minus 0.999955, and the model gets the maximum corrective pull." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="mc-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
+<marker id="mc-o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">MSE</text>
+<rect x="30" y="44" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="63.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Severe error</text>
+<text x="144.0" y="79.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">y = 1, p ≈ 0.000045</text>
+<line x1="144" y1="90" x2="144" y2="104" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="106" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Derivative saturates</text>
+<text x="144.0" y="141.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">p(1 − p) → 0</text>
+<line x1="144" y1="152" x2="144" y2="166" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="168" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="187.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Gradient = error × derivative</text>
+<text x="144.0" y="203.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">≈ −0.000045</text>
+<line x1="144" y1="214" x2="144" y2="228" marker-end="url(#mc-r)" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<rect x="30" y="230" width="228" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="144.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Trapped on a plateau</text>
+<text x="144.0" y="265.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">the signal is gone</text>
+<rect x="288" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Cross-entropy</text>
+<rect x="302" y="44" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="63.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Severe error</text>
+<text x="416.0" y="79.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">y = 1, p ≈ 0.000045</text>
+<line x1="416" y1="90" x2="416" y2="104" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="106" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="125.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Log cancels the</text>
+<text x="416.0" y="141.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">softmax denominator</text>
+<line x1="416" y1="152" x2="416" y2="166" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="168" width="228" height="46" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="187.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Linear gradient = p − y</text>
+<text x="416.0" y="203.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">≈ −0.999955</text>
+<line x1="416" y1="214" x2="416" y2="228" marker-end="url(#mc-o)" style="stroke:var(--c-success);stroke-width:1.5"/>
+<rect x="302" y="230" width="228" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="416.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Maximum corrective pull</text>
+<text x="416.0" y="265.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">the error drives the step</text>
+</svg>
 
 ### The Cross-Entropy Remedy
 

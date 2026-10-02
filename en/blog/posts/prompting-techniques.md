@@ -155,25 +155,38 @@ and Claude's extended thinking made the purchase at training time:
 **reinforcement learning** rewarded reasoning that reached right
 answers, until long internal chains became a reflex.
 
-```mermaid
-flowchart LR
-    subgraph P["2022 — in your prompt"]
-        a["zero-shot CoT"]
-        b["self-consistency"]
-        c["ReAct loop"]
-        d["Tree of Thoughts"]
-    end
-    subgraph M["2026 — in the model, and in the code around it"]
-        a2["internal thinking,<br>effort dial"]
-        b2["parallel test-time<br>compute"]
-        c2["native tool use +<br>interleaved thinking"]
-        d2["parallel subagents +<br>a coordinator"]
-    end
-    a --> a2
-    b --> b2
-    c --> c2
-    d --> d2
-```
+<svg viewBox="0 0 560 282" role="img" aria-label="Where each 2022 prompting trick lives in 2026. In 2022 the techniques lived in your prompt; in 2026 they live in the model and in the code around it. Zero-shot chain of thought became internal thinking with an effort dial. Self-consistency became parallel test-time compute. The ReAct loop became native tool use with interleaved thinking. Tree of Thoughts became parallel subagents with a coordinator." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="er-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">2022</text>
+<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">in your prompt</text>
+<text x="236" y="22" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2026</text>
+<text x="236" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">in the model, and in the code around it</text>
+<rect x="16" y="54" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="81.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">zero-shot CoT</text>
+<rect x="236" y="54" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="73.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">internal thinking</text>
+<text x="390.0" y="89.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">effort dial</text>
+<line x1="196" y1="77" x2="234" y2="77" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="110" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">self-consistency</text>
+<rect x="236" y="110" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">parallel test-time compute</text>
+<line x1="196" y1="133" x2="234" y2="133" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="166" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="193.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ReAct loop</text>
+<rect x="236" y="166" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">native tool use</text>
+<text x="390.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ interleaved thinking</text>
+<line x1="196" y1="189" x2="234" y2="189" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="222" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Tree of Thoughts</text>
+<rect x="236" y="222" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="241.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">parallel subagents</text>
+<text x="390.0" y="257.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ a coordinator</text>
+<line x1="196" y1="245" x2="234" y2="245" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+</svg>
 
 - **Zero-shot CoT → internal thinking.** Current models decide when
   and how much to reason, dialed by `effort` — the same name on both

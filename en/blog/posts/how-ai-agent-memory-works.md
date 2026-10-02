@@ -70,18 +70,46 @@ Consider an intuitive physical analogy: Imagine a brilliant management consultan
 
 Whether the consultant behaves as a coherent, context-aware partner depends entirely on the discipline of the librarian and filing clerk.
 
-```mermaid
-flowchart LR
-    subgraph RuntimeLoop["Runtime Execution Loop"]
-        U["User Input (q_t)"] --> ReadPath["Read Path (Retrieve): Need Gate, Rewrite, Hybrid Search, RRF, Filter"]
-        Store[("Persistent Memory Store (M)")] --> ReadPath
-        ReadPath --> Prompt["Dynamic Prompt: System + Relevant Memories + History + q_t"]
-        Prompt --> LLM["Stateless LLM"]
-        LLM --> Resp["Response (a_t)"]
-        LLM & Resp --> WritePath["Write Path (Write): Extraction, Bi-temporal Update, PII Gate"]
-        WritePath --> Store
-    end
-```
+<svg viewBox="0 0 560 268" role="img" aria-label="The runtime execution loop of agent memory. The user input q_t enters the read path, which also reads the persistent memory store M and runs a need gate, query rewrite, hybrid search, RRF and filtering. The read path builds a dynamic prompt: system prompt plus relevant memories plus history plus q_t. The stateless LLM produces the response a_t. The LLM and the response feed the write path, which extracts facts, applies bi-temporal updates and passes a PII gate, then writes back to the store." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="aml-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="aml-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+<marker id="aml-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Runtime execution loop</text>
+<rect x="16" y="30" width="104" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="68.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User input</text>
+<text x="68.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">q_t</text>
+<rect x="140" y="30" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="237.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Read path</text>
+<text x="237.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">need gate · rewrite · hybrid</text>
+<text x="237.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">search · RRF · filter</text>
+<rect x="354" y="30" width="190" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="449.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dynamic prompt</text>
+<text x="449.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">system + relevant memories</text>
+<text x="449.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ history + q_t</text>
+<rect x="354" y="116" width="190" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="449.0" y="140.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Stateless LLM</text>
+<rect x="354" y="192" width="190" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="449.0" y="216.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Response a_t</text>
+<rect x="140" y="186" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="237.0" y="202.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Write path</text>
+<text x="237.0" y="218.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">extraction · bi-temporal</text>
+<text x="237.0" y="234.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">update · PII gate</text>
+<path d="M16 111 V161 A52.0 7 0 0 0 120 161 V111" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="68.0" cy="111" rx="52.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="68.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Memory</text>
+<text x="68.0" y="152.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">store M</text>
+<line x1="120" y1="58" x2="138" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="334" y1="58" x2="352" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="449" y1="86" x2="449" y2="114" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="449" y1="156" x2="449" y2="190" marker-end="url(#aml-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M120 136 H237 V88" marker-end="url(#aml-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="354" y1="212" x2="336" y2="212" marker-end="url(#aml-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<path d="M354 136 H300 V184" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<path d="M140 214 H68 V170" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The model stays stateless; memory lives in the store and the two paths around it.</text>
+</svg>
 
 Mathematically, agent interaction at step $t$ begins with the retrieval function assembling the context:
 
@@ -201,22 +229,61 @@ The write pipeline converts turns into **atomic facts**. **Mem0 (Chhikara et al.
 1. **Extraction:** An auxiliary model parses dialogue turns to generate candidate propositions.
 2. **State Transition:** The candidate proposition is compared against the top-$k$ nearest neighbors in storage, triggering one of four operations:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Extraction: Raw Turn (q_t, a_t)
-    Extraction --> SimilaritySearch: Candidate Proposition
-    SimilaritySearch --> DecisionGate: Compare Against Top-K Existing Records
-    
-    DecisionGate --> ADD: No equivalent record found
-    DecisionGate --> UPDATE: Refines or extends existing record
-    DecisionGate --> DELETE: Directly contradicts existing record
-    DecisionGate --> NOOP: Information already stored identically
-    
-    ADD --> Store: Insert New Vector & Meta
-    UPDATE --> Store: Enrich Existing Entity
-    DELETE --> Store: Mark Superseded (Bi-temporal)
-    NOOP --> [*]: No Operation
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="How a write decides what to do. A raw turn, q_t and a_t, goes to extraction, which produces a candidate proposition. Similarity search compares it against the top-k existing records. A decision gate then picks one of four operations. ADD when no equivalent record is found: insert a new vector and metadata. UPDATE when it refines or extends an existing record: enrich the existing entity. DELETE when it directly contradicts an existing record: mark the old one superseded, bi-temporally. NOOP when the information is already stored identically: no operation. ADD, UPDATE and DELETE write to the store." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="amo-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">raw turn (q_t, a_t)</text>
+<line x1="60" y1="24" x2="60" y2="38" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="96.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Extraction</text>
+<text x="96.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">candidate proposition</text>
+<rect x="200" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Similarity search</text>
+<text x="280.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">vs top-k existing</text>
+<rect x="384" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="464.0" y="70.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Decision gate</text>
+<line x1="176" y1="66" x2="198" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="360" y1="66" x2="382" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M464 92 V108 H78 V122" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="210" y1="108" x2="210" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="342" y1="108" x2="342" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="474" y1="108" x2="474" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="78" y1="108" x2="78" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="78" y="141" text-anchor="middle" style="fill:var(--c-success);font-size:13px;font-weight:700;font-family:var(--font-mono)">ADD</text>
+<text x="78" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">no equivalent</text>
+<text x="78" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">record found</text>
+<text x="78" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">insert new</text>
+<text x="78" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">vector &amp; meta</text>
+<line x1="78" y1="230" x2="78" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="148" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="210" y="141" text-anchor="middle" style="fill:var(--c-accent);font-size:13px;font-weight:700;font-family:var(--font-mono)">UPDATE</text>
+<text x="210" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">refines or extends</text>
+<text x="210" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">an existing record</text>
+<text x="210" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">enrich existing</text>
+<text x="210" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">entity</text>
+<line x1="210" y1="230" x2="210" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="280" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="342" y="141" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700;font-family:var(--font-mono)">DELETE</text>
+<text x="342" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">directly contradicts</text>
+<text x="342" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">an existing record</text>
+<text x="342" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">mark superseded</text>
+<text x="342" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">(bi-temporal)</text>
+<line x1="342" y1="230" x2="342" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="412" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="474" y="141" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700;font-family:var(--font-mono)">NOOP</text>
+<text x="474" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">already stored</text>
+<text x="474" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">identically</text>
+<text x="474" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">no operation</text>
+<text x="474" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px"></text>
+<path d="M16 257 V285 A194.0 7 0 0 0 404 285 V257" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="210.0" cy="257" rx="194.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="210.0" y="279.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Memory store</text>
+<circle cx="474" cy="268" r="9" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="474" cy="268" r="4.5" style="fill:var(--c-text-mute)"/>
+<line x1="474" y1="230" x2="474" y2="256" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+</svg>
 
 The operational boundaries:
 - **ADD:** *"User prefers morning trail running."*
@@ -317,22 +384,60 @@ Architectures balance latency against consistency:
 
 In production, memory retrieval is an orchestrator pipeline executing across multiple stages:
 
-```mermaid
-flowchart TD
-    Q0["User Input (q_t)"] --> Step1{"1. Need Detection Gate"}
-    Step1 -- "No Memory Needed" --> Bypass["Direct LLM Dispatch (0 ms Added Latency)"]
-    Step1 -- "Memory Required" --> Step2["2. Query Rewriter & HyDE"]
-    
-    Step2 --> Step3A["Dense Vector Search (Cosine)"]
-    Step2 --> Step3B["Sparse Keyword Search (BM25)"]
-    Step2 --> Step3C["Temporal Knowledge Graph Walk"]
-    
-    Step3A & Step3B & Step3C --> Step4["4. Reciprocal Rank Fusion (RRF)"]
-    Step4 --> Step5["5. Multi-Signal Scoring (Recency + Importance + Relevance)"]
-    Step5 --> Step6["6. Scope & Bi-Temporal Validity Filter"]
-    Step6 --> Step7["7. Cache-Aware Prompt Packaging"]
-    Step7 --> LLM["LLM Context"]
-```
+<svg viewBox="0 0 560 392" role="img" aria-label="The read path, step by step. User input q_t meets a need detection gate. If no memory is needed, the request goes straight to the LLM with zero added latency. If memory is required, the query is rewritten, with HyDE. Three searches run in parallel: dense vector search by cosine, sparse keyword search with BM25, and a temporal knowledge graph walk. Reciprocal rank fusion merges their lists. Multi-signal scoring combines recency, importance and relevance. A scope and bi-temporal validity filter drops what does not apply. Cache-aware prompt packaging assembles the result, which becomes the LLM context." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="amr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="amr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="130" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="81.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">User input q_t</text>
+<rect x="170" y="8" width="160" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="250.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · Need detection</text>
+<rect x="410" y="8" width="134" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="477.0" y="28.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Direct to LLM</text>
+<text x="477.0" y="44.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+0 ms latency</text>
+<line x1="146" y1="32" x2="168" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="330" y1="32" x2="408" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="370" y="26" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">not needed</text>
+<line x1="250" y1="56" x2="250" y2="86" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="258" y="75" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">memory required</text>
+<rect x="150" y="88" width="200" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="250.0" y="114.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · Query rewrite &amp; HyDE</text>
+<path d="M250 132 V146 M100 146 H460" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="100" y1="146" x2="100" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="100.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dense vector search</text>
+<text x="100.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cosine</text>
+<line x1="280" y1="146" x2="280" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="196" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Sparse keyword search</text>
+<text x="280.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">BM25</text>
+<line x1="460" y1="146" x2="460" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Temporal graph walk</text>
+<text x="460.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">knowledge graph</text>
+<path d="M280 210 V224 M460 210 V224 H100" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="100" y1="210" x2="100" y2="240" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="100.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · RRF</text>
+<text x="100.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">reciprocal rank fusion</text>
+<line x1="184" y1="271" x2="194" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="196" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="259.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5 · Multi-signal score</text>
+<text x="280.0" y="275.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">recency + importance</text>
+<text x="280.0" y="291.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ relevance</text>
+<line x1="364" y1="271" x2="374" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6 · Validity filter</text>
+<text x="460.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">scope + bi-temporal</text>
+<line x1="460" y1="300" x2="460" y2="326" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="328" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="353.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">7 · Prompt packaging</text>
+<text x="460.0" y="369.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cache-aware</text>
+<rect x="196" y="336" width="152" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="272.0" y="361.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LLM context</text>
+<line x1="376" y1="357" x2="350" y2="357" marker-end="url(#amr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+</svg>
 
 ### Do we need memory? Need detection and Just-in-Time
 
@@ -513,30 +618,45 @@ While single-agent memory addresses *"What do I remember?"*, multi-agent swarms 
 
 A shared, unstructured global memory pool inevitably causes catastrophic data contamination.
 
-```mermaid
-flowchart TB
-    subgraph OrgLayer["Organization Scope (Global Policies, Company Runbooks)"]
-        ORG[("Organization Store")]
-    end
-    
-    subgraph ProjectLayer["Project Scope (Architectural Decisions, Code Standards)"]
-        PRJ[("Project Store")]
-    end
-    
-    subgraph UserLayer["User Profile Scope (Personal Preferences, Style)"]
-        USR[("User Store (user_id partitioned)")]
-    end
-    
-    subgraph AgentPrivate["Private Agent Working Memory (Scratchpads)"]
-        A1["Researcher Agent"]
-        A2["Coder Agent"]
-        A3["Security Auditor"]
-    end
-    
-    A1 & A2 & A3 -.->|"Explicit Scoped Writes"| PRJ
-    PRJ -.->|"Read-Only Reference"| ORG
-    USR ==>|"Strict Authenticated Filter"| A1 & A2
-```
+<svg viewBox="0 0 560 364" role="img" aria-label="Memory scopes in a multi-agent system. At the top, the organization scope holds global policies and company runbooks in the organization store. Below it, the project scope holds architectural decisions and code standards in the project store; the project reads the organization store as a read-only reference. The private agent working memory holds scratchpads for a researcher agent, a coder agent and a security auditor; the agents make explicit scoped writes to the project store. At the bottom, the user profile scope holds personal preferences and style in a store partitioned by user_id, which the researcher and coder agents read through a strict authenticated filter." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ams-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ams-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Organization scope</text>
+<text x="30" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">global policies, company runbooks</text>
+<path d="M330 24 V46 A101.0 7 0 0 0 532 46 V24" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="24" rx="101.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="431.0" y="43.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Organization store</text>
+<rect x="16" y="96" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="30" y="117" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Project scope</text>
+<text x="30" y="134" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">architectural decisions, code standards</text>
+<path d="M330 112 V134 A101.0 7 0 0 0 532 134 V112" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="112" rx="101.0" ry="7" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="431.0" y="131.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Project store</text>
+<line x1="280" y1="96" x2="280" y2="62" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="288" y="84" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">read-only reference</text>
+<rect x="16" y="184" width="528" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="30" y="203" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Private agent working memory (scratchpads)</text>
+<rect x="32" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="110.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Researcher agent</text>
+<rect x="202" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Coder agent</text>
+<rect x="372" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="450.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Security auditor</text>
+<line x1="450" y1="184" x2="450" y2="150" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="442" y="172" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">explicit scoped writes</text>
+<rect x="16" y="304" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="30" y="325" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">User profile scope</text>
+<text x="30" y="342" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">personal preferences, style</text>
+<path d="M330 320 V342 A101.0 7 0 0 0 532 342 V320" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="320" rx="101.0" ry="7" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="431.0" y="339.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">User store (by user_id)</text>
+<line x1="110" y1="304" x2="110" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
+<line x1="280" y1="304" x2="280" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
+<text x="122" y="288" text-anchor="start" style="fill:var(--c-text);font-size:11px">strict authenticated filter</text>
+</svg>
 
 ### Who can write where: Policy matrix
 

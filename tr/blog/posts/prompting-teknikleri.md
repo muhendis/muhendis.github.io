@@ -158,25 +158,38 @@ kuşak aynı alışverişi eğitim zamanında yaptı: **pekiştirmeli
 öğrenme (reinforcement learning)**, doğru cevaba çıkan akıl
 yürütmeyi ödüllendirdi — uzun dahili zincirler refleks olana dek.
 
-```mermaid
-flowchart LR
-    subgraph P["2022 — prompt'unuzda"]
-        a["zero-shot CoT"]
-        b["self-consistency"]
-        c["ReAct döngüsü"]
-        d["Tree of Thoughts"]
-    end
-    subgraph M["2026 — modelde ve onu saran kodda"]
-        a2["dahili thinking,<br>effort düğmesi"]
-        b2["paralel test-time<br>compute"]
-        c2["yerleşik araç kullanımı +<br>araya giren thinking"]
-        d2["paralel alt ajanlar +<br>bir koordinatör"]
-    end
-    a --> a2
-    b --> b2
-    c --> c2
-    d --> d2
-```
+<svg viewBox="0 0 560 282" role="img" aria-label="2022&#x27;nin prompting hileleri 2026&#x27;da nerede yaşıyor. 2022&#x27;de teknikler prompt&#x27;unuzdaydı; 2026&#x27;da modelde ve onu saran koddalar. Zero-shot CoT, effort düğmeli dahili thinking&#x27;e dönüştü. Self-consistency paralel test-time compute&#x27;a dönüştü. ReAct döngüsü, araya giren thinking&#x27;li yerleşik araç kullanımına dönüştü. Tree of Thoughts, bir koordinatörlü paralel alt ajanlara dönüştü." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="er-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">2022</text>
+<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prompt&#x27;unuzda</text>
+<text x="236" y="22" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2026</text>
+<text x="236" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">modelde ve onu saran kodda</text>
+<rect x="16" y="54" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="81.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">zero-shot CoT</text>
+<rect x="236" y="54" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="73.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">dahili thinking</text>
+<text x="390.0" y="89.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">effort düğmesi</text>
+<line x1="196" y1="77" x2="234" y2="77" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="110" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">self-consistency</text>
+<rect x="236" y="110" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">paralel test-time compute</text>
+<line x1="196" y1="133" x2="234" y2="133" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="166" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="193.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ReAct döngüsü</text>
+<rect x="236" y="166" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">yerleşik araç kullanımı</text>
+<text x="390.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ araya giren thinking</text>
+<line x1="196" y1="189" x2="234" y2="189" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="222" width="180" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="106.0" y="249.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Tree of Thoughts</text>
+<rect x="236" y="222" width="308" height="46" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="390.0" y="241.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">paralel alt ajanlar</text>
+<text x="390.0" y="257.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ bir koordinatör</text>
+<line x1="196" y1="245" x2="234" y2="245" marker-end="url(#er-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+</svg>
 
 - **Zero-shot CoT → dahili thinking.** Model ne zaman ve ne kadar
   düşüneceğine kendisi karar verir, `effort` ile ayarlanır — çitin

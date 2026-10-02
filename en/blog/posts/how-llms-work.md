@@ -237,19 +237,50 @@ It is no longer an isolated dictionary definition; it is now
 
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
 
-```mermaid
-flowchart TD
-    E["embedding of fox"] -->|"× W_Q"| Q["Q — what am I looking for?"]
-    E -->|"× W_K"| K["K — how am I found?"]
-    E -->|"× W_V"| V["V — what do I hand over?"]
-    Q --> S1["Step 1 · score = Q · K"]
-    K --> S1
-    S1 --> S2["Step 2 · scale ÷ √dₖ"]
-    S2 --> S3["Step 3 · softmax → percentages"]
-    S3 --> S4["Step 4 · blend = Σ weight × V"]
-    V --> S4
-    S4 --> OUT["new fox — this-particular-quick-brown-fox"]
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="How self-attention updates fox. The embedding of fox is multiplied by three learned matrices: times W_Q gives Q, what am I looking for; times W_K gives K, how am I found; times W_V gives V, what do I hand over. Step 1 scores Q against every K with a dot product. Step 2 scales the scores by dividing by the square root of d_k. Step 3 turns them into percentages with softmax. Step 4 blends the V vectors, weighted by those percentages. The result is a new fox: this-particular-quick-brown-fox." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bpa-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="190" y="8" width="180" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="280.0" y="32.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embedding of fox</text>
+<rect x="16" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="91.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q</text>
+<text x="91.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">what am I looking for?</text>
+<rect x="196" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="271.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">K</text>
+<text x="271.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">how am I found?</text>
+<rect x="394" y="84" width="150" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="469.0" y="106.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">V</text>
+<text x="469.0" y="122.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">what do I hand over?</text>
+<path d="M280 48 V62 M91 62 H469" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="91" y1="62" x2="91" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="98" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_Q</text>
+<line x1="271" y1="62" x2="271" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="278" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_K</text>
+<line x1="469" y1="62" x2="469" y2="82" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="476" y="77" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">× W_V</text>
+<rect x="16" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="76.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · score</text>
+<text x="76.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q · K</text>
+<line x1="136" y1="204" x2="150" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="212.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · scale</text>
+<text x="212.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">÷ √dₖ</text>
+<line x1="272" y1="204" x2="286" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="348.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3 · softmax</text>
+<text x="348.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ percentages</text>
+<line x1="408" y1="204" x2="422" y2="204" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="424" y="176" width="120" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="484.0" y="200.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · blend</text>
+<text x="484.0" y="216.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Σ weight × V</text>
+<line x1="76" y1="136" x2="76" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M240 136 V156 H110 V174" marker-end="url(#bpa-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="484" y1="136" x2="484" y2="174" marker-end="url(#bpa-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="254" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="278.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">new fox — this-particular-quick-brown-fox</text>
+<line x1="484" y1="232" x2="484" y2="252" marker-end="url(#bpa-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+</svg>
 
 ### One direction only and the causal mask
 
@@ -357,14 +388,33 @@ whereas assigning 20% incurs a loss of $\approx 1.60$. **Gradient descent**
 computes the partial derivatives of this loss with respect to all parameters,
 nudging weights downhill across trillions of iterations.
 
-```mermaid
-flowchart LR
-    A["stream training tokens"] --> B["hide the next token"]
-    B --> C["model predicts logits"]
-    C --> D["loss = −log p(true token)"]
-    D --> E["gradient descent updates weights"]
-    E -->|"repeat trillions of times"| A
-```
+<svg viewBox="0 0 560 136" role="img" aria-label="The pre-training loop. Stream real training text, hide the next token, let the model predict logits, compute the loss as minus log of the probability given to the true token, and let gradient descent update the weights. The loop repeats trillions of times." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bpt-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bpt-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="64.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">data</text>
+<text x="64.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">stream tokens</text>
+<line x1="112" y1="43" x2="122" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="124" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="172.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">hide</text>
+<text x="172.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">the next token</text>
+<line x1="220" y1="43" x2="230" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="232" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">predict</text>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">logits</text>
+<line x1="328" y1="43" x2="338" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="388.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">loss</text>
+<text x="388.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">−log p(true)</text>
+<line x1="436" y1="43" x2="446" y2="43" marker-end="url(#bpt-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="448" y="14" width="96" height="58" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="496.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">update</text>
+<text x="496.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">gradient step</text>
+<path d="M496 72 V100 H64 V74" marker-end="url(#bpt-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="280" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">repeat trillions of times</text>
+</svg>
 
 Scaling behavior is governed by empirical laws. The Kaplan and Chinchilla
 **scaling laws** demonstrated that compute budget must be allocated
@@ -397,24 +447,47 @@ When an aligned model serves user requests in production, it operates in
 **inference mode**. Serving workloads differ fundamentally from training,
 dividing into **two distinct execution phases**.
 
-```mermaid
-flowchart LR
-    subgraph P["1. Prefill Phase (Compute-bound)"]
-        direction TB
-        PR["Prompt Tokens"] --> PAR["All tokens processed in parallel"]
-        PAR --> KVW["KV Cache populated"]
-        KVW --> TTFT["First token emitted (TTFT)"]
-    end
-    subgraph D["2. Decode Phase (Memory-bound)"]
-        direction TB
-        TTFT --> SEQ["Token t generated sequentially"]
-        SEQ --> KVR["Prior KV Cache fetched"]
-        KVR --> ITL["Inter-Token Latency (ITL)"]
-        ITL --> STOP{"Stop condition met?"}
-        STOP -- No --> SEQ
-        STOP -- Yes --> END["Output sequence complete"]
-    end
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="The two phases of inference on a time axis. Prefill, compute-bound: all prompt tokens are processed in parallel and the KV cache is filled; it ends by emitting the first token, and the time from the request to that token is TTFT, time to first token. Decode, memory-bound: one token per step, each step reads the whole prior KV cache; the gap between two consecutive tokens is ITL, inter-token latency. After every token the model checks for a stop token: if not, it runs another step; if so, the output is complete." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">1 · Prefill</text>
+<text x="216" y="20" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">2 · Decode</text>
+<text x="16" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">compute-bound</text>
+<text x="216" y="37" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">memory-bound</text>
+<rect x="16" y="46" width="184" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="108" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:12px">all prompt tokens</text>
+<text x="108" y="86" text-anchor="middle" style="fill:var(--c-text);font-size:12px">in parallel</text>
+<text x="108" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:12px">→ KV cache filled</text>
+<rect x="216" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="244" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="244" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
+<text x="244" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<rect x="284" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="312" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="312" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
+<text x="312" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<rect x="352" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="380" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="380" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
+<text x="380" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<rect x="420" y="46" width="56" height="60" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="448" y="72" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 token</text>
+<text x="448" y="87" text-anchor="middle" style="fill:var(--c-text);font-size:11px">reads</text>
+<text x="448" y="102" text-anchor="middle" style="fill:var(--c-text);font-size:11px">KV cache</text>
+<text x="504" y="80" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px">…</text>
+<rect x="163" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="180.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₁</text>
+<rect x="227" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="244.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₂</text>
+<rect x="295" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="312.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₃</text>
+<rect x="363" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="380.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₄</text>
+<rect x="431" y="116" width="34" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="448.0" y="131.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">t₅</text>
+<rect x="512" y="116" width="32" height="22" rx="5" style="fill:var(--c-text-mute);fill-opacity:.16;stroke:var(--c-text-mute);stroke-width:1.3"/><text x="528.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:10px;font-family:var(--font-mono)">■</text>
+<text x="16" y="151" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">request in</text>
+<text x="528" y="151" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">stop</text>
+<path d="M16 157 V162 H180 V157" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="98.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">TTFT</text>
+<path d="M312 157 V162 H380 V157" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="346.0" y="177" text-anchor="middle" style="fill:var(--c-text);font-size:12px">ITL</text>
+<text x="16" y="206" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">After each token: stop token? No → another decode step. Yes → output complete.</text>
+<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">TTFT is set by prefill; every later token costs one ITL.</text>
+</svg>
 
 ### Prefill: parallel computation and TTFT
 

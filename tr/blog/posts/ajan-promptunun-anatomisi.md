@@ -58,24 +58,42 @@ neredeyse hiçbir şey söylemez. İşi devretmeyi güvenli kılan şey iş
 (escalation) yolu. İyi kurulmuş bir ajan prompt'unun sekiz bölümü tam
 olarak bu tanımdır ve dört kata istiflenir:
 
-```mermaid
-flowchart TB
-  subgraph f1 ["Kimlik — ajan kimdir"]
-    s1["1 · Rol ve misyon"] --- s2["2 · Kapsam ve non-goals"]
-  end
-  subgraph f2 ["Kararlar — nasıl düşünür"]
-    s3["3 · Çalışma ilkeleri"] --- s4["4 · İş akışı listesi"]
-  end
-  subgraph f3 ["Arayüzler — araç girer, çıktı çıkar"]
-    s5["5 · Araç kullanım politikası"] --- s6["6 · Çıktı formatı"]
-  end
-  subgraph f4 ["Kenarlar — plan bozulduğunda"]
-    s7["7 · Belirsizlik ve eskalasyon"] --- s8["8 · Few-shot örnekler"]
-  end
-  f1 --> f2
-  f2 --> f3
-  f3 --> f4
-```
+<svg viewBox="0 0 560 336" role="img" aria-label="Bir ajan prompt&#x27;unun sekiz bölümü, yukarıdan aşağı okunan dört aileye ayrılmış. Kimlik, ajan kimdir: 1, rol ve misyon; 2, kapsam ve non-goals. Kararlar, nasıl düşünür: 3, çalışma ilkeleri; 4, iş akışı listesi. Arayüzler, araç girer, çıktı çıkar: 5, araç kullanım politikası; 6, çıktı formatı. Kenarlar, plan bozulduğunda: 7, belirsizlik ve eskalasyon; 8, few-shot örnekler." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ap-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Kimlik</text>
+<text x="86.9" y="29" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ajan kimdir</text>
+<rect x="30" y="39" width="246" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="153" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">1 · Rol ve misyon</text>
+<rect x="284" y="39" width="246" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="407" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">2 · Kapsam ve non-goals</text>
+<line x1="280" y1="76" x2="280" y2="88" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="90" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="111" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">Kararlar</text>
+<text x="101.2" y="111" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">nasıl düşünür</text>
+<rect x="30" y="121" width="246" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<text x="153" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">3 · Çalışma ilkeleri</text>
+<rect x="284" y="121" width="246" height="26" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/>
+<text x="407" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">4 · İş akışı listesi</text>
+<line x1="280" y1="158" x2="280" y2="170" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="172" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="193" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Arayüzler</text>
+<text x="108.35000000000001" y="193" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">araç girer, çıktı çıkar</text>
+<rect x="30" y="203" width="246" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="153" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">5 · Araç kullanım politikası</text>
+<rect x="284" y="203" width="246" height="26" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="407" y="220.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">6 · Çıktı formatı</text>
+<line x1="280" y1="240" x2="280" y2="252" marker-end="url(#ap-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="254" width="528" height="68" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="275" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">Kenarlar</text>
+<text x="101.2" y="275" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">plan bozulduğunda</text>
+<rect x="30" y="285" width="246" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<text x="153" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">7 · Belirsizlik ve eskalasyon</text>
+<rect x="284" y="285" width="246" height="26" rx="5" style="fill:var(--c-danger);fill-opacity:.16;stroke:var(--c-danger);stroke-width:1.3"/>
+<text x="407" y="302.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">8 · Few-shot örnekler</text>
+</svg>
 
 Sıralama bilinçli. Kimlik kararlardan önce gelir, çünkü her muğlak
 durum rolün süzgecinden geçirilerek çözülür; arayüzler kenar

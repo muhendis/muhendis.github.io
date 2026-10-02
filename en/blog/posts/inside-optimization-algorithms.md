@@ -44,21 +44,41 @@ $$\kappa = \frac{\lambda_{\max}}{\lambda_{\min}} = \frac{L}{1} = L$$
 
 In deep neural networks, condition numbers regularly exceed $\kappa \ge 10^4 \text{ to } 10^6$.
 
-```mermaid
-flowchart TD
-    subgraph Ill_Conditioned_Ravine["The Ravine Dilemma (Condition Number κ >> 10^4)"]
-        direction TB
-        W["Wall Direction (λ_max)"] -->|Steep Curvature| O["Violent Transverse Oscillations"]
-        F["Floor Direction (λ_min)"] -->|Flat Curvature| C["Near-Zero Forward Progress"]
-        O --> FAIL["SGD: Diverges if η > 2/λ_max; Stalls if η < 2/λ_max"]
-    end
-    subgraph Solutions["Algorithmic Solutions"]
-        direction TB
-        M["Momentum: Cancels Oscillations (Σ ± g = 0), Accumulates Velocity"]
-        A["AdamW: Normalizes Step Size via Coordinate-wise RMS"]
-        MU["Muon: Orthogonalizes Entire 2D Matrix via Newton-Schulz"]
-    end
-```
+<svg viewBox="0 0 560 330" role="img" aria-label="The ill-conditioned ravine, with condition number kappa far above 10 to the 4. Along the wall direction, lambda max, curvature is steep and plain SGD bounces in violent transverse oscillations. Along the floor direction, lambda min, curvature is flat and forward progress is near zero. SGD is stuck: with a step size above 2 over lambda max it diverges; below it, it crawls along the floor. Three algorithmic fixes: momentum cancels the oscillations, since alternating gradients sum to about zero, and accumulates velocity along the floor; AdamW normalizes the step size per coordinate with an RMS; Muon orthogonalizes the whole 2D update matrix with Newton-Schulz iterations." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="rv-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="rv-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">The ravine dilemma (κ ≫ 10⁴)</text>
+<ellipse cx="230" cy="100" rx="200" ry="62" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<ellipse cx="230" cy="100" rx="140" ry="43" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<ellipse cx="230" cy="100" rx="80" ry="25" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<ellipse cx="230" cy="100" rx="24" ry="7.5" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<path d="M60 48 L73 150 L86 53 L99 144 L112 58 L125 140 L138 63 L151 134 L164 68" marker-end="url(#rv-r)" style="fill:none;stroke:var(--c-danger);stroke-width:1.6"/>
+<circle cx="230" cy="100" r="3" style="fill:var(--c-text)"/>
+<text x="238" y="104" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">minimum</text>
+<path d="M448 60 V140" marker-start="url(#rv-arr)" marker-end="url(#rv-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="458" y="84" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">wall · λ_max</text>
+<text x="458" y="99" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">steep curvature:</text>
+<text x="458" y="113" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">violent oscillations</text>
+<path d="M150 178 H310" marker-start="url(#rv-arr)" marker-end="url(#rv-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="230" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">floor · λ_min · flat curvature: near-zero forward progress</text>
+<rect x="16" y="206" width="528" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="280" y="225.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px">SGD: η &gt; 2/λ_max → diverges;  η &lt; 2/λ_max → crawls along the floor</text>
+<text x="16" y="258" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">Algorithmic solutions</text>
+<rect x="16" y="268" width="168" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="100.0" y="284.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Momentum</text>
+<text x="100.0" y="300.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">cancels oscillations</text>
+<text x="100.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(Σ ±g ≈ 0), builds speed</text>
+<rect x="196" y="268" width="168" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="280.0" y="284.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">AdamW</text>
+<text x="280.0" y="300.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">normalizes step size</text>
+<text x="280.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">per-coordinate RMS</text>
+<rect x="376" y="268" width="168" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="460.0" y="284.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Muon</text>
+<text x="460.0" y="300.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">orthogonalizes the 2D</text>
+<text x="460.0" y="316.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">matrix (Newton–Schulz)</text>
+</svg>
 
 ### The Stability Ceiling of Vanilla SGD
 
@@ -218,14 +238,40 @@ Loshchilov and Hutter restored the original formulation of weight decay by **dec
 
 $$\theta_t = \theta_{t-1} - \eta \lambda \theta_{t-1} - \frac{\eta}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t$$
 
-```
-Standard Adam with L2 Reg:
-  Grad = g + lambda * w  ---> Fed into First & Second Moments ---> Divided by sqrt(v)
-
-AdamW (Decoupled Weight Decay):
-  Grad = g               ---> Fed into Moments               ---> Standard Step
-  Weight Decay = -eta * lambda * w                           ---> Directly Subtracted
-```
+<svg viewBox="0 0 560 230" role="img" aria-label="Adam with L2 regularization versus AdamW. In Adam with L2, the decay term lambda times w is added to the gradient, fed into the first and second moments, and divided by the square root of v, so weights with large gradient history are barely decayed. In AdamW, decoupled weight decay, the plain gradient g goes through the moments to a standard Adam step, and the weight decay, minus eta times lambda times w, bypasses the moments and is subtracted from the weights directly." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="aw-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="96" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Adam + L2 regularization</text>
+<text x="530" y="29" text-anchor="end" style="fill:var(--c-danger);font-size:12px;font-weight:600">decay distorted</text>
+<rect x="16" y="120" width="528" height="100" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="141" text-anchor="start" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">AdamW (decoupled weight decay)</text>
+<text x="530" y="141" text-anchor="end" style="fill:var(--c-success);font-size:12px;font-weight:600">decay intact</text>
+<rect x="30" y="40" width="150" height="34" rx="6" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="105.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">g + λ·w</text>
+<rect x="206" y="40" width="150" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="281.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">1st &amp; 2nd moments</text>
+<rect x="382" y="40" width="148" height="34" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="456.0" y="61.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">divided by √v</text>
+<line x1="180" y1="57" x2="204" y2="57" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="356" y1="57" x2="380" y2="57" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="30" y="92" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">the decay term is rescaled per coordinate along with the gradient</text>
+<rect x="30" y="152" width="150" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="105.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">g</text>
+<rect x="206" y="152" width="150" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="281.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">moments m, v</text>
+<rect x="382" y="152" width="148" height="30" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="456.0" y="171.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">standard step</text>
+<line x1="180" y1="167" x2="204" y2="167" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="356" y1="167" x2="380" y2="167" marker-end="url(#aw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="30" y="190" width="150" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="105.0" y="209.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">−η·λ·w</text>
+<rect x="382" y="190" width="148" height="30" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="456.0" y="209.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">subtract from w</text>
+<line x1="180" y1="205" x2="380" y2="205" marker-end="url(#aw-arr)" style="stroke:var(--c-success);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="280" y="199" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">bypasses the moments</text>
+</svg>
 
 In AdamW, every weight decays by $(1 - \eta \lambda)$ uniformly, regardless of whether its gradient magnitude is $10^3$ or $10^{-6}$. This single fix restored Adam's generalization, establishing AdamW as the universal default optimizer for modern transformer architectures (BERT, GPT-3, LLaMA, Mistral).
 
@@ -271,13 +317,30 @@ Muon resolves this computational bottleneck using **Newton-Schulz iterations**�
 
 Because this iteration requires only matrix multiplications and additions, modern GPU Tensor Cores evaluate 5 Newton-Schulz iterations in sub-millisecond runtimes, operating at peak hardware FLOP saturation.
 
-```mermaid
-flowchart TD
-    G["Raw Momentum Matrix G (2D Hidden Weight)"] --> NORM["Scale by Frobenius Norm: X0 = G / ||G||_F"]
-    NORM --> NS["5x Newton-Schulz Iterations: Xk+1 = 0.5 Xk (3I - Xk^T Xk)"]
-    NS --> ORTH["Orthogonal Update Matrix: X^T X ≈ I (All Singular Values = 1)"]
-    ORTH --> STEP["Update W = W - η * X (Uniform Spectral Step)"]
-```
+<svg viewBox="0 0 560 270" role="img" aria-label="Muon&#x27;s update in five steps. Start from the raw momentum matrix G of a 2D hidden weight. Divide by its Frobenius norm: X0 equals G over the norm of G. Run five Newton-Schulz iterations: X k plus 1 equals one half X k times 3 I minus X k transpose X k. The result is an orthogonal update matrix: X transpose X is approximately the identity, all singular values equal 1. Update the weights: W becomes W minus eta X, a uniform spectral step." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="mu-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="33" text-anchor="start" style="fill:var(--c-text);font-size:13px">Raw momentum G (2D weight)</text>
+<text x="530" y="33" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">G</text>
+<line x1="60" y1="48" x2="60" y2="58" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="60" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="30" y="85" text-anchor="start" style="fill:var(--c-text);font-size:13px">Normalize energy</text>
+<text x="530" y="85" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">X₀ = G / ‖G‖_F</text>
+<line x1="60" y1="100" x2="60" y2="110" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="112" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="30" y="137" text-anchor="start" style="fill:var(--c-text);font-size:13px">5× Newton–Schulz</text>
+<text x="530" y="137" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">X_k+1 = ½·X_k(3I − X_kᵀX_k)</text>
+<line x1="60" y1="152" x2="60" y2="162" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="164" width="528" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="30" y="189" text-anchor="start" style="fill:var(--c-text);font-size:13px">Orthogonal update</text>
+<text x="530" y="189" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">XᵀX ≈ I (all σᵢ = 1)</text>
+<line x1="60" y1="204" x2="60" y2="214" marker-end="url(#mu-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="216" width="528" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="241" text-anchor="start" style="fill:var(--c-text);font-size:13px">Uniform spectral step</text>
+<text x="530" y="241" text-anchor="end" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">W ← W − η·X</text>
+</svg>
 
 ### The Production Hybrid Architecture
 

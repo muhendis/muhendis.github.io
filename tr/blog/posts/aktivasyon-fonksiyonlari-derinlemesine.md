@@ -30,24 +30,49 @@ Kâğıdı yalnızca döndürmenize, ötelemenize, uzatıp kısaltmanıza ya da 
 
 Doğrusal-olmayan aktivasyon fonksiyonları kâğıda **katlama (fold)** yeteneği kazandırır. Uzayı bükerek, keserek veya burkarak birbirine çok uzak bölgeleri tek bir katlama hamlesiyle yan yana getirir ve konveks olmayan karmaşık karar sınırlarının çizilmesine olanak tanır.
 
-```mermaid
-flowchart LR
-    subgraph Without_Activation["Doğrusal Çöküş (Birleşme Özelliği)"]
-        direction TB
-        X1["Girdi x"] --> L1["Katman 1: W1"]
-        L1 --> L2["Katman 2: W2"]
-        L2 --> L3["Katman L: WL"]
-        L3 --> OUT1["Çıktı: (WL ... W1) x = W_net x"]
-    end
-    subgraph With_Activation["Doğrusal-Olmayan Katlama"]
-        direction TB
-        X2["Girdi x"] --> A1["W1 x + b1"]
-        A1 --> F1["sigma(.) Geometrik Katlama"]
-        F1 --> A2["W2 h1 + b2"]
-        A2 --> F2["sigma(.) Geometrik Katlama"]
-        F2 --> OUT2["Evrensel Yüksek Boyutlu Manifold"]
-    end
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="Derinlik neden doğrusal olmayana muhtaç. Solda doğrusal çöküş: girdi x, W1&#x27;li 1. katmandan, W2&#x27;li 2. katmandan, W_L&#x27;li L. katmana kadar geçer; birleşme özelliği yüzünden çıktı (W_L ... W1) x&#x27;tir, bu da tek bir W_net matrisinin x ile çarpımına eşittir, yani yığın tek bir doğrusal katmandır. Sağda doğrusal olmayan katlama: girdi x, sonra W1 x artı b1, sonra uzayı katlayan sigma aktivasyonu, sonra W2 h1 artı b2, sonra bir katlama daha; sonuç evrensel, yüksek boyutlu bir manifolda bükülebilir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="af-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="af-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700;letter-spacing:.06em">Doğrusal çöküş</text>
+<rect x="40" y="44" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">girdi x</text>
+<line x1="144" y1="72" x2="144" y2="81" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="40" y="82" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="100.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">katman 1: W₁</text>
+<line x1="144" y1="110" x2="144" y2="119" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="40" y="120" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">katman 2: W₂</text>
+<line x1="144" y1="148" x2="144" y2="157" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="40" y="158" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="176.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">katman L: W_L</text>
+<line x1="144" y1="186" x2="144" y2="236" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="30" y="238" width="228" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="144" y="256" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">(W_L … W₁) x = W_net x</text>
+<text x="144" y="273" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">birleşme: yine tek katman</text>
+<rect x="288" y="8" width="256" height="284" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">Doğrusal olmayan katlama</text>
+<rect x="312" y="44" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">girdi x</text>
+<line x1="416" y1="72" x2="416" y2="81" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="312" y="82" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="100.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W₁x + b₁</text>
+<line x1="416" y1="110" x2="416" y2="119" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="312" y="120" width="208" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="416.0" y="138.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">σ(·)  katla</text>
+<line x1="416" y1="148" x2="416" y2="157" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="312" y="158" width="208" height="28" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="176.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W₂h₁ + b₂</text>
+<line x1="416" y1="186" x2="416" y2="195" marker-end="url(#af-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="312" y="196" width="208" height="28" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="416.0" y="214.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">σ(·)  katla</text>
+<line x1="416" y1="224" x2="416" y2="236" marker-end="url(#af-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="302" y="238" width="228" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="416" y="256" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">evrensel yüksek boyutlu manifold</text>
+<text x="416" y="273" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">her katlama uzayı büker</text>
+</svg>
 
 ### Matris Çöküşünün Matematiksel İspatı
 
@@ -195,12 +220,30 @@ $$\Phi(x) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x} e^{-\frac{t^2}{2}} dt = \fr
 
 Burada $\text{erf}(z) = \frac{2}{\sqrt{\pi}} \int_0^z e^{-t^2} dt$ Gauss hata fonksiyonudur.
 
-```
-       Girdi x  -----> [ P(X <= x) Olasılığı ile Ölçekle ] -----> Çıktı y
-                            ^
-                            |
-                     Gauss CDF Phi(x)
-```
+<svg viewBox="0 0 560 196" role="img" aria-label="Bir kapı olarak GELU. Girdi x, standart normal bir değişkenin x&#x27;ten küçük ya da eşit olma olasılığıyla ölçeklenir ve çıktı y, x çarpı Phi x olur. Gauss birikimli dağılım fonksiyonu Phi 0&#x27;dan 1&#x27;e yumuşakça yükselir: çok negatif girdiler neredeyse tamamen bastırılır, çok pozitif girdiler neredeyse aynen geçer." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ge-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="20" width="96" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="64.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">girdi x</text>
+<rect x="150" y="14" width="260" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="38.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">P(X ≤ x) olasılığıyla ölçekle</text>
+<text x="280.0" y="54.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">y = x · Φ(x)</text>
+<rect x="448" y="20" width="96" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">çıktı y</text>
+<line x1="112" y1="42" x2="148" y2="42" marker-end="url(#ge-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="410" y1="42" x2="446" y2="42" marker-end="url(#ge-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="180" y="94" width="200" height="98" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="280" y1="94" x2="280" y2="72" marker-end="url(#ge-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M190 170 H370" style="stroke:var(--c-border);stroke-width:1"/>
+<path d="M190.0 169.9 L193.0 169.9 L196.0 169.8 L199.0 169.8 L202.0 169.7 L205.0 169.6 L208.0 169.5 L211.0 169.4 L214.0 169.2 L217.0 168.9 L220.0 168.6 L223.0 168.3 L226.0 167.8 L229.0 167.3 L232.0 166.7 L235.0 166.0 L238.0 165.2 L241.0 164.2 L244.0 163.1 L247.0 161.9 L250.0 160.5 L253.0 159.0 L256.0 157.3 L259.0 155.5 L262.0 153.5 L265.0 151.5 L268.0 149.3 L271.0 147.1 L274.0 144.8 L277.0 142.4 L280.0 140.0 L283.0 137.6 L286.0 135.2 L289.0 132.9 L292.0 130.7 L295.0 128.5 L298.0 126.5 L301.0 124.5 L304.0 122.7 L307.0 121.0 L310.0 119.5 L313.0 118.1 L316.0 116.9 L319.0 115.8 L322.0 114.8 L325.0 114.0 L328.0 113.3 L331.0 112.7 L334.0 112.2 L337.0 111.7 L340.0 111.4 L343.0 111.1 L346.0 110.8 L349.0 110.6 L352.0 110.5 L355.0 110.4 L358.0 110.3 L361.0 110.2 L364.0 110.2 L367.0 110.1 L370.0 110.1" style="fill:none;stroke:var(--c-accent);stroke-width:2"/>
+<text x="194" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Φ(x)</text>
+<text x="370" y="186" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">Gauss CDF, x −3&#x27;ten 3&#x27;e</text>
+<text x="16" y="120" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">x ≪ 0: Φ ≈ 0,</text>
+<text x="16" y="135" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">sinyal neredeyse kapalı</text>
+<text x="544" y="120" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">x ≫ 0: Φ ≈ 1,</text>
+<text x="544" y="135" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">x neredeyse aynen geçer</text>
+</svg>
 
 Bu kurgu geometriye büyük üstünlükler sağlar:
 * $x$ büyük ve pozitif olduğunda ($x > 2$), $\Phi(x) \to 1$ olur ve $\text{GELU}(x) \to x$ (ReLU'nun pozitif kimliğine yaklaşır).
@@ -267,16 +310,37 @@ Burada:
 * $W_{\text{up}} \in \mathbb{R}^{d_{\text{model}} \times d_{\text{ff}}}$: Girdiyi kısıtlanmamış özellik alt uzayına yansıtır.
 * $W_{\text{down}} \in \mathbb{R}^{d_{\text{ff}} \times d_{\text{model}}}$: Kapılanmış temsili tekrar model boyutuna daraltır.
 
-```mermaid
-flowchart TD
-    X["Girdi Tensörü x (d_model)"] --> G["W_gate Projeksiyonu"]
-    X --> U["W_up Projeksiyonu"]
-    G --> ACT["SiLU / Swish Aktivasyonu"]
-    ACT --> HADAMARD(("Eleman Bazlı Çarpım ⊙"))
-    U --> HADAMARD
-    HADAMARD --> DOWN["W_down Projeksiyonu"]
-    DOWN --> Y["Çıktı Tensörü y (d_model)"]
-```
+<svg viewBox="0 0 560 196" role="img" aria-label="SwiGLU ileri besleme bloğu. d_model boyutlu girdi tensörü x iki kez yansıtılır. W_gate bir SiLU ya da Swish aktivasyonunu besler; W_up doğrusal kalır. İki sonuç eleman bazında çarpılır. W_down çarpımı d_model boyutlu çıktı tensörü y&#x27;ye geri yansıtır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="sw-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="70" width="92" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="62.0" y="90.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">x</text>
+<text x="62.0" y="106.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(d_model)</text>
+<rect x="140" y="14" width="110" height="36" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="195.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W_gate</text>
+<rect x="274" y="14" width="120" height="36" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="334.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">SiLU / Swish</text>
+<rect x="140" y="138" width="254" height="36" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="267.0" y="160.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W_up</text>
+<path d="M108 94 H124 V32 H138" marker-end="url(#sw-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M124 94 V156 H138" marker-end="url(#sw-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="250" y1="32" x2="272" y2="32" marker-end="url(#sw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="436" cy="94" r="18" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="436" y="100" text-anchor="middle" style="fill:var(--c-text);font-size:18px">⊙</text>
+<path d="M394 32 H436 V74" marker-end="url(#sw-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M394 156 H436 V114" marker-end="url(#sw-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="460" y="70" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">eleman bazlı</text>
+<rect x="476" y="76" width="68" height="36" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="510.0" y="98.5" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">W_down</text>
+<line x1="454" y1="94" x2="474" y2="94" marker-end="url(#sw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="476" y="134" width="68" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="510.0" y="154.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">y</text>
+<text x="510.0" y="170.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(d_model)</text>
+<line x1="510" y1="112" x2="510" y2="132" marker-end="url(#sw-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="140" y="76" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kapı kolu</text>
+<text x="140" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">doğrusal kol</text>
+</svg>
 
 ### Parametre Bütçesi Dengesi ($\frac{8}{3} d_{\text{model}}$)
 

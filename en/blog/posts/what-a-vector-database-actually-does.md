@@ -73,14 +73,34 @@ same three stages: the corpus was **indexed** ahead of time, the query
 is **matched** against that index, and the raw candidates are
 **post-processed** into an answer.
 
-```mermaid
-flowchart LR
-    Q["query text"] --> E["embed — same model<br>that embedded the corpus"]
-    E --> F["filter<br>tenant, date, access"]
-    F --> A["ANN index<br>candidate list"]
-    A --> P["post-process<br>final checks, rerank"]
-    P --> K["top-k<br>+ metadata"]
-```
+<svg viewBox="0 0 560 188" role="img" aria-label="The query path of a vector database. The query text is embedded with the same model that embedded the corpus. A filter applies tenant, date and access constraints. The ANN index returns a candidate list. Post-processing runs final checks and reranking. The result is the top-k items with their metadata." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="vd-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="96.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">query text</text>
+<rect x="200" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="29.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embed</text>
+<text x="280.0" y="45.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">same model that</text>
+<text x="280.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">embedded the corpus</text>
+<rect x="384" y="8" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="464.0" y="37.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">filter</text>
+<text x="464.0" y="53.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tenant, date, access</text>
+<rect x="384" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="464.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">ANN index</text>
+<text x="464.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">candidate list</text>
+<rect x="200" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">post-process</text>
+<text x="280.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">final checks, rerank</text>
+<rect x="16" y="108" width="160" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="96.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">top-k</text>
+<text x="96.0" y="153.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ metadata</text>
+<line x1="176" y1="41" x2="198" y2="41" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="360" y1="41" x2="382" y2="41" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="464" y1="74" x2="464" y2="106" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="384" y1="141" x2="362" y2="141" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="200" y1="141" x2="178" y2="141" marker-end="url(#vd-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+</svg>
 
 The embedding step reuses the exact model that embedded the corpus —
 [the embeddings article](post.html?slug=how-embeddings-work) explained

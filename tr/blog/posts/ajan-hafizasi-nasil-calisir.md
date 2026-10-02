@@ -75,18 +75,46 @@ Masanın başında oturan dahi bir danışman vardır. Bu danışman her sabah m
 
 Eğer danışman dünkü kararları biliyor gibi konuşuyorsa, bu danışmanın dehası değil; kütüphanecinin sabah masaya bıraktığı özet dosyasının başarısıdır.
 
-```mermaid
-flowchart LR
-    subgraph CalismaZamani["Çalışma Zamanı Döngüsü"]
-        U["Kullanıcı Mesajı (q_t)"] --> ReadPath["Okuma Yolu (Retrieve): İhtiyaç, Yeniden Yazım, Hibrit Arama, RRF, Filtre"]
-        Store[("Uzun Süreli Hafıza Deposu (M)")] --> ReadPath
-        ReadPath --> Prompt["Dinamik Prompt: Sistem + İlgili Anılar + Son Turlar + q_t"]
-        Prompt --> LLM["Durumsuz Model (LLM)"]
-        LLM --> Resp["Cevap (a_t)"]
-        LLM & Resp --> WritePath["Yazma Yolu (Write): Ayıkla, Bi-temporal Güncelle, Maskele, PII Kapısı"]
-        WritePath --> Store
-    end
-```
+<svg viewBox="0 0 560 268" role="img" aria-label="Ajan hafızasının çalışma zamanı döngüsü. Kullanıcı mesajı q_t okuma yoluna girer; okuma yolu uzun süreli hafıza deposu M&#x27;yi de okur ve ihtiyaç tespiti, yeniden yazım, hibrit arama, RRF ve filtre adımlarını çalıştırır. Okuma yolu dinamik bir prompt kurar: sistem prompt&#x27;u, ilgili anılar, son turlar ve q_t. Durumsuz model cevabı, a_t&#x27;yi üretir. Model ve cevap yazma yoluna akar; yazma yolu olguları ayıklar, bi-temporal güncelleme yapar, maskeler, PII kapısından geçirir ve depoya geri yazar." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="aml-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="aml-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+<marker id="aml-w" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">Çalışma zamanı döngüsü</text>
+<rect x="16" y="30" width="104" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="68.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Kullanıcı</text>
+<text x="68.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">mesajı q_t</text>
+<rect x="140" y="30" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="237.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Okuma yolu</text>
+<text x="237.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">ihtiyaç · yeniden yazım ·</text>
+<text x="237.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">hibrit arama · RRF · filtre</text>
+<rect x="354" y="30" width="190" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="449.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Dinamik prompt</text>
+<text x="449.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">sistem + ilgili anılar</text>
+<text x="449.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ son turlar + q_t</text>
+<rect x="354" y="116" width="190" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="449.0" y="140.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Durumsuz model (LLM)</text>
+<rect x="354" y="192" width="190" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="449.0" y="216.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Cevap a_t</text>
+<rect x="140" y="186" width="194" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="237.0" y="202.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Yazma yolu</text>
+<text x="237.0" y="218.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">ayıkla · bi-temporal güncelle</text>
+<text x="237.0" y="234.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">maskele · PII kapısı</text>
+<path d="M16 111 V161 A52.0 7 0 0 0 120 161 V111" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="68.0" cy="111" rx="52.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="68.0" y="137.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Hafıza</text>
+<text x="68.0" y="152.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">deposu M</text>
+<line x1="120" y1="58" x2="138" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="334" y1="58" x2="352" y2="58" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="449" y1="86" x2="449" y2="114" marker-end="url(#aml-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="449" y1="156" x2="449" y2="190" marker-end="url(#aml-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M120 136 H237 V88" marker-end="url(#aml-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="354" y1="212" x2="336" y2="212" marker-end="url(#aml-w)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<path d="M354 136 H300 V184" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<path d="M140 214 H68 V170" marker-end="url(#aml-w)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Model durumsuz kalır; hafıza depoda ve onu saran iki yolda yaşar.</text>
+</svg>
 
 Matematiksel olarak $t$ anındaki bir ajan etkileşimi, prompt'u inşa eden şu erişim fonksiyonuyla başlar:
 
@@ -206,22 +234,62 @@ Yazma yolu önce ham turları **bağımsız, atomik olgulara (atomic facts)** d�
 1. **Ayıklama (Extraction):** Bir yardımcı model, son mesaj çiftini okuyarak bağımsız aday önermeler üretir.
 2. **Durum Kararı:** Aday önerme, depodaki en yakın $k$ mevcut anıyla karşılaştırılır ve model dört işlemden birini yürütür:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Extraction: Ham Tur (q_t, a_t)
-    Extraction --> SimilaritySearch: Aday Atomik Olgu
-    SimilaritySearch --> DecisionGate: Mevcut En Yakın Anılarla Kıyasla
-    
-    DecisionGate --> ADD: Eşdeğer kayıt yoksa
-    DecisionGate --> UPDATE: Mevcut bilgiyi zenginleştiriyorsa
-    DecisionGate --> DELETE: Mevcut bilgiyle çelişiyorsa
-    DecisionGate --> NOOP: Bilgi zaten aynen mevcutsa
-    
-    ADD --> Store: Yeni Vektör & Kayıt
-    UPDATE --> Store: Bilgiyi Genişlet
-    DELETE --> Store: Geçersiz Kıl (Supersede)
-    NOOP --> [*]: Değişiklik Yok
-```
+<svg viewBox="0 0 560 300" role="img" aria-label="Bir yazmanın ne yapacağına nasıl karar verdiği. Ham tur, q_t ve a_t, ayıklamaya gider ve aday bir atomik olgu çıkar. Benzerlik araması onu mevcut en yakın anılarla kıyaslar. Karar kapısı dört işlemden birini seçer. Eşdeğer kayıt yoksa ADD: yeni vektör ve kayıt eklenir. Mevcut bilgiyi zenginleştiriyorsa UPDATE: bilgi genişletilir. Mevcut bilgiyle çelişiyorsa DELETE: eski kayıt geçersiz kılınır, supersede. Bilgi zaten aynen mevcutsa NOOP: değişiklik yok. ADD, UPDATE ve DELETE depoya yazar." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="amo-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">ham tur (q_t, a_t)</text>
+<line x1="60" y1="24" x2="60" y2="38" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="96.0" y="62.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Ayıklama</text>
+<text x="96.0" y="78.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">aday atomik olgu</text>
+<rect x="200" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Benzerlik araması</text>
+<text x="280.0" y="70.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">en yakın anılarla</text>
+<text x="280.0" y="86.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">kıyasla</text>
+<rect x="384" y="40" width="160" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="464.0" y="70.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Karar kapısı</text>
+<line x1="176" y1="66" x2="198" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="360" y1="66" x2="382" y2="66" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M464 92 V108 H78 V122" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="210" y1="108" x2="210" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="342" y1="108" x2="342" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="474" y1="108" x2="474" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="78" y1="108" x2="78" y2="120" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="78" y="141" text-anchor="middle" style="fill:var(--c-success);font-size:13px;font-weight:700;font-family:var(--font-mono)">ADD</text>
+<text x="78" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">eşdeğer</text>
+<text x="78" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">kayıt yoksa</text>
+<text x="78" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yeni vektör</text>
+<text x="78" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">&amp; kayıt</text>
+<line x1="78" y1="230" x2="78" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="148" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="210" y="141" text-anchor="middle" style="fill:var(--c-accent);font-size:13px;font-weight:700;font-family:var(--font-mono)">UPDATE</text>
+<text x="210" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">mevcut bilgiyi</text>
+<text x="210" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">zenginleştiriyorsa</text>
+<text x="210" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">bilgiyi</text>
+<text x="210" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">genişlet</text>
+<line x1="210" y1="230" x2="210" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="280" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="342" y="141" text-anchor="middle" style="fill:var(--c-danger);font-size:13px;font-weight:700;font-family:var(--font-mono)">DELETE</text>
+<text x="342" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">mevcut bilgiyle</text>
+<text x="342" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çelişiyorsa</text>
+<text x="342" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">geçersiz kıl</text>
+<text x="342" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px">(supersede)</text>
+<line x1="342" y1="230" x2="342" y2="248" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="412" y="122" width="124" height="66" rx="8" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="474" y="141" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700;font-family:var(--font-mono)">NOOP</text>
+<text x="474" y="158" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">bilgi zaten</text>
+<text x="474" y="172" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">aynen mevcutsa</text>
+<text x="474" y="206" text-anchor="middle" style="fill:var(--c-text);font-size:11px">değişiklik yok</text>
+<text x="474" y="220" text-anchor="middle" style="fill:var(--c-text);font-size:11px"></text>
+<path d="M16 257 V285 A194.0 7 0 0 0 404 285 V257" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="210.0" cy="257" rx="194.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="210.0" y="279.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Hafıza deposu</text>
+<circle cx="474" cy="268" r="9" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="474" cy="268" r="4.5" style="fill:var(--c-text-mute)"/>
+<line x1="474" y1="230" x2="474" y2="256" marker-end="url(#amo-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+</svg>
 
 Dört durumun karar dinamiği son derece hassastır:
 - **ADD:** *"Kullanıcı sabahları koşmayı sever."* (Yeni bir ilgi alanı).
@@ -322,22 +390,60 @@ LangGraph ve CrewAI mimarilerinde sıkça tartışılan ikilem: Hafıza hemen o 
 
 Üretimde hafıza okuma yolu, tek satırlık bir `db.similarity_search()` çağrısı değildir. Gerçek bir ajan hafızası okuma yolu, çok aşamalı bir sistem mühendisliği boru hattıdır:
 
-```mermaid
-flowchart TD
-    Q0["Kullanıcı Girdisi (q_t)"] --> Step1{"1. İhtiyaç Tespiti (Need Detection)"}
-    Step1 -- "Hafıza Gerekmiyor" --> Bypass["Doğrudan LLM'e İlet (0 ms Ek Gecikme)"]
-    Step1 -- "Hafıza Gerekiyor" --> Step2["2. Sorgu Yeniden Yazımı & HyDE"]
-    
-    Step2 --> Step3A["Yoğun Vektör Arama (Dense Cosine)"]
-    Step2 --> Step3B["Seyrek Arama (BM25 Keyword)"]
-    Step2 --> Step3C["Zamansal Graf Yürüyüşü (Graph Walk)"]
-    
-    Step3A & Step3B & Step3C --> Step4["4. Karşılıklı Sıra Füzyonu (Reciprocal Rank Fusion - RRF)"]
-    Step4 --> Step5["5. Çok Sinyalli Puanlama (Yakınlık + Önem + İlgi)"]
-    Step5 --> Step6["6. Kapsam ve Zaman Geçerlilik Filtresi"]
-    Step6 --> Step7["7. Önbellek Dostu Prompt Paketleme (Prefix Cache Friendly)"]
-    Step7 --> LLM["LLM Bağlamı"]
-```
+<svg viewBox="0 0 560 392" role="img" aria-label="Okuma yolu adım adım. Kullanıcı girdisi q_t bir ihtiyaç tespiti kapısına gelir. Hafıza gerekmiyorsa istek doğrudan LLM&#x27;e gider, ek gecikme sıfırdır. Hafıza gerekiyorsa sorgu HyDE ile yeniden yazılır. Üç arama paralel çalışır: kosinüsle yoğun vektör araması, BM25 ile seyrek anahtar kelime araması ve zamansal graf yürüyüşü. Karşılıklı sıra füzyonu, RRF, listeleri birleştirir. Çok sinyalli puanlama yakınlık, önem ve ilgiyi birleştirir. Kapsam ve zaman geçerlilik filtresi geçersizleri atar. Önbellek dostu prompt paketleme sonucu toplar ve sonuç LLM bağlamı olur." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="amr-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="amr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="130" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="81.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Girdi q_t</text>
+<rect x="170" y="8" width="160" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="250.0" y="36.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1 · İhtiyaç tespiti</text>
+<rect x="410" y="8" width="134" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="477.0" y="28.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Doğrudan LLM</text>
+<text x="477.0" y="44.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+0 ms ek gecikme</text>
+<line x1="146" y1="32" x2="168" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="330" y1="32" x2="408" y2="32" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="370" y="26" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gerekmiyor</text>
+<line x1="250" y1="56" x2="250" y2="86" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="258" y="75" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">hafıza gerekiyor</text>
+<rect x="150" y="88" width="200" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="250.0" y="114.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2 · Yeniden yazım &amp; HyDE</text>
+<path d="M250 132 V146 M100 146 H460" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="100" y1="146" x2="100" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="100.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Yoğun vektör arama</text>
+<text x="100.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">dense cosine</text>
+<line x1="280" y1="146" x2="280" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="196" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Seyrek arama</text>
+<text x="280.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">BM25 keyword</text>
+<line x1="460" y1="146" x2="460" y2="160" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="162" width="168" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="182.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Zamansal graf</text>
+<text x="460.0" y="198.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">graph walk</text>
+<path d="M280 210 V224 M460 210 V224 H100" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="100" y1="210" x2="100" y2="240" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="100.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4 · RRF</text>
+<text x="100.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">karşılıklı sıra füzyonu</text>
+<line x1="184" y1="271" x2="194" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="196" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="259.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5 · Çok sinyalli puan</text>
+<text x="280.0" y="275.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">yakınlık + önem</text>
+<text x="280.0" y="291.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ ilgi</text>
+<line x1="364" y1="271" x2="374" y2="271" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="242" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="267.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6 · Geçerlilik filtresi</text>
+<text x="460.0" y="283.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">kapsam + zaman</text>
+<line x1="460" y1="300" x2="460" y2="326" marker-end="url(#amr-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="376" y="328" width="168" height="58" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="460.0" y="353.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">7 · Prompt paketleme</text>
+<text x="460.0" y="369.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">önbellek dostu</text>
+<rect x="196" y="336" width="152" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="272.0" y="361.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LLM bağlamı</text>
+<line x1="376" y1="357" x2="350" y2="357" marker-end="url(#amr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+</svg>
 
 ### Hafızaya bakmalı mıyız? İhtiyaç tespiti ve Just-in-Time
 
@@ -518,30 +624,45 @@ Tek bir ajanın hafızası yalnızca *"Ben ne hatırlıyorum?"* sorusunu cevapla
 
 Ajanlar arası körlemesine paylaşılan tek bir küresel hafıza deposu, felakete davetiyedir.
 
-```mermaid
-flowchart TB
-    subgraph OrganizasyonKatmani["Organizasyon Kapsamı (Global Kurallar, Şirket Runbook'ları)"]
-        ORG[("Organizasyon Deposu")]
-    end
-    
-    subgraph ProjeKatmani["Proje Kapsamı (Mimari Kararlar, Ortak Kod Standartları)"]
-        PRJ[("Proje Deposu")]
-    end
-    
-    subgraph KullaniciKatmani["Kullanıcı Profili Kapsamı (Kişisel Tercihler, İletişim Stili)"]
-        USR[("Kullanıcı Deposu (user_id bazlı)")]
-    end
-    
-    subgraph OzelAjanlar["Ajan Özel Bellekleri (Geçici Çalışma Notları)"]
-        A1["Araştırmacı Ajan"]
-        A2["Kodlayıcı Ajan"]
-        A3["Güvenlik Denetçisi"]
-    end
-    
-    A1 & A2 & A3 -.->|"Kısıtlı Yazma (İzin Gerektirir)"| PRJ
-    PRJ -.->|"Salt Okunur Referans"| ORG
-    USR ==>|"Katı Kimlik Filtresiyle Okuma"| A1 & A2
-```
+<svg viewBox="0 0 560 364" role="img" aria-label="Çok ajanlı bir sistemde hafıza kapsamları. En üstte organizasyon kapsamı, global kuralları ve şirket runbook&#x27;larını organizasyon deposunda tutar. Altında proje kapsamı mimari kararları ve ortak kod standartlarını proje deposunda tutar; proje, organizasyon deposunu salt okunur referans olarak okur. Ajan özel bellekleri araştırmacı ajan, kodlayıcı ajan ve güvenlik denetçisi için geçici çalışma notlarını tutar; ajanlar proje deposuna izin gerektiren kısıtlı yazmalar yapar. En altta kullanıcı profili kapsamı kişisel tercihleri ve iletişim stilini user_id bazlı bir depoda tutar; araştırmacı ve kodlayıcı ajanlar onu katı bir kimlik filtresiyle okur." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ams-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ams-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
+</defs>
+<rect x="16" y="8" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="30" y="29" text-anchor="start" style="fill:var(--c-warn);font-size:13px;font-weight:700">Organizasyon kapsamı</text>
+<text x="30" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">global kurallar, şirket runbook&#x27;ları</text>
+<path d="M330 24 V46 A101.0 7 0 0 0 532 46 V24" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="24" rx="101.0" ry="7" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="431.0" y="43.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Organizasyon deposu</text>
+<rect x="16" y="96" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="30" y="117" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Proje kapsamı</text>
+<text x="30" y="134" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">mimari kararlar, ortak kod standartları</text>
+<path d="M330 112 V134 A101.0 7 0 0 0 532 134 V112" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="112" rx="101.0" ry="7" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="431.0" y="131.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Proje deposu</text>
+<line x1="280" y1="96" x2="280" y2="62" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="288" y="84" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">salt okunur referans</text>
+<rect x="16" y="184" width="528" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="30" y="203" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">Ajan özel bellekleri (geçici çalışma notları)</text>
+<rect x="32" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="110.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Araştırmacı ajan</text>
+<rect x="202" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Kodlayıcı ajan</text>
+<rect x="372" y="214" width="156" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="450.0" y="240.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Güvenlik denetçisi</text>
+<line x1="450" y1="184" x2="450" y2="150" marker-end="url(#ams-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="442" y="172" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">kısıtlı yazma (izin gerekir)</text>
+<rect x="16" y="304" width="528" height="52" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="30" y="325" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">Kullanıcı profili kapsamı</text>
+<text x="30" y="342" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">kişisel tercihler, iletişim stili</text>
+<path d="M330 320 V342 A101.0 7 0 0 0 532 342 V320" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
+<ellipse cx="431.0" cy="320" rx="101.0" ry="7" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="431.0" y="339.0" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px">Kullanıcı deposu (user_id)</text>
+<line x1="110" y1="304" x2="110" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
+<line x1="280" y1="304" x2="280" y2="262" marker-end="url(#ams-a)" style="stroke:var(--c-accent);stroke-width:3"/>
+<text x="122" y="288" text-anchor="start" style="fill:var(--c-text);font-size:11px">katı kimlik filtresiyle okuma</text>
+</svg>
 
 ### Kim nereye yazabilir: Politika matrisi
 
