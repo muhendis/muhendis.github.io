@@ -110,6 +110,9 @@ Her teknik makale konusunu hem **eğitim** hem **çıkarım** açısından ele a
 - **Training:** Gradyan davranışı, optimizer bellek faturası (AdamW 16 bayt/parametre), loss spike'lar, all-reduce iletişim maliyeti, dondurma/ince ayar etkileri.
 - **Inference:** VRAM'de yerleşik ağırlık, prefill (GEMM, compute-bound) vs decode (GEMV, memory-bandwidth-bound), KV cache faturası, TTFT/TPOT, nicemleme uygulanabilirliği.
 
+> [!TIP]
+> **Figürler:** Mekanizmayı gösteren diyagram gerektiğinde (pipeline, döngü, karşılaştırma) `cizim` skill'ini kullan: tema uyumlu inline SVG, EN+TR, `preview.py` ile taşma kontrolü. Dış görseller kopyalanmaz, yeniden çizilir.
+
 ### 3.5. Sabit Kapanış Üçlüsü
 Her makale istisnasız şu üç bölümle biter:
 1. `## The whole story in six lines` / `## Bütün hikâye altı satırda` (Tam 6 net ve somut madde; kuru mecaz değil).
