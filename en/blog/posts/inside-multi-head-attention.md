@@ -83,22 +83,50 @@ A professional stage does not solve this by attempting to bend a single bulb int
 - **Spotlight 2:** A cool, diffused fill light setting the overall atmospheric tone.
 - **Spotlight 3:** A sharp back-rim light carving silhouettes out from the darkness.
 
-```mermaid
-flowchart TD
-    subgraph SingleHeadBottleneck["Single-Head Bottleneck"]
-        Z1["Input Tensor Z"] --> M1["Single Bilinear Map: M = W_Q W_K^T"]
-        M1 --> Compromise["Compromise Trap: Blurred and Averaged Attention"]
-    end
-
-    subgraph MultiHeadSubspaces["Multi-Head Subspaces"]
-        Z2["Input Tensor Z"] --> H1["Head 1: Verb / Predicate Focus"]
-        Z2 --> H2["Head 2: Local Adjacency and Syntax"]
-        Z2 --> H3["Head 3: Syntactic Agreement"]
-        Z2 --> H4["Head 4: Long-Range Coreference"]
-        H1 & H2 & H3 & H4 --> Concat["Concatenation (Concat) & Output Matrix W^O"]
-        Concat --> Output["Rich, Multi-Layered Final Representation"]
-    end
-```
+<svg viewBox="0 0 560 262" role="img" aria-label="Single head versus multi-head. With one head, the input Z goes through a single bilinear map M = W_Q W_K transpose and ends in a compromise: blurred, averaged attention. With multiple heads, Z feeds four heads in parallel, head 1 on the verb or predicate, head 2 on local adjacency and syntax, head 3 on syntactic agreement, head 4 on long-range coreference; their outputs are concatenated and projected by W O into a rich, multi-layered representation." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bn-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bn-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">single head</text>
+<rect x="16" y="28" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="54.0" y="53.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
+<line x1="92" y1="49" x2="110" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="112" y="28" width="200" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="212.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">one bilinear map</text>
+<text x="212.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">M = W_Q W_Kᵀ</text>
+<line x1="312" y1="49" x2="330" y2="49" marker-end="url(#bn-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="332" y="28" width="212" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="438.0" y="45.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">compromise trap</text>
+<text x="438.0" y="61.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">blurred, averaged attention</text>
+<text x="16" y="104" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">multi-head subspaces</text>
+<rect x="16" y="160" width="76" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="54.0" y="185.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
+<path d="M92 181 C 102 181, 102 127, 112 127" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="114" y="114" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="124" y="131" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 1: verb / predicate</text>
+<path d="M314 127 C 322 127, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M92 181 C 102 181, 102 159, 112 159" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="114" y="146" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="124" y="163" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 2: local adjacency, syntax</text>
+<path d="M314 159 C 322 159, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M92 181 C 102 181, 102 191, 112 191" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="114" y="178" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="124" y="195" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 3: syntactic agreement</text>
+<path d="M314 191 C 322 191, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M92 181 C 102 181, 102 223, 112 223" marker-end="url(#bn-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="114" y="210" width="200" height="26" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="124" y="227" text-anchor="start" style="fill:var(--c-text);font-size:11.5px">head 4: long-range coreference</text>
+<path d="M314 223 C 322 223, 322 181, 330 181" marker-end="url(#bn-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="332" y="150" width="96" height="62" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="380.0" y="177.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Concat</text>
+<text x="380.0" y="193.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ Wᴼ</text>
+<line x1="428" y1="181" x2="442" y2="181" marker-end="url(#bn-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="444" y="150" width="100" height="62" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="494.0" y="169.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">rich</text>
+<text x="494.0" y="185.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">multi-layered</text>
+<text x="494.0" y="201.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">representation</text>
+</svg>
 
 Every human sentence is an equally layered stage. Consider the concurrent webs of relationships:
 - **Subject–verb dependency:** Identifying who initiated the action ("dog" $\to$ "chased").
@@ -189,17 +217,48 @@ $$\text{head}_h = A^{(h)} V_h = \text{softmax}\left(\frac{Q_h K_h^T}{\sqrt{d_k}}
 
 Notice the chronological execution sequence in hardware:
 
-```mermaid
-flowchart LR
-    Z["Input Z"] --> Proj["Q, K, V Projections"]
-    Proj --> Split["Partition into H Heads (Q_h, K_h, V_h)"]
-    Split --> Dot["1. Scores: S_h = Q_h K_h^T / sqrt(d_k)"]
-    Dot --> Mask["2. MASKING: S_h + M (-inf to future)"]
-    Mask --> Smax["3. SOFTMAX: A_h = softmax(S_h + M)"]
-    Smax --> WSum["4. Context: head_h = A_h V_h"]
-    WSum --> Concat["5. Concatenation: Concat(head_1, ..., head_H)"]
-    Concat --> Out["6. Projection: Concat * W^O -> O"]
-```
+<svg viewBox="0 0 560 208" role="img" aria-label="Multi-head causal attention in six steps. Input Z is projected to Q, K and V and partitioned into H heads. For each head, in parallel: 1, scores S_h = Q_h K_h transpose over square root of d_k; 2, masking, S_h plus M with minus infinity for the future; 3, softmax gives A_h; 4, context, head_h = A_h V_h. Then 5, the heads are concatenated, and 6, multiplied by W O to give the output O." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="pl-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="64.0" y="54.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">input Z</text>
+<line x1="112" y1="50" x2="123" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="124" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="172.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Q, K, V</text>
+<text x="172.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">projections</text>
+<line x1="220" y1="50" x2="231" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="232" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">split</text>
+<text x="280.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">into H heads</text>
+<line x1="328" y1="50" x2="339" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="388.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">1. scores</text>
+<text x="388.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">QₕKₕᵀ / √d_k</text>
+<line x1="436" y1="50" x2="447" y2="50" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="448" y="26" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="496.0" y="46.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">2. mask</text>
+<text x="496.0" y="62.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Sₕ + M (−∞)</text>
+<path d="M496.0 74 V92 H64.0 V108" marker-end="url(#pl-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="64.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">3. softmax</text>
+<text x="64.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ</text>
+<line x1="112" y1="134" x2="123" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="124" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="172.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">4. context</text>
+<text x="172.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Aₕ Vₕ</text>
+<line x1="220" y1="134" x2="231" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="232" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="280.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">5. concat</text>
+<text x="280.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">head₁ … head_H</text>
+<line x1="328" y1="134" x2="339" y2="134" marker-end="url(#pl-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="110" width="96" height="48" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="388.0" y="130.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">6. Wᴼ</text>
+<text x="388.0" y="146.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ O</text>
+<rect x="16" y="170" width="12" height="12" rx="2" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="34" y="180" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">per head, in parallel</text>
+<text x="16" y="200" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">The mask is applied in every head before softmax; heads never see each other until the concat.</text>
+</svg>
 
 The causal masking step is inserted **strictly between scaled dot-product scores and the Softmax function**. Because $e^{-\infty} = 0$, all future token logits vanish in the exponential, ensuring that zero future information can leak into the head outputs.
 > [!IMPORTANT]
@@ -448,6 +507,67 @@ $$\text{Concat}(\text{head}_1, \text{head}_2)[3] = [\underbrace{1.064, \; 1.105}
 - **Harmonization ($W^O$):** Projections are blended into the final output vector $O[3] = [1.382, \; 1.683, \; 1.169, \; 1.709]$.
 - **Zero Future Leakage:** Crucially, because both heads strictly honor the lower-triangular causal mask ($M$), zero future information has leaked into past representations.
 
+The whole argument on one picture: one budget versus two, and where each head's result lands:
+
+<svg viewBox="0 0 560 268" role="img" aria-label="Where the chased row&#x27;s attention budget goes. A single head that wants both the verb and its object ends up with 6.3 percent on dog and 46.8 percent each on cat and chased, a blur. Head 1 spends 19.3, 24.6 and 56.1 percent, mostly on the action. Head 2 spends 5.0, 75.0 and 20.0 percent, mostly on the object. Their outputs sit in separate drawers of the concatenated vector, 1.064 and 1.105 from head 1, 0.637 and 1.157 from head 2, and W O mixes them into 1.382, 1.683, 1.169, 1.709." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bg-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">row 3 (chased): where the 100% goes</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one softmax budget per head</text>
+<text x="16" y="70" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:600">one head</text>
+<rect x="76.0" y="54" width="12.2" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="89.2" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="138.37" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46.8%</text>
+<rect x="187.5" y="54" width="97.3" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="236.64999999999998" y="70" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">46.8%</text>
+<text x="16" y="110" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:600">head 1</text>
+<rect x="76.0" y="94" width="39.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<text x="96.265" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">19.3%</text>
+<rect x="116.5" y="94" width="50.7" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="142.36" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">24.6%</text>
+<rect x="168.2" y="94" width="116.8" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="227.095" y="110" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">56.1%</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">head 2</text>
+<rect x="76.0" y="134" width="9.5" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="86.5" y="134" width="156.5" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="165.25" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">75.0%</text>
+<rect x="244.0" y="134" width="41.0" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="265.0" y="150" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">20.0%</text>
+<rect x="76" y="178" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<text x="92" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">dog</text>
+<rect x="136" y="178" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="152" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">cat</text>
+<rect x="192" y="178" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="208" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">chased</text>
+<text x="16" y="214" text-anchor="start" style="fill:var(--c-danger);font-size:12px">one head would need 56.1% + 75.0% = 131.1%</text>
+<text x="16" y="230" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">so both targets blur to 46.8%; two heads get two budgets</text>
+<text x="316" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Concat → Wᴼ</text>
+<text x="316" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">each head writes its own drawer</text>
+<rect x="316" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
+<text x="342" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.064</text>
+<rect x="372" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.4"/>
+<text x="398" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.105</text>
+<rect x="428" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent-2);fill-opacity:.25;stroke:var(--c-accent-2);stroke-width:1.4"/>
+<text x="454" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.637</text>
+<rect x="484" y="54" width="52" height="28" rx="3" style="fill:var(--c-accent-2);fill-opacity:.25;stroke:var(--c-accent-2);stroke-width:1.4"/>
+<text x="510" y="73" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.157</text>
+<text x="370" y="98" text-anchor="middle" style="fill:var(--c-accent);font-size:11px">head 1: action</text>
+<text x="482" y="98" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px">head 2: object</text>
+<line x1="426" y1="106" x2="426" y2="136" marker-end="url(#bg-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="436" y="125" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">× Wᴼ</text>
+<rect x="316" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
+<text x="342" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.382</text>
+<rect x="372" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
+<text x="398" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.683</text>
+<rect x="428" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
+<text x="454" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.169</text>
+<rect x="484" y="140" width="52" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:.15;stroke:var(--c-border);stroke-width:1"/>
+<text x="510" y="159" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.709</text>
+<text x="426" y="186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">O[3], both signals mixed</text>
+<text x="16" y="260" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Separate budgets stop the two dependencies from cannibalizing one softmax denominator.</text>
+</svg>
+
 > [!IMPORTANT]
 > **Core Takeaway:** Single-head attention forces competing semantic dependencies into a zero-sum Softmax trade-off. Multi-Head Causal Attention allocates an independent $100\%$ budget to each relational axis while strictly preserving the arrow of time, allowing modern LLMs to capture complex syntax and semantics without leaking future context.
 
@@ -473,17 +593,43 @@ Running such a loop on a modern GPU is an engineering disaster. Launching $3 \ti
 
 In production engines (PyTorch, Hugging Face, vLLM), Multi-Head Attention is executed via **a single fused GEMM and zero-copy tensor view/transpose** manipulations:
 
-```mermaid
-flowchart TD
-    Z["Input Tensor Z: (B, N, d_model)"] --> GEMM1["Single Fused GEMM: W_qkv (d_model, 3 * d_model)"]
-    GEMM1 --> QKV["Packed QKV: (B, N, 3, H, d_k)"]
-    QKV --> Split["Split & Permute: (B, H, N, d_k)"]
-    Split --> BatchedAttn["Batched GEMM (bmm): Q @ K^T -> Softmax -> @ V"]
-    BatchedAttn --> Context["Head Outputs: (B, H, N, d_k)"]
-    Context --> Permute["Transpose(1, 2).contiguous().view(B, N, d_model)"]
-    Permute --> GEMM2["Final GEMM: W_o (d_model, d_model)"]
-    GEMM2 --> Out["Output: (B, N, d_model)"]
-```
+<svg viewBox="0 0 560 250" role="img" aria-label="How a GPU computes multi-head attention. Input Z of shape B, N, d_model goes through one fused GEMM with W_qkv of shape d_model by 3 d_model, giving packed QKV of shape B, N, 3, H, d_k. It is split and permuted to B, H, N, d_k. A batched GEMM computes Q times K transpose, softmax, times V for all heads at once, giving head outputs of shape B, H, N, d_k. Transpose and view bring it back to B, N, d_model, and a final GEMM with W_o gives the output of shape B, N, d_model." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="gp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">input Z</text>
+<text x="144.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<line x1="144.0" y1="52" x2="144.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="144.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">one fused GEMM</text>
+<text x="144.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">W_qkv: (d_model, 3·d_model)</text>
+<line x1="144.0" y1="108" x2="144.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">packed QKV</text>
+<text x="144.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, 3, H, d_k)</text>
+<line x1="144.0" y1="164" x2="144.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="144.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">split &amp; permute</text>
+<text x="144.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<rect x="288" y="10" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="416.0" y="27.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">batched GEMM (bmm)</text>
+<text x="416.0" y="43.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Q @ Kᵀ → softmax → @ V</text>
+<line x1="416.0" y1="52" x2="416.0" y2="65" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="66" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">head outputs</text>
+<text x="416.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, H, N, d_k)</text>
+<line x1="416.0" y1="108" x2="416.0" y2="121" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="122" width="256" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="416.0" y="139.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">transpose(1, 2).view</text>
+<text x="416.0" y="155.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">(B, N, d_model)</text>
+<line x1="416.0" y1="164" x2="416.0" y2="177" marker-end="url(#gp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="178" width="256" height="42" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="416.0" y="195.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">final GEMM W_o</text>
+<text x="416.0" y="211.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">→ output (B, N, d_model)</text>
+<path d="M144.0 220 V230 H280 V6 H416.0 V9" marker-end="url(#gp-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="16" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Two big GEMMs and one batched attention call: no Python loop over heads anywhere.</text>
+</svg>
 
 ### Four critical tensor tricks in production:
 
@@ -625,46 +771,133 @@ More than a terabyte of high-bandwidth GPU memory is consumed just holding past 
 
 ### The architectural evolution: From MHA to MQA, GQA, and MLA
 
-To overcome this crippling KV cache memory wall, modern LLM architectures evolved attention head layouts:
 Storing independent Key and Value vectors for every single attention head works flawlessly during training, but runs directly into the most unforgiving hardware bottleneck in modern inference: **HBM memory bandwidth.**
 
 During the autoregressive decode phase, generation proceeds one token at a time. The underlying computational kernel is GEMV (Matrix-Vector multiplication), where arithmetic intensity is minimal ($\approx 1\text{ FLOP/byte}$). The GPU spends over 90% of its execution time stalled, waiting for massive historical KV tensors to transfer across the memory bus from HBM into ultra-fast on-chip SRAM (**memory-bandwidth-bound GEMV regime**).
 
 To dismantle this memory wall, the AI research community engineered a four-generation architectural revolution, transitioning from standard MHA to MQA, GQA, and ultimately MLA:
 
-```mermaid
-flowchart TD
-    subgraph MHA["Standard MHA (e.g., GPT-3)"]
-        Q1["Q1..QH"] --- K1["K1..KH"] --- V1["V1..VH"]
-    subgraph MHA["1. MHA (Vaswani 2017)"]
-        Q1["32 Query Heads"] --- K1["32 Key Heads"] --- V1["32 Value Heads"]
-        MHA_Note["Ratio: 1 : 1 : 1\nKV Cache: 100% (Full Budget)"]
-    end
+<svg viewBox="0 0 560 300" role="img" aria-label="Four attention layouts, drawn with 8 query heads each. MHA gives every query head its own key-value head, ratio 32 to 32 to 32, 100 percent of the KV cache. MQA connects all query heads to a single shared key-value head, 32 to 1 to 1, 3.1 percent. GQA shares one key-value head per group of four query heads, 32 to 8 to 8, 25 percent. MLA keeps every head but caches one compressed latent vector of 512 numbers plus a 64-number RoPE key per token, about 1.8 percent of an MHA with the same 128 heads, roughly 57 times smaller." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<rect x="16" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="26" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">MHA</text>
+<text x="26" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Vaswani 2017</text>
+<rect x="25" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="39" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="53" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="67" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="81" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="95" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="109" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="123" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<line x1="31" y1="74" x2="31.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="25.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="45" y1="74" x2="45.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="39.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="59" y1="74" x2="59.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="53.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="73" y1="74" x2="73.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="67.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="87" y1="74" x2="87.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="81.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="101" y1="74" x2="101.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="95.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="115" y1="74" x2="115.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="109.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="129" y1="74" x2="129.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="123.0" y="112" width="12" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="26" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 32 : 32</text>
+<rect x="25" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="25" y="166" width="108.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
+<text x="26" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">100%</text>
+<text x="26" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">KV cache</text>
+<text x="26" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPT-3</text>
+<rect x="150" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="160" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">MQA</text>
+<text x="160" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Shazeer 2019</text>
+<rect x="159" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="173" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="187" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="201" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="215" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="229" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="243" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="257" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<line x1="165" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="179" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="193" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="207" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="221" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="235" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="249" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="263" y1="74" x2="214.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="201.0" y="112" width="26" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="160" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 1 : 1</text>
+<rect x="159" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="159" y="166" width="3.4" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
+<text x="160" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">3.1%</text>
+<text x="160" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">32× smaller</text>
+<text x="160" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PaLM, Falcon</text>
+<rect x="284" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="294" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">GQA</text>
+<text x="294" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Ainslie 2023</text>
+<rect x="293" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="307" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="321" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="335" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="349" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="363" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="377" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="391" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<line x1="299" y1="74" x2="320.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="313" y1="74" x2="320.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="327" y1="74" x2="320.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="341" y1="74" x2="320.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="308.0" y="112" width="24" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<line x1="355" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="369" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="383" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="397" y1="74" x2="376.0" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<rect x="364.0" y="112" width="24" height="22" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="294" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 : 8 : 8</text>
+<rect x="293" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="293" y="166" width="27.0" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.8"/>
+<text x="294" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">25%</text>
+<text x="294" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4× smaller</text>
+<text x="294" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Llama 2/3, Mistral</text>
+<rect x="418" y="8" width="126" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="428" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">MLA</text>
+<text x="428" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">DeepSeek 2024</text>
+<rect x="427" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="441" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="455" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="469" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="483" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="497" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="511" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="525" y="58" width="12" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="427" y="112" width="110" height="22" rx="3" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="482" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px">latent cₜ</text>
+<line x1="433" y1="74" x2="433" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="447" y1="74" x2="447" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="461" y1="74" x2="461" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="475" y1="74" x2="475" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="489" y1="74" x2="489" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="503" y1="74" x2="503" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="517" y1="74" x2="517" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="531" y1="74" x2="531" y2="112" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<text x="428" y="154" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">512 + 64 / token</text>
+<rect x="427" y="166" width="108" height="10" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="427" y="166" width="2.0" height="10" rx="2" style="fill:var(--c-accent-2);fill-opacity:.8"/>
+<text x="428" y="204" text-anchor="start" style="fill:var(--c-text);font-size:18px;font-weight:700">1.8%</text>
+<text x="428" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">≈57× smaller</text>
+<text x="428" y="237" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DeepSeek-V2/V3</text>
+<rect x="16" y="254" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="34" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">query heads</text>
+<rect x="130" y="254" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="148" y="264" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">cached K/V heads</text>
+<text x="16" y="288" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Drawn with 8 query heads; ratios use 32 heads. MLA is measured against an MHA with its own 128 heads.</text>
+</svg>
 
-    subgraph GQA["Grouped-Query Attention (e.g., LLaMA-3)"]
-        QG["Group of 8 Q Heads"] --> K_Shared["1 Shared K Head"]
-        QG --> V_Shared["1 Shared V Head"]
-    subgraph MQA["2. MQA (Shazeer 2019)"]
-        Q2["32 Query Heads"] --- K2["1 Shared Key Head"] --- V2["1 Shared Value Head"]
-        MQA_Note["Ratio: 32 : 1 : 1\nKV Cache: 3.1% (32x Reduction)"]
-    end
-
-    subgraph MLA["Multi-Head Latent Attention (DeepSeek-V2/V3)"]
-        Q_MLA["Q Heads"] --> Compress["Low-Rank Latent Compression"]
-        Compress --> Decompress["RoPE & Decoupled Cache (93% KV Savings)"]
-    subgraph GQA["3. GQA (Ainslie 2023)"]
-        Q3["32 Query Heads (8 Groups)"] --- K3["8 Group Key Heads"] --- V3["8 Group Value Heads"]
-        GQA_Note["Ratio: 4 : 1 : 1\nKV Cache: 25% (4x Reduction)"]
-    end
-
-    subgraph MLA["4. MLA (DeepSeek 2024)"]
-        Q4["128 Query Heads"] --- LatentKV["Compressed Latent Vector: c_t (d_c=512)"]
-        MLA_Note["Don't prune heads; compress!\nKV Cache: 1.8% (56x Reduction)"]
-    end
-```
-
-1. **Multi-Query Attention (MQA - Shazeer, 2019):**  
-   Uses multiple Query heads, but collapses Key and Value projections into **a single shared head** across the entire layer. Reduces KV Cache by $H\times$ (e.g., $32\times$), but can impair expressive capacity on complex reasoning.
 #### 1. MHA (Multi-Head Attention - Vaswani et al., 2017)
 * **Core Philosophy:** "Assign every Query head its own dedicated Key head and Value head."
 * **Architecture:** $H$ Query heads matched symmetrically to $H$ Key heads and $H$ Value heads (a strict $1:1:1$ ratio).
@@ -674,8 +907,6 @@ $$\text{KV}_{\text{MHA}} = 2 \times H \times d_k$$
 * **Strength:** Uncompromised representational expressiveness. Each head independently tracks distinct grammatical and semantic axes (subject-verb, coreferences, local syntax).
 * **Fatal Flaw:** Serving a 70B model to just 100 concurrent users requires over $1\text{ TB}$ of VRAM strictly for the KV cache. Decode throughput chokes on memory bandwidth.
 
-2. **Grouped-Query Attention (GQA - Ainslie et al., 2023):**  
-   The industry standard in modern models (LLaMA-3, Mistral). Queries are partitioned into groups (e.g., 8 groups of 4 Q heads), and each group shares 1 Key and 1 Value head. Delivers $8\times$ KV Cache reduction with virtually zero quality loss.
 #### 2. MQA (Multi-Query Attention - Noam Shazeer, 2019)
 * **Core Philosophy:** "Force all Query heads to share a single, unified Key and Value head."
 * **Architecture:** Preserves all $H$ Query heads, but collapses Key and Value projections into **a single head** across the layer ($n_{\text{kv\_heads}} = 1$), yielding an $H:1:1$ ratio.
@@ -685,8 +916,6 @@ $$\text{KV}_{\text{MQA}} = 2 \times 1 \times d_k$$
 * **Strength:** Drastically cuts KV memory bandwidth; generation speed and concurrent serving capacity surge dramatically (pioneered in Google PaLM, Falcon, and StarCoder).
 * **The Trade-Off (Capacity Bottleneck):** Because all Query heads are forced to attend over identical Key/Value projections, model performance on multi-hop reasoning, in-context learning, and fine-grained association tasks suffers measurable degradation.
 
-3. **Multi-Head Latent Attention (MLA - DeepSeek, 2024):**  
-   DeepSeek-V2 and V3 project Key and Value vectors into a low-rank compressed latent space ($d_c \ll d_{\text{model}}$). Reduces KV cache footprint by up to **$93.3\%$**, allowing ultra-long context windows at lightning speeds.
 #### 3. GQA (Grouped-Query Attention - Ainslie et al., 2023)
 * **Core Philosophy:** "The golden mean: Strike the optimal balance between MHA's expressive power and MQA's speed."
 * **Architecture:** Partitions $H$ Query heads into $G$ groups. Each group of $H/G$ queries shares a single Key head and Value head ($H:G:G$ ratio).
@@ -709,7 +938,7 @@ The table below summarizes the architectural characteristics across these four e
 | Feature | MHA (Vaswani 2017) | MQA (Shazeer 2019) | GQA (Ainslie 2023) | MLA (DeepSeek 2024) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Head Ratio ($Q : K : V$)** | $H : H : H$ ($32 : 32 : 32$) | $H : 1 : 1$ ($32 : 1 : 1$) | $H : G : G$ ($32 : 8 : 8$) | $H : H : H$ (Low-rank compressed via $c_t^{KV}$) |
-| **Memory Per Token** | $2 \times H \times d_k$ ($1\times$ baseline) | $2 \times 1 \times d_k$ ($H\times$ smaller) | $2 \times G \times d_k$ ($4\times - 8\times$ smaller) | $d_c + d_R$ ($56\times$ smaller, $98\%$ reduction) |
+| **Memory Per Token** | $2 \times H \times d_k$ ($1\times$ baseline) | $2 \times 1 \times d_k$ ($H\times$ smaller) | $2 \times G \times d_k$ ($4\times - 8\times$ smaller) | $d_c + d_R$ ($\approx 57\times$ smaller, $98\%$ reduction) |
 | **Expressive Quality** | Maximum baseline ($100\%$) | Measurable degradation in reasoning | Nearly identical to MHA ($99+\%$) | Matches or exceeds MHA baseline |
 | **Hardware Bottleneck** | Memory bandwidth bound | Maximum decoding throughput | Balanced, high throughput | Ultra-low bandwidth + massive context ($128\text{K}+$) |
 | **RoPE Integration** | Standard (Per-head RoPE) | Standard (Single-head RoPE) | Standard (Grouped RoPE) | Resolved via decoupled RoPE key ($k_t^R$) |

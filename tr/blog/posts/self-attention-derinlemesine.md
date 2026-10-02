@@ -69,14 +69,24 @@ Model, her kelimenin eline üç ayrı nesne verir:
 2. **Bir İsim Rozeti (Key - $K$):** Kelimenin yakasına taktığı etikettir. *"Ben kimim, hangi özelliklere sahibim?"* bilgisini dışarıya ilan eder.
 3. **Bir Bilgi Çantası (Value - $V$):** Kelimenin sırtında taşıdığı asıl yüktür. *"Eğer benimle ilgilenirsen sana içimdeki hangi zengin anlamı aktaracağım?"* içeriğini barındırır.
 
-```mermaid
-flowchart TD
-    subgraph KelimeNesneleri["Bir Kelimenin 3 Rolü"]
-        Q["🔦 Fener (Query - Q)<br>'Ne arıyorum?'"]
-        K["🏷️ Rozet (Key - K)<br>'Ben kimim?'"]
-        V["🎒 Çanta (Value - V)<br>'Sana ne verebilirim?'"]
-    end
-```
+<svg viewBox="0 0 560 128" role="img" aria-label="Bir kelimenin üç rolü. Sorgu, yani fener olarak ne arıyorum diye sorar. Anahtar, yani rozet olarak ben kimim der. Değer, yani çanta olarak sana ne verebilirim diye sunar." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bir kelimenin üç rolü</text>
+<rect x="16" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="16" y="28" width="168" height="6" rx="3" style="fill:var(--c-accent);fill-opacity:.8"/>
+<text x="30" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">fener</text>
+<text x="170" y="60" text-anchor="end" style="fill:var(--c-accent);font-size:14px;font-weight:700;font-family:var(--font-mono)">Q</text>
+<text x="30" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“Ne arıyorum?”</text>
+<rect x="196" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="196" y="28" width="168" height="6" rx="3" style="fill:var(--c-warn);fill-opacity:.8"/>
+<text x="210" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">rozet</text>
+<text x="350" y="60" text-anchor="end" style="fill:var(--c-warn);font-size:14px;font-weight:700;font-family:var(--font-mono)">K</text>
+<text x="210" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“Ben kimim?”</text>
+<rect x="376" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<rect x="376" y="28" width="168" height="6" rx="3" style="fill:var(--c-success);fill-opacity:.8"/>
+<text x="390" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">çanta</text>
+<text x="530" y="60" text-anchor="end" style="fill:var(--c-success);font-size:14px;font-weight:700;font-family:var(--font-mono)">V</text>
+<text x="390" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“Sana ne verebilirim?”</text>
+</svg>
 
 Mekanizma şöyle işler:
 - Her kelime elindeki **feneri ($Q$)** odadaki herkesin yakasındaki **rozete ($K$)** tutar.
@@ -135,19 +145,55 @@ dönüştürülür ve tüm token'ların Value vektörlerinden ağırlıklı bir 
 
 $$\text{Attention}(Q, K, V) = \sum_{j} \underbrace{\text{benzerlik}(Q, K_j)}_{\text{yüzdelik dikkat ağırlığı}} \cdot V_j$$
 
-```mermaid
-flowchart LR
-    subgraph HardDB["Klasik Veritabanı (Hard)"]
-        Q1["Query: 'Ali'"] --> M1{"WHERE isim='Ali'"}
-        M1 -->|"Evet (1.0)"| V1["Ali'nin Kaydı"]
-        M1 -->|"Hayır (0.0)"| V0["Elenir"]
-    end
-    subgraph SoftAttn["Self-Attention (Soft Differentiable)"]
-        Q2["Query: q_i"] --> M2["İç Çarpım: q_i · k_j"]
-        M2 --> S2["Softmax: a_ij"]
-        S2 --> V2["Ağırlıklı Toplam: Σ a_ij · v_j"]
-    end
-```
+<svg viewBox="0 0 560 262" role="img" aria-label="Veritabanı araması ile self-attention. Klasik veritabanında Ali sorgusu WHERE isim eşittir Ali çalıştırır: tek bir kayıt 1, diğer her kayıt 0 ağırlık alır. Self-attention&#x27;da q_i sorgusu her anahtarla iç çarpımla karşılaştırılır ve softmax skorları 0 ile 1 arasında ağırlıklara çevirir; örneğimizde kovaladı için köpek 0,193, kediyi 0,246, kovaladı 0,561 alır ve çıktı bütün değerlerin ağırlıklı toplamıdır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="hs-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="hs-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">klasik veritabanı: kesin (hard)</text>
+<rect x="16" y="30" width="112" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="72.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">&#x27;Ali&#x27;</text>
+<line x1="128" y1="52" x2="150" y2="52" marker-end="url(#hs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="30" width="150" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="227.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">WHERE isim=&#x27;Ali&#x27;</text>
+<line x1="302" y1="52" x2="324" y2="52" marker-end="url(#hs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="330" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<text x="359" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="359" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">köpek</text>
+<rect x="402" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<text x="431" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="431" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kediyi</text>
+<rect x="474" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="474" y="34.0" width="58" height="36.0" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="503" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1</text>
+<text x="503" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kovaladı</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">eşleşen = 1,0, geri kalan = 0,0: tek kayıt, başka hiçbir şey</text>
+<text x="16" y="136" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">self-attention: yumuşak, türevlenebilir</text>
+<rect x="16" y="146" width="70" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="51.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i</text>
+<line x1="86" y1="168" x2="100" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="102" y="146" width="90" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="147.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i · k_j</text>
+<line x1="192" y1="168" x2="206" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="208" y="146" width="96" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="256.0" y="164.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">softmax</text>
+<text x="256.0" y="180.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">a_ij</text>
+<line x1="304" y1="168" x2="324" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="330" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="330" y="179.1" width="58" height="6.9" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="359" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,193</text>
+<text x="359" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">köpek</text>
+<rect x="402" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="402" y="177.1" width="58" height="8.9" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="431" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,246</text>
+<text x="431" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kediyi</text>
+<rect x="474" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="474" y="165.8" width="58" height="20.2" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="503" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,561</text>
+<text x="503" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kovaladı</text>
+<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her kayıt (0, 1) arası pay alır; çıktı = Σ a_ij · v_j (kovaladı satırı)</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Yumuşak ağırlıkların gradyanı vardır; model neyle eşleşeceğini öğrenir, WHERE öğrenemez.</text>
+</svg>
 
 ### İş görüşmesi analojisi
 
@@ -182,18 +228,40 @@ Sıkça sorulan bir soru: *Neden Value, Query ve Key ile birlikte skor formülü
 Cevap şudur: **$Q$ ve $K$ bir adresleme (addressing) mekanizması kurar; $V$ ise o
 adreste saklanan içeriktir.**
 
-```mermaid
-flowchart TD
-    subgraph Adresleme["1. Adresleme Fazı (Nereye Bakılacak?)"]
-        Q["Query (q_i)"]
-        K["Key (k_j)"]
-        Q & K --> Dot["q_i · k_j"]
-        Dot --> Softmax["Softmax Ağırlığı: a_ij"]
-    end
-    subgraph Icerik["2. Okuma Fazı (Ne Alınacak?)"]
-        Softmax & V["Value (v_j)"] --> Out["Bağlam Vektörü: o_i = Σ a_ij · v_j"]
-    end
-```
+<svg viewBox="0 0 560 212" role="img" aria-label="Adresleme ve okuma. 1. faz, adresleme, nereye bakılacağına karar verir: q_i sorgusu ile k_j anahtarı iç çarpımda buluşur ve softmax skorları a_ij ağırlığına çevirir. 2. faz, okuma, ne alınacağına karar verir: ağırlıklar v_j değerleriyle çarpılır ve toplam, bağlam vektörü o_i olur. Değer adreslemeye hiç katılmaz." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ad-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ad-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="24" width="300" height="142" rx="8" style="fill:none;stroke:var(--c-accent);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="28" y="18" text-anchor="start" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">1. adresleme: nereye bakılacak?</text>
+<rect x="332" y="24" width="212" height="142" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="344" y="18" text-anchor="start" style="fill:var(--c-accent-2);font-size:12.5px;font-weight:600">2. okuma: ne alınacak?</text>
+<rect x="30" y="40" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="72.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i</text>
+<text x="72.0" y="72.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">query</text>
+<rect x="30" y="110" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="72.0" y="126.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">k_j</text>
+<text x="72.0" y="142.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">key</text>
+<path d="M114 60 C 128 60, 128 88, 138 88" marker-end="url(#ad-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M114 130 C 128 130, 128 102, 138 102" marker-end="url(#ad-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="140" y="74" width="90" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="185.0" y="99.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i · k_j</text>
+<line x1="230" y1="95" x2="238" y2="95" marker-end="url(#ad-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="240" y="74" width="68" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="274.0" y="91.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">softmax</text>
+<text x="274.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">a_ij</text>
+<rect x="346" y="110" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="388.0" y="126.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">v_j</text>
+<text x="388.0" y="142.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">value</text>
+<line x1="308" y1="95" x2="444" y2="95" marker-end="url(#ad-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M430 130 H470 V118" marker-end="url(#ad-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="446" y="66" width="90" height="50" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="491.0" y="87.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">o_i</text>
+<text x="491.0" y="103.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Σ a_ij · v_j</text>
+<text x="16" y="186" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">v ancak ağırlıklar belli olduktan sonra girer:</text>
+<text x="16" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kelimenin taşıdığı yük, nasıl bulunduğunu değiştirmez.</text>
+</svg>
 
 Bir bilgisayarın RAM belleğinden veri okuduğunuzu düşünün: Adres hesaplama devresi
 *"hangi bellek hücresine erişeceğim?"* sorusunu çözer; bellek hücresinin içinde ne
@@ -284,10 +352,48 @@ $$K = \begin{bmatrix} 0.65 & 1.03 & 0.95 & 0.57 \\ 1.23 & 1.11 & 0.53 & 0.65 \\ 
 
 $V = Z W_V$ projeksiyonu sonucunda elde edilen değer vektörleri:
 - **"köpek":** $v_1 = [0.34, 0.95, 1.26, 0.65]$
-- **"kediyi":** $v_2 = [1.32, 0.53, 0.44, 0.65]$
+- **"kediyi":** $v_2 = [1.32, 0.53, 0.44, 1.23]$
 - **"kovaladı":** $v_3 = [1.20, 1.41, 1.22, 1.01]$
 
-$$V = \begin{bmatrix} 0.34 & 0.95 & 1.26 & 0.65 \\ 1.32 & 0.53 & 0.44 & 0.65 \\ 1.20 & 1.41 & 1.22 & 1.01 \end{bmatrix}$$
+$$V = \begin{bmatrix} 0.34 & 0.95 & 1.26 & 0.65 \\ 1.32 & 0.53 & 0.44 & 1.23 \\ 1.20 & 1.41 & 1.22 & 1.01 \end{bmatrix}$$
+
+Aynı "köpek" satırının üç projeksiyonu yan yana konunca tek bir vektörün neden yetmeyeceği görülür:
+
+<svg viewBox="0 0 560 236" role="img" aria-label="Tek token, üç rol. köpek için girdi satırı z1 = 0.21, 0.82, 0.13, 0.44, öğrenilmiş üç farklı matrisle çarpılır. W_Q ile sorgu q1 = 0.34, 1.26, 0.65, 0.95 olur, fener: ne arıyorum. W_K ile anahtar k1 = 0.65, 1.03, 0.95, 0.57 olur, rozet: ben kimim. W_V ile değer v1 = 0.34, 0.95, 1.26, 0.65 olur, çanta: sana ne verebilirim." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ro-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="96" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">z₁ (köpek)</text>
+<rect x="16" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="34.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.21</text>
+<rect x="54" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="72.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.82</text>
+<rect x="92" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.15;stroke:var(--c-border);stroke-width:.8"/><text x="110.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.13</text>
+<rect x="130" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.23;stroke:var(--c-border);stroke-width:.8"/><text x="148.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.44</text>
+<path d="M170 118 C 196 118, 196 44, 222 44" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="226" y="48" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-family:var(--font-mono)">· W_Q</text>
+<rect x="270" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.34</text>
+<rect x="308" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.26</text>
+<rect x="346" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<rect x="384" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<text x="432" y="42" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">q₁ · fener</text>
+<text x="432" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ne arıyorum?</text>
+<path d="M170 118 C 196 118, 196 116, 222 116" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="226" y="120" text-anchor="start" style="fill:var(--c-warn);font-size:12px;font-family:var(--font-mono)">· W_K</text>
+<rect x="270" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<rect x="308" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.03</text>
+<rect x="346" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<rect x="384" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.21;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.57</text>
+<text x="432" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">k₁ · rozet</text>
+<text x="432" y="130" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ben kimim?</text>
+<path d="M170 118 C 196 118, 196 188, 222 188" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="226" y="192" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">· W_V</text>
+<rect x="270" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.34</text>
+<rect x="308" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<rect x="346" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.26</text>
+<rect x="384" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<text x="432" y="186" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">v₁ · çanta</text>
+<text x="432" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sana ne verebilirim?</text>
+<text x="16" y="228" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Aynı satır, öğrenilmiş üç mercek. Nereye bakılacağına q ve k karar verir; v taşınan yüktür.</text>
+</svg>
 
 ### D. Ham dikkat skorları: S = Q K^T (Kimin feneri kimin rozetine denk geldi?)
 
@@ -404,6 +510,78 @@ Normalleştirilmiş dikkat matrisi ($A$):
 
 $$A = \begin{bmatrix} 0.266 & 0.280 & 0.454 \\ 0.232 & 0.273 & 0.495 \\ 0.193 & 0.246 & 0.561 \end{bmatrix}$$
 
+Adresleme aşamasının tamamı tek şeritte, ham skorlardan ağırlıklara:
+
+<svg viewBox="0 0 560 276" role="img" aria-label="köpek, kediyi, kovaladı token&#x27;ları üzerinde üç adet 3&#x27;e 3 ısı haritası. Önce ham skorlar S = Q K devrik, 2.68&#x27;den 5.94&#x27;e. 4&#x27;ün kareköküne, yani 2&#x27;ye bölününce 1.34 ile 2.97 arasına iner. Satır bazında softmax her satırı toplamı 1 olan ağırlıklara çevirir: köpek 0.266, 0.280, 0.454; kediyi 0.232, 0.273, 0.495; kovaladı 0.193, 0.246, 0.561. Altta kovaladı satırı ölçeklemeyle 0.19, 0.25, 0.56; ölçekleme olmadan ham skorların softmax&#x27;ı daha keskin: 0.09, 0.15, 0.76." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ht-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="128" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">S = QKᵀ</text>
+<text x="83.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">köpek</text>
+<text x="127.0" y="53" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kediyi</text>
+<text x="171.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kovaladı</text>
+<rect x="62" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.68</text>
+<rect x="106" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.78</text>
+<rect x="150" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.33;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.74</text>
+<rect x="62" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.78</text>
+<rect x="106" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.19;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.11</text>
+<rect x="150" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.45;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">4.30</text>
+<rect x="62" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.34;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.80</text>
+<rect x="106" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">4.28</text>
+<rect x="150" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">5.94</text>
+<text x="302" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">S / √d_k</text>
+<text x="257.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">köpek</text>
+<text x="301.0" y="53" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kediyi</text>
+<text x="345.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kovaladı</text>
+<rect x="236" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.34</text>
+<rect x="280" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="324" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.33;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.87</text>
+<rect x="236" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="280" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.19;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.55</text>
+<rect x="324" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.45;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.15</text>
+<rect x="236" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.34;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.90</text>
+<rect x="280" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.14</text>
+<rect x="324" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.97</text>
+<text x="476" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">A = softmax</text>
+<text x="431.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">köpek</text>
+<text x="475.0" y="53" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kediyi</text>
+<text x="519.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">kovaladı</text>
+<rect x="410" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.266</text>
+<rect x="454" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.280</text>
+<rect x="498" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.60;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.454</text>
+<rect x="410" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.232</text>
+<rect x="454" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.25;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.273</text>
+<rect x="498" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.67;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.495</text>
+<rect x="410" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="454" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.20;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="498" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.561</text>
+<text x="56" y="93" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">köpek</text>
+<text x="56" y="127" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">kediyi</text>
+<text x="56" y="161" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">kovaladı</text>
+<text x="128" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">ham iç çarpımlar</text>
+<text x="302" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">d_k = 4, yani ÷ 2</text>
+<text x="476" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">satır bazında, toplam 1</text>
+<line x1="196" y1="123" x2="232" y2="123" marker-end="url(#ht-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="214" y="115" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">÷ 2</text>
+<line x1="370" y1="123" x2="406" y2="123" marker-end="url(#ht-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="388" y="115" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px">eˣ/Σ</text>
+<text x="16" y="196" text-anchor="start" style="fill:var(--c-text);font-size:12px">kovaladı satırı, ÷ √d_k adımıyla ve onsuz:</text>
+<text x="16" y="219" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">softmax(S / 2)</text>
+<rect x="150.0" y="206" width="56.9" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<text x="178.95" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.19</text>
+<rect x="207.9" y="206" width="72.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="244.8" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.25</text>
+<rect x="281.7" y="206" width="167.3" height="16" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="365.85" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.56</text>
+<text x="16" y="241" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">softmax(S)</text>
+<rect x="150.0" y="228" width="26.1" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="177.1" y="228" width="42.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="198.96457267664414" y="240" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.15</text>
+<rect x="220.9" y="228" width="228.1" height="16" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="335.4370787338276" y="240" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.76</text>
+<text x="16" y="268" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Sıralama iki durumda da aynı; ölçekleme yalnızca tercihin ne kadar keskin olduğunu belirler.</text>
+</svg>
+
 ---
 
 ## 6. Değerleri harmanlama: Bağlam vektörünün (Context Vector) doğuşu
@@ -418,28 +596,72 @@ $$o_i = \sum_{j=1}^{3} A_{ij} v_j$$
 
 Hatırlayalım:
 - $v_1 = [0.34, 0.95, 1.26, 0.65]$ ("köpek"in çantası)
-- $v_2 = [1.32, 0.53, 0.44, 0.65]$ ("kediyi"nin çantası)
+- $v_2 = [1.32, 0.53, 0.44, 1.23]$ ("kediyi"nin çantası)
 - $v_3 = [1.20, 1.41, 1.22, 1.01]$ ("kovaladı"nın çantası)
 
 **1. "köpek" için yeni karışım ($o_1 = 0.266 v_1 + 0.280 v_2 + 0.454 v_3$):**
 - 1. bileşen: $0.266(0.34) + 0.280(1.32) + 0.454(1.20) = 0.0904 + 0.3696 + 0.5448 = 1.0048$
 - 2. bileşen: $0.266(0.95) + 0.280(0.53) + 0.454(1.41) = 0.2527 + 0.1484 + 0.6401 = 1.0412$
 - 3. bileşen: $0.266(1.26) + 0.280(0.44) + 0.454(1.22) = 0.3352 + 0.1232 + 0.5539 = 1.0123$
-- 4. bileşen: $0.266(0.65) + 0.280(0.65) + 0.454(1.01) = 0.1729 + 0.1820 + 0.4585 = 0.8134$
+- 4. bileşen: $0.266(0.65) + 0.280(1.23) + 0.454(1.01) = 0.1729 + 0.3444 + 0.4585 = 0.9758$
 
-$$o_1 \approx [1.005, 1.041, 1.012, 0.813]$$
+$$o_1 \approx [1.005, 1.041, 1.012, 0.976]$$
 
 **2. "kediyi" için yeni karışım ($o_2 = 0.232 v_1 + 0.273 v_2 + 0.495 v_3$):**
 
-$$o_2 \approx [1.028, 1.053, 0.977, 0.828]$$
+$$o_2 \approx [1.033, 1.063, 1.016, 0.987]$$
 
 **3. "kovaladı" için yeni karışım ($o_3 = 0.193 v_1 + 0.246 v_2 + 0.561 v_3$):**
 
-$$o_3 \approx [1.053, 1.109, 0.974, 0.852]$$
+$$o_3 \approx [1.064, 1.105, 1.036, 0.995]$$
 
 Nihai tek-head self-attention çıktı matrisi:
 
-$$O = \begin{bmatrix} 1.005 & 1.041 & 1.012 & 0.813 \\ 1.028 & 1.053 & 0.977 & 0.828 \\ 1.053 & 1.109 & 0.974 & 0.852 \end{bmatrix}$$
+$$O = \begin{bmatrix} 1.005 & 1.041 & 1.012 & 0.976 \\ 1.033 & 1.063 & 1.016 & 0.987 \\ 1.064 & 1.105 & 1.036 & 0.995 \end{bmatrix}$$
+
+$O$'nun ilk satırı, dilim dilim açılmış hâliyle:
+
+<svg viewBox="0 0 560 236" role="img" aria-label="köpek için bağlam vektörü o1, üç değer vektörünün ağırlıklı toplamı olarak kurulur: köpek için 0.266, kediyi için 0.280, kovaladı için 0.454. Dört bileşenin her biri, üç katkının üst üste eklendiği bir çubuk olarak çizilmiştir. Toplamlar 1.005, 1.041, 1.012, 0.976. Her bileşende en büyük dilim kovaladı&#x27;dan gelir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">o₁ = 0.266·v₁ + 0.280·v₂ + 0.454·v₃, bileşen başına bir çubuk</text>
+<text x="16" y="57" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">bil. 1</text>
+<rect x="92.0" y="40" width="30.2" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="123.2" y="40" width="126.7" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="187.08290909090908" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.37</text>
+<rect x="250.9" y="40" width="187.2" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="345.0247272727272" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.54</text>
+<text x="447.1265454545454" y="57" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.005</text>
+<text x="16" y="91" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">bil. 2</text>
+<rect x="92.0" y="74" width="86.3" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="135.6481818181818" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.25</text>
+<rect x="179.3" y="74" width="50.3" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="204.9290909090909" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.15</text>
+<rect x="230.6" y="74" width="220.1" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="341.1314545454545" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.64</text>
+<text x="459.7010909090909" y="91" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.041</text>
+<text x="16" y="125" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">bil. 3</text>
+<rect x="92.0" y="108" width="114.8" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="149.89127272727274" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.34</text>
+<rect x="207.8" y="108" width="41.6" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="229.06254545454547" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.12</text>
+<rect x="250.3" y="108" width="190.3" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="346.01272727272726" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.55</text>
+<text x="449.6829090909091" y="125" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.012</text>
+<text x="16" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">bil. 4</text>
+<rect x="92.0" y="142" width="58.7" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="121.86454545454546" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.17</text>
+<rect x="151.7" y="142" width="118.0" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="211.21636363636367" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.34</text>
+<rect x="270.7" y="142" width="157.4" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="349.90600000000006" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.46</text>
+<text x="437.10836363636366" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 0.976</text>
+<rect x="16" y="186" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="34" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.266 × v1 (köpek)</text>
+<rect x="192" y="186" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="210" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.280 × v2 (kediyi)</text>
+<rect x="368" y="186" width="12" height="12" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="386" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.454 × v3 (kovaladı)</text>
+<text x="16" y="226" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Tek bir attention adımından sonra köpek büyük ölçüde kovaladı&#x27;dan oluşur: rolünü belirleyen fiil.</text>
+</svg>
 
 ### Bu dikkat yüzdeleri bize ne anlatıyor?
 
@@ -467,7 +689,7 @@ olarak adlandırılır. Serimiz boyunca izlediğimiz dönüşüm zincirini özet
 | **Son Katman** | $h_{\text{ctx}}$ | Tüm cümlenin rafine özeti | Sonraki token tahmini için kullanılan vektör |
 
 Başlangıçta $z_1 = [0.21, 0.82, 0.13, 0.44]$ olan "köpek" vektörü, self-attention'dan
-çıktığında $o_1 \approx [1.005, 1.041, 1.012, 0.813]$ olmuştur. Bu yeni vektör artık
+çıktığında $o_1 \approx [1.005, 1.041, 1.012, 0.976]$ olmuştur. Bu yeni vektör artık
 saf bir sözlük maddesi değil; içinde "kediyi" ve "kovaladı"nın da bilgilerini taşıyan
 yaşayan bir bağlam vektörüdür: **"Kediyi kovalayan köpek"**tir!
 
@@ -571,14 +793,39 @@ Bu durum derin öğrenme tarihinde yeni değildir:
 milyar dolarlık donanım kilitlenmesini çözmek için doğdu. İşte modern yapay zekâyı
 başlatan 9 aylık sürecin kronolojik özeti:
 
-```mermaid
-flowchart LR
-    A["Eylül 2016<br><b>Donanım Tıkanması</b><br>TPU'lar %80 atıl"] --> B["Aralık 2016<br><b>Radikal Fikir</b><br>Jakob: Pure Attention"]
-    B --> C["Şubat 2017<br><b>İlk Prototipler</b><br>Gradyanlar çöktü"]
-    C --> D["Mart 2017<br><b>Noam Shazeer</b><br>Ölçekleme & Multi-Head"]
-    D --> E["Mayıs 2017<br><b>Tarihi Başlık</b><br>Attention Is All You Need"]
-    E --> F["Haziran 2017<br><b>WMT Zaferi</b><br>28.4 BLEU / 3.5 gün"]
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="Metinde anlatıldığı hâliyle Transformer&#x27;ın Google&#x27;daki doğuşunun zaman çizelgesi. Eylül 2016, donanım tıkanması, TPU&#x27;lar yüzde 80 atıl. Aralık 2016, radikal fikir: Jakob saf attention önerir. Şubat 2017, ilk prototipler, gradyanlar çöktü. Mart 2017, Noam Shazeer: ölçekleme ve multi-head. Mayıs 2017, tarihi başlık Attention Is All You Need. Haziran 2017, WMT zaferi: 3,5 günlük eğitimle 28,4 BLEU." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<line x1="24" y1="118" x2="536" y2="118" style="stroke:var(--c-border);stroke-width:2"/>
+<circle cx="72" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="72" y1="110" x2="72" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="72" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Eylül 2016</text>
+<text x="72" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Donanım tıkanması</text>
+<text x="72" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">TPU&#x27;lar %80 atıl</text>
+<circle cx="155" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="155" y1="126" x2="155" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="155" y="158" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Aralık 2016</text>
+<text x="155" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Radikal fikir</text>
+<text x="155" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Jakob: saf attention</text>
+<circle cx="238" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="238" y1="110" x2="238" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="238" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Şubat 2017</text>
+<text x="238" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">İlk prototipler</text>
+<text x="238" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gradyanlar çöktü</text>
+<circle cx="321" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="321" y1="126" x2="321" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="321" y="158" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Mart 2017</text>
+<text x="321" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Noam Shazeer</text>
+<text x="321" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ölçekleme, multi-head</text>
+<circle cx="404" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="404" y1="110" x2="404" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="404" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Mayıs 2017</text>
+<text x="404" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Tarihi başlık</text>
+<text x="404" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Attention Is All You Need</text>
+<circle cx="487" cy="118" r="6" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="487" y1="126" x2="487" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="487" y="158" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:700">Haziran 2017</text>
+<text x="487" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">WMT zaferi</text>
+<text x="487" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">28,4 BLEU / 3,5 gün</text>
+</svg>
 
 ### ⏱️ Adım Adım Gelişim Süreci
 
@@ -683,7 +930,7 @@ Konsol çıktısı:
 
 ```text
 Dikkat Ağırlıkları (A):
- tensor([[0.266, 0.280, 0.454],
+ tensor([[0.266, 0.280, 0.453],
          [0.232, 0.273, 0.495],
          [0.193, 0.246, 0.561]])
 

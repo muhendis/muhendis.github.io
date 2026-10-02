@@ -18,24 +18,21 @@ This article dissects how the Transformer architecture enforces the unidirection
 - [3. Lower triangular matrix mechanics: Masking the future](#3-lower-triangular-matrix-mechanics-masking-the-future)
 - [4. Anatomy of masks: Causal, padding, and truncation](#4-anatomy-of-masks-causal-padding-and-truncation)
 - [5. The math of the void: Why the mask MUST precede Softmax](#5-the-math-of-the-void-why-the-mask-must-precede-softmax)
-  - [For Future Tokens ($j \> i$):](#for-future-tokens-j--i)
+  - [For Future Tokens ($j \> i$):](#for-future-tokens-j-i)
   - [The Fallacy of Post-Softmax Zeroing](#the-fallacy-of-post-softmax-zeroing)
 - [6. Step-by-step manual tensor walk: Three tokens through causal attention](#6-step-by-step-manual-tensor-walk-three-tokens-through-causal-attention)
   - [Step 1: Raw Scores and Scaling](#step-1-raw-scores-and-scaling)
-  - [Step 2: Adding the Causal Mask ($S\_{\\text{scaled}} + M$)](#step-2-adding-the-causal-mask-s_textscaled--m)
+  - [Step 2: Adding the Causal Mask ($S\_{\\text{scaled}} + M$)](#step-2-adding-the-causal-mask-stextscaled-m)
   - [Step 3: Row-by-Row Softmax Computation](#step-3-row-by-row-softmax-computation)
-    - [Row 0 ("dog", $t=0$):](#row-0-dog-t0)
-    - [Row 1 ("cat", $t=1$):](#row-1-cat-t1)
-    - [Row 2 ("chased", $t=2$):](#row-2-chased-t2)
-  - [Step 4: Blending Values (Output Context Vectors $O = A V$)](#step-4-blending-values-output-context-vectors-o--a-v)
+  - [Step 4: Blending Values (Output Context Vectors $O = A V$)](#step-4-blending-values-output-context-vectors-o-a-v)
   - [Side-by-Side Comparison: Bidirectional (Part 4) vs. Causal (Part 5)](#side-by-side-comparison-bidirectional-part-4-vs-causal-part-5)
 - [7. The two engineering lenses: Training vs. inference and chunked prefill](#7-the-two-engineering-lenses-training-vs-inference-and-chunked-prefill)
   - [1. The Training Lens: Teacher Forcing, Parallel GEMM, and Gradient Isolation](#1-the-training-lens-teacher-forcing-parallel-gemm-and-gradient-isolation)
   - [2. The Inference Lens: The Severe Shift from Prefill to Decode](#2-the-inference-lens-the-severe-shift-from-prefill-to-decode)
-  - [3. Production Engine Optimization: Chunked Prefill (vLLM / Sarathi-Serve)](#3-production-engine-optimization-chunked-prefill-vllm--sarathi-serve)
+  - [3. Production Engine Optimization: Chunked Prefill (vLLM / Sarathi-Serve)](#3-production-engine-optimization-chunked-prefill-vllm-sarathi-serve)
 - [8. Hardware and numerical stability: IEEE 754, fp16 traps, and FlashAttention varlen](#8-hardware-and-numerical-stability-ieee-754-fp16-traps-and-flashattention-varlen)
   - [The Precision Trap: fp16 vs. bf16](#the-precision-trap-fp16-vs-bf16)
-  - [FlashAttention Varlen: Eliminating the Mask via cu\_seqlens](#flashattention-varlen-eliminating-the-mask-via-cu_seqlens)
+  - [FlashAttention Varlen: Eliminating the Mask via cu\_seqlens](#flashattention-varlen-eliminating-the-mask-via-cuseqlens)
 - [9. PyTorch verification: Step-by-step code and tensors](#9-pytorch-verification-step-by-step-code-and-tensors)
 - [10. Production frontiers: How modern models diverge (Llama 3, Gemma 2, Mistral, DeepSeek)](#10-production-frontiers-how-modern-models-diverge-llama-3-gemma-2-mistral-deepseek)
 - [The whole story in six lines](#the-whole-story-in-six-lines)
@@ -65,21 +62,38 @@ This equation carries two profound mathematical implications:
 1. **Zero Independence Assumptions:** This factorization is not an approximation or heuristic; it is an exact identity of probability theory. No token is assumed to be conditionally independent of any other.
 2. **Physical Causality:** While mathematically the chain rule can factorize in any arbitrary permutation (e.g., from token $T$ down to $1$), language generation is only physically meaningful moving forward: **when predicting token $x_t$, future tokens ($x_{t+1}, \dots, x_T$) do not yet exist in the universe.**
 
-```mermaid
-flowchart TD
-    subgraph Bidirectional_Model["Bidirectional Attention (Unmasked): God's Eye View"]
-        direction LR
-        B1["x_1"] <--> B2["x_2"]
-        B2 <--> B3["x_3"]
-        B1 <--> B3
-    end
-
-    subgraph Causal_Model["Causal Attention (Masked): The Arrow of Time"]
-        direction LR
-        G1["x_1 (Attends to itself)"] --> G2["x_2 (Attends to x_1 and itself)"]
-        G2 --> G3["x_3 (Attends to x_1, x_2, and itself)"]
-    end
-```
+<svg viewBox="0 0 560 196" role="img" aria-label="Bidirectional versus causal attention over three tokens. Unmasked, the god&#x27;s eye view: x1, x2 and x3 are all linked in both directions, so every token sees every other. Causal, the arrow of time: information only flows forward; x1 attends to itself, x2 to x1 and itself, x3 to x1, x2 and itself." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bd-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bd-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Bidirectional</text>
+<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">unmasked: god&#x27;s eye view</text>
+<path d="M83 112 L125 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M163 112 L205 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M64 93 C 94 60, 194 60, 224 93" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="64" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="64" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
+<text x="64" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
+<circle cx="144" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="144" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
+<text x="144" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
+<circle cx="224" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="224" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
+<text x="224" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees all</text>
+<text x="144" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">every token sees the whole sequence</text>
+<rect x="288" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">Causal</text>
+<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">masked: the arrow of time</text>
+<line x1="355" y1="112" x2="395" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="435" y1="112" x2="475" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M336 93 C 366 60, 466 60, 496 91" marker-end="url(#bd-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<circle cx="336" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="336" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
+<text x="336" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁</text>
+<circle cx="416" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="416" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
+<text x="416" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁, x₂</text>
+<circle cx="496" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="496" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
+<text x="496" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sees x₁–x₃</text>
+<text x="416" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">each token sees only itself and the past</text>
+</svg>
 
 ### 2. Invariance of Past Representations and the Birth of KV Cache
 
@@ -128,11 +142,26 @@ In Part 4 of our series ([Inside Self-Attention](post.html?slug=inside-self-atte
 
 In bidirectional self-attention, every token shines its flashlight at every badge across the entire room. Now picture that same room participating in a **serialized murder mystery reading club**. Seated in order are our three core tokens: **"dog"** ($t=0$), **"cat"** ($t=1$), and **"chased"** ($t=2$).
 
-```text
-[Token 0: 'dog']    --> Reading page 1. Must deduce clues with zero knowledge of the culprit.
-[Token 1: 'cat']    --> Reading page 50. Remembers page 1, but future pages remain sealed.
-[Token 2: 'chased'] --> Reading the final chapter. Possesses full context of the entire narrative.
-```
+<svg viewBox="0 0 560 150" role="img" aria-label="A murder mystery with the pages glued. dog is at page 1 and must deduce clues with zero knowledge of the culprit. cat is at page 50: it remembers page 1, but the future pages stay sealed. chased reads the final chapter and holds the full context of the narrative." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">each token reads the book only up to its own page</text>
+<rect x="16" y="34" width="82" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="57.0" y="50.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">dog</text>
+<rect x="112" y="38" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="38" width="4.8" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="194.39999999999998" y="50" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">sealed</text>
+<text x="288" y="43" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">page 1</text>
+<text x="288" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">no idea who the culprit is</text>
+<rect x="16" y="74" width="82" height="24" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="57.0" y="90.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">cat</text>
+<rect x="112" y="78" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="78" width="72.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="228.0" y="90" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">sealed</text>
+<text x="288" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">page 50</text>
+<text x="288" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">remembers page 1, rest sealed</text>
+<rect x="16" y="114" width="82" height="24" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="57.0" y="130.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">chased</text>
+<rect x="112" y="118" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="118" width="160.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="288" y="123" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">final chapter</text>
+<text x="288" y="138" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">the whole story is in view</text>
+</svg>
 
 If "dog" ($t=0$) is allowed to shine its Query flashlight ($Q_0$) at the Key badge of "chased" ($K_2$), the reader spots the revelation before the plot begins. True deduction vanishes; the reader merely copies the ending.
 
@@ -250,6 +279,60 @@ Zeroing attention weights *after* standard Softmax ($\tilde{A} = \text{Softmax}(
 
 1. **Destruction of the Probability Measure:** Softmax forces row probabilities to sum to $1.0$. Post-hoc zeroing leaves the remaining probabilities summing to strictly less than unity ($\sum_{j=1}^i \tilde{A}_{ij} < 1.0$). Across 32 or 80 transformer layers, this systematic attenuation drives hidden activations toward zero.
 2. **Denominator Contamination:** Even if you re-normalize the remaining entries, the calculation is permanently tainted. The initial Softmax denominator incorporated unmasked exponential terms from the future ($e^{S_{ik}}$ for $k > i$). If future tokens possess large raw logits, they inflate the denominator, artificially suppressing the weights of legitimate past tokens. **Future information leaks through the normalisation denominator itself.**
+
+Both orders on our three-token example, side by side; watch the row sums:
+
+<svg viewBox="0 0 560 314" role="img" aria-label="Why the mask must come before softmax, on the dog, cat, chased example. The scaled scores range from 1.34 to 2.97. Correct order, add minus infinity above the diagonal and then apply softmax: the rows become dog 1.000, 0.000, 0.000, cat 0.459, 0.541, 0.000, chased 0.193, 0.246, 0.562; every row sums to 1. Wrong order, softmax first and then zero the future cells: dog keeps only 0.266, cat 0.232 and 0.273, so the rows sum to 0.266 and 0.505 instead of 1; only chased, which has no future, still sums to 1." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="or-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="or-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+<marker id="or-bad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
+</defs>
+<text x="16" y="108" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">S / √d_k</text>
+<rect x="16" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.16;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.34</text>
+<rect x="58" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="100" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.29;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.87</text>
+<rect x="16" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="58" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.21;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.55</text>
+<rect x="100" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.36;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.15</text>
+<rect x="16" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.30;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.90</text>
+<rect x="58" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.36;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.14</text>
+<rect x="100" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.57;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.97</text>
+<text x="146" y="135" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">dog</text>
+<text x="146" y="163" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">cat</text>
+<text x="146" y="191" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">chased</text>
+<path d="M200 140 C 230 140, 230 66, 262 66" marker-end="url(#or-ok)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">mask, then softmax</text>
+<text x="300" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">add −∞ above the diagonal first</text>
+<rect x="300" y="48" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.72;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="65.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.000</text>
+<rect x="342" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="384" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="76" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.40;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="93.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.459</text>
+<rect x="342" y="76" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="93.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.541</text>
+<rect x="384" y="76" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="93.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="342" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="384" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.46;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.562</text>
+<path d="M200 170 C 230 170, 230 214, 262 214" marker-end="url(#or-bad)" style="fill:none;stroke:var(--c-danger);stroke-width:1.5"/>
+<text x="300" y="172" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">softmax, then zero</text>
+<text x="300" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">future already in the denominator</text>
+<rect x="300" y="198" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="215.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.266</text>
+<rect x="342" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="384" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="226" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.26;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="243.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.232</text>
+<rect x="342" y="226" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="243.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.273</text>
+<rect x="384" y="226" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="243.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="342" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="384" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.46;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.562</text>
+<text x="440" y="65" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="215" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-family:var(--font-mono)">Σ = 0.266</text>
+<text x="440" y="93" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="243" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-family:var(--font-mono)">Σ = 0.505</text>
+<text x="440" y="121" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="271" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="16" y="306" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Zeroing after softmax leaks the future through the denominator and starves every early row.</text>
+</svg>
 
 ---
 
@@ -393,17 +476,23 @@ Contrasting these numerical distributions against Part 4 reveals the physical im
 
 Mastering causal attention requires dissecting its computational profile across training clusters and live production serving engines. The two environments operate under diametrically opposed hardware regimes.
 
-```text
-                    TRAINING                                  INFERENCE
-   (Parallel / Teacher Forcing / GEMM)            (Prefill vs Decode / GEMV)
-┌────────────────────────────────────────┐     ┌────────────────────────────────────────┐
-│ Full sequence passed simultaneously    │     │ 1. Prefill: Entire prompt ingested     │
-│ Causal mask applied as T x T matrix    │     │    Causal mask applied across prompt   │
-│ Backward: Masked gradient dL/dS = 0    │     │ 2. Decode: Token-by-token generation   │
-│ Workload: Compute-bound dense GEMM     │     │    Q: [1, d_k] -> KV Cache: [T, d_k]   │
-│                                        │     │    NO FUTURE TOKENS -> NO MASK NEEDED! │
-└────────────────────────────────────────┘     └────────────────────────────────────────┘
-```
+<svg viewBox="0 0 560 180" role="img" aria-label="Causal attention in training and inference. Training, parallel with teacher forcing: the full sequence goes in at once, the causal mask is applied as a T by T matrix, the masked gradients are zero, and the work is a compute-bound dense GEMM. Inference splits in two: prefill ingests the whole prompt with the causal mask; decode generates token by token, a single query against a KV cache of past tokens, and since no future tokens exist, no mask is needed." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<rect x="16" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="32" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">TRAINING</text>
+<text x="30" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">parallel · teacher forcing · GEMM</text>
+<text x="30" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">full sequence passed at once</text>
+<text x="30" y="95" text-anchor="start" style="fill:var(--c-text);font-size:12px">causal mask as a T × T matrix</text>
+<text x="30" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">backward: masked dL/dS = 0</text>
+<text x="30" y="133" text-anchor="start" style="fill:var(--c-text);font-size:12px">compute-bound dense GEMM</text>
+<rect x="288" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="32" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">INFERENCE</text>
+<text x="302" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill vs decode · GEMV</text>
+<text x="302" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">1. prefill: whole prompt ingested</text>
+<text x="302" y="95" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">causal mask across the prompt</text>
+<text x="302" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">2. decode: one token at a time</text>
+<text x="302" y="133" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">Q [1, d_k] vs KV cache [T, d_k]</text>
+<text x="302" y="152" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">no future tokens → no mask needed</text>
+</svg>
 
 ### 1. The Training Lens: Teacher Forcing, Parallel GEMM, and Gradient Isolation
 
@@ -448,6 +537,63 @@ In conventional inference engines, the scheduler ingests this entire 32k prompt 
 - TPOT latency spikes from 20 ms to 1,500 ms—a **75x latency jitter**.
 - In distributed systems and queueing theory, this phenomenon is known as **Head-of-Line Blocking** or the **Prefill Bubble**.
 
+Drawn as a timeline, the difference between the two schedulers is the shape of the step lengths:
+
+<svg viewBox="0 0 560 244" role="img" aria-label="Schematic timeline of one GPU serving many streaming users. Top lane, monolithic prefill: short decode steps run one after another until a long prompt arrives; its single prefill pass occupies the GPU and every decode stream stalls until it finishes. Bottom lane, chunked prefill: the long prompt is split into chunks, and every step carries the decode tokens plus one chunk, so step lengths stay even and streaming never stops." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="66" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">monolithic</text>
+<text x="16" y="82" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one pass for the whole prompt</text>
+<line x1="204" y1="86" x2="544" y2="86" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="16" y="152" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">chunked</text>
+<text x="16" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">one chunk per step</text>
+<line x1="204" y1="172" x2="544" y2="172" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="204" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="220" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="236" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="252" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="268" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="284" y="60" width="180" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="374" y="75" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">long prompt, one prefill pass</text>
+<path d="M284 54 H464" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<text x="374" y="48" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px">every decode stream waits</text>
+<rect x="468" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="484" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="500" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="516" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="532" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="204" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="220" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="236" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="252" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="268" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="284" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="291" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="314" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="321" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="344" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="351" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="374" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="381" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="404" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="411" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="434" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="441" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="464" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="471" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="494" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="510" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="526" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="389" y="136" text-anchor="middle" style="fill:var(--c-success);font-size:11.5px">decode slice + one chunk, every step</text>
+<line x1="204" y1="214" x2="544" y2="214" marker-end="url(#bb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="544" y="208" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">time</text>
+<rect x="204" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="222" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">decode step</text>
+<rect x="314" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="332" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill work</text>
+</svg>
+
 **The Architectural Remedy: Chunked Prefill (Sarathi-Serve / vLLM)**
 
 To eliminate this scheduling crisis, Sarathi-Serve (Agrawal et al., OSDI 2024) introduced—and modern engines like vLLM V1 have standardized—the concept of **Chunked Prefill**.
@@ -488,6 +634,92 @@ Hybrid Attention Mask for Chunk 2 (Queries: q_4..q_7) given Chunk 1 in KV Cache:
 **How the Two Mask Regions Operate:**
 1. **Left Block (Cross-Chunk Attention - Rectangular Full Attention):** Queries $q_4, q_5, q_6, q_7$ are permitted to attend to all historical tokens $k_0, k_1, k_2, k_3$ already finalized in the KV Cache. There is zero masking here; this $[C \times T_{\text{past}}]$ rectangular region is filled entirely with **$0.0$**.
 2. **Right Block (Intra-Chunk Attention - Square Causal Attention):** Within Chunk 2 ($q_4 \dots q_7$), tokens must strictly obey temporal order. Token $q_4$ cannot attend to upcoming keys $k_5, k_6, k_7$. Therefore, this $[C \times C]$ square submatrix enforces standard **lower-triangular $-\infty$ causal masking**.
+
+The same two iterations as allowed-cell grids (filled = attend, empty = masked):
+
+<svg viewBox="0 0 560 262" role="img" aria-label="Chunked prefill with an 8-token prompt and chunk size 4. Iteration 1 runs queries q0 to q3 against keys k0 to k3 with an ordinary lower-triangular causal mask and writes their keys and values to the KV cache. Iteration 2 runs queries q4 to q7: against the cached keys k0 to k3 every cell is allowed, a full rectangle; against the chunk&#x27;s own keys k4 to k7 only the lower triangle is allowed." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">iteration 1</text>
+<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">chunk q0–q3, causal</text>
+<rect x="44" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="88" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="110" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="110" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="110" y="118" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="110" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="54" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
+<text x="76" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
+<text x="98" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
+<text x="120" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
+<text x="38" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q0</text>
+<text x="38" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q1</text>
+<text x="38" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q2</text>
+<text x="38" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q3</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">→ K, V of 0–3 into the KV cache</text>
+<text x="200" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">iteration 2</text>
+<text x="200" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">chunk q4–q7 sees the cache + itself</text>
+<rect x="232" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="364" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="386" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="386" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="386" y="118" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="386" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="242" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
+<text x="264" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
+<text x="286" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
+<text x="308" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
+<text x="330" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k4</text>
+<text x="352" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k5</text>
+<text x="374" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k6</text>
+<text x="396" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k7</text>
+<text x="226" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q4</text>
+<text x="226" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q5</text>
+<text x="226" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q6</text>
+<text x="226" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q7</text>
+<path d="M232 168 V174 H318 V168" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="275.0" y="190" text-anchor="middle" style="fill:var(--c-accent);font-size:12px;font-weight:600">KV cache</text>
+<text x="275.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">full rectangle</text>
+<path d="M320 168 V174 H406 V168" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="363.0" y="190" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">this chunk</text>
+<text x="363.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">lower triangle</text>
+<text x="16" y="236" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Only the square inside the current chunk needs a causal check; everything already cached is</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">past by construction. Kernels test col &gt; row in registers instead of storing a mask.</text>
+</svg>
 
 **Hardware Execution: Integration with FlashAttention and PagedAttention**
 

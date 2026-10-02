@@ -6,7 +6,7 @@ When you submit a prompt to a large language model, the sequence of operations w
 5. [Causal Attention](post.html?slug=inside-causal-attention) enforces the arrow of time, masking future tokens behind lower-triangular matrices to guarantee strictly autoregressive generation.
 6. [Multi-Head Attention](post.html?slug=inside-multi-head-attention) shatters the single-projector compromise, dedicating independent subspaces to distinct grammatical axes (subject–verb, local adjacency).
 
-Recall our running 3-token prompt from Parts 4, 5, and 6: **`["köpek", "kediyi", "kovaladı"]`** ("the dog chased the cat"). In Part 6, we computed Multi-Head Attention for each token, concatenated the subspace heads, multiplied by $W^O$, and obtained a multi-perspective attention output vector ($O$) for each word.
+Recall our running 3-token prompt from Parts 4, 5, and 6: **`["dog", "cat", "chased"]`** ("the dog chased the cat"). In Part 6, we computed Multi-Head Attention for each token, concatenated the subspace heads, multiplied by $W^O$, and obtained a multi-perspective attention output vector ($O$) for each word.
 
 At this exact juncture, a fundamental architectural dilemma emerges: **Can we simply pass this attention output directly into the next attention layer or output projection?**
 
@@ -63,32 +63,53 @@ FFN       = Retreating to private desks (individual thinking, calculation, and r
 
 The data path within a single Transformer block consists of eight stages:
 
-```mermaid
-flowchart TD
-    subgraph Input["Input State"]
-        X["Token Input: X"] --> Z["Position-Enriched Representation: Z"]
-    end
-
-    subgraph SubLayer1["Sub-Layer 1: Communication (Attention)"]
-        Z --> Attn["Multi-Head Self-Attention"]
-        Attn --> AttnOut["AttnOut = MultiHead(Z)"]
-        Z -.-> Skip1["Residual / Skip Path (Z)"]
-        AttnOut --> Add1["Sum: Z + AttnOut"]
-        Skip1 --> Add1
-        Add1 --> LN1["LayerNorm / RMSNorm"]
-        LN1 --> H1["Intermediate Representation: H1"]
-    end
-
-    subgraph SubLayer2["Sub-Layer 2: Computation (FFN)"]
-        H1 --> FFN["Feed-Forward Network (FFN / MLP)"]
-        FFN --> FFNOut["FFNOut = W2 · σ(W1 · H1 + b1) + b2"]
-        H1 -.-> Skip2["Residual / Skip Path (H1)"]
-        FFNOut --> Add2["Sum: H1 + FFNOut"]
-        Skip2 --> Add2
-        Add2 --> LN2["LayerNorm / RMSNorm"]
-        LN2 --> H2["Final Block Output: H2"]
-    end
-```
+<svg viewBox="0 0 560 284" role="img" aria-label="Data path through one transformer block, Post-LN layout. Sub-layer 1, communication: token input X becomes the position-enriched Z, multi-head self-attention produces AttnOut, a skip path carries Z around it, the two are summed and LayerNorm or RMSNorm gives the intermediate H1. Sub-layer 2, computation: H1 goes through the feed-forward network W2 sigma of W1 H1 plus b1, plus b2, a skip path carries H1 around it, the sum is normalized again and gives the final block output H2." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bf-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bf-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="26" width="528" height="92" rx="8" style="fill:none;stroke:var(--c-accent);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="28" y="20" text-anchor="start" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">sub-layer 1: communication (attention)</text>
+<rect x="16" y="148" width="528" height="92" rx="8" style="fill:none;stroke:var(--c-success);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="90" y="142" text-anchor="start" style="fill:var(--c-success);font-size:12.5px;font-weight:600">sub-layer 2: computation (FFN)</text>
+<rect x="26" y="66" width="38" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="45.0" y="88.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">X</text>
+<line x1="64" y1="84" x2="78" y2="84" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="80" y="66" width="44" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="102.0" y="88.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">Z</text>
+<line x1="124" y1="84" x2="140" y2="84" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="142" y="62" width="150" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="217.0" y="88.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">multi-head attention</text>
+<line x1="292" y1="84" x2="297" y2="84" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="312" cy="84" r="13" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.4"/><text x="312" y="89.5" text-anchor="middle" style="fill:var(--c-text);font-size:16px;font-weight:700">+</text>
+<path d="M102 66 C 102 44, 312 44, 312 69" marker-end="url(#bf-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="206" y="37" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">skip path (Z)</text>
+<line x1="325" y1="84" x2="338" y2="84" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="66" width="100" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="390.0" y="88.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LayerNorm</text>
+<line x1="440" y1="84" x2="456" y2="84" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="458" y="66" width="72" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="494.0" y="88.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">H₁</text>
+<path d="M494 102 V130 H52 V186" marker-end="url(#bf-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="26" y="188" width="52" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="52.0" y="210.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">H₁</text>
+<line x1="78" y1="206" x2="92" y2="206" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="94" y="184" width="198" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="193.0" y="202.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">FFN / MLP</text>
+<text x="193.0" y="218.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">W₂·σ(W₁·H₁ + b₁) + b₂</text>
+<line x1="292" y1="206" x2="297" y2="206" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="312" cy="206" r="13" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.4"/><text x="312" y="211.5" text-anchor="middle" style="fill:var(--c-text);font-size:16px;font-weight:700">+</text>
+<path d="M60 188 C 60 166, 312 166, 312 191" marker-end="url(#bf-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="196" y="159" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">skip path (H₁)</text>
+<line x1="325" y1="206" x2="338" y2="206" marker-end="url(#bf-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="340" y="188" width="100" height="36" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="390.0" y="210.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LayerNorm</text>
+<line x1="440" y1="206" x2="456" y2="206" marker-end="url(#bf-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="458" y="188" width="72" height="36" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="494.0" y="210.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">H₂</text>
+<text x="16" y="262" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Post-LN (2017), as drawn: the norm sits after each sum.</text>
+<text x="16" y="278" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Pre-LN models (Llama, Mistral) move it in front of each sub-layer, off the skip path.</text>
+</svg>
 
 The original 2017 Transformer (Vaswani et al.) applied normalization after the addition, in a **Post-LN** layout:
 
@@ -126,15 +147,26 @@ This simple formulation confers three profound engineering benefits:
 
 Think of a residual block as a parallel circuit or dual-track railway. The input $x$ splits into two parallel tracks:
 
-```
-          x ─────────────────────────────┐ (Skip / Identity Track - Express Line)
-          │                              │
-          ▼                              ▼
-      ┌───────┐                      ┌───────┐
-      │ F(x)  │ ───────────────────> │   +   │ ───> y = x + F(x)
-      └───────┘                      └───────┘
-   (Processing Track)
-```
+<svg viewBox="0 0 560 150" role="img" aria-label="A residual block as two parallel tracks. The input x goes through the processing track F(x) and, at the same time, along an identity express line that skips it; the two meet at a sum and the output is y = x plus F(x)." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="sk-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="sk-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+</defs>
+<rect x="16" y="70" width="56" height="40" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="44.0" y="94.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">x</text>
+<path d="M72 82 C 100 82, 100 36, 130 36 H 352 C 380 36, 380 74, 380 76" marker-end="url(#sk-g)" style="fill:none;stroke:var(--c-success);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="240" y="28" text-anchor="middle" style="fill:var(--c-success);font-size:12px;font-weight:600">skip / identity track: the express line</text>
+<line x1="72" y1="98" x2="168" y2="98" marker-end="url(#sk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="170" y="76" width="150" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="245.0" y="94.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">F(x)</text>
+<text x="245.0" y="110.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">processing track</text>
+<line x1="320" y1="98" x2="365" y2="98" marker-end="url(#sk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="380" cy="98" r="13" style="fill:var(--c-surface);stroke:var(--c-text-mute);stroke-width:1.4"/><text x="380" y="103.5" text-anchor="middle" style="fill:var(--c-text);font-size:16px;font-weight:700">+</text>
+<line x1="393" y1="98" x2="420" y2="98" marker-end="url(#sk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="76" width="122" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="483.0" y="102.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">y = x + F(x)</text>
+<text x="16" y="142" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">However noisy F(x) gets, x always has an untouched path to the output.</text>
+</svg>
 
 No matter how non-linear, saturating, or noisy the function $\mathcal{F}(x)$ becomes, a clean path exists for input $x$ to reach the output unchanged.
 
@@ -204,6 +236,72 @@ Assuming $f'(x) \approx 0.5$ (each transformation halves the signal):
 | **10** | 0.00098 | 57.66 |
 | **20** | **0.00000095** | **3325.26** |
 
+The same numbers on a log axis, over every layer from 0 to 20:
+
+<svg viewBox="0 0 560 316" role="img" aria-label="Line chart on a logarithmic axis of how much gradient survives after 0 to 20 layers. Without residual connections, a per-layer factor of 0.9 leaves 0.122 after 20 layers, 0.7 leaves 0.0008, and 0.5 leaves 9.5 times 10 to the minus 7, under one millionth. With a residual connection the factor becomes 1 + 0.5 and the signal grows to about 3,325 instead: no vanishing, but a growth that normalization has to tame." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<line x1="66" y1="240.0" x2="420" y2="240.0" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="244.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻⁷</text>
+<line x1="66" y1="220.9" x2="420" y2="220.9" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="224.9090909090909" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻⁶</text>
+<line x1="66" y1="201.8" x2="420" y2="201.8" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="205.8181818181818" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻⁵</text>
+<line x1="66" y1="182.7" x2="420" y2="182.7" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="186.72727272727272" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻⁴</text>
+<line x1="66" y1="163.6" x2="420" y2="163.6" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="167.63636363636363" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻³</text>
+<line x1="66" y1="144.5" x2="420" y2="144.5" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="148.54545454545456" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻²</text>
+<line x1="66" y1="125.5" x2="420" y2="125.5" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="129.45454545454544" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁻¹</text>
+<line x1="66" y1="106.4" x2="420" y2="106.4" style="stroke:var(--c-border);stroke-width:1.2"/>
+<text x="60" y="110.36363636363637" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">1</text>
+<line x1="66" y1="87.3" x2="420" y2="87.3" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="91.27272727272728" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10¹</text>
+<line x1="66" y1="68.2" x2="420" y2="68.2" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="72.18181818181819" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10²</text>
+<line x1="66" y1="49.1" x2="420" y2="49.1" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="53.09090909090909" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10³</text>
+<line x1="66" y1="30.0" x2="420" y2="30.0" style="stroke:var(--c-border);stroke-width:0.7"/>
+<text x="60" y="34.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">10⁴</text>
+<text x="66.0" y="256" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">0</text>
+<text x="154.5" y="256" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">5</text>
+<text x="243.0" y="256" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">10</text>
+<text x="331.5" y="256" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">15</text>
+<text x="420.0" y="256" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">20</text>
+<text x="243.0" y="272" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">layers the gradient travels back through</text>
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">surviving gradient (log scale)</text>
+<path d="M66.0 106.4 L83.7 103.0 L101.4 99.6 L119.1 96.3 L136.8 92.9 L154.5 89.6 L172.2 86.2 L189.9 82.8 L207.6 79.5 L225.3 76.1 L243.0 72.7 L260.7 69.4 L278.4 66.0 L296.1 62.7 L313.8 59.3 L331.5 55.9 L349.2 52.6 L366.9 49.2 L384.6 45.9 L402.3 42.5 L420.0 39.1" style="fill:none;stroke:var(--c-success);stroke-width:2"/>
+<circle cx="154.5" cy="89.6" r="4" style="fill:var(--c-success);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="243.0" cy="72.7" r="4" style="fill:var(--c-success);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="331.5" cy="55.9" r="4" style="fill:var(--c-success);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="420.0" cy="39.1" r="4" style="fill:var(--c-success);stroke:var(--c-bg);stroke-width:2"/>
+<text x="428.0" y="43.128791996921706" text-anchor="start" style="fill:var(--c-text);font-size:11.5px;font-weight:600">1 + 0.5 (residual)</text>
+<text x="428.0" y="57.128791996921706" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">3,325</text>
+<path d="M66.0 106.4 L83.7 107.2 L101.4 108.1 L119.1 109.0 L136.8 109.9 L154.5 110.7 L172.2 111.6 L189.9 112.5 L207.6 113.4 L225.3 114.2 L243.0 115.1 L260.7 116.0 L278.4 116.8 L296.1 117.7 L313.8 118.6 L331.5 119.5 L349.2 120.3 L366.9 121.2 L384.6 122.1 L402.3 123.0 L420.0 123.8" style="fill:none;stroke:var(--c-accent);stroke-width:2"/>
+<circle cx="154.5" cy="110.7" r="4" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="243.0" cy="115.1" r="4" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="331.5" cy="119.5" r="4" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="420.0" cy="123.8" r="4" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<text x="428.0" y="127.83467821407595" text-anchor="start" style="fill:var(--c-text);font-size:11.5px;font-weight:600">r = 0.9</text>
+<text x="428.0" y="141.83467821407595" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">0.122</text>
+<path d="M66.0 106.4 L83.7 109.3 L101.4 112.3 L119.1 115.2 L136.8 118.2 L154.5 121.1 L172.2 124.1 L189.9 127.1 L207.6 130.0 L225.3 133.0 L243.0 135.9 L260.7 138.9 L278.4 141.9 L296.1 144.8 L313.8 147.8 L331.5 150.7 L349.2 153.7 L366.9 156.6 L384.6 159.6 L402.3 162.6 L420.0 165.5" style="fill:none;stroke:var(--c-warn);stroke-width:2"/>
+<circle cx="154.5" cy="121.1" r="4" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="243.0" cy="135.9" r="4" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="331.5" cy="150.7" r="4" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="420.0" cy="165.5" r="4" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:2"/>
+<text x="428.0" y="169.5080210854656" text-anchor="start" style="fill:var(--c-text);font-size:11.5px;font-weight:600">r = 0.7</text>
+<text x="428.0" y="183.5080210854656" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">0.0008</text>
+<path d="M66.0 106.4 L83.7 112.1 L101.4 117.9 L119.1 123.6 L136.8 129.4 L154.5 135.1 L172.2 140.8 L189.9 146.6 L207.6 152.3 L225.3 158.1 L243.0 163.8 L260.7 169.6 L278.4 175.3 L296.1 181.1 L313.8 186.8 L331.5 192.6 L349.2 198.3 L366.9 204.1 L384.6 209.8 L402.3 215.6 L420.0 221.3" style="fill:none;stroke:var(--c-danger);stroke-width:2"/>
+<circle cx="154.5" cy="135.1" r="4" style="fill:var(--c-danger);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="243.0" cy="163.8" r="4" style="fill:var(--c-danger);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="331.5" cy="192.6" r="4" style="fill:var(--c-danger);stroke:var(--c-bg);stroke-width:2"/>
+<circle cx="420.0" cy="221.3" r="4" style="fill:var(--c-danger);stroke:var(--c-bg);stroke-width:2"/>
+<text x="428.0" y="225.30236198079282" text-anchor="start" style="fill:var(--c-text);font-size:11.5px;font-weight:600">r = 0.5</text>
+<text x="428.0" y="239.30236198079282" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">9.5×10⁻⁷</text>
+<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Without the skip path the signal dies geometrically.</text>
+<text x="16" y="308" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">With it, the signal can only grow, and LayerNorm reins that growth in.</text>
+</svg>
+
 The residual connection prevents gradient extinction. However, $(1 + 0.5)^{20} \approx 3325$ exposes another danger: **Exploding Gradients** and runaway variance accumulation.
 
 The governor that tames this explosive growth across successive additions is the residual connection's essential partner: **Layer Normalization**.
@@ -271,13 +369,13 @@ RMSNorm saves 10% to 50% GPU memory bandwidth by eliminating the extra memory pa
 
 ### Skip addition: Combining Z with the attention output
 
-Recall our concrete tensors from Parts 4, 5, and 6. For $d_{\text{model}} = 4$ and token 1 (`"köpek"`):
+Recall our concrete tensors from Parts 4, 5, and 6. For $d_{\text{model}} = 4$ and token 1 (`"dog"`):
 
 Input embedding vector:
 $$z_1 = [0.210, \; 0.820, \; 0.130, \; 0.440]$$
 
 Post-attention output vector:
-$$o_1 = [1.005, \; 1.041, \; 1.012, \; 0.813]$$
+$$o_1 = [1.005, \; 1.041, \; 1.012, \; 0.976]$$
 
 **Step 1: Skip Addition ($r_1 = z_1 + o_1$):**
 
@@ -287,9 +385,9 @@ $$r_1[1] = 0.820 + 1.041 = 1.861$$
 
 $$r_1[2] = 0.130 + 1.012 = 1.142$$
 
-$$r_1[3] = 0.440 + 0.813 = 1.253$$
+$$r_1[3] = 0.440 + 0.976 = 1.416$$
 
-$$r_1 = [1.215, \; 1.861, \; 1.142, \; 1.253]$$
+$$r_1 = [1.215, \; 1.861, \; 1.142, \; 1.416]$$
 
 ### Step-by-step LayerNorm arithmetic: Mean centering and variance scaling
 
@@ -297,35 +395,35 @@ Passing $r_1$ through LayerNorm ($\gamma = [1, 1, 1, 1]$, $\beta = [0, 0, 0, 0]$
 
 **1. Mean ($\mu$):**
 
-$$\mu = \frac{1.215 + 1.861 + 1.142 + 1.253}{4} = \frac{5.471}{4} = 1.36775$$
+$$\mu = \frac{1.215 + 1.861 + 1.142 + 1.416}{4} = \frac{5.634}{4} = 1.4085$$
 
 **2. Squared deviations and Variance ($\sigma^2$):**
 
-$$(1.215 - 1.36775)^2 = (-0.15275)^2 \approx 0.02333$$
+$$(1.215 - 1.4085)^2 = (-0.1935)^2 \approx 0.03744$$
 
-$$(1.861 - 1.36775)^2 = (0.49325)^2 \approx 0.24330$$
+$$(1.861 - 1.4085)^2 = (0.4525)^2 \approx 0.20476$$
 
-$$(1.142 - 1.36775)^2 = (-0.22575)^2 \approx 0.05096$$
+$$(1.142 - 1.4085)^2 = (-0.2665)^2 \approx 0.07102$$
 
-$$(1.253 - 1.36775)^2 = (-0.11475)^2 \approx 0.01317$$
+$$(1.416 - 1.4085)^2 = (0.0075)^2 \approx 0.00006$$
 
-$$\sigma^2 = \frac{0.02333 + 0.24330 + 0.05096 + 0.01317}{4} = \frac{0.33076}{4} = 0.08269$$
+$$\sigma^2 = \frac{0.03744 + 0.20476 + 0.07102 + 0.00006}{4} = \frac{0.31328}{4} = 0.07832$$
 
 Standard deviation denominator:
 
-$$\sqrt{\sigma^2 + \epsilon} = \sqrt{0.08269 + 0.00001} = \sqrt{0.08270} \approx 0.28758$$
+$$\sqrt{\sigma^2 + \epsilon} = \sqrt{0.07832 + 0.00001} = \sqrt{0.07833} \approx 0.27987$$
 
 **3. Normalized Intermediate Representation ($h_1$):**
 
-$$h_1[0] = \frac{1.215 - 1.36775}{0.28758} = \frac{-0.15275}{0.28758} \approx -0.531$$
+$$h_1[0] = \frac{1.215 - 1.4085}{0.27987} = \frac{-0.1935}{0.27987} \approx -0.691$$
 
-$$h_1[1] = \frac{1.861 - 1.36775}{0.28758} = \frac{0.49325}{0.28758} \approx 1.715$$
+$$h_1[1] = \frac{1.861 - 1.4085}{0.27987} = \frac{0.4525}{0.27987} \approx 1.617$$
 
-$$h_1[2] = \frac{1.142 - 1.36775}{0.28758} = \frac{-0.22575}{0.28758} \approx -0.785$$
+$$h_1[2] = \frac{1.142 - 1.4085}{0.27987} = \frac{-0.2665}{0.27987} \approx -0.952$$
 
-$$h_1[3] = \frac{1.253 - 1.36775}{0.28758} = \frac{-0.11475}{0.28758} \approx -0.399$$
+$$h_1[3] = \frac{1.416 - 1.4085}{0.27987} = \frac{0.0075}{0.27987} \approx 0.027$$
 
-$$h_1 = [-0.531, \; 1.715, \; -0.785, \; -0.399]$$
+$$h_1 = [-0.691, \; 1.617, \; -0.952, \; 0.027]$$
 
 This $h_1$ vector has zero mean and unit variance. Unchecked growth has been reined in, preparing the representation for the FFN.
 
@@ -347,14 +445,45 @@ $$\text{head}_i = \sum_{j=1}^N A_{ij} v_j$$
 
 Geometrically, every output vector is trapped inside the **Convex Hull** formed by the input Value vectors $\{v_1, v_2, \dots, v_N\}$. It cannot generate points outside this boundary.
 
-```
-       v2 ●
-         / \
-        /   \     ● head_i (INSIDE the Convex Hull - purely an interpolation)
-       /  *  \
-  v1  ●───────● v3
-                 ✕ Novel conceptual coordinates (Impossible to reach!)
-```
+Here is that barrier with real numbers: the 2-dimensional value vectors and outputs of head 1 from Part 6:
+
+<svg viewBox="0 0 560 300" role="img" aria-label="Convex hull of attention, drawn with real 2-dimensional numbers from Part 6, head 1. The value vectors v dog at 0.34, 0.95, v cat at 1.32, 0.53 and v chased at 1.20, 1.41 form a triangle. Head 1&#x27;s outputs, 0.870, 0.723 for cat and 1.064, 1.105 for chased, both fall inside it, because softmax weights are non-negative and sum to 1. A point such as 1.45, 0.25 lies outside and no attention weighting can produce it; the FFN, with its non-linearity, can." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="hl-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<line x1="40" y1="270" x2="360" y2="270" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="40" y1="270" x2="40" y2="20" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="140.0" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">0.5</text>
+<text x="32" y="189.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">0.5</text>
+<text x="240.0" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">1.0</text>
+<text x="32" y="104.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">1.0</text>
+<text x="340.0" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">1.5</text>
+<text x="32" y="19.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px">1.5</text>
+<polygon points="108.0,108.5 304.0,179.9 280.0,30.3" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.5"/>
+<circle cx="108.0" cy="108.5" r="5" style="fill:var(--c-accent)"/>
+<text x="108.0" y="126.5" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-family:var(--font-mono)">v_dog</text>
+<circle cx="304.0" cy="179.9" r="5" style="fill:var(--c-accent)"/>
+<text x="304.0" y="197.9" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-family:var(--font-mono)">v_cat</text>
+<circle cx="280.0" cy="30.3" r="5" style="fill:var(--c-accent)"/>
+<text x="280.0" y="20.3" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-family:var(--font-mono)">v_chased</text>
+<circle cx="214.0" cy="147.1" r="4.5" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="222.0" y="151.1" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">o_cat</text>
+<circle cx="252.8" cy="82.2" r="4.5" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="260.8" y="86.2" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">o_chased</text>
+<circle cx="330.0" cy="227.5" r="6" style="fill:none;stroke:var(--c-danger);stroke-width:1.8;stroke-dasharray:3 2"/>
+<text x="320.0" y="231.5" text-anchor="end" style="fill:var(--c-danger);font-size:11px">unreachable</text>
+<text x="384" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">a weighted average</text>
+<text x="384" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">weights ≥ 0, sum to 1,</text>
+<text x="384" y="73" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">so every output stays</text>
+<text x="384" y="88" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">inside the triangle</text>
+<text x="384" y="140" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">purple: real outputs</text>
+<text x="384" y="158" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">head 1, Part 6:</text>
+<text x="384" y="173" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">both land inside</text>
+<text x="384" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">the hull of v</text>
+<text x="384" y="226" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:600">FFN breaks out</text>
+<text x="384" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">non-linearity reaches</text>
+<text x="384" y="259" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">points no mixture can</text>
+</svg>
 
 ### The paint-mixing analogy and the non-linear XOR dilemma
 
@@ -397,15 +526,40 @@ What purpose does this massive capacity serve? Geva et al. (2021, *Transformer F
 2. **The non-linear activation $\sigma$ acts as a THRESHOLD FILTER:** Suppresses irrelevant keys (e.g., zeroing out negatives via ReLU), letting only active keys pass.
 3. **$W_2$ acts as VALUES:** Columns corresponding to active keys inject stored factual information into the residual stream, such as adding the vector for *"Paris"*.
 
-```
-Token Input ───> [ W1 Projection: Key Matching ]
-                        │
-                        ▼
-                 [ Activation: Threshold Filter ]
-                        │ (Only matched keys fire)
-                        ▼
-                 [ W2 Projection: Value Injection ] ───> Fact added to Residual Stream
-```
+<svg viewBox="0 0 560 210" role="img" aria-label="The FFN as an associative key-value memory. The token&#x27;s vector is read from the residual stream; W1 projection matches it against keys; the activation acts as a threshold filter so only matched keys fire, in our walkthrough neurons 1, 2 and 4 of six; W2 projection injects the corresponding values, and the fact is added back into the residual stream." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="kv-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="kv-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="20" width="92" height="56" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="62.0" y="44.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token</text>
+<text x="62.0" y="60.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">input</text>
+<line x1="108" y1="48" x2="125" y2="48" marker-end="url(#kv-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="126" y="20" width="130" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="191.0" y="44.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">W₁ projection</text>
+<text x="191.0" y="60.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">key matching</text>
+<line x1="256" y1="48" x2="273" y2="48" marker-end="url(#kv-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="274" y="20" width="130" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="339.0" y="44.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">activation</text>
+<text x="339.0" y="60.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">threshold filter</text>
+<line x1="404" y1="48" x2="421" y2="48" marker-end="url(#kv-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="422" y="20" width="122" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="483.0" y="44.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">W₂ projection</text>
+<text x="483.0" y="60.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">value injection</text>
+<circle cx="296" cy="94" r="6" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:1"/>
+<circle cx="313" cy="94" r="6" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:1"/>
+<circle cx="330" cy="94" r="6" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:1"/>
+<circle cx="347" cy="94" r="6" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:1"/>
+<circle cx="364" cy="94" r="6" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:1"/>
+<circle cx="381" cy="94" r="6" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:1"/>
+<text x="339" y="116" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">our walkthrough: 3 of 6 fire</text>
+<rect x="16" y="138" width="528" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1"/>
+<text x="280" y="155" text-anchor="middle" style="fill:var(--c-text);font-size:12px">residual stream</text>
+<line x1="62" y1="138" x2="62" y2="78" marker-end="url(#kv-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<line x1="483" y1="78" x2="483" y2="136" marker-end="url(#kv-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="491" y="112" text-anchor="start" style="fill:var(--c-accent-2);font-size:11px">fact added</text>
+<text x="16" y="192" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Keys decide which memories wake up; values decide what they write back.</text>
+</svg>
 
 Meng et al. (2022, ROME) exploited this exact key-value structure to surgically edit factual memories in GPT models, updating $W_1$ and $W_2$ to reassign facts like changing the Eiffel Tower's location from Paris to Rome.
 
@@ -449,29 +603,29 @@ Where $\text{Swish}(z) = z \cdot \text{sigmoid}(\beta z)$. SwiGLU uses three mat
 
 Taking our normalized vector from Step 1:
 
-$$h_1 = [-0.531, \; 1.715, \; -0.785, \; -0.399] \in \mathbb{R}^4$$
+$$h_1 = [-0.691, \; 1.617, \; -0.952, \; 0.027] \in \mathbb{R}^4$$
 
 Setting up an FFN with hidden dimension $d_{\text{ff}} = 6$ ($W_1 \in \mathbb{R}^{6 \times 4}$, $b_1 \in \mathbb{R}^6$):
 
 $$W_1 = \begin{bmatrix} 0.2 & -0.1 & 0.3 & 0.4 \\ -0.5 & 0.2 & 0.1 & 0.0 \\ 0.1 & 0.3 & -0.2 & 0.2 \\ 0.4 & 0.1 & 0.0 & -0.3 \\ -0.2 & 0.5 & 0.4 & 0.1 \\ 0.3 & -0.4 & 0.2 & 0.6 \end{bmatrix}, \quad b_1 = \begin{bmatrix} 0.1 \\ 0.1 \\ 0.1 \\ 0.1 \\ 0.1 \\ 0.1 \end{bmatrix}$$
 
 **1. Projection and Bias Addition ($u = W_1 h_1 + b_1$):**
-- $u_0 = 0.2(-0.531) - 0.1(1.715) + 0.3(-0.785) + 0.4(-0.399) + 0.1 \approx -0.573$
-- $u_1 = -0.5(-0.531) + 0.2(1.715) + 0.1(-0.785) + 0.0(-0.399) + 0.1 \approx 0.630$
-- $u_2 = 0.1(-0.531) + 0.3(1.715) - 0.2(-0.785) + 0.2(-0.399) + 0.1 \approx 0.639$
-- $u_3 = 0.4(-0.531) + 0.1(1.715) + 0.0(-0.785) - 0.3(-0.399) + 0.1 \approx 0.179$
-- $u_4 = -0.2(-0.531) + 0.5(1.715) + 0.4(-0.785) + 0.1(-0.399) + 0.1 \approx 0.710$
-- $u_5 = 0.3(-0.531) - 0.4(1.715) + 0.2(-0.785) + 0.6(-0.399) + 0.1 \approx -1.142$
+- $u_0 = 0.2(-0.691) - 0.1(1.617) + 0.3(-0.952) + 0.4(0.027) + 0.1 \approx -0.475$
+- $u_1 = -0.5(-0.691) + 0.2(1.617) + 0.1(-0.952) + 0.0(0.027) + 0.1 \approx 0.674$
+- $u_2 = 0.1(-0.691) + 0.3(1.617) - 0.2(-0.952) + 0.2(0.027) + 0.1 \approx 0.712$
+- $u_3 = 0.4(-0.691) + 0.1(1.617) + 0.0(-0.952) - 0.3(0.027) + 0.1 \approx -0.023$
+- $u_4 = -0.2(-0.691) + 0.5(1.617) + 0.4(-0.952) + 0.1(0.027) + 0.1 \approx 0.669$
+- $u_5 = 0.3(-0.691) - 0.4(1.617) + 0.2(-0.952) + 0.6(0.027) + 0.1 \approx -0.928$
 
-$$u = [-0.573, \; 0.630, \; 0.639, \; 0.179, \; 0.710, \; -1.142]$$
+$$u = [-0.475, \; 0.674, \; 0.712, \; -0.023, \; 0.669, \; -0.928]$$
 
 **2. Non-linear Activation ($a = \text{ReLU}(u)$):**
 
 Negative components are zeroed out, letting matching keys fire:
 
-$$a = [0.000, \; 0.630, \; 0.639, \; 0.179, \; 0.710, \; 0.000]$$
+$$a = [0.000, \; 0.674, \; 0.712, \; 0.000, \; 0.669, \; 0.000]$$
 
-Neurons 0 and 5 are suppressed; neurons 1, 2, 3, and 4 fire.
+Neurons 0, 3, and 5 are suppressed; neurons 1, 2, and 4 fire. Neuron 3 is a near miss: its pre-activation is only $-0.023$, and ReLU cuts it to exactly zero.
 
 **3. Second Projection ($f = W_2 a + b_2$):**
 
@@ -480,40 +634,161 @@ Given $W_2 \in \mathbb{R}^{4 \times 6}$ and $b_2 = [0.05, \; 0.05, \; 0.05, \; 0
 $$W_2 = \begin{bmatrix} 0.2 & 0.1 & -0.3 & 0.4 & 0.2 & -0.1 \\ -0.2 & 0.3 & 0.2 & -0.1 & 0.5 & 0.4 \\ 0.1 & -0.4 & 0.3 & 0.2 & -0.2 & 0.1 \\ 0.5 & 0.2 & -0.1 & 0.3 & 0.1 & -0.3 \end{bmatrix}$$
 
 Multiplying $a$ by $W_2$ and adding $b_2$:
-- $f[0] = 0.2(0) + 0.1(0.630) - 0.3(0.639) + 0.4(0.179) + 0.2(0.710) - 0.1(0) + 0.05 \approx 0.135$
-- $f[1] = -0.2(0) + 0.3(0.630) + 0.2(0.639) - 0.1(0.179) + 0.5(0.710) + 0.4(0) + 0.05 \approx 0.704$
-- $f[2] = 0.1(0) - 0.4(0.630) + 0.3(0.639) + 0.2(0.179) - 0.2(0.710) + 0.1(0) + 0.05 \approx -0.117$
-- $f[3] = 0.5(0) + 0.2(0.630) - 0.1(0.639) + 0.3(0.179) + 0.1(0.710) - 0.3(0) + 0.05 \approx 0.237$
+- $f[0] = 0.2(0) + 0.1(0.674) - 0.3(0.712) + 0.4(0) + 0.2(0.669) - 0.1(0) + 0.05 \approx 0.038$
+- $f[1] = -0.2(0) + 0.3(0.674) + 0.2(0.712) - 0.1(0) + 0.5(0.669) + 0.4(0) + 0.05 \approx 0.729$
+- $f[2] = 0.1(0) - 0.4(0.674) + 0.3(0.712) + 0.2(0) - 0.2(0.669) + 0.1(0) + 0.05 \approx -0.140$
+- $f[3] = 0.5(0) + 0.2(0.674) - 0.1(0.712) + 0.3(0) + 0.1(0.669) - 0.3(0) + 0.05 \approx 0.180$
 
-$$f = [0.135, \; 0.704, \; -0.117, \; 0.237]$$
+$$f = [0.038, \; 0.729, \; -0.140, \; 0.180]$$
 
 ### Second residual addition and the final block output H2
 
 **1. Second Skip Addition ($r_2 = h_1 + f$):**
 
-$$r_2 = [-0.531 + 0.135, \; 1.715 + 0.704, \; -0.785 - 0.117, \; -0.399 + 0.237]$$
+$$r_2 = [-0.691 + 0.038, \; 1.617 + 0.729, \; -0.952 - 0.140, \; 0.027 + 0.180]$$
 
-$$r_2 = [-0.396, \; 2.419, \; -0.902, \; -0.162]$$
+$$r_2 = [-0.653, \; 2.346, \; -1.092, \; 0.207]$$
 
 **2. Second Layer Normalization ($H_2 = \text{LayerNorm}(r_2)$):**
 
-- Mean: $\mu_2 = \frac{-0.396 + 2.419 - 0.902 - 0.162}{4} = \frac{0.959}{4} \approx 0.240$
-- Variance: $\sigma_2^2 = \frac{(-0.636)^2 + (2.179)^2 + (-1.142)^2 + (-0.402)^2}{4} = \frac{0.404 + 4.748 + 1.304 + 0.162}{4} \approx 1.655$
-- Standard deviation: $\sqrt{1.655} \approx 1.286$
+- Mean: $\mu_2 = \frac{-0.653 + 2.346 - 1.092 + 0.207}{4} = \frac{0.808}{4} = 0.202$
+- Variance: $\sigma_2^2 = \frac{(-0.855)^2 + (2.144)^2 + (-1.294)^2 + (0.005)^2}{4} = \frac{0.731 + 4.597 + 1.674 + 0.000}{4} \approx 1.751$
+- Standard deviation: $\sqrt{1.751} \approx 1.323$
 
 Standardized output values:
 
-$$H_2[0] = \frac{-0.396 - 0.240}{1.286} \approx -0.495$$
+$$H_2[0] = \frac{-0.653 - 0.202}{1.323} \approx -0.646$$
 
-$$H_2[1] = \frac{2.419 - 0.240}{1.286} \approx 1.694$$
+$$H_2[1] = \frac{2.346 - 0.202}{1.323} \approx 1.621$$
 
-$$H_2[2] = \frac{-0.902 - 0.240}{1.286} \approx -0.888$$
+$$H_2[2] = \frac{-1.092 - 0.202}{1.323} \approx -0.978$$
 
-$$H_2[3] = \frac{-0.162 - 0.240}{1.286} \approx -0.313$$
+$$H_2[3] = \frac{0.207 - 0.202}{1.323} \approx 0.004$$
 
-$$H_2 = [-0.495, \; 1.694, \; -0.888, \; -0.313]$$
+$$H_2 = [-0.646, \; 1.621, \; -0.978, \; 0.004]$$
 
-This $H_2$ vector is the completed output of the Transformer block. Token 1 (`"köpek"`) gathered context through attention, preserved its identity through the skip highway, stabilized via LayerNorm, broke through the convex hull barrier via the FFN, and is ready for the subsequent block.
+This $H_2$ vector is the completed output of the Transformer block. Token 1 (`"dog"`) gathered context through attention, preserved its identity through the skip highway, stabilized via LayerNorm, broke through the convex hull barrier via the FFN, and is ready for the subsequent block.
+
+The whole trip of token 1 through the block, on one page:
+
+<svg viewBox="0 0 560 420" role="img" aria-label="Token 1, dog, through one transformer block, as nine 4-number strips with the values from the text. z1 0.210, 0.820, 0.130, 0.440 plus the attention output o1 1.005, 1.041, 1.012, 0.976 gives r1 1.215, 1.861, 1.142, 1.416. LayerNorm turns it into h1 -0.691, 1.617, -0.952, 0.027. The FFN widens to six pre-activations u -0.475, 0.674, 0.712, -0.023, 0.669, -0.928; ReLU zeroes neurons 0, 3 and 5. W2 brings it back to f 0.038, 0.729, -0.140, 0.180. The second skip gives r2 -0.653, 2.346, -1.092, 0.207, and LayerNorm gives the block output H2 -0.646, 1.621, -0.978, 0.004." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="tb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="tb-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+</defs>
+<text x="16" y="27" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">z₁</text>
+<text x="16" y="41" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">input</text>
+<rect x="150" y="16" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.18"/>
+<text x="171.5" y="31" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.210</text>
+<rect x="196" y="16" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.35"/>
+<text x="217.5" y="31" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.820</text>
+<rect x="242" y="16" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.16"/>
+<text x="263.5" y="31" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.130</text>
+<rect x="288" y="16" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.24"/>
+<text x="309.5" y="31" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.440</text>
+<text x="16" y="61" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">+ o₁</text>
+<text x="16" y="75" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">attention out</text>
+<rect x="150" y="50" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.40"/>
+<text x="171.5" y="65" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.005</text>
+<rect x="196" y="50" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.41"/>
+<text x="217.5" y="65" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.041</text>
+<rect x="242" y="50" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.40"/>
+<text x="263.5" y="65" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.012</text>
+<rect x="288" y="50" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.39"/>
+<text x="309.5" y="65" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.976</text>
+<text x="16" y="95" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">r₁</text>
+<text x="16" y="109" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">1st skip</text>
+<rect x="150" y="84" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.46"/>
+<text x="171.5" y="99" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.215</text>
+<rect x="196" y="84" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.64"/>
+<text x="217.5" y="99" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.861</text>
+<rect x="242" y="84" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.44"/>
+<text x="263.5" y="99" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.142</text>
+<rect x="288" y="84" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.52"/>
+<text x="309.5" y="99" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.416</text>
+<text x="16" y="139" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">h₁</text>
+<text x="16" y="153" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">LayerNorm</text>
+<rect x="150" y="128" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.31"/>
+<text x="171.5" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.691</text>
+<rect x="196" y="128" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.57"/>
+<text x="217.5" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.617</text>
+<rect x="242" y="128" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.39"/>
+<text x="263.5" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.952</text>
+<rect x="288" y="128" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.13"/>
+<text x="309.5" y="143" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.027</text>
+<text x="16" y="183" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">u</text>
+<text x="16" y="197" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">W₁h₁ + b₁ (×6)</text>
+<rect x="150" y="172" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.25"/>
+<text x="171.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.475</text>
+<rect x="196" y="172" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.31"/>
+<text x="217.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.674</text>
+<rect x="242" y="172" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.32"/>
+<text x="263.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.712</text>
+<rect x="288" y="172" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.13"/>
+<text x="309.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.023</text>
+<rect x="334" y="172" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.31"/>
+<text x="355.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.669</text>
+<rect x="380" y="172" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.38"/>
+<text x="401.5" y="187" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.928</text>
+<text x="16" y="217" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">ReLU</text>
+<text x="16" y="231" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">3 of 6 fire</text>
+<rect x="150" y="206" width="43" height="22" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1;stroke-dasharray:3 2"/>
+<text x="171.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.000</text>
+<rect x="196" y="206" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.31"/>
+<text x="217.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.674</text>
+<rect x="242" y="206" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.32"/>
+<text x="263.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.712</text>
+<rect x="288" y="206" width="43" height="22" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1;stroke-dasharray:3 2"/>
+<text x="309.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.000</text>
+<rect x="334" y="206" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.31"/>
+<text x="355.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.669</text>
+<rect x="380" y="206" width="43" height="22" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1;stroke-dasharray:3 2"/>
+<text x="401.5" y="221" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.000</text>
+<text x="16" y="261" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">f</text>
+<text x="16" y="275" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">W₂a + b₂</text>
+<rect x="150" y="250" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.13"/>
+<text x="171.5" y="265" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.038</text>
+<rect x="196" y="250" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.32"/>
+<text x="217.5" y="265" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.729</text>
+<rect x="242" y="250" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.16"/>
+<text x="263.5" y="265" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.140</text>
+<rect x="288" y="250" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.17"/>
+<text x="309.5" y="265" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.180</text>
+<text x="16" y="305" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">r₂ = h₁ + f</text>
+<text x="16" y="319" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">2nd skip</text>
+<rect x="150" y="294" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.30"/>
+<text x="171.5" y="309" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.653</text>
+<rect x="196" y="294" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.75"/>
+<text x="217.5" y="309" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">2.346</text>
+<rect x="242" y="294" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.43"/>
+<text x="263.5" y="309" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-1.092</text>
+<rect x="288" y="294" width="43" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:0.18"/>
+<text x="309.5" y="309" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.207</text>
+<text x="16" y="349" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600;font-family:var(--font-mono)">H₂</text>
+<text x="16" y="363" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">block output</text>
+<rect x="150" y="338" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.30"/>
+<text x="171.5" y="353" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.646</text>
+<rect x="196" y="338" width="43" height="22" rx="3" style="fill:var(--c-success);fill-opacity:0.57"/>
+<text x="217.5" y="353" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">1.621</text>
+<rect x="242" y="338" width="43" height="22" rx="3" style="fill:var(--c-danger);fill-opacity:0.39"/>
+<text x="263.5" y="353" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">-0.978</text>
+<rect x="288" y="338" width="43" height="22" rx="3" style="fill:var(--c-success);fill-opacity:0.12"/>
+<text x="309.5" y="353" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.004</text>
+<path d="M430 16 H438 V106 H430" style="fill:none;stroke:var(--c-accent);stroke-width:1.4"/>
+<text x="446" y="57.0" text-anchor="start" style="fill:var(--c-accent);font-size:11.5px">attention</text>
+<text x="446" y="72.0" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">+ skip</text>
+<path d="M430 128 H438 V228 H430" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.4"/>
+<text x="446" y="174.0" text-anchor="start" style="fill:var(--c-accent-2);font-size:11.5px">FFN up</text>
+<text x="446" y="189.0" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">+ ReLU</text>
+<path d="M430 250 H438 V360 H430" style="fill:none;stroke:var(--c-success);stroke-width:1.4"/>
+<text x="446" y="301.0" text-anchor="start" style="fill:var(--c-success);font-size:11.5px">FFN down,</text>
+<text x="446" y="316.0" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">skip + norm</text>
+<path d="M142 27 C 116 27, 116 95, 142 95" marker-end="url(#tb-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<path d="M142 139 C 110 139, 110 305, 142 305" marker-end="url(#tb-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<text x="16" y="384" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Red = negative. Dashed arcs are the skip paths: each sub-layer only adds a delta to what</text>
+<text x="16" y="400" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">it was given. Neuron 3 misses by 0.023, so ReLU silences it.</text>
+<text x="16" y="416" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Post-LN layout, as in the walkthrough; Llama-style blocks normalize before each sub-layer instead.</text>
+</svg>
 
 ---
 
@@ -572,11 +847,11 @@ import torch.nn as nn
 
 # 1. Input and Attention Output (Tensors from Section 6)
 z1 = torch.tensor([0.210, 0.820, 0.130, 0.440], dtype=torch.float32)
-o1 = torch.tensor([1.005, 1.041, 1.012, 0.813], dtype=torch.float32)
+o1 = torch.tensor([1.005, 1.041, 1.012, 0.976], dtype=torch.float32)
 
 # 2. First Residual Addition
 r1 = z1 + o1
-print(f"Residual 1 (r1): {r1.tolist()}")
+print(f"Residual 1 (r1): {[round(x, 4) for x in r1.tolist()]}")
 
 # 3. First LayerNorm (gamma=1, beta=0, eps=1e-5)
 ln1 = nn.LayerNorm(4, eps=1e-5, elementwise_affine=True)
@@ -629,11 +904,11 @@ print(f"Final Block Output (H2): {[round(x, 4) for x in h2.tolist()]}")
 Executing the verification script produces the following terminal output:
 
 ```text
-Residual 1 (r1): [1.215, 1.861, 1.142, 1.253]
-LayerNorm 1 (h1): [-0.5305, 1.7129, -0.784, -0.3985]
-FFN Output (f): [0.1349, 0.7037, -0.1166, 0.2368]
-Residual 2 (r2): [-0.3956, 2.4166, -0.9006, -0.1617]
-Final Block Output (H2): [-0.4942, 1.6943, -0.8875, -0.3126]
+Residual 1 (r1): [1.215, 1.861, 1.142, 1.416]
+LayerNorm 1 (h1): [-0.6914, 1.6168, -0.9522, 0.0268]
+FFN Output (f): [0.0376, 0.7287, -0.1397, 0.1804]
+Residual 2 (r2): [-0.6538, 2.3455, -1.0919, 0.2072]
+Final Block Output (H2): [-0.6467, 1.6204, -0.9778, 0.0041]
 ```
 
 The absolute error between manual calculations and PyTorch's 32-bit floating-point arithmetic is below $0.001$, confirming the mathematical integrity of the block walkthrough.

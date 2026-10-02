@@ -54,13 +54,32 @@ tek bir vektöre indirger (çoğunlukla ortalamalarını alır — mean pooling)
 normalizasyon ise bu vektörü uzunluğu 1 olacak şekilde birim küreye
 ölçekler — derlemdeki her metin artık aynı kürenin yüzeyinde yaşar:
 
-```mermaid
-flowchart LR
-    A["bulaşık makinem alttan<br>su sızdırıyor"] --> B["token'lar"]
-    B --> C["encoder — tüm token'ları<br>birlikte okur"]
-    C --> D["pooling — çok vektörden<br>tek vektör"]
-    D --> E["1.024 sayı,<br>uzunluk 1"]
-```
+<svg viewBox="0 0 560 160" role="img" aria-label="Bir cümleden tek bir noktaya. bulaşık makinem alttan su sızdırıyor metni token&#x27;lara bölünür. Bir encoder bütün token&#x27;ları attention ile birlikte okur. Pooling token başına çok sayıda vektörü teke indirir. Normalizasyon uzunluğu 1 olan 1.024 sayı bırakır: birim küre üzerinde bir nokta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="en-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-style:italic">“bulaşık makinem alttan su sızdırıyor”</text>
+<path d="M40 30 V48" marker-end="url(#en-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="74.0" y="83.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token&#x27;lar</text>
+<text x="74.0" y="99.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">metin → parçalar</text>
+<line x1="132" y1="87" x2="152" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="154" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="212.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">encoder</text>
+<text x="212.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tüm token&#x27;ları</text>
+<text x="212.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">birlikte okur</text>
+<line x1="270" y1="87" x2="290" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="292" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="350.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">pooling</text>
+<text x="350.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">çok vektörden</text>
+<text x="350.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">tek vektör</text>
+<line x1="408" y1="87" x2="428" y2="87" marker-end="url(#en-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="430" y="52" width="116" height="70" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="488.0" y="75.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embedding</text>
+<text x="488.0" y="91.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1.024 sayı,</text>
+<text x="488.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">uzunluk 1</text>
+<text x="16" y="150" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İçeri bir cümle girer, dışarı birim küre üzerinde tek bir nokta çıkar.</text>
+</svg>
 
 Bir cümle girer, bir nokta çıkar. İlginç soru mekanikte değil —
 noktaların *nereye* gideceğine kimin karar verdiğinde.
@@ -83,6 +102,63 @@ all-MiniLM-L6-v2 tam **1,17 milyar çiftle** böyle eğitildi — geometri
 anlam olur. "Alttan su sızdırıyor" cümlesi hortum paragrafının yanına
 düşer, çünkü milyonlarca gündelik soru, onları cevaplayan resmî
 pasajlara doğru çekilmiştir.
+
+Tek bir eğitim adımının gerçekte neyi optimize ettiği ve bu adımların binlercesinin geride bıraktığı harita:
+
+<svg viewBox="0 0 560 300" role="img" aria-label="Üç çiftlik tek bir batch üzerinde contrastive eğitim: q1 sızıntı sorusu ile p1 tahliye hortumu pasajı, q2 wifi sıfırlama sorusu ile p2 modem kılavuzu, q3 hello ile p3 merhaba. Solda batch&#x27;in sorgulara karşı pasajlardan oluşan 3&#x27;e 3 benzerlik ızgarası: köşegendeki üç hücre, yani gerçek çiftler, yukarı itilir; köşegen dışındaki altı hücre, yani batch&#x27;teki diğer her pasaj, aşağı itilir. Sağda ortaya çıkan harita, birim küre üzerinde: her soru artık kendi pasajının yanında ve diğer çiftlerden uzakta." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">tek bir eğitim batch&#x27;i</text>
+<text x="16" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her q&#x27;nun her p ile benzerliği</text>
+<rect x="92" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="108.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p1</text>
+<rect x="140" y="52" width="32" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="156.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p2</text>
+<rect x="188" y="52" width="32" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="204.0" y="67.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">p3</text>
+<rect x="32" y="97" width="40" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="52.0" y="112.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">q1</text>
+<rect x="84" y="84" width="44" height="44" rx="4" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="106.0" y="112" text-anchor="middle" style="fill:var(--c-success);font-size:16px;font-weight:700">↑</text>
+<rect x="132" y="84" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="154.0" y="112" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="180" y="84" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="202.0" y="112" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="32" y="145" width="40" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="52.0" y="160.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">q2</text>
+<rect x="84" y="132" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="106.0" y="160" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="132" y="132" width="44" height="44" rx="4" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="154.0" y="160" text-anchor="middle" style="fill:var(--c-success);font-size:16px;font-weight:700">↑</text>
+<rect x="180" y="132" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="202.0" y="160" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="32" y="193" width="40" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="52.0" y="208.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">q3</text>
+<rect x="84" y="180" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="106.0" y="208" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="132" y="180" width="44" height="44" rx="4" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="154.0" y="208" text-anchor="middle" style="fill:var(--c-danger);font-size:16px;font-weight:700">↓</text>
+<rect x="180" y="180" width="44" height="44" rx="4" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="202.0" y="208" text-anchor="middle" style="fill:var(--c-success);font-size:16px;font-weight:700">↑</text>
+<rect x="32" y="236" width="12" height="12" rx="2" style="fill:var(--c-success);fill-opacity:.35;stroke:var(--c-success)"/>
+<text x="50" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gerçek çift: yaklaştır</text>
+<rect x="32" y="256" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger)"/>
+<text x="50" y="266" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">batch&#x27;in geri kalanı: uzaklaştır</text>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">geride bıraktığı harita</text>
+<text x="300" y="39" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">birim küre üzerinde normalize noktalar</text>
+<circle cx="420" cy="136" r="66" style="fill:none;stroke:var(--c-border);stroke-width:1.2;stroke-dasharray:4 4"/>
+<circle cx="362.8" cy="103.0" r="5.5" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="349.0" y="99.0" text-anchor="end" style="fill:var(--c-text);font-size:12px">q1</text>
+<circle cx="377.6" cy="85.4" r="5.5" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="367.3" y="77.2" text-anchor="end" style="fill:var(--c-text);font-size:12px">p1</text>
+<circle cx="477.2" cy="103.0" r="5.5" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="491.0" y="99.0" text-anchor="start" style="fill:var(--c-text);font-size:12px">q2</text>
+<circle cx="485.0" cy="124.5" r="5.5" style="fill:var(--c-warn);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="500.8" y="125.8" text-anchor="start" style="fill:var(--c-text);font-size:12px">p2</text>
+<circle cx="437.1" cy="199.8" r="5.5" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="441.2" y="219.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px">q3</text>
+<circle cx="414.2" cy="201.7" r="5.5" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:1.5"/>
+<text x="412.9" y="221.7" text-anchor="middle" style="fill:var(--c-text);font-size:12px">p3</text>
+<circle cx="306" cy="232" r="4.5" style="fill:var(--c-accent)"/>
+<text x="316" y="236" text-anchor="start" style="fill:var(--c-text);font-size:12px">q1 sızıntı?  ↔  p1 hortum</text>
+<circle cx="306" cy="250" r="4.5" style="fill:var(--c-warn)"/>
+<text x="316" y="254" text-anchor="start" style="fill:var(--c-text);font-size:12px">q2 wifi?  ↔  p2 modem kılavuzu</text>
+<circle cx="306" cy="268" r="4.5" style="fill:var(--c-accent-2)"/>
+<text x="316" y="272" text-anchor="start" style="fill:var(--c-text);font-size:12px">q3 hello  ↔  p3 merhaba</text>
+<text x="16" y="292" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Eksenleri kimse etiketlemez. 1,17 milyar çiftte &#x27;birbirine ait&#x27; &#x27;yakında&#x27; demek olur.</text>
+</svg>
 
 Bu eğitim tarifinin içinde üç pratik sonuç saklı:
 
@@ -266,6 +342,74 @@ kırpmada daha çok düştü. Üretimdeki modeller bu düğmeyle geliyor:
 EmbeddingGemma 768 boyutu 512, 256 ya da 128'e kırpılabilir sunar;
 Qwen3-Embedding 1.024'ten 32'ye kadar iner.
 
+İki düğme yan yana, aynı bir milyon vektör için:
+
+<svg viewBox="0 0 560 290" role="img" aria-label="Bir milyon adet 1.024 boyutlu vektör için iki maliyet düğmesi. Hassasiyet: float32 4,1 GB, float16 2,0 GB, int8 1,0 GB tutar ve erişim kalitesinin yaklaşık %99&#x27;unu korur, binary 128 MB tutar ve yaklaşık %96&#x27;sını korur; ikisi de tam hassasiyetli yeniden puanlamayla. Boyut: Matryoshka embedding bilgiyi öne yığar; aynı 1.024 boyutlu vektör yeniden eğitim olmadan ilk 512, 256 ya da 128 sayısına kısaltılabilir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<rect x="16" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<rect x="288" y="16" width="256" height="236" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">hassasiyet</text>
+<text x="30" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1M vektör × 1.024 boyut</text>
+<text x="30" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float32</text>
+<rect x="90" y="70" width="168.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="30" y="102" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">4,1 GB</text>
+<text x="30" y="121" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">float16</text>
+<rect x="90" y="108" width="84.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="30" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">2,0 GB</text>
+<text x="30" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">int8</text>
+<rect x="90" y="146" width="42.0" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="30" y="178" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1,0 GB</text>
+<text x="258" y="178" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%99 kalite</text>
+<text x="30" y="197" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">binary</text>
+<rect x="90" y="184" width="5.2" height="18" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="30" y="216" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 MB · 32× küçük</text>
+<text x="258" y="216" text-anchor="end" style="fill:var(--c-success);font-size:12px">~%96 kalite</text>
+<text x="30" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kalite, tam hassasiyetli yeniden puanlamayla</text>
+<text x="302" y="40" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">boyut (Matryoshka)</text>
+<text x="302" y="57" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bilgi önde yığılı; koyu = daha çok</text>
+<rect x="304" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.85"/>
+<rect x="311" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.83"/>
+<rect x="318" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.80"/>
+<rect x="325" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.78"/>
+<rect x="332" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.75"/>
+<rect x="339" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.73"/>
+<rect x="346" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.70"/>
+<rect x="353" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.68"/>
+<rect x="360" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.66"/>
+<rect x="367" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.63"/>
+<rect x="374" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.61"/>
+<rect x="381" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.58"/>
+<rect x="388" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.56"/>
+<rect x="395" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.54"/>
+<rect x="402" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.51"/>
+<rect x="409" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.49"/>
+<rect x="416" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.46"/>
+<rect x="423" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.44"/>
+<rect x="430" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.41"/>
+<rect x="437" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.39"/>
+<rect x="444" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.37"/>
+<rect x="451" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.34"/>
+<rect x="458" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.32"/>
+<rect x="465" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.29"/>
+<rect x="472" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.27"/>
+<rect x="479" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.25"/>
+<rect x="486" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.22"/>
+<rect x="493" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.20"/>
+<rect x="500" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.17"/>
+<rect x="507" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.15"/>
+<rect x="514" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.12"/>
+<rect x="521" y="80" width="6" height="26" rx="1" style="fill:var(--c-accent-2);fill-opacity:0.10"/>
+<path d="M304 112 V118 H527.0 V112" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="415.5" y="132" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ilk 1.024</text>
+<path d="M304 138 V144 H415.0 V138" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="423.0" y="146" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 512</text>
+<path d="M304 164 V170 H359.0 V164" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="367.0" y="172" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 256</text>
+<path d="M304 190 V196 H331.0 V190" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="339.0" y="198" text-anchor="start" style="fill:var(--c-text);font-size:11px">ilk 128</text>
+<text x="302" y="244" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kuyruğu kes; yeniden eğitim yok</text>
+<text x="16" y="274" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">İki düğme de baytı küçültür; kalite modelde yaşar, önce güçlü modeli seçin.</text>
+</svg>
+
 İki düğme artık büyük API'lerin arkasında da duruyor. OpenAI'ın
 text-embedding-3-large modeli varsayılan olarak 3.072 boyutla gelir
 ama bir `dimensions` argümanı alır ve öne yığma gerçektir: 256'ya
@@ -318,6 +462,103 @@ okula ayırır:
 > birebir kelime yok. Sparse bir vektör (BM25, TF-IDF) ise sözcük
 > dağarcığındaki her kelimeye bir hücre ayırır ve neredeyse hepsi
 > sıfırdır — birebir kelime var, anlam yok.
+
+İki okulu bulaşık makinesi örneğine koyunca kör noktaları tam ters yerlere düşer:
+
+<svg viewBox="0 0 560 250" role="img" aria-label="Yoğun bir vektörün yanında seyrek bir vektör. Dense embedding 1.024 hücresinin her birini öğrenilmiş bir değerle doldurur: sızdırıyor ile damlatıyor&#x27;un aynı şikâyet olduğunu görür ama E24&#x27;ü E25&#x27;ten ayıramaz. Sparse vektörde sözcük dağarcığındaki her kelimeye bir hücre vardır ve neredeyse hepsi sıfırdır; yalnızca hata, E24 ve bulaşık hücreleri yanar: E24 ile E25&#x27;i asla karıştırmaz ama sızdırıyor ile damlatıyor arasında bağ görmez." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="26" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">dense</text>
+<text x="16" y="42" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1.024 hücre, hepsi öğrenilmiş değer</text>
+<rect x="64" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
+<rect x="76" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
+<rect x="88" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
+<rect x="100" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.22"/>
+<rect x="112" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
+<rect x="124" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
+<rect x="136" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
+<rect x="148" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.57"/>
+<rect x="160" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.85"/>
+<rect x="172" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.36"/>
+<rect x="184" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.64"/>
+<rect x="196" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
+<rect x="208" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
+<rect x="220" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
+<rect x="232" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.22"/>
+<rect x="244" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
+<rect x="256" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
+<rect x="268" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
+<rect x="280" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.57"/>
+<rect x="292" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.85"/>
+<rect x="304" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.36"/>
+<rect x="316" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.64"/>
+<rect x="328" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
+<rect x="340" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
+<rect x="352" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
+<rect x="364" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.22"/>
+<rect x="376" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
+<rect x="388" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
+<rect x="400" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
+<rect x="412" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.57"/>
+<rect x="424" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.85"/>
+<rect x="436" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.36"/>
+<rect x="448" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.64"/>
+<rect x="460" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.15"/>
+<rect x="472" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.43"/>
+<rect x="484" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.71"/>
+<rect x="496" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.22"/>
+<rect x="508" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.50"/>
+<rect x="520" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.78"/>
+<rect x="532" y="52" width="10" height="26" rx="1.5" style="fill:var(--c-accent);fill-opacity:0.29"/>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-success);font-size:12px">görür: sızdırıyor ≈ damlatıyor</text>
+<text x="544" y="98" text-anchor="end" style="fill:var(--c-danger);font-size:12px">karıştırır: E24 ≈ E25</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">sparse</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kelime başına bir hücre, neredeyse hepsi sıfır</text>
+<rect x="64" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="76" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="88" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="100" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="112" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="124" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="136" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="148" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="160" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="172" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="184" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="196" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="208" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="220" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="232" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="244" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="256" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="268" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="280" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="292" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="304" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="316" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="328" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="340" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="352" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="364" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="376" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="388" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="400" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="412" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="424" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="436" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-warn);fill-opacity:.8;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="448" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="460" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="472" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="484" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="496" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="508" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="520" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<rect x="532" y="150" width="10" height="26" rx="1.5" style="fill:var(--c-surface-2);fill-opacity:1;stroke:var(--c-border);stroke-width:.6"/>
+<text x="141" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">hata</text>
+<text x="297" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">E24</text>
+<text x="441" y="191" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">bulaşık</text>
+<text x="16" y="216" text-anchor="start" style="fill:var(--c-success);font-size:12px">ayırır: E24 / E25</text>
+<text x="544" y="216" text-anchor="end" style="fill:var(--c-danger);font-size:12px">kaçırır: sızdırıyor ≈ damlatıyor</text>
+<text x="16" y="242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her biri tam da diğerinin gördüğü yerde kördür; hibrit arama bu yüzden ikisini birlikte koşar.</text>
+</svg>
 
 Bu yazıdaki her şey dense okuldur. Sparse okul E24 ile E25'i asla
 karıştırmaz — ama "sızdırıyor" ile "damlatıyor"un aynı şikâyet

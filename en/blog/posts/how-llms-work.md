@@ -567,7 +567,7 @@ that prefill (and every earlier step) left behind:
 <text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">vs. every cached K</text>
 <text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ mix of cached V</text>
 <line x1="196" y1="120" x2="226" y2="120" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="211" y="112" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">read</text>
+<text x="205" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px" transform="rotate(-90 205 100)">read</text>
 <path d="M228 166 H208 V245 H182" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">append k, v</text>
 <line x1="310" y1="176" x2="310" y2="188" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>

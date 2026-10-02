@@ -568,7 +568,7 @@ Her adımda katman yığınından tam olarak bir yeni token geçer ve prefill'in
 <text x="310" y="148" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">önbellekteki tüm K&#x27;lerle</text>
 <text x="310" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">→ önbellekteki V karışımı</text>
 <line x1="196" y1="120" x2="226" y2="120" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="211" y="112" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">oku</text>
+<text x="205" y="100" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px" transform="rotate(-90 205 100)">oku</text>
 <path d="M228 166 H208 V245 H182" marker-end="url(#dc-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
 <text x="203" y="210" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px" transform="rotate(-90 203 210)">k, v ekle</text>
 <line x1="310" y1="176" x2="310" y2="188" marker-end="url(#dc-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>

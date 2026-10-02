@@ -69,14 +69,24 @@ definitions. The model hands each word three distinct objects:
 2. **An ID Badge (Key - $K$):** The label pinned to the word's chest. It broadcasts outward: *"Who am I, and what attributes do I possess?"*
 3. **An Information Bag (Value - $V$):** The cargo carried on the word's back. It contains: *"If you pay attention to me, what rich semantic content will I hand over to you?"*
 
-```mermaid
-flowchart TD
-    subgraph TokenObjects["A Word's Three Roles"]
-        Q["🔦 Flashlight (Query - Q)<br>'What am I looking for?'"]
-        K["🏷️ Badge (Key - K)<br>'Who am I?'"]
-        V["🎒 Bag (Value - V)<br>'What can I give you?'"]
-    end
-```
+<svg viewBox="0 0 560 128" role="img" aria-label="A word&#x27;s three roles. As a query, the flashlight, it asks what am I looking for. As a key, the badge, it says who am I. As a value, the bag, it offers what can I give you." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">a word&#x27;s three roles</text>
+<rect x="16" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="16" y="28" width="168" height="6" rx="3" style="fill:var(--c-accent);fill-opacity:.8"/>
+<text x="30" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">flashlight</text>
+<text x="170" y="60" text-anchor="end" style="fill:var(--c-accent);font-size:14px;font-weight:700;font-family:var(--font-mono)">Q</text>
+<text x="30" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“What am I looking for?”</text>
+<rect x="196" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<rect x="196" y="28" width="168" height="6" rx="3" style="fill:var(--c-warn);fill-opacity:.8"/>
+<text x="210" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">badge</text>
+<text x="350" y="60" text-anchor="end" style="fill:var(--c-warn);font-size:14px;font-weight:700;font-family:var(--font-mono)">K</text>
+<text x="210" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“Who am I?”</text>
+<rect x="376" y="28" width="168" height="88" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<rect x="376" y="28" width="168" height="6" rx="3" style="fill:var(--c-success);fill-opacity:.8"/>
+<text x="390" y="60" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">bag</text>
+<text x="530" y="60" text-anchor="end" style="fill:var(--c-success);font-size:14px;font-weight:700;font-family:var(--font-mono)">V</text>
+<text x="390" y="90" text-anchor="start" style="fill:var(--c-text-mute);font-size:12.5px;font-style:italic">“What can I give you?”</text>
+</svg>
 
 The mechanism operates as follows:
 - Every word shines its **flashlight ($Q$)** onto the **badges ($K$)** of everyone else in the room (including its own).
@@ -135,19 +145,55 @@ weighted average across all Value vectors is computed:
 
 $$\text{Attention}(Q, K, V) = \sum_{j} \underbrace{\text{similarity}(Q, K_j)}_{\text{normalized attention weight}} \cdot V_j$$
 
-```mermaid
-flowchart LR
-    subgraph HardDB["Relational DB (Hard)"]
-        Q1["Query: 'Alice'"] --> M1{"WHERE name='Alice'"}
-        M1 -->|"Yes (1.0)"| V1["Alice's Record"]
-        M1 -->|"No (0.0)"| V0["Discarded"]
-    end
-    subgraph SoftAttn["Self-Attention (Soft Differentiable)"]
-        Q2["Query: q_i"] --> M2["Dot Product: q_i · k_j"]
-        M2 --> S2["Softmax: a_ij"]
-        S2 --> V2["Weighted Average: Σ a_ij · v_j"]
-    end
-```
+<svg viewBox="0 0 560 262" role="img" aria-label="A database lookup versus self-attention. In a relational database the query Alice runs WHERE name equals Alice: one record gets weight 1 and every other record weight 0. In self-attention the query q_i is compared with every key by dot product and softmax turns the scores into weights between 0 and 1; for chased in our example they are 0.193 for dog, 0.246 for cat and 0.561 for chased, and the output is the weighted sum of all values." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="hs-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="hs-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<text x="16" y="20" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">relational database: hard</text>
+<rect x="16" y="30" width="112" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="72.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">&#x27;Alice&#x27;</text>
+<line x1="128" y1="52" x2="150" y2="52" marker-end="url(#hs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="30" width="150" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="227.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">WHERE name=&#x27;Alice&#x27;</text>
+<line x1="302" y1="52" x2="324" y2="52" marker-end="url(#hs-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="330" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<text x="359" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="359" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">dog</text>
+<rect x="402" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<text x="431" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="431" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">cat</text>
+<rect x="474" y="32" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="474" y="34.0" width="58" height="36.0" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="503" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1</text>
+<text x="503" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">chased</text>
+<text x="16" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">match = 1.0, everything else = 0.0: one record, nothing else</text>
+<text x="16" y="136" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:600">self-attention: soft, differentiable</text>
+<rect x="16" y="146" width="70" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="51.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i</text>
+<line x1="86" y1="168" x2="100" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="102" y="146" width="90" height="44" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="147.0" y="172.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i · k_j</text>
+<line x1="192" y1="168" x2="206" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="208" y="146" width="96" height="44" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="256.0" y="164.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">softmax</text>
+<text x="256.0" y="180.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">a_ij</text>
+<line x1="304" y1="168" x2="324" y2="168" marker-end="url(#hs-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="330" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="330" y="179.1" width="58" height="6.9" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="359" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<text x="359" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">dog</text>
+<rect x="402" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="402" y="177.1" width="58" height="8.9" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="431" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<text x="431" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">cat</text>
+<rect x="474" y="148" width="58" height="38" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="474" y="165.8" width="58" height="20.2" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="503" y="172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.561</text>
+<text x="503" y="200" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">chased</text>
+<text x="16" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">every record gets a share in (0, 1); output = Σ a_ij · v_j (chased row shown)</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Soft weights have gradients, so the model can learn what to match on; a WHERE clause cannot.</text>
+</svg>
 
 ### The hiring interview analogy
 
@@ -182,18 +228,40 @@ Why does $V$ never appear alongside $Q$ and $K$ in the score calculation?
 Because **$Q$ and $K$ form the addressing mechanism (where to look); $V$ is the
 addressed payload (what to retrieve).**
 
-```mermaid
-flowchart TD
-    subgraph Addressing["1. Addressing Phase (Where to look?)"]
-        Q["Query (q_i)"]
-        K["Key (k_j)"]
-        Q & K --> Dot["q_i · k_j"]
-        Dot --> Softmax["Softmax Weight: a_ij"]
-    end
-    subgraph Retrieval["2. Retrieval Phase (What to get?)"]
-        Softmax & V["Value (v_j)"] --> Out["Context Vector: o_i = Σ a_ij · v_j"]
-    end
-```
+<svg viewBox="0 0 560 212" role="img" aria-label="Addressing and retrieval. Phase 1, addressing, decides where to look: the query q_i and the key k_j meet in a dot product, and softmax turns the scores into the weight a_ij. Phase 2, retrieval, decides what to take: the weights multiply the values v_j and the sum is the context vector o_i. The value never takes part in the addressing." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ad-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ad-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="24" width="300" height="142" rx="8" style="fill:none;stroke:var(--c-accent);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="28" y="18" text-anchor="start" style="fill:var(--c-accent);font-size:12.5px;font-weight:600">1. addressing: where to look?</text>
+<rect x="332" y="24" width="212" height="142" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:5 4"/>
+<text x="344" y="18" text-anchor="start" style="fill:var(--c-accent-2);font-size:12.5px;font-weight:600">2. retrieval: what to get?</text>
+<rect x="30" y="40" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="72.0" y="56.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i</text>
+<text x="72.0" y="72.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">query</text>
+<rect x="30" y="110" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="72.0" y="126.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">k_j</text>
+<text x="72.0" y="142.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">key</text>
+<path d="M114 60 C 128 60, 128 88, 138 88" marker-end="url(#ad-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M114 130 C 128 130, 128 102, 138 102" marker-end="url(#ad-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="140" y="74" width="90" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="185.0" y="99.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">q_i · k_j</text>
+<line x1="230" y1="95" x2="238" y2="95" marker-end="url(#ad-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="240" y="74" width="68" height="42" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="274.0" y="91.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">softmax</text>
+<text x="274.0" y="107.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">a_ij</text>
+<rect x="346" y="110" width="84" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
+<text x="388.0" y="126.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">v_j</text>
+<text x="388.0" y="142.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">value</text>
+<line x1="308" y1="95" x2="444" y2="95" marker-end="url(#ad-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M430 130 H470 V118" marker-end="url(#ad-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="446" y="66" width="90" height="50" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="491.0" y="87.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-family:var(--font-mono)">o_i</text>
+<text x="491.0" y="103.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">Σ a_ij · v_j</text>
+<text x="16" y="186" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">v enters only after the weights are fixed:</text>
+<text x="16" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">changing what a word carries never changes how it is found.</text>
+</svg>
 
 In computer hardware, memory address decoders determine *which physical memory cell
 to read*. The stored bits inside the cell ($V$) are simply retrieved; they do not
@@ -284,10 +352,48 @@ $$K = \begin{bmatrix} 0.65 & 1.03 & 0.95 & 0.57 \\ 1.23 & 1.11 & 0.53 & 0.65 \\ 
 
 Applying $V = Z W_V$:
 - **"dog":** $v_1 = [0.34, 0.95, 1.26, 0.65]$
-- **"cat":** $v_2 = [1.32, 0.53, 0.44, 0.65]$
+- **"cat":** $v_2 = [1.32, 0.53, 0.44, 1.23]$
 - **"chased":** $v_3 = [1.20, 1.41, 1.22, 1.01]$
 
-$$V = \begin{bmatrix} 0.34 & 0.95 & 1.26 & 0.65 \\ 1.32 & 0.53 & 0.44 & 0.65 \\ 1.20 & 1.41 & 1.22 & 1.01 \end{bmatrix}$$
+$$V = \begin{bmatrix} 0.34 & 0.95 & 1.26 & 0.65 \\ 1.32 & 0.53 & 0.44 & 1.23 \\ 1.20 & 1.41 & 1.22 & 1.01 \end{bmatrix}$$
+
+Put side by side, the three projections of the same "dog" row show why one vector would not be enough:
+
+<svg viewBox="0 0 560 236" role="img" aria-label="One token, three roles. The input row for dog, z1 = 0.21, 0.82, 0.13, 0.44, is multiplied by three different learned matrices. Through W_Q it becomes the query q1 = 0.34, 1.26, 0.65, 0.95, the flashlight: what am I looking for. Through W_K it becomes the key k1 = 0.65, 1.03, 0.95, 0.57, the badge: who am I. Through W_V it becomes the value v1 = 0.34, 0.95, 1.26, 0.65, the bag: what can I give you." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ro-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="96" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">z₁ (dog)</text>
+<rect x="16" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="34.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.21</text>
+<rect x="54" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="72.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.82</text>
+<rect x="92" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.15;stroke:var(--c-border);stroke-width:.8"/><text x="110.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.13</text>
+<rect x="130" y="104" width="36" height="28" rx="3" style="fill:var(--c-text-mute);fill-opacity:0.23;stroke:var(--c-border);stroke-width:.8"/><text x="148.0" y="122.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.44</text>
+<path d="M170 118 C 196 118, 196 44, 222 44" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="226" y="48" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-family:var(--font-mono)">· W_Q</text>
+<rect x="270" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.34</text>
+<rect x="308" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.26</text>
+<rect x="346" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<rect x="384" y="30" width="36" height="28" rx="3" style="fill:var(--c-accent);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="48.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<text x="432" y="42" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">q₁ · flashlight</text>
+<text x="432" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">what am I looking for?</text>
+<path d="M170 118 C 196 118, 196 116, 222 116" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-warn);stroke-width:1.5"/>
+<text x="226" y="120" text-anchor="start" style="fill:var(--c-warn);font-size:12px;font-family:var(--font-mono)">· W_K</text>
+<rect x="270" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<rect x="308" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.03</text>
+<rect x="346" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<rect x="384" y="102" width="36" height="28" rx="3" style="fill:var(--c-warn);fill-opacity:0.21;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.57</text>
+<text x="432" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">k₁ · badge</text>
+<text x="432" y="130" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">who am I?</text>
+<path d="M170 118 C 196 118, 196 188, 222 188" marker-end="url(#ro-arr)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="226" y="192" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">· W_V</text>
+<rect x="270" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="288.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.34</text>
+<rect x="308" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="326.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.95</text>
+<rect x="346" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.32;stroke:var(--c-border);stroke-width:.8"/><text x="364.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.26</text>
+<rect x="384" y="174" width="36" height="28" rx="3" style="fill:var(--c-success);fill-opacity:0.22;stroke:var(--c-border);stroke-width:.8"/><text x="402.0" y="192.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.65</text>
+<text x="432" y="186" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">v₁ · bag</text>
+<text x="432" y="202" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">what can I give you?</text>
+<text x="16" y="228" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Same row, three learned lenses. Only q and k decide where to look; v is what gets carried.</text>
+</svg>
 
 ### D. Raw attention scores: S = Q K^T (Whose flashlight caught whose badge?)
 
@@ -400,6 +506,78 @@ The resulting attention weight matrix ($A$):
 
 $$A = \begin{bmatrix} 0.266 & 0.280 & 0.454 \\ 0.232 & 0.273 & 0.495 \\ 0.193 & 0.246 & 0.561 \end{bmatrix}$$
 
+The whole addressing phase on one strip, from raw scores to weights:
+
+<svg viewBox="0 0 560 276" role="img" aria-label="Three 3 by 3 heatmaps over the tokens dog, cat, chased. First the raw scores S = Q K transpose, from 2.68 to 5.94. Divided by the square root of 4, that is by 2, they become 1.34 to 2.97. Row-wise softmax turns each row into weights that sum to 1: dog 0.266, 0.280, 0.454; cat 0.232, 0.273, 0.495; chased 0.193, 0.246, 0.561. Below, the chased row with the scaling is 0.19, 0.25, 0.56; without it, softmax of the raw scores is sharper: 0.09, 0.15, 0.76." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ht-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="128" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">S = QKᵀ</text>
+<text x="83.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">dog</text>
+<text x="127.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">cat</text>
+<text x="171.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">chased</text>
+<rect x="62" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.68</text>
+<rect x="106" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.78</text>
+<rect x="150" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.33;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.74</text>
+<rect x="62" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.78</text>
+<rect x="106" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.19;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.11</text>
+<rect x="150" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.45;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">4.30</text>
+<rect x="62" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.34;stroke:var(--c-border);stroke-width:.8"/><text x="83.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3.80</text>
+<rect x="106" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="127.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">4.28</text>
+<rect x="150" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="171.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">5.94</text>
+<text x="302" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">S / √d_k</text>
+<text x="257.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">dog</text>
+<text x="301.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">cat</text>
+<text x="345.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">chased</text>
+<rect x="236" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.34</text>
+<rect x="280" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="324" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.33;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.87</text>
+<rect x="236" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.12;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="280" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.19;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.55</text>
+<rect x="324" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.45;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.15</text>
+<rect x="236" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.34;stroke:var(--c-border);stroke-width:.8"/><text x="257.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.90</text>
+<rect x="280" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="301.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.14</text>
+<rect x="324" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="345.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.97</text>
+<text x="476" y="20" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">A = softmax</text>
+<text x="431.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">dog</text>
+<text x="475.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">cat</text>
+<text x="519.0" y="64" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">chased</text>
+<rect x="410" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.266</text>
+<rect x="454" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.280</text>
+<rect x="498" y="72" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.60;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="92.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.454</text>
+<rect x="410" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.232</text>
+<rect x="454" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.25;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.273</text>
+<rect x="498" y="106" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.67;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="126.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.495</text>
+<rect x="410" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.10;stroke:var(--c-border);stroke-width:.8"/><text x="431.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="454" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.20;stroke:var(--c-border);stroke-width:.8"/><text x="475.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="498" y="140" width="42" height="32" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.80;stroke:var(--c-border);stroke-width:.8"/><text x="519.0" y="160.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.561</text>
+<text x="56" y="93" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">dog</text>
+<text x="56" y="127" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">cat</text>
+<text x="56" y="161" text-anchor="end" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">chased</text>
+<text x="128" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">raw dot products</text>
+<text x="302" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">d_k = 4, so ÷ 2</text>
+<text x="476" y="36" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">row-wise, rows sum to 1</text>
+<line x1="196" y1="123" x2="232" y2="123" marker-end="url(#ht-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="214" y="115" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">÷ 2</text>
+<line x1="370" y1="123" x2="406" y2="123" marker-end="url(#ht-arr)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="388" y="115" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11px">eˣ/Σ</text>
+<text x="16" y="196" text-anchor="start" style="fill:var(--c-text);font-size:12px">The chased row, with and without the ÷ √d_k step:</text>
+<text x="16" y="219" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">softmax(S / 2)</text>
+<rect x="150.0" y="206" width="56.9" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<text x="178.95" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.19</text>
+<rect x="207.9" y="206" width="72.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="244.8" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.25</text>
+<rect x="281.7" y="206" width="167.3" height="16" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="365.85" y="218" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.56</text>
+<text x="16" y="241" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">softmax(S)</text>
+<rect x="150.0" y="228" width="26.1" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="177.1" y="228" width="42.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="198.96457267664414" y="240" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.15</text>
+<rect x="220.9" y="228" width="228.1" height="16" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="335.4370787338276" y="240" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.76</text>
+<text x="16" y="268" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Same ranking either way; the scaling only decides how sharp the preference is.</text>
+</svg>
+
 ---
 
 ## 6. Blending values: The birth of the Context Vector
@@ -414,30 +592,74 @@ $$o_i = \sum_{j=1}^{3} A_{ij} v_j$$
 
 Recall:
 - $v_1 = [0.34, 0.95, 1.26, 0.65]$ ("dog"'s bag)
-- $v_2 = [1.32, 0.53, 0.44, 0.65]$ ("cat"'s bag)
+- $v_2 = [1.32, 0.53, 0.44, 1.23]$ ("cat"'s bag)
 - $v_3 = [1.20, 1.41, 1.22, 1.01]$ ("chased"'s bag)
 
 **1. Output blend for "dog" ($o_1 = 0.266 v_1 + 0.280 v_2 + 0.454 v_3$):**
 - Comp 1: $0.266(0.34) + 0.280(1.32) + 0.454(1.20) = 0.0904 + 0.3696 + 0.5448 = 1.0048$
 - Comp 2: $0.266(0.95) + 0.280(0.53) + 0.454(1.41) = 0.2527 + 0.1484 + 0.6401 = 1.0412$
 - Comp 3: $0.266(1.26) + 0.280(0.44) + 0.454(1.22) = 0.3352 + 0.1232 + 0.5539 = 1.0123$
-- Comp 4: $0.266(0.65) + 0.280(0.65) + 0.454(1.01) = 0.1729 + 0.1820 + 0.4585 = 0.8134$
+- Comp 4: $0.266(0.65) + 0.280(1.23) + 0.454(1.01) = 0.1729 + 0.3444 + 0.4585 = 0.9758$
 
-$$o_1 \approx [1.005, 1.041, 1.012, 0.813]$$
+$$o_1 \approx [1.005, 1.041, 1.012, 0.976]$$
 
 **2. Output blend for "cat" ($o_2 = 0.232 v_1 + 0.273 v_2 + 0.495 v_3$):**
 
-$$o_2 \approx [1.028, 1.053, 0.977, 0.828]$$
+$$o_2 \approx [1.033, 1.063, 1.016, 0.987]$$
 
 **3. Output blend for "chased" ($o_3 = 0.193 v_1 + 0.246 v_2 + 0.561 v_3$):**
 
-$$o_3 \approx [1.053, 1.109, 0.974, 0.852]$$
+$$o_3 \approx [1.064, 1.105, 1.036, 0.995]$$
 
 The single-head self-attention output matrix:
 
-$$O = \begin{bmatrix} 1.005 & 1.041 & 1.012 & 0.813 \\ 1.028 & 1.053 & 0.977 & 0.828 \\ 1.053 & 1.109 & 0.974 & 0.852 \end{bmatrix}$$
+$$O = \begin{bmatrix} 1.005 & 1.041 & 1.012 & 0.976 \\ 1.033 & 1.063 & 1.016 & 0.987 \\ 1.064 & 1.105 & 1.036 & 0.995 \end{bmatrix}$$
 
-### Bu dikkat yüzdeleri bize ne anlatıyor?
+Here is the first row of $O$ taken apart, slice by slice:
+
+<svg viewBox="0 0 560 236" role="img" aria-label="The context vector for dog, o1, built as a weighted sum of the three value vectors with weights 0.266 for dog, 0.280 for cat and 0.454 for chased. Each of the four components is drawn as a stacked bar of the three contributions. The totals are 1.005, 1.041, 1.012, 0.976. In every component the largest slice comes from chased." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">o₁ = 0.266·v₁ + 0.280·v₂ + 0.454·v₃, one bar per component</text>
+<text x="16" y="57" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">comp 1</text>
+<rect x="92.0" y="40" width="30.2" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="123.2" y="40" width="126.7" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="187.08290909090908" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.37</text>
+<rect x="250.9" y="40" width="187.2" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="345.0247272727272" y="56" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.54</text>
+<text x="447.1265454545454" y="57" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.005</text>
+<text x="16" y="91" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">comp 2</text>
+<rect x="92.0" y="74" width="86.3" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="135.6481818181818" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.25</text>
+<rect x="179.3" y="74" width="50.3" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="204.9290909090909" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.15</text>
+<rect x="230.6" y="74" width="220.1" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="341.1314545454545" y="90" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.64</text>
+<text x="459.7010909090909" y="91" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.041</text>
+<text x="16" y="125" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">comp 3</text>
+<rect x="92.0" y="108" width="114.8" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="149.89127272727274" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.34</text>
+<rect x="207.8" y="108" width="41.6" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="229.06254545454547" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.12</text>
+<rect x="250.3" y="108" width="190.3" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="346.01272727272726" y="124" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.55</text>
+<text x="449.6829090909091" y="125" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 1.012</text>
+<text x="16" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">comp 4</text>
+<rect x="92.0" y="142" width="58.7" height="24" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="121.86454545454546" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.17</text>
+<rect x="151.7" y="142" width="118.0" height="24" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="211.21636363636367" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.34</text>
+<rect x="270.7" y="142" width="157.4" height="24" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="349.90600000000006" y="158" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-family:var(--font-mono)">0.46</text>
+<text x="437.10836363636366" y="159" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">= 0.976</text>
+<rect x="16" y="186" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="34" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.266 × v1 (dog)</text>
+<rect x="182" y="186" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.6"/>
+<text x="200" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.280 × v2 (cat)</text>
+<rect x="342" y="186" width="12" height="12" rx="2" style="fill:var(--c-success);fill-opacity:.6"/>
+<text x="360" y="196" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0.454 × v3 (chased)</text>
+<text x="16" y="226" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">After one attention step, dog is mostly made of chased: the verb that defines its role.</text>
+</svg>
+
+### What these attention percentages tell us
 
 Examining the rows of $A$ reveals how the model cleanly captures linguistic roles:
 - **"dog" row ($[0.266, 0.280, 0.454]$):** Allocates its highest weight (45.4%) to
@@ -461,7 +683,7 @@ Each row of $O$ is formally designated as a **Context Vector**:
 | **Final Layer Output**| $h_{\text{ctx}}$ | Sequence-level distilled representation | Context Vector used for prediction |
 
 In our numerical walkthrough, "dog" began as $z_1 = [0.21, 0.82, 0.13, 0.44]$. After
-self-attention, it became $o_1 \approx [1.005, 1.041, 1.012, 0.813]$. It is no longer
+self-attention, it became $o_1 \approx [1.005, 1.041, 1.012, 0.976]$. It is no longer
 an isolated noun; it is an active context vector holding the synthesized reality
 of **"the dog that chased the cat"**!
 
@@ -558,14 +780,39 @@ This mirrors earlier breakthroughs in deep learning:
 a multi-million-dollar hardware bottleneck at Google. Here is the concise timeline
 of the nine-month sprint that triggered modern AI:
 
-```mermaid
-flowchart LR
-    A["Sep 2016<br><b>Hardware Deadlock</b><br>TPUs 80% idle"] --> B["Dec 2016<br><b>Radical Hypothesis</b><br>Jakob: Pure Attention"]
-    B --> C["Feb 2017<br><b>Early Prototypes</b><br>Gradients vanished"]
-    C --> D["Mar 2017<br><b>Noam Shazeer</b><br>Scaling & Multi-Head"]
-    D --> E["May 2017<br><b>Historic Title</b><br>Attention Is All You Need"]
-    E --> F["Jun 2017<br><b>WMT Record</b><br>28.4 BLEU / 3.5 days"]
-```
+<svg viewBox="0 0 560 236" role="img" aria-label="Timeline of the Transformer&#x27;s genesis at Google, as told in the text. September 2016, hardware deadlock, TPUs 80 percent idle. December 2016, radical hypothesis: Jakob proposes pure attention. February 2017, early prototypes, gradients vanished. March 2017, Noam Shazeer: scaling and multi-head. May 2017, the historic title Attention Is All You Need. June 2017, WMT record: 28.4 BLEU after 3.5 days of training." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<line x1="24" y1="118" x2="536" y2="118" style="stroke:var(--c-border);stroke-width:2"/>
+<circle cx="72" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="72" y1="110" x2="72" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="72" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Sep 2016</text>
+<text x="72" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Hardware deadlock</text>
+<text x="72" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">TPUs 80% idle</text>
+<circle cx="155" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="155" y1="126" x2="155" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="155" y="158" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Dec 2016</text>
+<text x="155" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Radical hypothesis</text>
+<text x="155" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Jakob: pure attention</text>
+<circle cx="238" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="238" y1="110" x2="238" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="238" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Feb 2017</text>
+<text x="238" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Early prototypes</text>
+<text x="238" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gradients vanished</text>
+<circle cx="321" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="321" y1="126" x2="321" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="321" y="158" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">Mar 2017</text>
+<text x="321" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Noam Shazeer</text>
+<text x="321" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">scaling, multi-head</text>
+<circle cx="404" cy="118" r="6" style="fill:var(--c-accent);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="404" y1="110" x2="404" y2="96" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="404" y="44" text-anchor="middle" style="fill:var(--c-accent);font-size:11.5px;font-weight:700">May 2017</text>
+<text x="404" y="60" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">Historic title</text>
+<text x="404" y="75" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Attention Is All You Need</text>
+<circle cx="487" cy="118" r="6" style="fill:var(--c-accent-2);stroke:var(--c-bg);stroke-width:2"/>
+<line x1="487" y1="126" x2="487" y2="140" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="487" y="158" text-anchor="middle" style="fill:var(--c-accent-2);font-size:11.5px;font-weight:700">Jun 2017</text>
+<text x="487" y="174" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:600">WMT record</text>
+<text x="487" y="189" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">28.4 BLEU / 3.5 days</text>
+</svg>
 
 ### ⏱️ Step-by-Step Chronology
 
@@ -671,7 +918,7 @@ Running this snippet produces:
 
 ```text
 Attention Weights (A):
- tensor([[0.266, 0.280, 0.454],
+ tensor([[0.266, 0.280, 0.453],
          [0.232, 0.273, 0.495],
          [0.193, 0.246, 0.561]])
 

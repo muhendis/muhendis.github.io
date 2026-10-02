@@ -47,21 +47,38 @@ Bu denklemin derin iki teorik sonucu vardır:
 1. **Sıfır Bağımsızlık Varsayımı:** Bu ifade bir yaklaşım ya da basitleştirme değildir; olasılık aksiyomlarının mutlak bir matematiksel özdeşliğidir. Hiçbir token'ın bir diğerinden bağımsız olduğu varsayılmaz.
 2. **Fiziksel Kısıt:** Matematiksel olarak zincir kuralı herhangi bir permütasyonla da yazılabilir (örneğin $T$'den $1$'e doğru). Fakat insan dilinde nedenler sonuçları öncelediği için modelleme yalnızca ileriye doğru anlamlıdır: **$x_t$ token'ı tahmin edilirken, $x_{t+1}, \dots, x_T$ token'ları evrende henüz fiziksel olarak mevcut değildir.**
 
-```mermaid
-flowchart TD
-    subgraph Bidirectional_Model["Çift Yönlü Dikkat (Unmasked): Tanrı Gözü"]
-        direction LR
-        B1["x_1"] <--> B2["x_2"]
-        B2 <--> B3["x_3"]
-        B1 <--> B3
-    end
-
-    subgraph Causal_Model["Nedensel Dikkat (Causal Masked): Zamanın Oku"]
-        direction LR
-        G1["x_1 (Kendine bakar)"] --> G2["x_2 (x_1 ve kendine bakar)"]
-        G2 --> G3["x_3 (x_1, x_2 ve kendine bakar)"]
-    end
-```
+<svg viewBox="0 0 560 196" role="img" aria-label="Üç token üzerinde çift yönlü ve nedensel dikkat. Maskesiz, tanrı gözü: x1, x2 ve x3 birbirine iki yönde bağlıdır, her token diğer hepsini görür. Nedensel, zamanın oku: bilgi yalnızca ileri akar; x1 kendine, x2 x1&#x27;e ve kendine, x3 x1&#x27;e, x2&#x27;ye ve kendine bakar." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bd-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="bd-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="16" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Çift yönlü</text>
+<text x="30" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">maskesiz: tanrı gözü</text>
+<path d="M83 112 L125 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M163 112 L205 112" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<path d="M64 93 C 94 60, 194 60, 224 93" marker-start="url(#bd-arr)" marker-end="url(#bd-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5"/>
+<circle cx="64" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="64" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
+<text x="64" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hepsini görür</text>
+<circle cx="144" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="144" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
+<text x="144" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hepsini görür</text>
+<circle cx="224" cy="112" r="17" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.5"/><text x="224" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
+<text x="224" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">hepsini görür</text>
+<text x="144" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">her token bütün diziyi görür</text>
+<rect x="288" y="8" width="256" height="180" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="30" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">Nedensel</text>
+<text x="302" y="47" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">maskeli: zamanın oku</text>
+<line x1="355" y1="112" x2="395" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="435" y1="112" x2="475" y2="112" marker-end="url(#bd-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<path d="M336 93 C 366 60, 466 60, 496 91" marker-end="url(#bd-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<circle cx="336" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="336" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₁</text>
+<text x="336" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">x₁&#x27;i görür</text>
+<circle cx="416" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="416" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₂</text>
+<text x="416" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">x₁, x₂&#x27;yi görür</text>
+<circle cx="496" cy="112" r="17" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.5"/><text x="496" y="116.5" text-anchor="middle" style="fill:var(--c-text);font-size:12.5px;font-family:var(--font-mono)">x₃</text>
+<text x="496" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">x₁–x₃&#x27;ü görür</text>
+<text x="416" y="176" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">her token yalnızca kendini ve geçmişi görür</text>
+</svg>
 
 ### 2. Geçmiş Temsillerin Değişmezliği ve KV Cache'in Doğuşu
 
@@ -110,11 +127,26 @@ Serimizin 4. bölümünde ([Self-Attention Derinlemesine](post.html?slug=self-at
 
 Standart self-attention katmanında herkes odadaki herkesin yakasına fener tutabiliyordu. Şimdi bu sınıfın bir **cinayet romanı kulübü** olduğunu hayal edin. Masada sırasıyla üç kelimemiz oturuyor: **"köpek"** ($t=0$), **"kediyi"** ($t=1$) ve **"kovaladı"** ($t=2$).
 
-```text
-[Kelime 0: 'köpek']    --> Romanın 1. sayfasında. Katilin kim olduğunu asla bilemez.
-[Kelime 1: 'kediyi']   --> Romanın 50. sayfasında. 1. sayfayı hatırlar, sonrasını göremez.
-[Kelime 2: 'kovaladı'] --> Romanın son sayfasında. Bütün hikâyeye hâkimdir.
-```
+<svg viewBox="0 0 560 150" role="img" aria-label="Sayfaları yapıştırılmış bir cinayet romanı. köpek romanın 1. sayfasındadır, katilin kim olduğunu asla bilemez. kediyi 50. sayfadadır: 1. sayfayı hatırlar, sonrasını göremez. kovaladı son sayfadadır ve bütün hikâyeye hâkimdir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="18" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her token kitabı yalnızca kendi sayfasına kadar okur</text>
+<rect x="16" y="34" width="82" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="57.0" y="50.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">köpek</text>
+<rect x="112" y="38" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="38" width="4.8" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="194.39999999999998" y="50" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">kapalı</text>
+<text x="288" y="43" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">1. sayfa</text>
+<text x="288" y="58" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">katilin kim olduğunu bilemez</text>
+<rect x="16" y="74" width="82" height="24" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="57.0" y="90.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">kediyi</text>
+<rect x="112" y="78" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="78" width="72.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="228.0" y="90" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">kapalı</text>
+<text x="288" y="83" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">50. sayfa</text>
+<text x="288" y="98" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">1. sayfayı hatırlar, gerisi kapalı</text>
+<rect x="16" y="114" width="82" height="24" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="57.0" y="130.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">kovaladı</text>
+<rect x="112" y="118" width="160" height="16" rx="3" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="112" y="118" width="160.0" height="16" rx="3" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="288" y="123" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:600">son sayfa</text>
+<text x="288" y="138" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bütün hikâyeye hâkim</text>
+</svg>
 
 Eğer "köpek" ($t=0$) kelimesinin fenerini ($Q_0$), romanın sonundaki "kovaladı" ($K_2$) kelimesinin rozetine tutmasına izin verirseniz, dedektif daha ipuçlarını toplamadan katilin adını öğrenir. Akıl yürütme çürür.
 
@@ -234,6 +266,60 @@ Eğer maskeyi Softmax'ten *sonra* uygulasaydınız ($\tilde{A} = \text{Softmax}(
 
 1. **Olasılık Ölçüsünün Yıkımı:** Softmax başlangıçta tüm satırın toplamını $1,0$ yapacak şekilde çalışır. Üst üçgeni sonradan sıfırladığınızda, geriye kalan ağırlıkların toplamı $1,0$'ın altına düşer ($\sum_{j=1}^i \tilde{A}_{ij} < 1,0$). Her katmanda vektörün normu küçülür; derin ağlarda aktivasyonlar sönümlenir.
 2. **Payda Zehirlenmesi (Denominator Contamination):** *"Sonradan tekrar normalize ederiz"* deseniz dahi matematik kurtulamaz. Çünkü ilk Softmax paydasında geleceğe ait $e^{S_{ik}}$ terimleri zaten yer almıştır. Eğer gelecekteki bir kelimenin ham skoru çok yüksekse, paydayı devasa oranda şişirir. Bu şişkin payda, geçmişteki meşru kelimelerin paylarını haksız yere ezer ve küçültür. **Gelecek, payda üzerinden geçmişin olasılık dağılımını çoktan bozmuş ve bilgi sızdırmış olur.**
+
+İki sıra, üç token'lık örneğimizde yan yana; satır toplamlarına bakın:
+
+<svg viewBox="0 0 560 314" role="img" aria-label="Maskenin neden softmax&#x27;tan önce gelmesi gerektiği, köpek, kediyi, kovaladı örneğinde. Ölçeklenmiş skorlar 1,34 ile 2,97 arasında. Doğru sıra, köşegenin üstüne eksi sonsuz ekleyip sonra softmax uygulamak: satırlar köpek 1.000, 0.000, 0.000, kediyi 0.459, 0.541, 0.000, kovaladı 0.193, 0.246, 0.562 olur; her satırın toplamı 1. Yanlış sıra, önce softmax sonra gelecek hücreleri sıfırlamak: köpek yalnızca 0,266&#x27;yı, kediyi 0,232 ile 0,273&#x27;ü tutar; satır toplamları 1 yerine 0,266 ve 0,505 olur. Geleceği olmayan kovaladı satırı ise yine 1 toplar." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="or-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="or-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
+<marker id="or-bad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-danger)"/></marker>
+</defs>
+<text x="16" y="108" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">S / √d_k</text>
+<rect x="16" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.16;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.34</text>
+<rect x="58" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="100" y="118" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.29;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="135.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.87</text>
+<rect x="16" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.17;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.39</text>
+<rect x="58" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.21;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.55</text>
+<rect x="100" y="146" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.36;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="163.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.15</text>
+<rect x="16" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.30;stroke:var(--c-border);stroke-width:.8"/><text x="36.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.90</text>
+<rect x="58" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.36;stroke:var(--c-border);stroke-width:.8"/><text x="78.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.14</text>
+<rect x="100" y="174" width="40" height="26" rx="3" style="fill:var(--c-accent);fill-opacity:0.57;stroke:var(--c-border);stroke-width:.8"/><text x="120.0" y="191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2.97</text>
+<text x="146" y="135" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">köpek</text>
+<text x="146" y="163" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">kediyi</text>
+<text x="146" y="191" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">kovaladı</text>
+<path d="M200 140 C 230 140, 230 66, 262 66" marker-end="url(#or-ok)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
+<text x="300" y="22" text-anchor="start" style="fill:var(--c-success);font-size:13px;font-weight:700">önce maske, sonra softmax</text>
+<text x="300" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">köşegenin üstüne önce −∞ ekle</text>
+<rect x="300" y="48" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.72;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="65.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">1.000</text>
+<rect x="342" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="384" y="48" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="65.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="76" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.40;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="93.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.459</text>
+<rect x="342" y="76" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.44;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="93.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.541</text>
+<rect x="384" y="76" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="93.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="342" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="384" y="104" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.46;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="121.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.562</text>
+<path d="M200 170 C 230 170, 230 214, 262 214" marker-end="url(#or-bad)" style="fill:none;stroke:var(--c-danger);stroke-width:1.5"/>
+<text x="300" y="172" text-anchor="start" style="fill:var(--c-danger);font-size:13px;font-weight:700">önce softmax, sonra sıfırla</text>
+<text x="300" y="188" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gelecek paydaya çoktan girdi</text>
+<rect x="300" y="198" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="215.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.266</text>
+<rect x="342" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="384" y="198" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="215.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="226" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.26;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="243.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.232</text>
+<rect x="342" y="226" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.28;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="243.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.273</text>
+<rect x="384" y="226" width="40" height="26" rx="3" style="fill:var(--c-surface-2);fill-opacity:1.00;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="243.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<rect x="300" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.24;stroke:var(--c-border);stroke-width:.8"/><text x="320.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.193</text>
+<rect x="342" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.27;stroke:var(--c-border);stroke-width:.8"/><text x="362.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.246</text>
+<rect x="384" y="254" width="40" height="26" rx="3" style="fill:var(--c-accent-2);fill-opacity:0.46;stroke:var(--c-border);stroke-width:.8"/><text x="404.0" y="271.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0.562</text>
+<text x="440" y="65" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="215" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-family:var(--font-mono)">Σ = 0.266</text>
+<text x="440" y="93" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="243" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-family:var(--font-mono)">Σ = 0.505</text>
+<text x="440" y="121" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="440" y="271" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-family:var(--font-mono)">Σ = 1.000</text>
+<text x="16" y="306" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Softmax&#x27;tan sonra sıfırlamak geleceği paydadan sızdırır ve erken satırları aç bırakır.</text>
+</svg>
 
 ---
 
@@ -379,17 +465,23 @@ O_2 = 0.193 · v_0 + 0.246 · v_1 + 0.562 · v_2
 
 Nedensel dikkati (causal attention) eksiksiz kavramak, onun eğitim kümesindeki davranışıyla canlı üretim sunucusundaki donanım faturasını ayrı ayrı incelemeyi gerektirir. Bu iki ortam, taban tabana zıt donanım rejimlerinde çalışır.
 
-```text
-                    TRAINING                                  INFERENCE
-   (Paralel / Teacher Forcing / GEMM)            (Prefill vs Decode / GEMV)
-┌────────────────────────────────────────┐     ┌────────────────────────────────────────┐
-│ Tüm dizi GPU'ya tek seferde verilir    │     │ 1. Prefill: Promptun tamamı işlenir    │
-│ Causal maske T x T matrisi uygulanır   │     │    Causal maske prompta uygulanır      │
-│ Backward: Maskeli gradyan dL/dS = 0    │     │ 2. Decode: Token-token üretim yapılır  │
-│ İş Yükü: Compute-bound yoğun GEMM      │     │    Q: [1, d_k] -> KV Cache: [T, d_k]   │
-│                                        │     │    GELECEK YOKTUR -> MASKE GEREKMEZ!   │
-└────────────────────────────────────────┘     └────────────────────────────────────────┘
-```
+<svg viewBox="0 0 560 180" role="img" aria-label="Eğitimde ve çıkarımda nedensel dikkat. Eğitim, teacher forcing ile paralel: bütün dizi GPU&#x27;ya tek seferde verilir, causal maske T&#x27;ye T matris olarak uygulanır, maskeli gradyanlar sıfırdır ve iş compute-bound yoğun bir GEMM&#x27;dir. Çıkarım ikiye ayrılır: prefill promptun tamamını causal maskeyle işler; decode token token üretir, tek bir sorgu geçmiş token&#x27;ların KV cache&#x27;ine bakar ve gelecek olmadığı için maske gerekmez." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<rect x="16" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="30" y="32" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">TRAINING</text>
+<text x="30" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">paralel · teacher forcing · GEMM</text>
+<text x="30" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">tüm dizi tek seferde verilir</text>
+<text x="30" y="95" text-anchor="start" style="fill:var(--c-text);font-size:12px">causal maske T × T matris</text>
+<text x="30" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">backward: maskeli dL/dS = 0</text>
+<text x="30" y="133" text-anchor="start" style="fill:var(--c-text);font-size:12px">compute-bound yoğun GEMM</text>
+<rect x="288" y="8" width="256" height="164" rx="8" style="fill:none;stroke:var(--c-border);stroke-width:1.2"/>
+<text x="302" y="32" text-anchor="start" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">INFERENCE</text>
+<text x="302" y="49" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill vs decode · GEMV</text>
+<text x="302" y="76" text-anchor="start" style="fill:var(--c-text);font-size:12px">1. prefill: promptun tamamı işlenir</text>
+<text x="302" y="95" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">causal maske prompta uygulanır</text>
+<text x="302" y="114" text-anchor="start" style="fill:var(--c-text);font-size:12px">2. decode: token token üretim</text>
+<text x="302" y="133" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">Q [1, d_k] vs KV cache [T, d_k]</text>
+<text x="302" y="152" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:600">gelecek yok → maske gerekmez</text>
+</svg>
 
 ### 1. Eğitim Gözü: Teacher Forcing, Paralel GEMM ve Gradyan Yalıtımı
 
@@ -434,6 +526,63 @@ Geleneksel servis motorlarında zamanlayıcı (scheduler) bu devasa prompt'u tek
 - TPOT gecikmesi 20 ms'den 1.500 ms'ye fırlayarak **75 katlık bir gecikme dalgalanması (jitter)** yaratır.
 - Bu donanımsal tıkanıklığa literatürde **Ön Sıra Tıkanması (Head-of-Line Blocking)** veya **Prefill Balonu (Prefill Bubble)** denir.
 
+Zaman çizelgesi olarak çizildiğinde iki zamanlayıcı arasındaki fark, adım sürelerinin biçimidir:
+
+<svg viewBox="0 0 560 244" role="img" aria-label="Birçok kullanıcıya akış yapan tek bir GPU&#x27;nun şematik zaman çizelgesi. Üst şerit, tek parça prefill: kısa decode adımları art arda koşar; uzun bir prompt gelince tek prefill geçişi GPU&#x27;yu tutar ve bitene kadar her decode akışı durur. Alt şerit, chunked prefill: uzun prompt parçalara bölünür ve her adım decode token&#x27;larını artı bir chunk&#x27;ı taşır; adım süreleri eşit kalır ve akış hiç durmaz." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="bb-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="16" y="66" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">tek parça</text>
+<text x="16" y="82" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bütün prompt tek geçişte</text>
+<line x1="204" y1="86" x2="544" y2="86" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="16" y="152" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">chunked</text>
+<text x="16" y="168" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">her adımda bir chunk</text>
+<line x1="204" y1="172" x2="544" y2="172" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="204" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="220" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="236" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="252" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="268" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="284" y="60" width="180" height="22" rx="3" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="374" y="75" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">uzun prompt, tek prefill geçişi</text>
+<path d="M284 54 H464" style="stroke:var(--c-danger);stroke-width:1.5"/>
+<text x="374" y="48" text-anchor="middle" style="fill:var(--c-danger);font-size:11.5px">her decode akışı bekler</text>
+<rect x="468" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="484" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="500" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="516" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="532" y="60" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="204" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="220" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="236" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="252" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="268" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="284" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="291" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="314" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="321" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="344" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="351" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="374" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="381" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="404" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="411" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="434" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="441" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="464" y="146" width="6" height="22" rx="1.5" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="471" y="146" width="19" height="22" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<rect x="494" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="510" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<rect x="526" y="146" width="12" height="22" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="389" y="136" text-anchor="middle" style="fill:var(--c-success);font-size:11.5px">her adımda decode dilimi + bir chunk</text>
+<line x1="204" y1="214" x2="544" y2="214" marker-end="url(#bb-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="544" y="208" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">zaman</text>
+<rect x="204" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent-2);fill-opacity:.6"/>
+<text x="222" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">decode adımı</text>
+<rect x="314" y="225" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="332" y="235" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">prefill işi</text>
+</svg>
+
 **Çözüm: Sarathi-Serve ve vLLM'in Parçalı Ön Doldurma Mimarisi**
 
 Bu krizi çözmek için Sarathi-Serve (Agrawal et al., OSDI 2024) tarafından geliştirilen ve günümüzde vLLM V1 ile modern motorlarda endüstri standardı olan **Parçalı Ön Doldurma (Chunked Prefill)** tekniği uygulanır.
@@ -474,6 +623,92 @@ Diyelim ki 8 token'lık bir prompt'umuz var ve parçalama bütçemiz $C = 4$ tok
 **Maskenin İki Bölgesinin Çalışma Prensibi:**
 1. **Sol Blok (Parçalar Arası Çapraz Dikkat - Rectangular Full Attention):** $q_4, q_5, q_6, q_7$ sorgularının tamamı, kendilerinden önce üretilmiş ve KV Cache'te saklanan $k_0, k_1, k_2, k_3$ anahtarlarının tamamına erişebilir. Burada hiçbir maskeleme yoktur; matrisin bu $[C \times T_{\text{past}}]$ boyutundaki dikdörtgen bölgesi tamamen **$0.0$** ile doludur.
 2. **Sağ Blok (Parça İçi Nedensel Dikkat - Square Causal Attention):** 2. Parçanın kendi içindeki token'lar ($q_4 \dots q_7$), birbirleri arasındaki zamansal sırayı korumak zorundadır. $q_4$ henüz üretilmemiş $k_5, k_6, k_7$ token'larını göremez. Bu yüzden bu $[C \times C]$ boyutundaki kare bölgeye standart **alt üçgensel $-\infty$ nedensel maskesi** uygulanır.
+
+Aynı iki iterasyon, izin verilen hücre ızgaraları olarak (dolu = bakabilir, boş = maskeli):
+
+<svg viewBox="0 0 560 262" role="img" aria-label="8 token&#x27;lık bir prompt ve 4&#x27;lük chunk ile chunked prefill. 1. iterasyon q0&#x27;dan q3&#x27;e kadar sorguları k0&#x27;dan k3&#x27;e kadar anahtarlara karşı sıradan alt üçgen causal maskeyle çalıştırır ve anahtar ile değerlerini KV cache&#x27;e yazar. 2. iterasyon q4&#x27;ten q7&#x27;ye kadar sorguları çalıştırır: önbellekteki k0–k3 anahtarlarına karşı her hücre serbesttir, tam bir dikdörtgen; chunk&#x27;ın kendi k4–k7 anahtarlarına karşı yalnızca alt üçgen serbesttir." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<text x="16" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">1. iterasyon</text>
+<text x="16" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">q0–q3 chunk&#x27;ı, causal</text>
+<rect x="44" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="88" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="110" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="110" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="110" y="118" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="44" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="66" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="88" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="110" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="54" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
+<text x="76" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
+<text x="98" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
+<text x="120" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
+<text x="38" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q0</text>
+<text x="38" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q1</text>
+<text x="38" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q2</text>
+<text x="38" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q3</text>
+<text x="16" y="182" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">→ 0–3&#x27;ün K, V&#x27;si KV cache&#x27;e</text>
+<text x="200" y="24" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">2. iterasyon</text>
+<text x="200" y="40" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">q4–q7 chunk&#x27;ı önbelleği + kendini görür</text>
+<rect x="232" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="74" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="364" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="386" y="74" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="96" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="386" y="96" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="118" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="386" y="118" width="20" height="20" rx="2" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:.8"/>
+<rect x="232" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="254" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="276" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="298" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="320" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="364" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="386" y="140" width="20" height="20" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="242" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k0</text>
+<text x="264" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k1</text>
+<text x="286" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k2</text>
+<text x="308" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k3</text>
+<text x="330" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k4</text>
+<text x="352" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k5</text>
+<text x="374" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k6</text>
+<text x="396" y="68" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">k7</text>
+<text x="226" y="89" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q4</text>
+<text x="226" y="111" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q5</text>
+<text x="226" y="133" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q6</text>
+<text x="226" y="155" text-anchor="end" style="fill:var(--c-text-mute);font-size:10.5px;font-family:var(--font-mono)">q7</text>
+<path d="M232 168 V174 H318 V168" style="fill:none;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="275.0" y="190" text-anchor="middle" style="fill:var(--c-accent);font-size:12px;font-weight:600">KV cache</text>
+<text x="275.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">tam dikdörtgen</text>
+<path d="M320 168 V174 H406 V168" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="363.0" y="190" text-anchor="middle" style="fill:var(--c-accent-2);font-size:12px;font-weight:600">bu chunk</text>
+<text x="363.0" y="206" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">alt üçgen</text>
+<text x="16" y="236" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Causal kontrol yalnızca mevcut chunk&#x27;ın karesinde gerekir; önbellekteki her şey tanım gereği</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">geçmiştir. Kernel&#x27;lar maske saklamak yerine col &gt; row testini register&#x27;da yapar.</text>
+</svg>
 
 **Donanımdaki İcra: FlashAttention ve PagedAttention Entegrasyonu**
 

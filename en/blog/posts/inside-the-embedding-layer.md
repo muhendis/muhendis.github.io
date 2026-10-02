@@ -81,20 +81,32 @@ vectors that act as coordinates in a high-dimensional semantic space.
 `embed_tokens` is a weight matrix of shape $V \times d_{\text{model}}$, where
 $V$ is the vocabulary size and $d_{\text{model}}$ is the hidden dimension:
 
-```mermaid
-flowchart LR
-    subgraph Input["Input Tensor"]
-        A["Token ID Sequence<br>[batch_size, seq_len]<br>e.g. [1, 6]"]
-    end
-    subgraph Memory["Weight Memory"]
-        B["embed_tokens table<br>V × d_model<br>(262,144 × 1,152)"]
-    end
-    subgraph Output["Embedding Output"]
-        C["Dense Tensor<br>[batch_size, seq_len, d_model]<br>e.g. [1, 6, 1,152]"]
-    end
-    A -->|"O(1) gather<br>(row read)"| B
-    B -->|"0 FLOPs<br>(no arithmetic)"| C
-```
+<svg viewBox="0 0 560 150" role="img" aria-label="The embedding lookup. An input tensor of token IDs with shape batch by sequence length, for example 1 by 6, indexes the embed_tokens weight table of V by d_model, 262,144 by 1,152 on Gemma-3-1B. The step is an O(1) gather that reads rows, with zero FLOPs and no arithmetic, and produces a dense tensor of shape batch by sequence length by d_model, for example 1 by 6 by 1,152." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="lk-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<text x="90" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">input tensor</text>
+<rect x="16" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="90.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">token IDs</text>
+<text x="90.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq_len]</text>
+<text x="90.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">e.g. [1, 6]</text>
+<text x="280" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">weight memory</text>
+<rect x="206" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="280.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">embed_tokens</text>
+<text x="280.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">V × d_model</text>
+<text x="280.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">262,144 × 1,152</text>
+<text x="470" y="22" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">embedding output</text>
+<rect x="396" y="30" width="148" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="470.0" y="55.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">dense tensor</text>
+<text x="470.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">[batch, seq, d_model]</text>
+<text x="470.0" y="87.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">e.g. [1, 6, 1,152]</text>
+<line x1="164" y1="67" x2="204" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<text x="184.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">O(1) gather</text>
+<text x="184.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(row read)</text>
+<line x1="354" y1="67" x2="394" y2="67" marker-end="url(#lk-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="374.0" y="122" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">0 FLOPs</text>
+<text x="374.0" y="136" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">(no arithmetic)</text>
+</svg>
 
 - **Lookup table ($O(1)$) logic.** Rather than performing a matrix
   multiplication, `embed_tokens` retrieves the row corresponding to the incoming
@@ -489,6 +501,63 @@ periods for our 4 pairs:
 | **Pair 3 ($j=3$, channels 5–6)** | $0.01\text{ rad}$ | $\approx 0.57^\circ$ | $T_3 = 2\pi / 0.01 \approx 628.3\text{ tokens}$ | **Slow Minute Hand:** Preserves paragraph-level relationships. |
 | **Pair 4 ($j=4$, channels 7–8)** | $0.001\text{ rad}$ | $\approx 0.057^\circ$ | $T_4 = 2\pi / 0.001 \approx 6283.2\text{ tokens}$ | **Hour Hand (Telescope):** Rotates slowly; preserves global order across long books. |
 
+Run the six positions of our sentence through each pair and the four speeds become visible:
+
+<svg viewBox="0 0 560 268" role="img" aria-label="RoPE&#x27;s four dimension pairs drawn as four clock dials, each showing where its needle points at positions 0 to 5. Pair 1 turns 1 radian per token, about 57 degrees, and has gone most of the way round by position 5. Pair 2 turns 0.1 radian per token and has moved about 29 degrees. Pair 3 turns 0.01 radian and has barely moved, about 3 degrees. Pair 4 turns 0.001 radian and looks frozen. Fast pairs separate neighbours; slow pairs keep long-range order." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<circle cx="82" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="82" y1="112" x2="82.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
+<text x="82.0" y="51.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">0</text>
+<line x1="82" y1="112" x2="122.4" y2="86.1" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
+<text x="136.7" y="80.9" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1</text>
+<line x1="82" y1="112" x2="125.6" y2="132.0" style="stroke:var(--c-accent);stroke-opacity:0.49;stroke-width:1.6"/>
+<text x="141.1" y="143.0" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">2</text>
+<line x1="82" y1="112" x2="88.8" y2="159.5" style="stroke:var(--c-accent);stroke-opacity:0.61;stroke-width:1.6"/>
+<text x="91.2" y="180.3" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">3</text>
+<line x1="82" y1="112" x2="45.7" y2="143.4" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
+<text x="32.8" y="158.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">4</text>
+<line x1="82" y1="112" x2="36.0" y2="98.4" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
+<text x="19.7" y="97.6" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">5</text>
+<circle cx="82" cy="112" r="3" style="fill:var(--c-text)"/>
+<text x="82" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 1</text>
+<text x="82" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 1.0 rad</text>
+<text x="82" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">second hand</text>
+<circle cx="214" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="214" y1="112" x2="214.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
+<line x1="214" y1="112" x2="218.8" y2="64.2" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
+<line x1="214" y1="112" x2="223.5" y2="65.0" style="stroke:var(--c-accent);stroke-opacity:0.49;stroke-width:1.6"/>
+<line x1="214" y1="112" x2="228.2" y2="66.1" style="stroke:var(--c-accent);stroke-opacity:0.61;stroke-width:1.6"/>
+<line x1="214" y1="112" x2="232.7" y2="67.8" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
+<line x1="214" y1="112" x2="237.0" y2="69.9" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
+<circle cx="214" cy="112" r="3" style="fill:var(--c-text)"/>
+<text x="214" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 2</text>
+<text x="214" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.1 rad</text>
+<text x="214" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">fast minute</text>
+<circle cx="346" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="346" y1="112" x2="346.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
+<line x1="346" y1="112" x2="346.5" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
+<line x1="346" y1="112" x2="347.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.49;stroke-width:1.6"/>
+<line x1="346" y1="112" x2="347.4" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.61;stroke-width:1.6"/>
+<line x1="346" y1="112" x2="347.9" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
+<line x1="346" y1="112" x2="348.4" y2="64.1" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
+<circle cx="346" cy="112" r="3" style="fill:var(--c-text)"/>
+<text x="346" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 3</text>
+<text x="346" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.01 rad</text>
+<text x="346" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">slow minute</text>
+<circle cx="478" cy="112" r="56" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.25;stroke-width:1.6"/>
+<line x1="478" y1="112" x2="478.0" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.37;stroke-width:1.6"/>
+<line x1="478" y1="112" x2="478.1" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.49;stroke-width:1.6"/>
+<line x1="478" y1="112" x2="478.1" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.61;stroke-width:1.6"/>
+<line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent);stroke-opacity:0.73;stroke-width:1.6"/>
+<line x1="478" y1="112" x2="478.2" y2="64.0" style="stroke:var(--c-accent-2);stroke-opacity:1.00;stroke-width:2.6"/>
+<circle cx="478" cy="112" r="3" style="fill:var(--c-text)"/>
+<text x="478" y="196" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">pair 4</text>
+<text x="478" y="213" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">θ = 0.001 rad</text>
+<text x="478" y="229" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">hour hand</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">needle positions for m = 0 … 5 (base = 10,000, d = 8); m = 5 in purple</text>
+<text x="16" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Same six steps, four speeds: pair 1 nearly laps the dial while pair 4 has not visibly moved.</text>
+</svg>
+
 **Why `rope_theta` Was Scaled to 1,000,000:**
 When LLaMA 1 operated on 2,048-token contexts, `base = 10000` was sufficient because
 the slowest hour hand took 6,283 tokens to complete a circle. But when modern models
@@ -731,6 +800,65 @@ geometry.
 | **Relative Distance Inherent?** | No | Partial | **Yes (Exact $n-m$)** |
 | **Trainable Parameters** | $L_{\max} \times d_{\text{model}}$ | 0 | **0** |
 
+The norm rows of that table, drawn against each token's raw norm:
+
+<svg viewBox="0 0 560 300" role="img" aria-label="Grouped bar chart of vector norms for the six tokens The, dog, chased, the, black, cat, under three position schemes, with each token&#x27;s raw norm marked as a dashed line. Learned absolute addition drifts norms up slightly: 1.45, 1.42, 1.33, 1.40, 1.23, 1.41. Sinusoidal addition more than doubles them: 2.79, 2.96, 2.79, 2.42, 2.60, 2.63. RoPE keeps the raw norms exactly: 1.26, 1.19, 1.22, 1.26, 1.14, 1.24. The identical tokens The and the end up with different norms under both additive schemes." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<line x1="52" y1="236.0" x2="544" y2="236.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="44" y="240.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">0</text>
+<line x1="52" y1="172.7" x2="544" y2="172.7" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="44" y="176.66666666666666" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">1</text>
+<line x1="52" y1="109.3" x2="544" y2="109.3" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="44" y="113.33333333333333" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2</text>
+<line x1="52" y1="46.0" x2="544" y2="46.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="44" y="50.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">3</text>
+<text x="16" y="30" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">vector norm ‖x‖</text>
+<rect x="62.0" y="144.2" width="18" height="91.8" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="84.0" y="59.3" width="18" height="176.7" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="106.0" y="156.2" width="18" height="79.8" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="59.0" y1="156.2" x2="127.0" y2="156.2" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="93.0" y="53.29999999999998" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.79</text>
+<text x="93.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">The</text>
+<rect x="144.0" y="146.1" width="18" height="89.9" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="166.0" y="48.5" width="18" height="187.5" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="188.0" y="160.6" width="18" height="75.4" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="141.0" y1="160.6" x2="209.0" y2="160.6" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="175.0" y="42.53333333333333" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.96</text>
+<text x="175.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">dog</text>
+<rect x="226.0" y="151.8" width="18" height="84.2" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="248.0" y="59.3" width="18" height="176.7" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="270.0" y="158.7" width="18" height="77.3" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="223.0" y1="158.7" x2="291.0" y2="158.7" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="257.0" y="53.29999999999998" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.79</text>
+<text x="257.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">chased</text>
+<rect x="308.0" y="147.3" width="18" height="88.7" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="330.0" y="82.7" width="18" height="153.3" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="352.0" y="156.2" width="18" height="79.8" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="305.0" y1="156.2" x2="373.0" y2="156.2" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="339.0" y="76.73333333333332" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.42</text>
+<text x="339.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">the</text>
+<rect x="390.0" y="158.1" width="18" height="77.9" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="412.0" y="71.3" width="18" height="164.7" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="434.0" y="163.8" width="18" height="72.2" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="387.0" y1="163.8" x2="455.0" y2="163.8" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="421.0" y="65.33333333333331" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.60</text>
+<text x="421.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">black</text>
+<rect x="472.0" y="146.7" width="18" height="89.3" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="494.0" y="69.4" width="18" height="166.6" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<rect x="516.0" y="157.5" width="18" height="78.5" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<line x1="469.0" y1="157.5" x2="537.0" y2="157.5" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="503.0" y="63.43333333333334" text-anchor="middle" style="fill:var(--c-danger);font-size:11px">2.63</text>
+<text x="503.0" y="252" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">cat</text>
+<rect x="16" y="262" width="12" height="12" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<text x="34" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">learned absolute</text>
+<rect x="144" y="262" width="12" height="12" rx="2" style="fill:var(--c-danger);fill-opacity:.75"/>
+<text x="162" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sinusoidal</text>
+<rect x="240" y="262" width="12" height="12" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<text x="258" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">RoPE</text>
+<line x1="306" y1="268" x2="324" y2="268" style="stroke:var(--c-text);stroke-width:1.5;stroke-dasharray:3 2"/>
+<text x="330" y="272" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">raw norm</text>
+<text x="16" y="294" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adding a position vector stretches the token; rotating it does not. The and the start equal.</text>
+</svg>
+
 **Why vector length must not distort (norm preservation).** Attention scores
 are computed by dot products: $\mathbf{u} \cdot \mathbf{v} = \Vert \mathbf{u}\Vert \Vert \mathbf{v}\Vert \cos(\theta)$.
 Under scheme B, inflating a vector norm from $1.26$ to $2.96$ multiplies
@@ -759,15 +887,29 @@ A **loss spike** — the sudden, pathological divergence of loss during
 pre-training — is fundamentally tied to parameter scale imbalances across
 deep layers.
 
-```text
-Residual scaling (1/sqrt(2N)) ──> Parameter norms shrink (||W_d|| ≈ 0.002)
-                                                │
-                                                ▼
-                              High relative update ratio (||ΔW|| / ||W||)
-                                                │
-                                                ▼
-                                   Extreme instability & LOSS SPIKE
-```
+<svg viewBox="0 0 560 136" role="img" aria-label="How a loss spike forms. Residual scaling by 1 over the square root of 2N shrinks the norms of the down-projection weights to about 0.002. Adam&#x27;s steps stay about 0.001 regardless, so the relative update ratio jumps from 5 percent to 50 percent per step. That instability produces the loss spike." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="sp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+</defs>
+<rect x="16" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="76.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">residual scaling</text>
+<text x="76.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">1/√(2N)</text>
+<line x1="136" y1="51" x2="150" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="152" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="212.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">norms shrink</text>
+<text x="212.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖W_d‖ ≈ 0.002</text>
+<line x1="272" y1="51" x2="286" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="288" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="348.0" y="39.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">update ratio jumps</text>
+<text x="348.0" y="55.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">‖ΔW‖ / ‖W‖</text>
+<text x="348.0" y="71.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">5% → 50% per step</text>
+<line x1="408" y1="51" x2="422" y2="51" marker-end="url(#sp-arr)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="424" y="14" width="120" height="74" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="484.0" y="47.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">LOSS SPIKE</text>
+<text x="484.0" y="63.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">extreme instability</text>
+<text x="16" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Adam&#x27;s step stays near 0.001 whatever the weight scale,</text>
+<text x="16" y="128" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">so a small weight takes a proportionally huge step.</text>
+</svg>
 
 **Why it happens (norm imbalance).** To stabilize gradients in very deep
 transformers, residual branches use depth-based scaling ($1/\sqrt{2N}$).
@@ -834,6 +976,75 @@ between training and inference:
   - Gemma-3-27B: $2 \times 5,376 \times 262,208 \approx 2.82\text{ GFLOP}$ per token.
   Production serving engines split this burden using `VocabParallelEmbedding`
   and `ParallelLMHead` across distributed GPUs.
+
+The asymmetry is easiest to see with both roles of the one matrix side by side:
+
+<svg viewBox="0 0 560 262" role="img" aria-label="Weight tying in Gemma 3. A single matrix E of shape 262,144 by 1,152, one row per vocabulary entry, is used twice through the same memory pointer. On the input side, embed_tokens takes token ID k and simply reads row k: a gather, zero FLOPs. On the output side, lm_head takes the final hidden vector h and multiplies it against every row of E to produce one logit per vocabulary entry: about 0.60 GFLOP per generated token on Gemma-3-1B." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs>
+<marker id="ty-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
+<marker id="ty-arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
+</defs>
+<rect x="222" y="40" width="116" height="170" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<line x1="230" y1="50" x2="330" y2="50" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="58" x2="330" y2="58" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="66" x2="330" y2="66" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="74" x2="330" y2="74" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="82" x2="330" y2="82" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="90" x2="330" y2="90" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="98" x2="330" y2="98" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="106" x2="330" y2="106" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="114" x2="330" y2="114" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="122" x2="330" y2="122" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="130" x2="330" y2="130" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="138" x2="330" y2="138" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="146" x2="330" y2="146" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="154" x2="330" y2="154" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="162" x2="330" y2="162" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="170" x2="330" y2="170" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="178" x2="330" y2="178" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="186" x2="330" y2="186" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="194" x2="330" y2="194" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="230" y1="202" x2="330" y2="202" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="280" y="30" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">one matrix E</text>
+<text x="280" y="228" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">262,144 × 1,152</text>
+<text x="280" y="244" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">same data_ptr() twice</text>
+<text x="16" y="30" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">INPUT · embed_tokens</text>
+<rect x="16" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="51.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">ID k</text>
+<line x1="86" y1="87" x2="220" y2="87" marker-end="url(#ty-arr)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="224" y="82" width="112" height="10" rx="2" style="fill:var(--c-accent);fill-opacity:.6"/>
+<text x="150" y="78" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">read row k</text>
+<text x="16" y="124" text-anchor="start" style="fill:var(--c-text);font-size:12px">gather one row</text>
+<text x="16" y="140" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">0 FLOPs, a memory read</text>
+<text x="16" y="156" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">(then × √1152 in Gemma)</text>
+<text x="544" y="30" text-anchor="end" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">OUTPUT · lm_head</text>
+<rect x="474" y="74" width="70" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="509.0" y="91.2" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">h</text>
+<path d="M474 87 H406 V125 H342" marker-end="url(#ty-arr-g)" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="338" y1="50" x2="352" y2="50" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="58" x2="352" y2="58" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="66" x2="352" y2="66" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="74" x2="352" y2="74" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="82" x2="352" y2="82" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="90" x2="352" y2="90" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="98" x2="352" y2="98" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="106" x2="352" y2="106" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="114" x2="352" y2="114" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="122" x2="352" y2="122" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="130" x2="352" y2="130" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="138" x2="352" y2="138" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="146" x2="352" y2="146" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="154" x2="352" y2="154" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="162" x2="352" y2="162" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="170" x2="352" y2="170" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="178" x2="352" y2="178" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="186" x2="352" y2="186" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="194" x2="352" y2="194" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<line x1="338" y1="202" x2="352" y2="202" style="stroke:var(--c-accent-2);stroke-opacity:.5;stroke-width:1"/>
+<text x="472" y="118" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px">h · every row</text>
+<line x1="352" y1="180" x2="470" y2="180" marker-end="url(#ty-arr-g)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<text x="544" y="176" text-anchor="end" style="fill:var(--c-text);font-size:12px">262,144 logits</text>
+<text x="544" y="196" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">2 × d × V ≈ 0.60 GFLOP</text>
+<text x="544" y="212" text-anchor="end" style="fill:var(--c-text-mute);font-size:12px">per generated token (1B)</text>
+</svg>
 
 ---
 
