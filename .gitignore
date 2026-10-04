@@ -19,3 +19,4 @@ draft-context/
 
 # One-off page scaffolder; output is committed, the script is not part of the site.
 .build/
+scratch/

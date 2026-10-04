@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-10-01",
+  "updated": "2026-10-04",
   "stages": [
     {
       "id": "orientation",
@@ -55,9 +55,9 @@
       "id": "bir-promptun-yolculugu",
       "title": "Bir Prompt'un Yolculuğu",
       "stage": "architecture",
-      "tagline": "Bir prompt'u tokenizer'dan transformer bloğunun çıkışına kadar adım adım izliyoruz.",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına ve tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN ve konveks örtü sınırı) 7 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "7 Bölümlük Seri",
+      "tagline": "Bir prompt'u tokenizer'dan transformer bloğunun çıkışına ve çıktı katmanına kadar adım adım izliyoruz.",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına, tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN) ve nihayet olasılık uzayına geçişi yöneten çıktı katmanına (LM Head, Cross-Entropy, bellek duvarı ve spekülatif kod çözme) 8 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "8 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
@@ -65,7 +65,8 @@
         "self-attention-derinlemesine",
         "causal-attention-derinlemesine",
         "multi-head-attention-derinlemesine",
-        "transformer-blogu-derinlemesine"
+        "transformer-blogu-derinlemesine",
+        "cikti-katmani-derinlemesine"
       ]
     },
     {
@@ -107,6 +108,28 @@
     }
   ],
   "posts": [
+    {
+      "slug": "cikti-katmani-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (8): Çıktı Katmanı (LM Head) — logitler, bellek duvarı, Megatron-LM ve spekülatif kod çözme",
+      "date": "2026-10-04",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 8,
+      "summary": "Ne: Transformer bloğundan çıkan gizli durum vektörlerini kelime dağarcığına yansıtan Çıktı Katmanı (LM Head), Logits ve Softmax dinamikleri, Cross-Entropy kaybı, dL/dz = P - y türevi, bağlı (tied) vs serbest (untied) embedding geometrisi, Gemma 2 logit soft-capping, Megatron-LM Vocab Paralelizmi, Liger Kernel Fused Linear Cross-Entropy, LoRA sözlük genişletme ve Medusa/EAGLE spekülatif kod çözme mimarisi. Neden önemli: 128k sözlükte 8k bağlam için tek bir yığının ham logit tensörü HBM'de 8,4 GB tutar ve geri yayılımla birlikte 25 GB'ı aşarak OOM çöküşüne yol açar; çıkarımda ise model ağırlıklarının her adımda okunması sistemi bellek bant genişliği darboğazına mahkum eder (< 1 FLOP/bayt). Nasıl: H @ W^T doğrusal izdüşümü ve broadcasting; Press & Wolf 2017 ağırlık bağlama vs Llama 3/Qwen 2.5 serbest ağırlık ortogonalitesi (cos ≈ 0,0007, tam ranklı SVD); Gemma 2 c * tanh(z/c) soft-capping formülasyonu; Softmax yer değiştirme değişmezliği (z - max(z)) ile IEEE 754 taşma önleme; Cross-Entropy dL/dz = P - y doğrusal gradyan ispatı; Megatron-LM ColumnParallelLinear ve VocabParallelCrossEntropy all-reduce mekaniği; Liger Kernel Triton SRAM parçalama; PEFT modules_to_save sözleşmesi; Medusa çok başlıklı Tree Attention ve EAGLE özellik seviyesi spekülatif örnekleme; model.generate() filtre ve örnekleme anatomisi. Nerede: 4 boyutlu oyuncak aktivasyon vektörü, 5 kelimelik sözlük, soft-capping, shift-invariant Softmax ve Cross-Entropy geri yayılımının adım adım elle sayısal hesabı ve bağımsız Python/PyTorch doğrulaması üzerinden. Kim için: Büyük dil modelleri eğiten, ince ayar yapan, GPU bellek darboğazlarını ve çıkarım gecikmesini en alt seviyede optimize etmek isteyen yapay zeka mühendisleri ve sistem mimarları. Ne zaman: Model sözlüğü genişletilirken LoRA anlamsız çıktılar ürettiğinde, eğitimde son katmanda OOM alındığında, logit patlamasıyla tekrar döngüleri yaşandığında veya çıkarım hızını spekülatif kod çözmeyle 3 katına çıkarmak gerektiğinde.",
+      "tagline": "Son transformer bloğundan çıkan gizli vektörün ekrandaki kelimeye nasıl dönüştüğünü, bellek duvarını ve spekülatif kod çözmeyi inceliyoruz.",
+      "tags": [
+        "llm",
+        "transformer",
+        "lm-head",
+        "cikti-katmani",
+        "softmax",
+        "cross-entropy",
+        "mimari",
+        "temeller"
+      ],
+      "readingMinutes": 24,
+      "translationSlug": "inside-the-output-layer",
+      "draft": false
+    },
     {
       "slug": "agirlik-baslatma-ve-normalizasyon",
       "title": "Sinir Ağlarının Yapı Taşları (5): Ağırlık Başlatma ve Normalizasyon — Xavier, Kaiming, LayerNorm ve RMSNorm matematiği",

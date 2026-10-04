@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-10-01",
+  "updated": "2026-10-04",
   "stages": [
     {
       "id": "orientation",
@@ -55,9 +55,9 @@
       "id": "a-prompts-journey",
       "title": "A Prompt's Journey",
       "stage": "architecture",
-      "tagline": "Follow a prompt step by step, from the tokenizer to the output of a transformer block.",
-      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, and the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN, and the convex hull barrier) — a 7-part architectural journey.",
-      "badge": "7-Part Series",
+      "tagline": "Follow a prompt step by step, from the tokenizer through the transformer block to the final output layer.",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN), and finally the output layer that governs the leap into probability space (LM Head, Cross-Entropy, the memory wall, and speculative decoding) — an 8-part architectural journey.",
+      "badge": "8-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
@@ -65,7 +65,8 @@
         "inside-self-attention",
         "inside-causal-attention",
         "inside-multi-head-attention",
-        "inside-the-transformer-block"
+        "inside-the-transformer-block",
+        "inside-the-output-layer"
       ]
     },
     {
@@ -107,6 +108,28 @@
     }
   ],
   "posts": [
+    {
+      "slug": "inside-the-output-layer",
+      "title": "A Prompt's Journey (8): The Output Layer (LM Head) — Logits, the Memory Wall, Megatron-LM, and Speculative Decoding",
+      "date": "2026-10-04",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 8,
+      "summary": "What: The complete architectural and mathematical anatomy of the Output Layer (LM Head) in Large Language Models; tensor broadcasting and token_num dynamics, tied vs. untied embeddings and representation orthogonality, Gemma 2 logit soft-capping, shift-invariant Softmax, Cross-Entropy loss and the dL/dz = P - y derivative, Megatron-LM Vocab Parallelism, Liger Kernel Fused Linear Cross-Entropy, LoRA vocabulary expansion, and Medusa/EAGLE speculative decoding. Why it matters: Materializing the full logits tensor for an 8k context window across 128k vocabulary consumes 8.4 GB of HBM in a single forward pass, triggering instantaneous OOM errors without fused kernels; in inference, sequential decoding is strictly memory-bandwidth bound (< 1 FLOP/byte), leaving tensor cores 95% idle. How: H @ W^T projection and broadcasting mechanics; Press & Wolf 2017 weight tying vs. Llama 3.1/Qwen 2.5 untied orthogonality (cos ≈ 0.0007, full-rank SVD); Gemma 2 c * tanh(z/c) soft-capping; Softmax shift invariance (z - max(z)) preventing IEEE 754 overflow; analytic proof of Cross-Entropy dL/dz = P - y linear gradient; Megatron-LM ColumnParallelLinear and VocabParallelCrossEntropy all-reduce reductions; Liger Kernel Triton SRAM chunking; PEFT modules_to_save contract; Medusa multi-head Tree Attention and EAGLE feature-level extrapolation; model.generate() prefill/decode loops and sampling filters. Where: Traced through a 4-dimensional hidden vector, a 5-token toy vocabulary, soft-capping, shift-invariant Softmax, Cross-Entropy loss, and upstream backpropagation gradients, fully verified by Python and PyTorch. Who it's for: AI engineers, researchers, and systems architects pre-training, fine-tuning, or deploying large language models under strict GPU memory and latency budgets. When to use: When expanding tokenizers in PEFT runs, diagnosing output layer OOM crashes, resolving logit explosion repetition loops, or accelerating autoregressive serving throughput via speculative decoding.",
+      "tagline": "How the hidden vector from the final transformer block becomes a word on the screen, smashing the memory wall and accelerating inference.",
+      "tags": [
+        "llm",
+        "transformer",
+        "lm-head",
+        "output-layer",
+        "softmax",
+        "cross-entropy",
+        "architecture",
+        "fundamentals"
+      ],
+      "readingMinutes": 24,
+      "translationSlug": "cikti-katmani-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "inside-initialization-and-normalization",
       "title": "Building Blocks of Neural Networks (5): Weight Initialization and Normalization — Xavier, Kaiming, LayerNorm, and RMSNorm mathematics",
