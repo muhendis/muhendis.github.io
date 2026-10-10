@@ -1,8 +1,8 @@
-Kâğıt üzerinde 1.024 adet NVIDIA H100 GPU'dan oluşan bir küme yenilmez görünür: 1 Eksaflopp'un üzerinde 8-bit tensör hesaplama gücü, 80 Terabayt yüksek bant genişlikli bellek ve saniyede petabitleri aşan ara bağlantı omurgası. Ancak 70 milyar parametreli bir temel modelin ön eğitimini başlattığınız anda telemetri panoları sizi soğuk bir gerçekle yüzleştirir: Model FLOP Kullanımı (MFU) %38'in altında sürünür, yüksek maliyetli Streaming Multiprocessor çekirdekleri döngülerinin %40'ını yüksek bant genişlikli bellek kuyruklarında bekleyerek harcar, InfiniBand hatları gradyan senkronizasyon kabarcıklarıyla tıkanır ve eşzamanlı kontrol noktası (checkpoint) kayıtları birkaç saatte bir tüm kümeyi beş dakika boyunca dondurur.
+Kâğıt üzerinde 1.024 adet NVIDIA H100 GPU'dan oluşan bir küme yenilmez görünür: 1 ExaFLOP'un üzerinde 8-bit tensor compute kapasitesi, 80 Terabayt High-Bandwidth Memory (HBM) ve multi-terabit interconnect fabric omurgası. Ancak 70 milyar parametreli bir temel modelin (foundation model) ön eğitimini (pre-training) başlattığınız anda telemetri panoları sizi soğuk bir gerçekle yüzleştirir: Model FLOPs Utilization (MFU) %38'in altında sürünür; yüksek maliyetli Streaming Multiprocessor (SM) birimleriniz saat döngülerinin %40'ını HBM bellek kuyruklarında stall olarak harcar; scale-out InfiniBand linkleri gradient synchronization bubble'ları ile boğulur ve senkronize checkpoint yazımları birkaç saatte bir tüm cluster'ı beş dakika boyunca dondurur.
 
-Bu darboğaz rastgele bir aksaklık ya da yazılım hatası değildir. Modern bir GPU süper bilgisayarını homojen, tek parça devasa bir işlem havuzu sanmanın fiziksel bedelidir. Statik ve eşzamanlı iletişim döngülerine sahip 2D veya 3D torus ağlarıyla birbirine bağlı Google TPU'larının aksine, modern yapay zekâ süper bilgisayarları derinlemesine hiyerarşik ve üç temel fiziksel sütun tarafından yönetilen yapılardır: **Hesaplama (Compute)**, **Ağ (Network)** ve **Depolama (Storage)**. Her bir silikon çipin içinde yüzden fazla bağımsız Streaming Multiprocessor dar bir L2 önbellek için yarışır. 8 GPU'lu tek bir kasa içinde NVSwitch çapraz bağlantıları çip başına çift yönde 900 GB/s gibi akıl almaz bir bant genişliği sunar. Fakat kolektif bir işlem düğüm sınırını aşıp InfiniBand ağına adım attığı anda erişilebilir bant genişliği neredeyse bir mertebe birden düşer; depolama alt sisteminiz ise ana işlemcileri (CPU) boğmadan terabaytlarca kontrol noktasını ve trilyonlarca tokeni kesintisiz akıtamazsa, milyonlarca dolarlık tüm hesaplama omurganız kilitlenir.
+Bu darboğaz rastgele bir aksaklık ya da yazılım hatası değildir. Modern bir GPU süper bilgisayarını homojen, tek parça devasa bir işlem havuzu sanmanın fiziksel bedelidir. Statik ve eşzamanlı iletişim döngülerine sahip 2D veya 3D torus ağlarıyla birbirine bağlı Google TPU'larının aksine, modern yapay zekâ süper bilgisayarları derinlemesine hiyerarşik ve üç temel fiziksel sütun tarafından yönetilen sistemlerdir: **Hesaplama (Compute)**, **Ağ (Network)** ve **Depolama (Storage)**. Her bir silikon çipin içinde yüzden fazla bağımsız Streaming Multiprocessor dar bir L2 cache için yarışır. 8 GPU'lu tek bir kasa (chassis) içinde tescilli NVSwitch crossbar fabric'i çip başına çift yönde 900 GB/s gibi akıl almaz bir bant genişliği sunar. Fakat kolektif bir işlem (collective operation) node sınırını aşıp InfiniBand scale-out fabric'e adım attığı anda erişilebilir bant genişliği neredeyse bir büyüklük mertebesi birden düşer; depolama (I/O) alt sisteminiz ise host CPU'ları boğmadan onlarca terabayt checkpoint ve trilyonlarca token stream edemezse, multi-milyon dolarlık tüm hesaplama omurganız kilitlenir.
 
-Bu yazı, modern temel modellerin ölçekleme mimarisini bu üç kurucu sütun üzerinden adım adım inceliyor. Bağımsız warp scheduler birimlerinin silikon üzerindeki komut dağıtımından NVLink ve rail-optimized InfiniBand fat-tree ağ topolojilerine, Mellanox SHARP gibi ağ içi donanımsal hızlandırmalardan GPUDirect Storage ve Young-Daly kontrol noktası formülüne kadar tüm yığını titiz matematiksel modellemeler ve ampirik ölçümlerle ortaya koyuyor.
+Bu yazı, modern foundation model'ların ölçekleme mimarisini bu üç kurucu sütun üzerinden adım adım inceliyor. Bağımsız warp scheduler birimlerinin silikon üzerindeki komut dağıtımından NVLink ve rail-optimized InfiniBand fat-tree ağ topolojilerine, Mellanox SHARP gibi ağ içi donanımsal hızlandırmalardan (in-network reduction) GPUDirect Storage ve Young-Daly checkpoint formülüne kadar tüm yığını titiz matematiksel modellemeler ve ampirik benchmark'larla ortaya koyuyor.
 
 **Bu yazıda**
 
@@ -19,13 +19,13 @@ Bu yazı, modern temel modellerin ölçekleme mimarisini bu üç kurucu sütun �
 
 ## 1. Modern yapay zekâ üçlüsü: Hesaplama, ağ ve depolama
 
-Dağıtık temel model eğitimi, uç sınırlarda bir ortak tasarım (co-design) mühendisliğidir. Binlerce hızlandırıcı üzerinde bir büyük dil modeli ölçeklemeye çalışan mühendisler kaçınılmaz olarak üç fiziksel duvara çarpar:
+Dağıtık foundation model eğitimi, uç sınırlarda bir ortak tasarım (co-design) mühendisliğidir. Binlerce hızlandırıcı üzerinde bir büyük dil modeli ölçeklemeye çalışan mühendisler kaçınılmaz olarak üç fiziksel duvara çarpar:
 
-1. **Bellek Duvarı (Hesaplama):** Son on yılda ham kayan nokta matris hesaplama gücü $1.000\times$'den fazla artarken, yüksek bant genişlikli bellek (HBM) hızları $30\times$'dan daha az büyüdü. GPU içindeki aritmetik birimler, matris boyutları donanım roofline modelinin kırılma noktasını aşacak düzeyde veri yeniden kullanımı sunmadığı sürece aç kalır.
-2. **Ağ Duvarı (İletişim):** İletişim bant genişliği küme boyutuyla doğrusal ölçeklenmez. 8 GPU'lu tek bir kasa içinde NVLink üzerinden aktivasyon ve gradyan aktarmak, yüzlerce sunucu kabinine yayılan optik InfiniBand veya RoCE v2 hatlarına kıyasla neredeyse bir mertebe daha hızlıdır. Model boyutlarını bu ara bağlantı hiyerarşisine uyduramamak felaket gecikmelere yol açar.
-3. **Depolama Duvarı (G/Ç):** Temel modeller 15 trilyondan fazla token ile eğitilir; 405 milyar parametreli bir modelin parametre ve optimizer durumları tek bir kontrol noktasında 7,5 Terabayttan fazla yer kaplar. Depolama erişimi geleneksel işletim sistemi önbelleklerine ve CPU bellek kopyalamalarına dayanırsa, host bellek veri yolları tıkanır ve her kontrol noktası yazımında tüm küme donar.
+1. **Memory Wall (Hesaplama / Compute):** Son on yılda ham floating-point matrix compute gücü $1.000\times$'den fazla artarken, High-Bandwidth Memory (HBM) bant genişliği $30\times$'dan daha az büyüdü. GPU içindeki aritmetik birimler, operasyonel matris boyutları donanım roofline modelinin kırılma noktasını (roofline knee) aşacak düzeyde veri yeniden kullanımı (data reuse) sunmadığı sürece aç kalır (starve eder).
+2. **Fabric Wall (İletişim / Network):** İletişim bant genişliği cluster boyutuyla doğrusal ölçeklenmez. 8 GPU'lu tek bir kasa (chassis) içinde NVLink üzerinden aktivasyon ve gradyan aktarmak, yüzlerce sunucu kabinine yayılan optik InfiniBand veya RoCE v2 fabric hatlarına kıyasla neredeyse bir mertebe daha hızlıdır. Model boyutlarını bu interconnect hiyerarşisine uyduramamak felaket iletişim duraklamalarına (communication stalls) yol açar.
+3. **I/O Wall (Depolama / Storage):** Foundation model'lar 15 trilyondan fazla yapılandırılmamış metin ve multimodal token ile eğitilir; 405 milyar parametreli bir modelin parametre durumları ve optimizer buffer'ları tek bir checkpoint snapshot'ında 7,5 Terabayttan fazla yer kaplar. Depolama erişimi geleneksel işletim sistemi kernel page cache mekanizmalarına ve CPU bellek kopyalamalarına (`memcpy`) dayanırsa, host bellek veri yolları doyuma ulaşır (saturate olur) ve her checkpoint aralığında tüm cluster donar.
 
-Donanımın boşta kalmasını engellemek ve Model FLOP Kullanımını (MFU) maksimize etmek için bir yapay zekâ altyapı mühendisi bu üç sütunu eşzamanlı olarak yönetmek zorundadır:
+Donanımın boşta (idle) kalmasını engellemek ve Model FLOPs Utilization (MFU) oranını maksimize etmek için bir yapay zekâ altyapı mühendisi bu üç sütunu eşzamanlı olarak yönetmek zorundadır:
 
 <svg viewBox="0 0 840 8652" role="img" aria-label="Yapay zekâ altyapısını anlatan beş bölümlük bir poster. A bölümü dört basamakta uzaklaşır. 1. basamak, Streaming Multiprocessor: dört özdeş alt bölme; her birinde döngüde 1.024 BF16 FLOP yapan bir Tensor Core, 32 thread&#x27;lik warp&#x27;ları dağıtan bir warp scheduler, 32 FP32 ALU ve 16.384 register; ayrıca 256 KiB SMEM ya da L1. Bir hat aşçısı ve tezgâhı gibidir. 132 SM bir H100 SXM5 GPU eder: 814 milimetrekare kalıp, 80 milyar transistör, 50 MB L2, 6 yuvanın 5&#x27;inde 3,35 TB/s hızlı 80 GB HBM3, 700 W&#x27;ta 990 TFLOP/s BF16; kileri HBM olan bir mutfak gibidir. 8 GPU bir DGX H100 düğümü eder: 4 NVSwitch, GPU başına 900 GB/s NVLink, 3,6 TB/s biseksiyon, PCIe Gen5 üzerinden 64 GB/s ile bağlı 2 TB RAM&#x27;li 2 Xeon işlemci, GPU başına bir 400 Gb/s hesaplama NIC&#x27;i, depolama ve yönetim için 2 çift portlu NIC ve 8 NVMe sürücü. 32 düğüm bir ölçeklenebilir birim, 4 birim 127 düğümlük, 1.016 GPU&#x27;luk bir DGX SuperPOD eder: her düğümün i. NIC&#x27;inin i. leaf&#x27;e gittiği ray uyumlu fat-tree&#x27;de 32 leaf ve 16 spine switch, düğüm başına en az 40 GB/s veren ayrı bir depolama ağı ve in-band ile OOB Ethernet yönetim ağları. B bölümü TP 8, PP 16, DP 128 düzenli Llama 3 405B&#x27;nin tek bir eğitim adımını izler: 1 depolamadan HBM&#x27;e 16 milyon token okunur; 2 ileri geçişte HBM&#x27;den Tensor Core&#x27;lara veri akar; 3 NVLink üzerinde katman başına iki tensör paralel AllReduce yapılır; 4 aktivasyonlar ağ üzerinden sonraki boru hattı aşamasına gönderilir; 5 geri geçiş aynı hatları kullanır; 6 gradyanlar ray switch&#x27;leri üzerinden diğer 127 kopyayla AllReduce edilir; 7 AdamW optimizer adımı HBM&#x27;de yapılır; 8 her 14 dakikada 7,5 TB&#x27;lık kontrol noktası depolamaya yazılır. C bölümü üç duvarı hesaplanmış eğrilerle gösterir. Bellek duvarı: H100&#x27;de Llama 3 70B MLP katmanı için elde edilen hız batch 1&#x27;de 3,3 TFLOP/s&#x27;den batch 128&#x27;de 420&#x27;ye çıkar ve batch 310 civarında 990 tavanına ulaşır; çare büyük batch, kernel füzyonu ve decode&#x27;da düşük bitli ağırlıktır. Ağ duvarı: GPU başına bant genişliği HBM&#x27;de 3,35 TB/s&#x27;den NVLink&#x27;te 450 GB/s&#x27;ye, düğüm dışında 50 GB/s&#x27;ye düşer; tensör paralelliği NVLink&#x27;te 13 GPU&#x27;ya, yani 8&#x27;e sığar, InfiniBand&#x27;de yalnızca 1,45&#x27;e; 16 aşamalı bir boru hattı 16 mikrobatch ile yüzde 48, 128 ile yüzde 10,5 boşta kalır; çare TP&#x27;yi düğüm içinde tutmak, SHARP ve iletişimi hesapla çakıştırmaktır. G/Ç duvarı: kayıt aralığına göre Young-Daly kayıp eğrileri; 25 GB/s&#x27;de en düşük kayıp 42,9 dakikada yüzde 24, 250 GB/s&#x27;de 13,6 dakikada yüzde 7,5&#x27;tir; çare GPUDirect Storage, asenkron yazma ve karekök aralığıdır. D bölümü aynı 140 GB&#x27;ın taşınma süresini verir: HBM&#x27;den 42 milisaniye, NVLink&#x27;ten 0,31 saniye, PCIe&#x27;den 2,2 saniye, GPU başına InfiniBand&#x27;den 2,8 saniye, bütün kümenin paylaştığı eski depolamadan 5,6 saniye; 8 H100&#x27;de decode saniyede yaklaşık 190 tokenle sınırlıdır. E bölümü Meta&#x27;nın Llama 3 405B eğitimini özetler: GPU başına 400 TFLOP/s ve yüzde 41 MFU ile 16.384 H100, 3.072 GPU&#x27;luk pod&#x27;lardan oluşan bir RoCE ağı, 2 TB/s sürekli ve 7 TB/s tepe hızlı 240 PB&#x27;lık Tectonic depolama ve 54 günde 466 kesinti, yani yaklaşık 3 saatte bir arıza. En yavaş halka bütün kümenin hızını belirler. Küme basamağından sonra bir kart SuperPOD&#x27;un yapı taşlarını ve her birinin neden var olduğunu sıralar: 127 DGX H100 sistemi matematiği yapar; 48 QM9700 switch her GPU&#x27;ya bir ray veren hesaplama ağını, 16 tanesi düğüm başına en az 40 GB/s&#x27;lik ayrı depolama ağını kurar; 4 UFM cihazı InfiniBand ağını izler; 8 SN4600C ve 8 SN2201 switch in-band ve OOB yönetimi taşır; 5 yönetim sunucusu kontrol yazılımlarını koşturur; 38 kabin ve 108 PDU yaklaşık 1,3 MW güç dağıtır. Yazılımda Base Command Manager düğümleri kurar, Slurm işleri zamanlar, Magnum IO veriyi NCCL, GPUDirect ve SHARP ile taşır, NGC uyumlu konteynerler sunar, Base Command Platform veri bilimcilere hizmet eder, AI Enterprise destekli araçlar ekler. Düğüm basamağı NVIDIA&#x27;nın DGX H100 sistem topolojisini yeniden çizer: UPI ile bağlı CPU 0 ve CPU 1; CPU 0 GPU 0–3 ile NIC 0–3&#x27;ü, CPU 1 GPU 4–7 ile NIC 4–7&#x27;yi besler ve her GPU&#x27;nun kendi ağ kartı vardır; üstteki iki PCIe switch çift portlu depolama kartlarını ve 4&#x27;er NVMe diski taşır; CPU 0&#x27;da iki M.2 işletim sistemi diski, CPU 1&#x27;de bir 100 GbE kartı bulunur; her GPU 18 NVLink&#x27;ini 5, 4, 4 ve 5 olarak dört NVSwitch&#x27;e gönderir; alttaki PCIe switch NVSwitch&#x27;leri yönetim için CPU 0&#x27;a bağlar. Düğüm şemasındaki altı numaralı daire, altındaki altı soruyla eşleşir: kim kimi besler (iki NUMA yarısı), GPU ağa nasıl çıkar (GPUDirect RDMA ile kendi NIC&#x27;i), GPU&#x27;lar nasıl konuşur (dört NVSwitch&#x27;e 18 NVLink), depolama trafiği nereden geçer (üstteki PCIe switch&#x27;ler), iki yarıyı ne birleştirir (CPU iletişimi, UPI) ve NVSwitch&#x27;leri kim yönetir (CPU 0&#x27;dan PCIe ile Fabric Manager). Küme basamağı H100 SXM5, DGX H100, 32 DGX&#x27;lik ölçeklenebilir birim ve 4 birimli DGX SuperPOD hiyerarşisiyle açılır. Yakından inceleme kartı portları sayar: 64 portlu her leaf 32 portunu düğümlere, 32 portunu spine&#x27;lara verir, toplam 1.024 leaf–spine kablosu vardır ve ağ engelsizdir; aynı raydaki trafik tek leaf&#x27;ten geçer, raylar arası trafik ise NCCL&#x27;in PXN&#x27;i önce NVLink&#x27;e taşımadıkça spine&#x27;dan geçer; bütün GPU&#x27;lar 50,8 TB/s gönderebilir, spine kapasitesi 51,2 TB/s&#x27;dir; 16 birimden itibaren bir core katmanı eklenir ve 2.048 DGX 512 leaf, 512 spine ve 256 core switch kullanır. Bir not SuperPOD&#x27;un neden 128 değil 127 DGX olduğunu açıklar: bir çift UFM cihazı bir DGX yuvasını alır; daha küçük kurulumlar tek birimden başlar, 31 ile 127 DGX arasındadır. Küme çizimi NVIDIA&#x27;nın hesaplama ağı şemasını izler: üstte Spine-01&#x27;den Spine-16&#x27;ya; Leaf-01-01–08 ve H100-001–032 düğümleriyle SU 1; Leaf-02-01–08 ve H100-033–064 düğümleriyle SU 2; aynı düzeni tekrarlayan ve çizimde atlanan SU 3; Leaf-04-01–08, H100-097–127 düğümleri ve C-UFM 1 ile 2 UFM çiftiyle SU 4; spine–leaf hatları 2 × 400 Gb/s, DGX–leaf hatları 400 Gb/s, UFM–leaf hatları 200 Gb/s&#x27;dir. Hiyerarşinin altındaki &#x27;ne neyi yapar&#x27; tablosu her basamağı açıklar: H100 matematiği yapar ve modelin kendine düşen payını HBM&#x27;de tutar; DGX 8 GPU&#x27;yu tensör paralelliğinin yaşadığı tek bir NVLink alanında birleştirir, işlemcileri işletim sistemini ve veri yükleyiciyi koşturur; SU, aynı numaralı GPU&#x27;ların tek sıçramada buluştuğu 32 DGX ve 8 leaf switch&#x27;lik tekrar eden birimdir; SuperPOD SU&#x27;ları spine ile birleştirir, depolama, yönetim ve yazılımı ekler ve veri paralelliğini bütün kümeye yayar. Bir tanım kutusu leaf ve spine&#x27;ı açıklar: leaf, sunucuların takıldığı alt katman switch&#x27;idir, SU başına 8 tane, her ray için bir tane, 32 portu aşağı 32 portu yukarı; spine, leaf&#x27;leri birbirine bağlayan ve hiç sunucu taşımayan üst katman switch&#x27;idir, toplam 16 tane, her biri 32 leaf&#x27;in hepsine bağlıdır; her leaf her spine&#x27;a ulaştığı için herhangi iki sunucu en fazla leaf, spine, leaf yoluyla buluşur." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -738,7 +738,7 @@ Donanımın boşta kalmasını engellemek ve Model FLOP Kullanımını (MFU) mak
 <text x="552" y="2851" text-anchor="start" style="fill:var(--c-text);font-size:12px">düzen telefon santrallerinden gelir</text>
 <text x="552" y="2868" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Clos, 1953); yukarı çıktıkça</text>
 <text x="552" y="2885" text-anchor="start" style="fill:var(--c-text);font-size:12px">bağlantıların kalınlaştığı hâline</text>
-<text x="552" y="2902" text-anchor="start" style="fill:var(--c-text);font-size:12px">fat-tree, yani şişman ağaç denir</text>
+<text x="552" y="2902" text-anchor="start" style="fill:var(--c-text);font-size:12px">fat-tree topolojisi denir</text>
 <text x="552" y="2919" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Leiserson, 1985).</text>
 <text x="552" y="2941" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Benzetme: leaf bir mahallenin santralidir,</text>
 <text x="552" y="2956" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">spine şehirler arasındaki ana hat.</text>
@@ -1640,13 +1640,13 @@ Donanımın boşta kalmasını engellemek ve Model FLOP Kullanımını (MFU) mak
 
 ### Silikon seviyesinde GPU anatomisi: SM, warp scheduler ve tensor core
 
-GPU'ların TPU'lardan neden bu kadar farklı davrandığını kavramak için bir restoran mutfağı analojisi kuralım. Bir Google TPU v5p, sadece iki devasa baş aşçı (TensorCore birimleri) tarafından yönetilen lüks bir Fransız restoranı gibidir. Her baş aşçı, 128x128 matrisleri tek hamlede doğrayabilen devasa kesme tahtalarına (Matrix Multiply Unit / MXU) sahiptir; küçük siparişler veya asimetrik görevler geldiğinde bu dev tahtalar boş kalır. Modern bir NVIDIA GPU (örneğin Hopper H100 veya Blackwell B200) ise 132 ila 148 adet bağımsız hat aşçısından oluşan koca bir ordudur. Bu aşçıların her birine **Streaming Multiprocessor (SM)** denir. Her hat aşçısı kendi küçük tezgâhında tamamen bağımsız siparişler hazırlar ve hepsi ortak bir kilere bağlıdır.
+GPU'ların TPU'lardan neden bu kadar farklı davrandığını kavramak için bir restoran mutfağı analojisi kuralım. Bir Google TPU v5p, sadece iki devasa baş aşçı (TensorCore birimleri) tarafından yönetilen lüks bir mutfak gibidir. Her baş aşçı, 128x128 matrisleri lockstep içinde tek hamlede işleyebilen devasa kesme tahtalarına (Matrix Multiply Unit / MXU) sahiptir; küçük siparişler veya asimetrik görevler geldiğinde bu dev tahtalar boş (idle) kalır. Modern bir NVIDIA GPU (örneğin Hopper H100 veya Blackwell B200) ise 132 ila 148 adet bağımsız hat aşçısından oluşan bir ordudur. Bu aşçıların her birine **Streaming Multiprocessor (SM)** denir. Her hat aşçısı kendi küçük tezgâhında tamamen bağımsız siparişler hazırlar ve hepsi ortak bir HBM kilerine bağlıdır.
 
-Fiziksel donanımda her bir SM, **SM alt bölmesi (subpartition)** adı verilen 4 özdeş çeyreğe ayrılmıştır. Her çeyrekte şu bileşenler bulunur:
-1. **Bir Tensor Core (TC):** Özel sistolik matris çarpım motoru. 1,76 GHz saat hızında çalışan bir H100 üzerinde her bir Tensor Core, saat döngüsü başına yaklaşık 1.024 adet BF16 kayan nokta işlemi (kabaca 8x8x8 matris çarpımı) yürütür. 132 SM üzerindeki 528 Tensor Core bir araya geldiğinde 990 TFLOP/s BF16 yoğun hesaplama gücü üretilir. Blackwell B200'de bu güç döngü başına 2.048 işleme çıkarak yoğun BF16'da 2.250 TFLOP/s seviyesine ulaşır.
-2. **Bir Warp Scheduler ve Dağıtım Birimi:** **Warp** adı verilen 32 iş parçacıklı (thread) kümelere komut dağıtır. Tek bir SM aynı anda 64 adede kadar yerleşik (resident) warp barındırabilir; bellek gecikmelerini gizlemek için saat döngüleri arasında warp'lar arasında ışık hızında bağlam değiştirir.
-3. **32 FP32 CUDA Core (ALU):** Vektör aktivasyonlarını (GELU, SiLU), normalizasyonları (RMSNorm) ve toplamaları yürüten genel amaçlı aritmetik birimler. 132 SM'e sahip bir H100 çipinde ~1,98 GHz boost saat hızında çalışan 16.896 adet CUDA çekirdeği bulunur.
-4. **16.384 Adet 32-bit Register:** Alt bölme başına 64 KiB (SM başına 256 KiB, çip genelinde ~33 MB) ultra hızlı register dosyası sağlar.
+Fiziksel donanımda her bir SM, **SM subpartition (alt bölüm)** adı verilen 4 özdeş çeyreğe ayrılmıştır. Her çeyrekte şu bileşenler bulunur:
+1. **Bir Tensor Core (TC):** Özel sistolik matris çarpım motoru. 1,76 GHz saat hızında çalışan bir H100 SXM5 üzerinde her bir Tensor Core, saat döngüsü (clock cycle) başına yaklaşık 1.024 adet BF16 kayan nokta işlemi (FLOP) yürütür (kabaca 8x8x8 matris çarpımı). 132 SM üzerindeki 528 Tensor Core bir araya geldiğinde tepe 990 TFLOP/s BF16 yoğun (dense) hesaplama gücü üretilir. Blackwell B200'de bu güç döngü başına 2.048 FLOP'a çıkarak yoğun BF16'da 2.250 TFLOP/s seviyesine ulaşır.
+2. **Bir Warp Scheduler ve Dağıtım Birimi (Dispatch Unit):** **Warp** adı verilen 32 thread'lik kümelere komut dağıtır. Tek bir SM aynı anda 64 adede kadar resident (yerleşik) warp barındırabilir; bellek erişim gecikmelerini gizlemek (latency hiding) için saat döngüleri arasında warp'lar arasında sıfır ek yüklü (zero-overhead) bağlam değiştirme (context-switching) yapar.
+3. **32 FP32 CUDA Core (ALU):** Vektör aktivasyonlarını (GELU, SiLU), normalizasyonları (RMSNorm) ve element-wise toplamaları yürüten genel amaçlı aritmetik birimler. 132 SM'e sahip bir H100 çipinde ~1,98 GHz boost saat hızında çalışan 16.896 adet CUDA çekirdeği bulunur.
+4. **16.384 Adet 32-bit Register:** Subpartition başına 64 KiB (SM başına 256 KiB, çip genelinde ~33 MB) ultra hızlı register file sağlar.
 
 Modern bir GPU'nun genel çip yerleşimi ve tek bir SM'in iç anatomisi aşağıdaki mimari diyagramda gösterilmektedir:
 
@@ -1746,35 +1746,35 @@ NVIDIA'nın GH100 silikon yerleşimi ve mikro-mimari şemaları bu işlem biriml
 
 ### SIMT yürütme dinamikleri ve warp divergence tehdidi
 
-TPU'ların saf SIMD (Single Instruction, Multiple Data) yürütme modelinin aksine, NVIDIA GPU'ları **SIMT (Single Instruction, Multiple Threads)** paradigmasıyla çalışır. Bir warp içindeki 32 CUDA çekirdeğinin tümü belirli bir döngüde aynı komutu yürütse de, her iş parçacığı kendi program sayacına ve özel register alanına sahiptir.
+TPU'ların saf SIMD (Single Instruction, Multiple Data) yürütme modelinin aksine, NVIDIA GPU'ları **SIMT (Single Instruction, Multiple Threads)** paradigmasıyla çalışır. Bir warp içindeki 32 CUDA core belirli bir saat döngüsünde aynı komutu yürütse de, her thread kendi program counter'ına ve bağımsız register alanına sahiptir.
 
-Bu esneklik, donanımda **warp divergence (sapma)** adı verilen tehlikeli bir başarım kaybı yaratır. Çekirdeğiniz (kernel) koşullu bir dallanma içeriyorsa (örneğin MoE uzman yönlendirmesini kontrol eden bir `if/else` veya dinamik dolgu maskesi), dallara ayrılan iş parçacıkları bağımsızca ilerleyemez. Warp scheduler önce `if` yolunu yürütürken diğer çekirdekleri maskeleyip durdurur; ardından `else` yolunu yürütürken ilk grubu bekletir:
+Bu esneklik, donanımda **warp divergence (sapma)** adı verilen tehlikeli bir başarım cezası doğurur. Kernel koşullu bir dallanma içeriyorsa (örneğin MoE expert routing kararını kontrol eden bir `if/else` veya dinamik sequence padding maskesi), dallara ayrılan thread'ler bağımsızca ilerleyemez. Warp scheduler önce `if` yolunu yürütürken diğer execution lane'leri maskeleyip durdurur (stall eder); ardından `else` yolunu yürütürken ilk grubu bekletir:
 
 ![NVIDIA GPU'larda Warp Sapması](../../assets/img/gpu/warp-divergence.png)
-*Şekil 2.3: Warp sapmasının donanım zaman çizelgesi. 32 iş parçacıklı bir warp dallara ayrıldığında aktif olmayan hatlar maskelenir ve donanım verimi yarıya düşer.*
+*Şekil 2.3: Warp divergence donanım zaman çizelgesi. 32 thread'lik bir warp dallara ayrıldığında aktif olmayan execution lane'ler maskelenir ve donanım verimi yarıya düşer.*
 
-32 iş parçacığının 16'sı A dalına, 16'sı B dalına giderse, yürütme süresi iki katına çıkar ve efektif aritmetik verim tam %50 düşer.
+32 thread'in 16'sı A dalına, 16'sı B dalına giderse, wall-clock yürütme süresi iki katına çıkar ve o warp için sustained arithmetic throughput tam %50 düşer.
 
 <details>
 <summary>Quiz: Warp sapmasının donanım hesaplama verimine etkisi nedir?</summary>
 
-Bir warp içindeki 32 iş parçacığının yarısı `then` dalına, diğer yarısı `else` dalına saptığında donanım bu iki yolu sırayla yürütmek zorundadır. İlk aşamada 16 ALU çalışırken 16'sı boş bekler; ikinci aşamada durum tersine döner. Toplam saat süresi iki katına çıkar ve o warp için efektif hesaplama verimi tam %50 oranında çöker.
+Bir warp içindeki 32 thread'in yarısı `then` dalına, diğer yarısı `else` dalına saptığında donanım bu iki yolu serileştirmek (serialize etmek) zorundadır. İlk aşamada 16 ALU çalışırken 16'sı maskelenip boş bekler; ikinci aşamada durum tersine döner. Toplam saat süresi iki katına çıkar ve o warp için sürdürülen hesaplama verimi tam %50 oranında çöker.
 </details>
 
 ### Bellek hiyerarşisi ve aritmetik yoğunluk roofline modeli
 
 Hesaplama gücü, işlem birimlerini besleyecek bellek bant genişliği olmadan bir hiçtir. GPU bellek alt sistemi dik bir piramit oluşturur:
-- **Register Dosyası:** SM başına 256 KiB (çip genelinde ~33 MB). Tek döngüde erişim gecikmesi.
-- **Paylaşımlı Bellek (SMEM) / L1 Önbellek:** SM başına 256 KiB. FlashAttention algoritmalarında dikkat bloklarını önbelleğe almak için kullanılan programlanabilir SRAM (10 ns altı gecikme).
-- **Tensor Belleği (TMEM):** Blackwell B200 ile tanıtılan SM başına 256 KiB özel bellek. B200 Tensor Core birimlerinin ürettiği matris çarpım akümülatörleri klasik register kapasitesini aştığı için çip üstünde özel matris deposu sağlar.
-- **Paylaşımlı L2 Önbellek:** Hopper H100'de 50 MB, Blackwell B200'de 126 MB. Çift yönde yaklaşık 5,5 TB/s bant genişliği sunar.
-- **Yüksek Bant Genişlikli Bellek (HBM3 / HBM3e):** H100'de 80 GB (3,35 TB/s), H200'de 141 GB (4,8 TB/s), B200'de 192 GB (8,0 TB/s).
+- **Register File:** SM başına 256 KiB (çip genelinde ~33 MB). Single-cycle (tek döngüde) erişim gecikmesi.
+- **Shared Memory (SMEM) / L1 Cache:** SM başına 256 KiB. FlashAttention algoritmalarında attention tile'larını önbelleğe almak için programatik olarak yönetilen SRAM (sub-10 ns gecikme).
+- **Tensor Memory (TMEM):** Blackwell B200 ile tanıtılan SM başına 256 KiB on-chip bellek. B200 Tensor Core birimlerinin ürettiği matris çarpım akümülatörleri klasik register file kapasitesini aştığı için çip üstünde dedicated matris accumulator deposu sağlar.
+- **Shared L2 Cache:** Hopper H100'de 50 MB, Blackwell B200'de 126 MB. Çift yönde yaklaşık 5,5 TB/s bant genişliği sunar.
+- **High-Bandwidth Memory (HBM3 / HBM3e):** H100'de 80 GB (3,35 TB/s), H200'de 141 GB (4,8 TB/s), B200'de 192 GB (8,0 TB/s).
 
 Hesaplama kapasitesi ile bellek bant genişliği arasındaki denge **Roofline Modeli** ile tanımlanır:
 
 $$\alpha_{\text{crit}} = \frac{C_{\text{peak}}}{W_{\text{mem}}}$$
 
-Şöyle okuyun: $\alpha_{\text{crit}}$ bayt başına FLOP cinsinden kritik aritmetik yoğunluk, $C_{\text{peak}}$ saniyedeki tepe kayan nokta işlem sayısı, $W_{\text{mem}}$ ise saniyedeki bellek bant genişliğidir.
+Şöyle okuyun: $\alpha_{\text{crit}}$ bayt başına FLOP cinsinden kritik aritmetik yoğunluk (arithmetic intensity), $C_{\text{peak}}$ saniyedeki tepe kayan nokta işlem sayısı (peak FLOP/s), $W_{\text{mem}}$ ise saniyedeki bellek bant genişliğidir (bytes/s).
 
 BF16 Tensor Core çalıştıran bir H100 SXM5 için:
 $$C_{\text{peak}} = 990 \times 10^{12} \text{ FLOP/s}, \quad W_{\text{mem}} = 3,35 \times 10^{12} \text{ B/s}$$
@@ -1783,23 +1783,23 @@ $$\alpha_{\text{crit}} = \frac{990 \times 10^{12}}{3,35 \times 10^{12}} \approx 
 $X \in \mathbb{R}^{B \times D}$ aktivasyon matrisi ile $W \in \mathbb{R}^{D \times F}$ ağırlık matrisinin 16-bit duyarlıkta çarpımı için:
 - **Toplam Matematiksel İşlem:** $2 B D F \text{ FLOP}$
 - **Toplam Bellek Transferi:** $2(BD + DF + BF) \text{ bayt}$
-- **Operasyonel Yoğunluk:**
+- **Operasyonel Yoğunluk (Operational Intensity):**
 
 $$\alpha(B) = \frac{2 B D F}{2(BD + DF + BF)} = \frac{B D F}{B(D + F) + D F}$$
 
-Batch boyutu $B$ çok küçük olduğunda ($B \to 1$, örneğin tek tokenli ardışık çıkarım üretimi), ağırlık matrisi bellek trafiğini domine eder ($DF \gg B(D+F)$):
+Batch boyutu $B$ çok küçük olduğunda ($B \to 1$, örneğin tek tokenli ardışık çıkarım / autoregressive decoding), ağırlık matrisi bellek trafiğini domine eder ($DF \gg B(D+F)$):
 $$\alpha(1) \approx \frac{D F}{D F} \cdot B \approx B = 1 \text{ FLOP/bayt} \ll 295,5 \text{ FLOP/bayt}$$
 
-Bu rejimde GPU tamamen bellek bant genişliğine takılır (memory-bandwidth bound) ve tepe hesaplama kapasitesinin %1'inden azını kullanabilir. Hesaplama sınırına (compute-bound) geçmek için gereken batch boyutu şartı şudur:
+Bu rejimde GPU aşırı derecede **memory-bandwidth bound** (bellek bant genişliği kısıtlı) çalışır ve tepe hesaplama kapasitesinin %1'inden azını kullanabilir. **Compute-bound** (hesaplama kısıtlı) sınırına geçmek için gereken batch boyutu şartı şudur:
 
 $$B \ge \frac{\alpha_{\text{crit}} \cdot D F}{D F - \alpha_{\text{crit}}(D + F)} \approx \alpha_{\text{crit}} \approx 295 \text{ token}$$
 
-Hem Hopper H100 hem de Blackwell B200'de roofline eğrisinin dirsek noktasını aşıp hesaplama sınırına geçebilmek için SM başına en az 280 ila 300 tokenlik bir batch boyutu gerekir.
+Hem Hopper H100 hem de Blackwell B200'de roofline eğrisinin dirsek noktasını (roofline knee) aşıp compute-bound bölgesine geçebilmek için SM başına en az 280 ila 300 tokenlik bir batch boyutu gerekir.
 
 <details>
 <summary>Quiz: Otoregresif token üretiminde MFU neden %2'nin altında kalır?</summary>
 
-Tek tokenli çıkarımda ($B=1$) GPU tek bir vektörü işlemek için tüm model ağırlıklarını HBM'den register'lara çekmek zorundadır. Aritmetik yoğunluk $\alpha(1) \approx 1 \text{ FLOP/bayt}$ seviyesindedir. H100 Tensor Core birimlerini doyurmak için $\alpha_{\text{crit}} \approx 295,5 \text{ FLOP/bayt}$ gerektiğinden, donanım döngülerinin %99'undan fazlasını bellek bekleyerek harcar ve MFU %1-2 bandına sıkışır.
+Single-token decoding evresinde ($B=1$) GPU tek bir vektörü işlemek için tüm model ağırlıklarını HBM'den register file'a çekmek zorundadır. Aritmetik yoğunluk $\alpha(1) \approx 1 \text{ FLOP/bayt}$ seviyesindedir. H100 Tensor Core birimlerini doyurmak için $\alpha_{\text{crit}} \approx 295,5 \text{ FLOP/bayt}$ gerektiğinden, donanım saat döngülerinin %99'undan fazlasını bellek bekleyerek (memory stall) harcar ve MFU %1-2 bandına sıkışır.
 </details>
 
 ### Düşük duyarlıklı sayısal formatlar: FP32'den FP8 ve NVFP4'e
@@ -1817,37 +1817,37 @@ Mimari nesilleri boyunca Tensor Core hesaplama motorlarının evrimi ve donanım
 | **Blackwell (B200)** | 5. Nesil Tensor Core | 192 GB @ 8,0 TB/s | 2.250 | 4.500 | 9.000 |
 
 Hopper H100 ile birlikte donanıma iki farklı FP8 (8-bit kayan nokta) formatı eklendi:
-1. **E4M3 (1 işaret, 4 üs, 3 mantis biti):** Dinamik aralığın kararlı olduğu ileri geçiş aktivasyonları ve ağırlıklar için daha yüksek sayısal hassasiyet sunar.
-2. **E5M2 (1 işaret, 5 üs, 2 mantis biti):** FP16'nın dinamik aralığını koruyarak geri yayılım gradyanlarında taşma veya sıfıra yuvarlanmayı (underflow) engeller.
+1. **E4M3 (1 işaret, 4 üs, 3 mantis biti):** Dinamik aralığın kararlı olduğu ileri geçiş (forward pass) aktivasyonları ve ağırlıklar için daha yüksek sayısal hassasiyet sunar.
+2. **E5M2 (1 işaret, 5 üs, 2 mantis biti):** FP16'nın dinamik aralığını koruyarak geri yayılım (backward pass) gradyanlarında taşma veya sıfıra yuvarlanmayı (underflow) engeller.
 
-| Sayısal Format | İşaret Biti | Üs Biti | Mantis Biti | Dinamik Aralık ({\text{min}} \dots E_{\text{max}}$) | LLM Ölçeklemesindeki Temel Rolü |
+| Sayısal Format | İşaret Biti | Üs Biti | Mantis Biti | Dinamik Aralık ($E_{\text{min}} \dots E_{\text{max}}$) | LLM Ölçeklemesindeki Temel Rolü |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **IEEE FP16** | 1 | 5 | 10 | $\approx 6 \times 10^{-5} \dots 65.504$ | Geleneksel çıkarım ve temel işlem |
 | **Google BF16** | 1 | 8 | 7 | $\approx 1 \times 10^{-38} \dots 3 \times 10^{38}$ | Kararlı temel model ön eğitimi |
-| **FP8 (E4M3)** | 1 | 4 | 3 | $\approx \pm 448$ | İleri geçiş aktivasyonları ve ağırlıklar |
-| **FP8 (E5M2)** | 1 | 5 | 2 | $\approx \pm 57.344$ | Geri yayılım gradyan iletimi |
+| **FP8 (E4M3)** | 1 | 4 | 3 | $\approx \pm 448$ | Forward pass aktivasyonları ve ağırlıklar |
+| **FP8 (E5M2)** | 1 | 5 | 2 | $\approx \pm 57.344$ | Backward pass gradyan iletimi |
 | **NVFP4 (E2M1)** | 1 | 2 | 1 | Blok ölçekli | Blackwell ultra yoğun GEMM hızlandırması |
 
-Blackwell B200'de ise **NVFP4 (4-bit Microscaling)** mimarisine geçilmiştir. 16 elemanlı vektör blokları üzerinde paylaşılan 8-bit veya 16-bit ölçekleme katsayılarıyla desteklenen 4-bit sayılar, çip başına 4.500 TFLOP/s yoğun hesaplama üreterek devasa matrislerin doğrudan TMEM ve L2 önbellek sınırlarında kalmasını sağlar.
+Blackwell B200'de ise **NVFP4 (4-bit Microscaling)** mimarisine geçilmiştir. 16 elemanlı vektör blokları üzerinde paylaşılan 8-bit veya 16-bit ölçekleme katsayılarıyla desteklenen 4-bit sayılar, çip başına 4.500 TFLOP/s dense compute üreterek devasa GEMM matrislerinin doğrudan TMEM ve L2 cache sınırlarında kalmasını sağlar.
 
 ---
 
 ## 3. 2. Sütun — Ağ: Ara bağlantı omurgaları, kolektifler ve çok boyutlu paralellik
 
-### Düğüm seviyesinde ağ: NVLink ve NVSwitch mimarisi
+### Intra-node ağ mimarisi: NVLink ve NVSwitch fabric'leri
 
 Tek bir çipin sınırlarını aşarken standart PCIe veri yolları (PCIe Gen 5'te tek yönde yalnızca 64 GB/s) aşılması imkânsız bir darboğaza dönüşür. NVIDIA bu engeli **NVLink** ve **NVSwitch** ile aşar.
 
-Standart bir DGX H100 veya HGX H100 kasasında 8 GPU, 4 adet özel NVSwitch 4 ASIC'i ile eşleştirilmiştir. Her H100 çipi 18 adet NVLink 4 portuna sahiptir. Her port çift yönde 50 GB/s (tek yönde 25 GB/s) aktarım yaparak çip başına şu çıkış hızını üretir:
+Standart bir DGX H100 veya HGX H100 kasasında 8 GPU, 4 adet özel NVSwitch 4 ASIC'i ile eşleştirilmiştir. Her H100 çipi 18 adet NVLink 4 portuna sahiptir. Her port çift yönde 50 GB/s (tek yönde 25 GB/s) aktarım yaparak çip başına şu egress hızını üretir:
 $$W_{\text{GPU egress}} = 18 \times 25 \text{ GB/s} = 450 \text{ GB/s tek yönlü } (900 \text{ GB/s çift yönlü})$$
 
-4 adet merkezi NVSwitch, engellemesiz (non-blocking) bir çapraz bağlantı (crossbar) oluşturur. Kasa içindeki toplam anahtarlama kapasitesi şöyledir:
+4 adet merkezi NVSwitch, non-blocking (engellemesiz) bir crossbar fabric oluşturur. Kasa içindeki toplam switching kapasitesi şöyledir:
 $$4 \text{ switch} \times 1,6 \text{ TB/s} = 6,4 \text{ TB/s anahtarlama bant genişliği}$$
 
-8 GPU'nun her biri 450 GB/s çıkış yapabildiğinden, kasanın 4 GPU'ya karşı 4 GPU şeklindeki herhangi bir eşit ikiye bölünüşünde (bisection):
-$$\text{Biseksiyon Bant Genişliği} = 4 \text{ GPU} \times 450 \text{ GB/s} \times 2 \text{ yön} = 3,6 \text{ TB/s}$$
+8 GPU'nun her biri 450 GB/s egress yapabildiğinden, kasanın 4 GPU'ya karşı 4 GPU şeklindeki herhangi bir eşit ikiye bölünüşünde (bisection):
+$$\text{Bisection Bandwidth} = 4 \text{ GPU} \times 450 \text{ GB/s} \times 2 \text{ yön} = 3,6 \text{ TB/s}$$
 
-Düğüm içi çapraz bağlantı ağ mimarisi aşağıdaki yapısal diyagramda gösterilmektedir:
+Düğüm içi (intra-node) crossbar ağ mimarisi aşağıdaki yapısal diyagramda gösterilmektedir:
 
 <svg viewBox="0 0 560 410" role="img" aria-label="8 GPU&#x27;lu DGX düğümünde NVSwitch çapraz bağlantı mimarisi ve bant genişlikleri." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -1922,14 +1922,14 @@ Bu 8 GPU'lu anakartların fiziksel yerleşimi ve NVSwitch 4 ASIC'inin iç yapıs
 *Şekil 3.1: GPU'lar ile 4 yerleşik NVSwitch arasındaki yüksek yoğunluklu NVLink hatlarını yönlendiren HGX 8 GPU taban kartı mimarisi.*
 
 ![NVIDIA NVLink 4 Switch Crossbar Mimarisi](../../assets/img/gpu/nvlink4.png)
-*Şekil 3.2: Hot Chips 34'te sunulan, donanımsal indirgeme yeteneğine sahip ve çift yönde 3,2 TB/s yönlendirebilen 64 portlu NVLink 4 switch ASIC'inin iç şeması.*
+*Şekil 3.2: Hot Chips 34'te sunulan, donanımsal in-network reduction yeteneğine sahip ve çift yönde 3,2 TB/s yönlendirebilen 64 portlu NVLink 4 switch ASIC'inin iç şeması.*
 
-Blackwell nesliyle birlikte NVIDIA, **GB200 NVL72** mimarisiyle bu denklemi kökten değiştirdi. NVLink etki alanını 8 GPU'lu bir kasayla sınırlamak yerine, sıvı soğutmalı kabinler 72 adet B200 GPU'yu 18 adet NVSwitch 5 ASIC'i üzerinden bakır arka panelde birleştirir:
+Blackwell nesliyle birlikte NVIDIA, **GB200 NVL72** mimarisiyle bu denklemi kökten değiştirdi. NVLink domain'ini 8 GPU'lu tek bir kasayla sınırlamak yerine, sıvı soğutmalı rack'ler 72 adet B200 GPU'yu 18 adet NVSwitch 5 ASIC'i üzerinden bakır arka panelde (copper backplane) birleştirir:
 
 ![GB200 NVL72 Kabin Mimarisi](../../assets/img/gpu/b200-node.png)
-*Şekil 3.3: 72 GPU ve 18 NVLink switch'i tek bir 900 GB/s NVLink etki alanında birleştiren GB200 NVL72 kabin yapısı.*
+*Şekil 3.3: 72 GPU ve 18 NVLink switch'i tek bir 900 GB/s NVLink domain'inde birleştiren GB200 NVL72 rack mimarisi.*
 
-NVL72'de 72 GPU'nun tümü, herhangi bir çipin diğerinin belleğine 900 GB/s hızla erişebildiği tek bir NVLink etki alanını paylaşır ve tek düğüm sınırını 9 kat genişletir.
+NVL72'de 72 GPU'nun tümü, herhangi bir çipin diğerinin HBM belleğine 900 GB/s hızla erişebildiği tek bir NVLink etki alanını paylaşır ve tek node sınırını 9 kat genişletir.
 
 <details>
 <summary>Quiz: Bir H100 SXM5 GPU'da kaç NVLink portu bulunur ve toplam bant genişliği nedir?</summary>
@@ -1937,16 +1937,16 @@ NVL72'de 72 GPU'nun tümü, herhangi bir çipin diğerinin belleğine 900 GB/s h
 H100 SXM5 çipinde 18 adet NVLink 4 portu bulunur. Her port tek yönde 25 GB/s hızla çalışarak GPU başına tek yönde 450 GB/s, çift yönde 900 GB/s toplam bant genişliği sağlar.
 </details>
 
-### Düğümler ötesi ölçekleme: SuperPod ve rail-optimized fat-tree topolojisi
+### Düğümler ötesi ölçekleme (Scale-out): SuperPod ve rail-optimized fat-tree topolojisi
 
-Yüz milyarlarca parametreli modelleri eğitmek için kümenin binlerce GPU'ya ölçeklenmesi gerekir. Bu katman **InfiniBand** (veya RoCE v2 Ethernet) tarafından yönetilir.
+Yüz milyarlarca parametreli modelleri eğitmek için cluster'ın binlerce GPU'ya ölçeklenmesi gerekir. Bu scale-out katmanı **InfiniBand** (veya RoCE v2 Ethernet) tarafından yönetilir.
 
-1.024 GPU'lu bir DGX H100 SuperPod kümesinde:
-- Küme, her biri 32 DGX düğümü (256 GPU) içeren **Ölçeklenebilir Birimlere (Scalable Unit / SU)** ayrılır.
-- Her düğümde 8 adet ConnectX-7 400 Gbps (NDR) NIC bulunur; bu da düğüm başına $8 \times 50 \text{ GB/s} = 400 \text{ GB/s}$ (GPU başına 50 GB/s) dış ağ çıkışı sağlar.
-- Her SU içinde 8 Leaf switch bulunur. 4 SU genelinde 16 merkezi Spine switch, ağı 51,2 TB/s anahtarlama kapasitesine sahip 1:1 **Fat-Tree (Şişman Ağaç)** topolojisinde birleştirir.
+1.024 GPU'lu bir DGX H100 SuperPod cluster'ında:
+- Cluster, her biri 32 DGX node (256 GPU) içeren **Scalable Unit (SU)** bloklarına ayrılır.
+- Her node'da 8 adet ConnectX-7 400 Gbps (NDR) NIC bulunur; bu da node başına $8 \times 50 \text{ GB/s} = 400 \text{ GB/s}$ (GPU başına 50 GB/s) scale-out network egress sağlar.
+- Her SU içinde 8 Leaf switch bulunur. 4 SU genelinde 16 merkezi Spine switch, ağı 51,2 TB/s aggregate switching capacity'ye sahip non-blocking 1:1 **Fat-Tree topolojisinde** birleştirir.
 
-Kritik olarak modern kümeler **Rail-Optimized (Ray Uyumlu)** kablolama kullanır. Bu topolojide her düğümdeki $i$. GPU rank'ı doğrudan $i$. Leaf switch'e bağlanır. Aynı indeksli GPU'lar arasında veri paraleli veya boru hattı kolektifleri yürütülürken paketler spine katmanına çıkmadan kendi ray switch'i içinde kalır; gecikme ve omurga tıkanıklığı önlenir:
+Kritik olarak modern cluster'lar **Rail-Optimized kablolama** kullanır. Bu topolojide her node'daki $i$. GPU rank'ı doğrudan $i$. Leaf switch'e (rail switch) bağlanır. Aynı indeksli GPU'lar arasında Data Parallelism (DP) veya Pipeline Parallelism (PP) kolektifleri yürütülürken paketler spine katmanına çıkmadan doğrudan kendi rail switch'i içinde kalır; böylece spine hop'ları ortadan kalkar ve fabric congestion önlenir:
 
 <svg viewBox="0 0 560 440" role="img" aria-label="1024 GPU&#x27;lu DGX H100 SuperPod Fat-Tree InfiniBand ağ topolojisi diyagramı." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -2019,35 +2019,35 @@ H100 ve GB200 SuperPod kümelerinin resmi topolojileri aşağıda belgelenmişti
 *Şekil 3.4: Hesaplama düğümleri ile depolama omurgası arasındaki leaf-spine bağlantılarını gösteren mantıksal SuperPod yerleşimi.*
 
 ![DGX H100 SuperPod Küme Mimarisi](../../assets/img/gpu/h100-superpod.png)
-*Şekil 3.5: 128 DGX düğümü, ray uyumlu InfiniBand switch'leri ve yönetim kabinlerinden oluşan 1.024 GPU'lu fiziksel H100 SuperPod kurulumu.*
+*Şekil 3.5: 128 DGX node'u, rail-optimized InfiniBand switch'leri ve yönetim rack'lerinden oluşan 1.024 GPU'luk fiziksel H100 SuperPod kurulumu.*
 
 ![GB200 NVL72 SuperPod Mimarisi](../../assets/img/gpu/gb200-superpod.png)
 *Şekil 3.6: 576 B200 GPU'yu Quantum-X800 800 Gbps InfiniBand switch'leriyle bağlayan Blackwell GB200 NVL72 çok kabinli ölçekleme topolojisi.*
 
-### Kolektif iletişim: Halka algoritmalarından donanımsal SHARP'a
+### Kolektif iletişim (Collectives): Ring algoritmalarından donanımsal SHARP'a
 
-Dağıtık eğitim, NCCL (NVIDIA Collective Communications Library) içinde uygulanan temel kolektif iletişim primitiflerine dayanır:
-1. **AllGather:** Her rank $B/N$ boyutunda bir parça tutar; tüm parçalar toplanarak her GPU'da $B$ boyutunda tam tensör oluşturulur.
-2. **ReduceScatter:** Her rank $B$ boyutunda girdi tutar; elemanlar rank'lar arasında toplanır ve $i$. rank yalnızca $B/N$ boyutundaki $i$. parçayı saklar.
-3. **AllReduce:** ReduceScatter ve ardından AllGather işlemine eşdeğerdir. Tüm rank'lar arasında eleman bazında toplama yapar ve $B$ boyutundaki nihai tensörü $N$ GPU'nun tamamına çoğaltır.
-4. **AllToAll:** Her rank diğer tüm rank'lara farklı bir tensör dilimi gönderir; MoE uzman dağıtımının temelini oluşturur.
+Dağıtık eğitim, NCCL (NVIDIA Collective Communications Library) içinde uygulanan temel kolektif iletişim (collective communication) primitiflerine dayanır:
+1. **AllGather:** Her rank $B/N$ boyutunda bir tensör parçası (slice) tutar; tüm parçalar toplanarak her GPU'da $B$ boyutunda tam tensör oluşturulur.
+2. **ReduceScatter:** Her rank $B$ boyutunda girdi tensörü tutar; elemanlar rank'lar arasında toplanır (element-wise sum) ve $i$. rank yalnızca $B/N$ boyutundaki $i$. parçayı saklar.
+3. **AllReduce:** ReduceScatter ve ardından AllGather işlemine eşdeğerdir. Tüm rank'lar arasında element-wise toplama yapar ve $B$ boyutundaki nihai tensörü $N$ GPU'nun tamamına replike eder.
+4. **AllToAll:** Her rank diğer tüm rank'lara farklı bir tensör slice'ı gönderir; Mixture of Experts (MoE) token routing mekanizmasının temelini oluşturur.
 
 AllGather kolektifinin adım adım akışı aşağıdaki animasyonda gösterilmektedir:
 
 ![AllGather Kolektif İletişim Adımı](../../assets/img/gpu/all-gather.gif)
 *Şekil 3.7: Dört GPU arasında bir AllGather kolektifinin adım adım iletişim modeli.*
 
-Ağ çıkış bant genişliği $W$ olan $N$ cihazlık klasik bir **Ring AllGather** algoritmasında:
-- Her cihaz tensörünü $B/N$ boyutunda $N$ parçaya böler.
+Ağ çıkış bant genişliği (network egress bandwidth) $W$ olan $N$ cihazlık klasik bir **Ring AllGather** algoritmasında:
+- Her cihaz tensörünü $B/N$ boyutunda $N$ parçaya (chunk) böler.
 - Her adımda her rank bir parçayı komşusuna aktarırken diğerinden yenisini alır.
-- Halka $N-1$ adımda tamamlanır:
+- Ring dolaşımı $N-1$ adımda tamamlanır:
 
 $$T_{\text{AllGather, Ring}} = (N - 1) \cdot \frac{B / N}{W} = \frac{N - 1}{N} \cdot \frac{B}{W} \approx \frac{B}{W}$$
 
-Bir AllReduce hem ReduceScatter hem AllGather gerektirdiğinden, klasik halka AllReduce işlemi $2 \times \frac{N-1}{N} B$ bayt aktarır ve şu süreyi alır:
+Bir AllReduce işlemi hem ReduceScatter hem AllGather gerektirdiğinden, klasik ring AllReduce $2 \times \frac{N-1}{N} B$ bayt aktarır ve şu süreyi alır:
 $$T_{\text{AllReduce, Ring}} \approx 2 \cdot \frac{B}{W}$$
 
-Bu $2\times$ maliyetini ortadan kaldırmak için modern InfiniBand switch'leri **Mellanox SHARP (Scalable Hierarchical Aggregation and Reduction Protocol)** teknolojisini kullanır. SHARP, kayan nokta toplama mantığını doğrudan Quantum switch ASIC'lerine gömer:
+Bu $2\times$ maliyetini ortadan kaldırmak için modern InfiniBand switch'leri **Mellanox SHARP (Scalable Hierarchical Aggregation and Reduction Protocol)** teknolojisini kullanır. SHARP, floating-point reduction mantığını doğrudan Quantum switch ASIC'lerine gömer:
 
 <svg viewBox="0 0 560 400" role="img" aria-label="Halka tabanlı kolektif iletişim ile Quantum switch SHARP ağ içi indirgeme karşılaştırması." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -2151,58 +2151,58 @@ Klasik halka AllReduce iki aşamadan oluşur (yaklaşık $B$ bayt aktaran Reduce
 
 ### LLM ölçekleme için 4D paralellik roofline sınırları
 
-Yüz milyarlarca parametreli modelleri eğitmek dört temel paralellik boyutunun harmanlanmasını gerektirir: **Tensör Paralelliği (TP)**, **Boru Hattı Paralelliği (PP)**, **Uzman Paralelliği (EP)** ve **Veri Paralelliği (DP / FSDP)**.
+Frontier modelleri eğitmek dört temel paralellik boyutunun harmanlanmasını gerektirir: **Tensor Parallelism (TP)**, **Pipeline Parallelism (PP)**, **Expert Parallelism (EP)** ve **Data Parallelism (DP / FSDP)**.
 
-#### Tensör Paralelliği (TP) ve 8 GPU Tavanı
+#### Tensor Parallelism (TP) ve 8 GPU NVLink Tavanı
 
-Megatron-LM tarzı tensör paralelliğinde Transformer MLP bloğu $Y$ parçaya bölünür: $W_{\text{in}}$ sütunlara ($[D, F/Y]$), $W_{\text{out}}$ satırlara ($[F/Y, D]$) paylaştırılır.
-- **İleri Hesaplama Süresi:** $T_{\text{math}} = \frac{4 B D F}{Y \cdot C_{\text{peak}}}$
-- **İletişim Süresi:** Aktivasyonlar üzerinde bir AllReduce: $T_{\text{comms}} = \frac{4 B D}{W_{\text{collective}}}$
+Megatron-LM tarzı tensor parallelism'de Transformer MLP bloğu $Y$ parçaya bölünür: $W_{\text{in}}$ column-wise ($[D, F/Y]$), $W_{\text{out}}$ row-wise ($[F/Y, D]$) paylaştırılır.
+- **İleri Hesaplama Süresi (Forward Math Time):** $T_{\text{math}} = \frac{4 B D F}{Y \cdot C_{\text{peak}}}$
+- **İletişim Süresi (Communication Time):** Aktivasyonlar üzerinde bir AllReduce: $T_{\text{comms}} = \frac{4 B D}{W_{\text{collective}}}$
 
 Hesaplamanın iletişimden hızlı kalması ($T_{\text{math}} \ge T_{\text{comms}}$) için:
 
 $$Y \le \frac{F \cdot W_{\text{collective}}}{C_{\text{peak}}} = \frac{F}{\alpha_{\text{crit}}}$$
 
-Düğüm içi NVLink kullanan bir H100 için ($W_{\text{collective}} = 450 \text{ GB/s}$, $C_{\text{peak}} = 990 \text{ TFLOP/s}$):
+Intra-node NVLink kullanan bir H100 SXM5 için ($W_{\text{collective}} = 450 \text{ GB/s}$, $C_{\text{peak}} = 990 \text{ TFLOP/s}$):
 $$\frac{C_{\text{peak}}}{W_{\text{collective}}} = \frac{990 \times 10^{12}}{450 \times 10^9} = 2.200$$
 
 LLaMA-3 70B ($F = 28.672$) için:
 $$Y \le \frac{28.672}{2.200} \approx 13,03 \implies Y = 8 \text{ GPU}$$
 
-Bu matematiksel sınır, **Tensör Paralelliğinin neden kesinlikle 8 GPU'luk tek bir NVLink kasasına hapsedildiğini** açıklar. TP'yi InfiniBand üzerinden 16 GPU'ya çıkarmaya kalktığınızda ($W_{\text{collective}} = 400 \text{ GB/s}$ düğüm çıkışı, yani GPU başına 50 GB/s), $C/W$ oranı 19.800'e fırlar, izin verilen $Y$ değeri 1,5'in altına düşer ve donanım verimi çöker.
+Bu matematiksel sınır, **Tensor Parallelism'in neden kesinlikle 8 GPU'luk tek bir NVLink kasasına hapsedildiğini** kanıtlar. TP'yi InfiniBand üzerinden cross-node olarak 16 GPU'ya çıkarmaya kalktığınızda ($W_{\text{collective}} = 400 \text{ GB/s}$ node egress, yani GPU başına 50 GB/s), $C/W$ oranı 19.800'e fırlar, izin verilen $Y$ değeri 1,5'in altına düşer ve donanım verimi çöker.
 
-#### Boru Hattı Paralelliği (PP) ve Kabarcık Kaybı
+#### Pipeline Parallelism (PP) ve Pipeline Kabarcıkları (Pipeline Bubbles)
 
-Boru hattı paralelliği model katmanlarını $P$ aşamaya böler. Komşu aşamalar mikrobatch başına yalnızca $2BD / N_{\text{MB}}$ boyutunda aktivasyon tensörleri takas ettiğinden ağ trafiği önemsizdir.
+Pipeline parallelism model katmanlarını $P$ pipeline stage'ine böler. Komşu stage'ler microbatch başına yalnızca $2BD / N_{\text{MB}}$ boyutunda boundary aktivasyon tensörleri takas eder (basit peer-to-peer / P2P hatlar üzerinden), bu nedenle network veri hacmi önemsizdir.
 
-Ancak boru hattı, aşamaların birbirini beklemesinden kaynaklanan **kabarcık (bubble)** kaybı yaratır:
+Ancak pipelining, stage'lerin microbatch'leri beklemesinden kaynaklanan **Pipeline Bubble** (kabarcık) cezası yaratır:
 
-$$\text{Kabarcık Oranı} = \frac{P - 1}{P - 1 + M}$$
+$$\text{Bubble Fraction} = \frac{P - 1}{P - 1 + M}$$
 
-Şöyle okuyun: $P$ boru hattı aşama sayısı, $M$ ise küresel batch içindeki mikrobatch sayısıdır.
+Şöyle okuyun: $P$ pipeline stage sayısı, $M$ ise global batch içindeki microbatch sayısıdır.
 
 ![1F1B Çizelgesinde Boru Hattı Kabarcıkları](../../assets/img/gpu/pipeline-bubble.png)
-*Şekil 3.16: 2 aşamalı ve 2 mikrobatchli boru hattı çizelgesi. Beyaz boşluklar kabarcık kayıplarını, 'G' ise gradyan senkronizasyonunu temsil eder.*
+*Şekil 3.16: 2 stage ve 2 microbatch'li 1F1B pipeline çizelgesi. Beyaz boşluklar idle pipeline bubble döngülerini, 'G' ise gradyan senkronizasyonunu temsil eder.*
 
 ![Aktivasyon Aktarım Gecikmesinin Kabarcığa Etkisi](../../assets/img/gpu/pipeline-transfer.png)
-*Şekil 3.17: Aşamalar arasındaki aktivasyon iletim gecikmesi boru hattını kaydırarak kabarcık oranını artırır.*
+*Şekil 3.17: Stage'ler arasındaki aktivasyon iletim gecikmesi pipeline yürütmesini kaydırarak bubble oranını artırır.*
 
-#### Veri Paralelliği (DP & FSDP) ve Kritik Batch Boyutu
+#### Data Parallelism (DP & FSDP) ve Kritik Batch Boyutu
 
-Veri Paralelliğinde (ZeRO-3 / FSDP dahil) parametreler ve gradyanlar $X$ cihaza dağıtılır:
+Data Parallelism'de (ZeRO-3 / FSDP dahil) parametreler ve gradyanlar $X$ cihaza dağıtılır:
 $$T_{\text{math}} = \frac{6 B D F}{X \cdot C_{\text{peak}}}, \quad T_{\text{comms}} = \frac{2 \cdot 2 \cdot DF \cdot (X - 1)}{X \cdot W_{\text{collective}}}$$
 
-$T_{\text{math}} \ge T_{\text{comms}}$ şartından **Kritik Yerel Batch Boyutu** çıkar:
+$T_{\text{math}} \ge T_{\text{comms}}$ şartından **Critical Local Batch Size (Kritik Yerel Batch Boyutu)** çıkar:
 
 $$\frac{B}{X} \ge \frac{2}{3} \cdot \frac{C_{\text{peak}}}{W_{\text{collective}}} \approx 2.475 \text{ token / GPU}$$
 
-GPU başına düşen batch boyutu yaklaşık 2.500 tokenin altına indiğinde, InfiniBand üzerindeki gradyan senkronizasyonu hesaplamadan daha uzun sürer ve GPU'lar boş bekler.
+GPU başına düşen batch boyutu yaklaşık 2.500 tokenin altına indiğinde, scale-out gradient senkronizasyonu forward-backward hesaplamasından daha uzun sürer ve GPU'lar idle bekler.
 
-$E$ toplam uzman ve token başına $k$ aktif uzmana sahip MoE modellerinde bu eşik felaket biçimde büyür:
+$E$ toplam uzman ve token başına $k$ aktif uzmana sahip Mixture of Experts (MoE) modellerinde bu eşik dramatik biçimde büyür:
 
 $$\left(\frac{B}{X}\right)_{\text{crit, MoE}} \ge \frac{E}{k} \cdot \frac{C_{\text{peak}}}{W_{\text{collective}}}$$
 
-$E = 128$ ve $k = 4$ olan bir modelde kritik batch boyutu $32\times$ katlanarak GPU başına 79.000 tokene fırlar; bu patlama ancak Uzman Paralelliği (EP) ile çözülebilir.
+$E = 128$ ve $k = 4$ olan bir modelde kritik batch boyutu $32\times$ katlanarak GPU başına 79.000 tokene fırlar; bu patlama ancak Expert Parallelism (EP) ile çözülebilir.
 
 Dört paralellik boyutunun karar matrisi aşağıdaki yapısal diyagramda gösterilmektedir:
 
@@ -2215,88 +2215,88 @@ Dört paralellik boyutunun karar matrisi aşağıdaki yapısal diyagramda göste
 <text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">LLM Paralellik Matrisi ve Roofline Dengesi</text>
 <text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TP · PP · EP · DP / FSDP Karar Ağacı</text>
 <rect x="16" y="48" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="30" y="68" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Tensör Paralelliği (TP)</text>
-<text x="30" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Tek Düğüm (NVLink)</text>
+<text x="30" y="68" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Tensor Parallelism (TP)</text>
+<text x="30" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Tek Node (NVLink)</text>
 <rect x="30" y="92" width="228" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="144.0" y="104.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">AllGather + ReduceScatter</text>
 <text x="30" y="128" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: Y ≤ F / 2475 (LLaMA: Y ≤ 8)</text>
-<text x="30" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Aşılırsa iletişim hesabı yutar</text>
+<text x="30" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Cross-node TP hızla comms-bound olur</text>
 <text x="30" y="164" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Roofline: Compute vs Comms</text>
 <rect x="288" y="48" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="302" y="68" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:700">Boru Hattı Paralelliği (PP)</text>
-<text x="302" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Çok Düğümlü Katmanlar</text>
-<rect x="302" y="92" width="228" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="416.0" y="104.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">P2P Aktivasyon (Microbatch)</text>
-<text x="302" y="128" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: Kabarcık = (P-1) / (P-1+M)</text>
-<text x="302" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Düşük ağ yükü, zor çizelgeleme</text>
+<text x="302" y="68" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:700">Pipeline Parallelism (PP)</text>
+<text x="302" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Cross-Node Katmanlar</text>
+<rect x="302" y="92" width="228" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="416.0" y="104.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">P2P Activation Passing</text>
+<text x="302" y="128" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: Bubble = (P-1) / (P-1+M)</text>
+<text x="302" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Minimum hat maliyeti, karmaşık takvim</text>
 <text x="302" y="164" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Roofline: Compute vs Comms</text>
 <rect x="16" y="192" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="30" y="212" text-anchor="start" style="fill:var(--c-warn);font-size:12px;font-weight:700">Uzman Paralelliği (EP)</text>
-<text x="30" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: MoE (1-8 Düğüm)</text>
-<rect x="30" y="236" width="228" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="248.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Ragged AllToAll İletişimi</text>
-<text x="30" y="272" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: F &lt; 8C/W ise 1-2 düğüm</text>
-<text x="30" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">MoE ağırlık patlamasını çözer</text>
+<text x="30" y="212" text-anchor="start" style="fill:var(--c-warn);font-size:12px;font-weight:700">Expert Parallelism (EP)</text>
+<text x="30" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: MoE (1-8 Node)</text>
+<rect x="30" y="236" width="228" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="248.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Ragged AllToAll Routing</text>
+<text x="30" y="272" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: 1-2 node (küçük F); multi-node (büyük)</text>
+<text x="30" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">MoE parametre patlamasını çözer</text>
 <text x="30" y="308" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Roofline: Compute vs Comms</text>
 <rect x="288" y="192" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="302" y="212" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Veri Paralelliği (DP / FSDP)</text>
-<text x="302" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Tüm Küme (ZeRO-1 / 3)</text>
+<text x="302" y="212" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Data Parallelism (DP / FSDP)</text>
+<text x="302" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Etki Alanı: Tüm Cluster (ZeRO-1 / 3)</text>
 <rect x="302" y="236" width="228" height="19" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="416.0" y="248.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">AllReduce / ReduceScatter</text>
 <text x="302" y="272" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Kural: B_yerel ≥ 2.500 token / GPU</text>
-<text x="302" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">MoE&#x27;de eşik E/k kat büyür</text>
+<text x="302" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">MoE&#x27;de kritik batch boyutu E/k kat büyür</text>
 <text x="302" y="308" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Roofline: Compute vs Comms</text>
 <rect x="16" y="336" width="528" height="92" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
 <text x="28" y="356" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Modern Üretim Modellerinin Paralellik Reçeteleri:</text>
-<text x="28" y="374" text-anchor="start" style="fill:var(--c-accent-2);font-size:10.5px;font-family:var(--font-mono)">DeepSeek-V3 (2048x H800): 64-way EP (8 düğüm) + 16-way PP + 2-way DP (ZeRO-1)</text>
-<text x="28" y="392" text-anchor="start" style="fill:var(--c-accent);font-size:10.5px;font-family:var(--font-mono)">LLaMA-3 405B (16k H100):  8-way TP (1 düğüm) + 16-way PP + 128-way DP (ZeRO-1)</text>
-<text x="28" y="410" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">Temel kural: TP düğüm içine hapsedilir, PP ve EP düğüm sınırlarını aşar, DP ise ölçeği tamamlar.</text>
+<text x="28" y="374" text-anchor="start" style="fill:var(--c-accent-2);font-size:10.5px;font-family:var(--font-mono)">DeepSeek-V3 (2048x H800): 64-way EP (8 node) + 16-way PP + 2-way DP (ZeRO-1)</text>
+<text x="28" y="392" text-anchor="start" style="fill:var(--c-accent);font-size:10.5px;font-family:var(--font-mono)">LLaMA-3 405B (16k H100):  8-way TP (1 node) + 16-way PP + 128-way DP (ZeRO-1)</text>
+<text x="28" y="410" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">Temel kural: TP intra-node kalır, PP ve EP node sınırlarını aşar, DP ise cluster genelinde ölçeklenir.</text>
 </svg>
 
-Öncü modeller bu alanı şu reçetelerle fetheder:
-- **LLaMA-3 405B (16.384 H100):** 8-way düğüm içi TP $\times$ 16-way PP $\times$ 128-way DP (ZeRO-1).
-- **DeepSeek-V3 (2.048 H800):** 64-way EP (InfiniBand üzerinde 8 düğüme yayılan) $\times$ 16-way PP $\times$ 2-way DP (ZeRO-1), GPU başına 30.720 token.
+Frontier modeller bu tasarım uzayını şu üretim reçeteleriyle fetheder:
+- **LLaMA-3 405B (16.384 H100):** 8-way intra-node TP $\times$ 16-way PP $\times$ 128-way DP (ZeRO-1).
+- **DeepSeek-V3 (2.048 H800):** 64-way EP (InfiniBand üzerinde 8 node'a yayılan) $\times$ 16-way PP $\times$ 2-way DP (ZeRO-1), GPU başına 30.720 token.
 
 Megatron-LM 3D paralellik uzayı aşağıda özetlenmiştir:
 
 ![Megatron-LM 3D Paralellik Ayar Uzayı](../../assets/img/gpu/megatron-hparams.png)
-*Şekil 3.18: Megatron-LM araştırmasında TP, PP ve DP eksenlerinin farklı küme boyutlarındaki başarım alanları.*
+*Şekil 3.18: Megatron-LM araştırmasında farklı cluster boyutlarında TP, PP ve DP parametre verimlilik alanları.*
 
-### Öncü mühendislik: DeepSeek-V3 DualPipe ve iletişim-hesaplama çakışması
+### Frontier engineering: DeepSeek-V3 DualPipe ve iletişim-hesaplama çakışması (communication-computation overlap)
 
-64-way Uzman Paralelliği düğümler arasına yayıldığında, AllToAll token yönlendirmesi InfiniBand hatlarını tıkama tehlikesi yaratır. DeepSeek-V3 bu darboğazı **DualPipe** ile çözmüştür.
+64-way Expert Parallelism (EP) node'lar arasına yayıldığında, AllToAll token routing scale-out InfiniBand linklerini tıkama tehlikesi yaratır. DeepSeek-V3 bu darboğazı **DualPipe** ile çözmüştür.
 
-DualPipe, ileri ve geri yönlerde aynı anda iki bağımsız boru hattı çizelgesi yürütür. Katmanları ince taneli bloklara bölerek, bir bloğun düğümler arası AllToAll token transferini arka planda yürütürken GPU Tensor Core birimlerinde diğer bloğun yoğun dikkat ve GEMM hesaplamalarını çalıştırır. İletişimi hesaplamayla kusursuz biçimde çakıştırarak (overlap) DeepSeek, ağ gecikmesinin %95'ten fazlasını gizler ve kısıtlı H800 kümelerinde dahi tepe MFU'ya ulaşır.
+DualPipe, ileri ve geri yönlerde (forward ve backward) aynı anda iki bağımsız pipeline schedule yürütür. Katmanları ince taneli chunk'lara bölerek, bir chunk'ın cross-node AllToAll token transferini arka planda yürütürken GPU Tensor Core birimlerinde diğer chunk'ın yoğun attention ve GEMM hesaplamalarını çalıştırır. İletişimi hesaplamayla kusursuz biçimde çakıştırarak (communication-computation overlap), DeepSeek ağ gecikmesinin %95'ten fazlasını gizler (latency hiding) ve kısıtlı H800 cluster'larında dahi tepe MFU'ya ulaşır.
 
 ---
 
-## 4. 3. Sütun — Depolama: Temel model veri setleri, kontrol noktaları ve yüksek verimli G/Ç
+## 4. 3. Sütun — Depolama (Storage): Foundation model veri setleri, checkpointing ve yüksek verimli I/O
 
-### Modern temel modellerin ön eğitimindeki depolama krizi
+### Foundation model ön eğitiminde depolama krizi
 
-Hesaplama ve ağ mimarisi ön planda olsa da, büyük dil modeli kümeleri depolama G/Ç (I/O) yetersizlikleri yüzünden binlerce saat boyunca felç olur. Ön eğitimde depolama alt sistemi iki devasa yük altındadır:
+Hesaplama ve ağ mimarisi ön planda olsa da, foundation model eğitim cluster'ları depolama I/O yetersizlikleri yüzünden binlerce saat boyunca felç olur. Modern ön eğitimde depolama alt sistemi iki devasa zorlukla karşı karşıyadır:
 
-1. **Sürekli Veri Besleme (Data Streaming):** LLaMA 3 gibi bir temel modeli eğitmek 15 trilyondan fazla tokenin okunmasını gerektirir. 16.384 GPU'luk bir kümede veri besleme hattı, PyTorch iş parçacıklarını düşürmeden saniyede 2 ila 4 Terabayt kesintisiz okuma hızını korumalıdır.
-2. **Kontrol Noktası (Checkpointing) Krizi:** Donanım arızalarına karşı model durumları periyodik olarak kalıcı depolamaya yazılmalıdır. 405 milyar parametreli bir modelin eğitim sırasındaki bellek faturası şöyledir:
+1. **Sürekli Veri Besleme (Continuous Dataset Ingestion):** LLaMA 3 gibi bir frontier modeli eğitmek 15 trilyondan fazla yapılandırılmamış metin, kod ve multimodal tokenin stream edilmesini gerektirir. 16.384 GPU'luk bir cluster'da dataloader alt sistemi, PyTorch worker iş parçacıklarını düşürmeden veya bekletmeden saniyede 2 ila 4 Terabayt kesintisiz okuma throughput'unu korumalıdır.
+2. **Checkpointing Krizi:** Donanım arızalarına karşı model durumları (states) periyodik olarak kalıcı depolamaya snapshot olarak yazılmalıdır. 405 milyar parametreli bir modelin eğitim sırasındaki tam bellek faturası şöyledir:
 
 $$S_{\text{state}} = S_{\text{weights}} + S_{\text{gradients}} + S_{\text{AdamW}} = 2M + 2M + 12M = 16M \text{ bayt}$$
 
 $M = 405 \times 10^9$ parametre için:
 - **BF16 Model Ağırlıkları:** $405 \times 10^9 \times 2 \text{ bayt} = 810 \text{ GB}$
 - **BF16 Gradyanlar:** $405 \times 10^9 \times 2 \text{ bayt} = 810 \text{ GB}$
-- **FP32 AdamW Optimizer Durumu:** Master ağırlıklar (4 bayt) + Momentum (4 bayt) + Varyans (4 bayt) = $405 \times 10^9 \times 12 \text{ bayt} = 4.860 \text{ GB} = 4,86 \text{ TB}$
+- **FP32 AdamW Optimizer State:** Master weights (4 bayt) + Momentum (4 bayt) + Variance (4 bayt) = $405 \times 10^9 \times 12 \text{ bayt} = 4.860 \text{ GB} = 4,86 \text{ TB}$
 
-Bunların toplamı $6.480 \text{ GB} \approx 6,48 \text{ TB}$ eder. Aktivasyon tamponları, rastgele sayı üreteci (RNG) durumları ve adım meta verileri eklendiğinde tek bir kontrol noktası boyutu **~7,5 Terabayta** ulaşır.
+Bunların toplamı $6.480 \text{ GB} \approx 6,48 \text{ TB}$ eder. Aktivasyon buffer'ları, rastgele sayı üreteci (RNG) state'leri ve optimizer step metadata'sı eklendiğinde tek bir checkpoint snapshot boyutu **~7,5 Terabayta** ulaşır.
 
-Eğer küme bu 7,5 TB veriyi geleneksel 25 GB/s'lik bir paylaşımlı depolama omurgasına eşzamanlı olarak yazmaya kalkarsa, **16.384 GPU'luk dev süper bilgisayar her kayıtta 5 dakikadan fazla ($307 \text{ saniye}$) tamamen donar**. Haftalar süren bir eğitim maratonunda bu duraklamalar milyonlarca dolarlık GPU döngüsünü çöpe atar.
+Eğer küme bu 7,5 TB snapshot'ı geleneksel 25 GB/s'lik bir paylaşımlı depolama fabric'ine senkron olarak yazmaya kalkarsa, **16.384 GPU'luk süper bilgisayar her kayıtta 5 dakikadan fazla ($307 \text{ saniye}$) tamamen donar (freeze)**. Haftalar süren bir eğitim maratonunda bu checkpoint duraklamaları milyonlarca dolarlık GPU döngüsünü çöpe atar.
 
-### Geleneksel G/Ç darboğazı: Host CPU sayfa önbelleği ve bellek kopyalama
+### Geleneksel I/O darboğazı: Host CPU page cache ve bounce buffer'lar
 
-Geleneksel kümelerdeki G/Ç darboğazının temel nedeni işletim sisteminin çok sekmeli mimarisidir:
-1. **NVMe Okuma/Yazma:** Veri NVMe SSD'den PCIe üzerinden ana sunucu CPU root complex birimine gelir.
-2. **Kernel Sayfa Önbelleği Kopyası:** Linux depolama yığını veriyi ana sunucunun DDR5 sistem belleğindeki sayfa önbelleğine kopyalar.
-3. **Kullanıcı Alanı Tamponu:** PyTorch veya kontrol noktası yöneticisi veriyi çekirdek alanından kullanıcı alanı RAM'ine kopyalar.
-4. **Host-to-Device Aktarımı:** Host CPU, PCIe Gen 5 üzerinden veriyi GPU HBM belleğine basmak için ikinci bir DMA transferi başlatır.
+Geleneksel GPU cluster'larındaki depolama duraklamalarının temel nedeni çok sekmeli (multi-hop) geleneksel I/O mimarisidir:
+1. **NVMe Okuma/Yazma:** Veri NVMe SSD'den PCIe üzerinden host CPU root complex birimine gelir.
+2. **Kernel Page Cache Kopyası:** Linux depolama yığını veriyi host sistemin DDR5 RAM'indeki kernel page cache'e kopyalar.
+3. **User Space Bounce Buffer:** PyTorch veya checkpoint yöneticisi veriyi kernel space'ten user space host RAM'e kopyalar.
+4. **Host-to-Device Aktarımı:** Host CPU, PCIe Gen 5 üzerinden veriyi GPU High Bandwidth Memory (HBM) içine basmak için ikinci bir DMA transferi başlatır.
 
-Bu geleneksel yol, her baytın PCIe veri yolunu iki kez geçmesini ve iki ayrı CPU bellek kopyalamasına (`memcpy`) uğramasını zorunlu kılar. Çift soketli bir modern sunucu CPU'su %100 çekirdek yüküyle 50-100 GB/s hızda bellek bant genişliğini tüketir ve depolamayı felç eder.
+Bu geleneksel yol, her baytın PCIe veri yolunu iki kez geçmesini ve iki ayrı CPU bellek kopyalamasına (`memcpy`) uğramasını zorunlu kılar. Çift soketli modern bir host CPU %100 çekirdek yüküyle 50-100 GB/s hızda bellek veri yolunu tüketir ve depolama I/O'sunu felç edici bir darboğaza dönüştürür.
 
-### GPUDirect Storage (GDS) ve doğrudan DMA mimarisi
+### GPUDirect Storage (GDS) ve doğrudan DMA pipeline'ları
 
 Modern yapay zekâ süper bilgisayarları bu darboğazı **GPUDirect Storage (GDS)** ile aşar:
 
@@ -2308,174 +2308,174 @@ Modern yapay zekâ süper bilgisayarları bu darboğazı **GPUDirect Storage (GD
 <marker id="gds-arr-suc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
 <marker id="gds-arr-warn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
 </defs>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Depolama Mimarisi: CPU Bounce vs GPUDirect Storage</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Checkpointing ve Veri Besleme Boru Hattı</text>
+<text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Storage Architecture: CPU Bounce vs GPUDirect Storage</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Checkpointing ve Dataset Streaming Pipeline'ları</text>
 <rect x="16" y="48" width="256" height="286" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Geleneksel G/Ç Yolu</text>
-<text x="144" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">CPU Sayfa Önbelleği &amp; Bounce Buffer</text>
+<text x="144" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Geleneksel I/O Yolu</text>
+<text x="144" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">CPU Page Cache &amp; Bounce Buffer'lar</text>
 <rect x="32" y="252" width="224" height="36" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="144" y="274" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">NVMe Depolama (SSD)</text>
 <rect x="32" y="150" width="224" height="54" rx="5" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
 <text x="144" y="170" text-anchor="middle" style="fill:var(--c-warn);font-size:11.5px;font-weight:700">Host CPU &amp; DDR5 RAM</text>
-<text x="144" y="188" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Kernel Sayfa Önbelleği (50-100 GB/s)</text>
+<text x="144" y="188" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Kernel Page Cache (50-100 GB/s)</text>
 <rect x="32" y="96" width="224" height="36" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="144" y="118" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">GPU HBM3 (3,35 TB/s)</text>
 <line x1="144" y1="250" x2="144" y2="206" marker-end="url(#gds-arr-warn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="150" y="232" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">G/Ç Adım 1</text>
+<text x="150" y="232" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Adım 1</text>
 <line x1="144" y1="148" x2="144" y2="134" marker-end="url(#gds-arr-warn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="150" y="142" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">G/Ç Adım 2</text>
-<rect x="24" y="302" width="240" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Darboğaz: CPU ve RAM Kopyası</text>
+<text x="150" y="142" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Adım 2</text>
+<rect x="24" y="302" width="240" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Darboğaz: CPU &amp; RAM Bounce</text>
 <rect x="288" y="48" width="256" height="286" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="416" y="68" text-anchor="middle" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">GPUDirect Storage (GDS)</text>
-<text x="416" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Doğrudan DMA (cuFile API)</text>
+<text x="416" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Direct DMA (cuFile API)</text>
 <rect x="304" y="252" width="224" height="36" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="416" y="274" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">NVMe Depolama (SSD)</text>
 <rect x="304" y="162" width="224" height="42" rx="5" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="416" y="180" text-anchor="middle" style="fill:var(--c-success);font-size:11.5px;font-weight:700">PCIe Gen 5 Switch / DMA</text>
-<text x="416" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Doğrudan Donanım Yolu (64+ GB/s)</text>
+<text x="416" y="196" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Direct Donanım Yolu (64+ GB/s)</text>
 <rect x="304" y="96" width="224" height="36" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="416" y="118" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">GPU HBM3 (3,35 TB/s)</text>
 <line x1="416" y1="250" x2="416" y2="206" marker-end="url(#gds-arr-suc)" style="stroke:var(--c-success);stroke-width:2"/>
 <line x1="416" y1="160" x2="416" y2="134" marker-end="url(#gds-arr-suc)" style="stroke:var(--c-success);stroke-width:2"/>
-<text x="424" y="232" text-anchor="start" style="fill:var(--c-success);font-size:10px;font-weight:600">Doğrudan DMA</text>
-<rect x="296" y="302" width="240" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="416.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">CPU Baypas · Doğrudan HBM DMA</text>
+<text x="424" y="232" text-anchor="start" style="fill:var(--c-success);font-size:10px;font-weight:600">Direct DMA</text>
+<rect x="296" y="302" width="240" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="416.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Sıfır CPU Yükü · Direct DMA</text>
 <rect x="16" y="344" width="528" height="64" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="364" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Checkpointing Zorluğu: 405B modelinde 7,5 TB durum kaydedilir.</text>
-<text x="28" y="382" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">GDS sayesinde depolama birimleri CPU ve sistem RAM&#x27;ini tamamen baypas ederek,</text>
-<text x="28" y="398" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">doğrudan GPU HBM belleğine veri basar; GPU bekleme süresi sıfıra yaklaşır.</text>
+<text x="28" y="364" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Checkpointing Zorluğu: 405B modelinde ~7,5 TB state periyodik kaydedilir.</text>
+<text x="28" y="382" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">GDS ile depolama, sistem RAM&#x27;ini baypas ederek doğrudan GPU HBM&#x27;e akar,</text>
+<text x="28" y="398" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">CPU bounce gecikmesi elenir ve eğitim duraklamaları önlenir.</text>
 </svg>
 
-GDS, `cuFile` API'si ve `nvidia-fs.ko` çekirdek modülü üzerinden çalışır. Yerel NVMe sürücüler (veya InfiniBand üzerinden NVMe-oF) ile GPU HBM belleği arasında PCIe switch katmanında doğrudan bir DMA (Direct Memory Access) köprüsü kurar; ana sunucu CPU'sunu, kullanıcı belleğini ve Linux sayfa önbelleğini tamamen baypas eder.
+GDS, `cuFile` API'si ve `nvidia-fs.ko` çekirdek modülü üzerinden çalışır. Yerel NVMe sürücüler (veya InfiniBand üzerinden NVMe-oF) ile GPU HBM belleği arasında PCIe switch fabric üzerinde doğrudan bir DMA (Direct Memory Access) kanalı kurar; host CPU'yu, user space bounce buffer'larını ve Linux kernel page cache'ini tamamen baypas eder.
 
 CPU bellek kopyalamaları ortadan kalktığında:
-- Depolama verimi doğrudan PCIe Gen 5 hat hızına (**denetleyici başına 64+ GB/s**) ulaşır.
-- Uçtan uca G/Ç gecikmesi **%80** azalır.
-- Host CPU yükü **%100'den neredeyse %0'a** düşerek CPU çekirdeklerini veri işleme ve orkestrasyona bırakır.
+- Depolama throughput'u PCIe Gen 5 hat hızına (**denetleyici başına 64+ GB/s**) ulaşır.
+- Uçtan uca I/O gecikmesi **%80** azalır.
+- Host CPU yükü **%100'den neredeyse %0'a** düşerek CPU çekirdeklerini token ön işleme ve orkestrasyona bırakır.
 
 <details>
-<summary>Quiz: GPUDirect Storage (GDS) kontrol noktası yazarken CPU yükünü neden sıfıra indirir?</summary>
+<summary>Quiz: GPUDirect Storage (GDS) checkpointing sırasında CPU yükünü neden neredeyse sıfıra indirir?</summary>
 
-Geleneksel G/Ç'de ana sunucu CPU'su çekirdek önbelleği ile kullanıcı belleği arasında gigabaytlarca veriyi taşımak için sürekli `memcpy` komutları yürütür. GDS ise PCIe DMA motorlarını doğrudan programlayarak veriyi NVMe denetleyicisi ile GPU HBM arasında CPU ve DDR5 RAM'e hiç uğramadan akıtır; böylece CPU çekirdekleri tamamen boşta kalır.
+Geleneksel I/O, host CPU'nun kernel page cache buffer'ları ile user space belleği arasında gigabaytlarca veriyi taşımak için `memcpy` komutları yürütmesini gerektirir. GDS ise PCIe DMA motorlarını doğrudan programlayarak veriyi NVMe depolama denetleyicileri ile GPU HBM arasında, host CPU çekirdeklerine ve sistem DDR5 RAM'ine hiç uğramadan stream eder.
 </details>
 
-### Eksabayt ölçeğinde dağıtık dosya sistemleri: Meta Tectonic vaka analizi
+### Exabyte ölçeğinde dağıtık dosya sistemleri: Meta Tectonic vaka analizi
 
-Binlerce düğümlü devasa bir kümede yerel diskler global kontrol noktalarını barındıramaz. Kümeler eksabayt ölçeğinde dağıtık dosya sistemlerine bağlanır.
+Binlerce node'a yayılan bir üretim cluster'ında yerel NVMe sürücüler global checkpoint'leri barındıramaz. Bunun yerine cluster'lar exabyte ölçeğindeki dağıtık dosya sistemlerine bağlanır.
 
-Meta'nın resmi LLaMA 3 altyapı raporuna göre 16.384 GPU'luk küme Meta'nın **Tectonic** dağıtık dosya sistemiyle beslenmiştir:
-- **Ölçek:** 240 Petabayt depolama kapasitesi sunan 7.500 adet özel SSD depolama sunucusu.
-- **Sürekli Okuma Verimi:** 2.048 hesaplama düğümündeki veri besleme süreçlerini beslemek için kesintisiz **2 TB/s** okuma bant genişliği.
-- **Anlık Yazma Verimi:** **7 TB/s anlık tepe yazma bant genişliği**; bu sayede 7,5 TB'lık global kontrol noktası tüm rank'lar tarafından asenkron kopyalama ile yaklaşık **1 saniyede** kalıcı depolamaya dökülebilir.
-- **Güvenilirlik:** Sürücü ve kabin arızalarına karşı veriyi kaybetmemek için Reed-Solomon silme kodlaması ($9+3$ parça) kullanır.
+Meta'nın resmi LLaMA 3 altyapı raporunda 16.384 GPU'luk cluster, Meta'nın dağıtık dosya sistemi **Tectonic** tarafından desteklenmiştir:
+- **Ölçek:** 240 Petabayt depolama kapasitesi sunan 7.500 adet dedicated SSD depolama sunucusu.
+- **Sürekli Okuma Throughput'u:** 2.048 compute node'undaki dataloader worker süreçlerini beslemek için kesintisiz **2 TB/s** okuma bant genişliği.
+- **Burst Checkpoint Throughput'u:** **7 TB/s anlık tepe (burst) yazma bant genişliği**; bu sayede 7,5 TB'lık checkpoint snapshot'ı tüm rank'lar tarafından asenkron copy-on-write buffer'ları kullanılarak yaklaşık **bir saniyede** kalıcı depolamaya kaydedilebilir.
+- **Güvenilirlik:** Sürücü ve rack düzeyindeki depolama sunucusu arızalarında model state'ini korumak için Reed-Solomon erasure coding ($9+3$ parça) kullanır.
 
-### Yüksek verimli veri besleme: İkili token indeksleme ve sıfır kopya mmap
+### Yüksek verimli dataloading: Token binary indexing ve zero-copy mmap
 
-Milyonlarca tokeni GPU'lara kesintisiz beslemek özel veri yükleyici (dataloader) mühendisliği gerektirir:
-- **Standart DataLoader Neden Çöker:** Ham metin veya JSONL dosyaları yüklemek, Python iş parçacıklarının sürekli string parse etmesine ve dinamik nesneler üretmesine yol açarak Python Global Interpreter Lock (GIL) kilitlenmelerine neden olur.
-- **Bitişik İkili Düzen (.bin / .idx):** Üretim kütüphaneleri (Megatron-LM, Lit-GPT) veri setini diskte bitişik `uint16` veya `int32` token dizileri halinde tek bir ikili dosyada (`.bin`) saklar; yanında doküman sınırlarını gösteren bir indeks dosyası (`.idx`) tutulur.
-- **Sıfır Kopya Bellek Eşleme (`mmap`):** İş parçacıkları POSIX `mmap()` çağrısıyla dosyayı doğrudan sanal adres alanına eşler. İşletim sistemi token bloklarını ihtiyaç duyuldukça kullanıcı belleğine ek kopyalama yapmadan sayfalayarak getirir.
-- **NUMA Uyumlu Ön Getirme:** Düğümlerde iki ayrı CPU soketi bulunur ve her soket 4 GPU'ya fiziksel olarak bağlıdır (Şekil 1.1'deki düğüm topolojisinde CPU 0 GPU 0–3'ü, CPU 1 GPU 4–7'yi besler). DataLoader süreçleri doğrudan hedef GPU'nun PCIe root complex birimine bağlı CPU soketine kilitlenir (NUMA affinity) ve CUDA asenkron akışlarıyla (`pin_memory=True`) NUMA hatlarını geçmeden doğrudan HBM'e aktarılır.
+Binlerce GPU'ya kesintisiz token stream etmek özel dataloader mühendisliği gerektirir:
+- **Standart PyTorch DataLoader Neden Yetersiz Kalır:** Ham JSONL veya metin dosyaları yüklemek, Python worker'larının sürekli string parse etmesine, metin tokenize etmesine ve dinamik Python nesneleri allocate etmesine yol açar; bu da Python Global Interpreter Lock (GIL) kilitlenmelerine ve worker thread'lerinin duraklamasına neden olur.
+- **Bitişik İkili Düzen (Contiguous Binary Layout - .bin / .idx):** Üretim framework'leri (Megatron-LM ve Lit-GPT gibi) veri setlerini diskte bitişik `uint16` veya `int32` token ID array'leri halinde tek bir ikili dosyada (`.bin`) önceden tokenize eder; yanında dokümanların bayt offset'lerini eşleyen bir indeks dosyası (`.idx`) tutulur.
+- **Zero-Copy Memory Mapping (`mmap`):** Worker süreçleri POSIX `mmap()` çağrısıyla ikili veri setini doğrudan process sanal adres uzayına eşler. İşletim sistemi token bloklarını ihtiyaç duyuldukça user space buffer allocation'ı yapmadan şeffaf bir biçimde belleğe sayfalar (demand paging).
+- **NUMA-Aware Prefetching:** Compute node'larında iki CPU soketi bulunur ve her soket dedicated bir NUMA node'una ve 4 GPU'ya fiziksel olarak bağlıdır (Şekil 1.1'deki node topolojisinde CPU 0 GPU 0–3'ü, CPU 1 GPU 4–7'yi besler). Worker'lar doğrudan hedef GPU'nun PCIe root complex birimine bağlı CPU soketine kilitlenir (NUMA affinity), böylece NUMA interconnect'lerini geçmeden asenkron CUDA stream'leri (`pin_memory=True`) üzerinden token'ları doğrudan HBM'e stream eder.
 
-### Küme hata toleransı, MTBF ve Young-Daly kontrol noktası formülü
+### Cluster MTBF, fault tolerance ve Young-Daly checkpoint formülü
 
-16.384 GPU'luk (2.048 düğüm) bir kümede donanım arızası istisna değil, sürekli bir çalışma koşuludur:
-- Tek bir DGX düğümünün Arızalar Arası Ortalama Süresi (MTBF) 3 yıl (~26.000 saat) olsa bile, kümenin efektif MTBF'si şöyledir:
+16.384 GPU'luk (2.048 node) bir cluster'da donanım arızaları nadir istisnalar değil, sürekli operasyonel koşullardır:
+- Tek bir DGX node'unun Arızalar Arası Ortalama Süresi (Mean Time Between Failures - MTBF) 3 yıl (~26.000 saat) olsa bile, toplam küme MTBF'si şöyledir:
 
-$$M_{\text{küme}} = \frac{26.000 \text{ saat}}{2.048 \text{ düğüm}} \approx 12,7 \text{ saat}$$
+$$M_{\text{küme}} = \frac{26.000 \text{ saat}}{2.048 \text{ node}} \approx 12,7 \text{ saat}$$
 
-Pratikte sessiz veri bozulmaları (SDC), HBM3 ECC bellek hataları, optik alıcı-verici düşmeleri ve ağ zaman aşımları eklendiğinde 16k GPU'luk kümede her **2 ila 3 saatte bir** ölümcül bir arıza yaşanır.
+Pratikte sessiz veri bozulmaları (Silent Data Corruption - SDC), HBM3 ECC bellek hataları, optik alıcı-verici (transceiver) düşmeleri ve ağ zaman aşımları eklendiğinde, 16k GPU'luk kümede her **2 ila 3 saatte bir** fatal bir kesinti yaşanır.
 
-Bir düğüm çöktüğünde tüm küme son kaydedilen kontrol noktasından yeniden başlamak zorundadır. Bu durum temel bir matematiksel ödünleşme (trade-off) doğurur:
-- Çok sık kontrol noktası alırsanız zamanınızı diske yazarak harcarsınız ($\delta$).
-- Çok seyrek kontrol noktası alırsanız bir çöküşte saatlerce geriye düşüp hesaplamayı baştan yaparsınız.
+Bir node çöktüğünde tüm cluster son kaydedilen checkpoint snapshot'ından yeniden başlamak zorundadır. Bu durum temel bir matematiksel trade-off doğurur:
+- Çok sık checkpoint alırsanız zamanınızı diske veri yazarak harcarsınız ($\delta$).
+- Çok seyrek checkpoint alırsanız bir çöküşte saatlerce geriye düşüp kayıp adımları baştan hesaplamakla vakit kaybedersiniz.
 
-Matematiksel olarak en uygun kayıt aralığı klasik **Young-Daly Formülü** ile hesaplanır:
+Matematiksel olarak optimal checkpoint aralığı klasik **Young-Daly Formülü** ile yönetilir:
 
 $$\tau_{\text{opt}} = \sqrt{2 \cdot \delta \cdot M}$$
 
 Burada:
-- $\delta$ tek bir kontrol noktasını kaydetmek için geçen süre (saniye).
-- $M$ kümenin Arızalar Arası Ortalama Süresi (MTBF, saniye).
-- $\tau_{\text{opt}}$ ardışık iki kayıt arasındaki en uygun süredir.
+- $\delta$ bir checkpoint snapshot'ını kaydetmek için gereken süredir (saniye).
+- $M$ kümenin Arızalar Arası Ortalama Süresidir (cluster MTBF, saniye).
+- $\tau_{\text{opt}}$ ardışık iki checkpoint arasındaki optimal süredir.
 
-LLaMA-3 405B için bu dengeyi hesaplayalım ($M = 3 \text{ saat} = 10.800 \text{ saniye}$):
-- **Senaryo A: Geleneksel Depolama (25 GB/s küme yazma hızı):**
+LLaMA-3 405B için bu trade-off'u 16k GPU üzerinde inceleyelim ($M = 3 \text{ saat} = 10.800 \text{ saniye}$):
+- **Senaryo A: Geleneksel Depolama Fabric'i (25 GB/s küme toplam yazma hızı):**
   $$\delta = \frac{7,5 \times 1024 \text{ GB}}{25 \text{ GB/s}} \approx 307,2 \text{ s} \approx 5,12 \text{ dakika}$$
   $$\tau_{\text{opt}} = \sqrt{2 \cdot 307,2 \cdot 10.800} \approx \sqrt{6.635.520} \approx 2.576 \text{ s} \approx 42,9 \text{ dakika}$$
-  Her 43 dakikada bir kayıt almak $\frac{5,12}{42,9} \approx \%11,9$ doğrudan kayıt kaybı ve $\frac{\tau}{2M} \approx \%11,9$ beklenen geri sarma kaybı yaratır; **yani süper bilgisayarın hesaplama gücünün neredeyse %24'ü çöpe gider!**
-- **Senaryo B: GPUDirect Storage & Tectonic Anlık Yazma (250 GB/s yazma hızı):**
+  Her 43 dakikada bir checkpoint almak $\frac{5,12}{42,9} \approx \%11,9$ doğrudan checkpoint yükü ve $\frac{\tau}{2M} \approx \%11,9$ beklenen yeniden hesaplama kaybı yaratır; **yani süper bilgisayarın toplam hesaplama kapasitesinin neredeyse %24'ü çöpe gider!**
+- **Senaryo B: GPUDirect Storage & Tectonic Burst (250 GB/s yazma fabric'i):**
   $$\delta = \frac{7,5 \times 1024 \text{ GB}}{250 \text{ GB/s}} \approx 30,72 \text{ s} \approx 0,51 \text{ dakika}$$
   $$\tau_{\text{opt}} = \sqrt{2 \cdot 30,72 \cdot 10.800} \approx \sqrt{663.552} \approx 814,6 \text{ s} \approx 13,6 \text{ dakika}$$
-  Kayıt kaybı $\frac{0,51}{13,6} \approx \%3,8$, beklenen geri sarma kaybı da $\frac{\tau}{2M} \approx \%3,8$ olur; toplam kayıp **%24'ten yaklaşık %7,5'e** iner ve milyonlarca dolarlık hesaplama zamanı kurtarılır. Yazma 10 kat hızlanınca kayıp $\sqrt{10} \approx 3,2$ kat azalır, çünkü $\tau_{\text{opt}}$ noktasında iki kayıp terimi de $\sqrt{\delta}$ ile ölçeklenir.
+  Checkpoint yükü $\frac{0,51}{13,6} \approx \%3,8$ ve beklenen yeniden hesaplama kaybı $\frac{\tau}{2M} \approx \%3,8$ olur; toplam hesaplama kaybı **%24'ten yaklaşık %7,5'e** iner ve milyonlarca dolarlık verimli eğitim süresi kurtarılır. Yazma 10 kat hızlandığında kayıp $\sqrt{10} \approx 3,2$ kat azalır, çünkü $\tau_{\text{opt}}$ noktasında her iki kayıp terimi de $\sqrt{\delta}$ ile ölçeklenir.
 
 <details>
-<summary>Quiz: MTBF = 4 saat ve kayıt süresi = 2 dakika olan bir kümede ideal kontrol noktası alma sıklığı nedir?</summary>
+<summary>Quiz: MTBF = 4 saat ve checkpoint süresi = 2 dakika olan bir kümede optimal checkpoint aralığı nedir?</summary>
 
 Young-Daly formülü uygulandığında:
 $\tau_{\text{opt}} = \sqrt{2 \cdot \delta \cdot M} = \sqrt{2 \cdot 2 \text{ dk} \cdot 240 \text{ dk}} = \sqrt{960} \approx 30,98 \text{ dakika}$.
-Yaklaşık her 31 dakikada bir kontrol noktası almak toplam zaman kaybını en aza indirir.
+Yaklaşık her 31 dakikada bir checkpoint almak toplam kaybedilen eğitim süresini minimize eder.
 </details>
 
 ---
 
-## 5. Sentez: Eğitim ve çıkarım arasındaki operasyonel dengeler
+## 5. Sentez: Training ve inference arasındaki operasyonel dengeler
 
-### İki mühendislik gözü: Eğitim ve çıkarım
+### İki mühendislik merceği: Training ve inference karşılaştırması
 
-Donanım kararları model eğitimi ile yüksek hacimli çıkarım sunumu arasında taban tabana zıttır:
+Donanım kararları model eğitimi ile yüksek hacimli çıkarım (inference) sunumu arasında taban tabana zıttır:
 
-| Mimari Boyut | Eğitim Tarafı (Pre-training / SFT) | Çıkarım Tarafı (Prefill & Decode) |
+| Mimari Boyut | Eğitim (Pre-training / SFT) | Çıkarım (Prefill & Decode) |
 | :--- | :--- | :--- |
-| **Temel Bellek Faturası** | Ağırlıklar ($2B$) + Gradyanlar ($2B$) + AdamW Durumları ($12-16B$) + Aktivasyonlar | Model Ağırlıkları ($4-8$ bit nicemlenmiş) + Dinamik tahsis edilen KV Cache |
-| **Hesap / Bellek Kısıtı** | Yoğun biçimde **Compute-Bound** (Binlerce tokenlik GEMM matris çarpımları) | Prefill evresi **Compute-Bound**; Decode evresi kesinlikle **Memory-Bandwidth-Bound** ($B=1$, GEMV) |
-| **Baskın Ağ Primitifi** | InfiniBand üzerinde yüksek verimli **AllReduce** & **ReduceScatter** | NVLink üzerinde ultra düşük gecikmeli **AllGather** & **P2P Tensör Paralelliği** |
-| **Kritik Metrikler** | Model FLOP Kullanımı (MFU), Adım Süresi (ms), Gradyan Kararlılığı | İlk Token Gecikmesi (TTFT), Token Başına Üretim Süresi (TPOT), Eşzamanlı İstek |
-| **Kritik Riskler** | Loss spike'lar, sessiz veri bozulmaları (SDC), kabarcık tıkanıklıkları | KV Cache bellek patlaması (OOM), bellek parçalanması, istek kesintileri |
+| **Birincil Bellek Ayak İzi** | Model Ağırlıkları ($2B$) + Gradyanlar ($2B$) + AdamW Durumları ($12-16B$) + Aktivasyonlar | Model Ağırlıkları ($4-8$ bit quantized) + Dinamik tahsis edilen KV Cache |
+| **Hesaplama / Bellek Rejimi** | Yoğun biçimde **Compute-Bound** (Batch başına binlerce token içeren GEMM) | Prefill evresi **Compute-Bound**; Decode evresi kesinlikle **Memory-Bandwidth-Bound** ($B=1$, GEMV) |
+| **Baskın Ağ Primitifi** | InfiniBand üzerinde yüksek throughput'lu **AllReduce** & **ReduceScatter** | NVLink üzerinde ultra düşük gecikmeli **AllGather** & **P2P Tensor Parallelism** |
+| **Temel Performans Metrikleri** | Model FLOPs Utilization (MFU), Step Time (ms), Gradyan Kararlılığı | Time to First Token (TTFT), Inter-Token Latency (TPOT), Eşzamanlı İstek Sayısı |
+| **Kritik Hata Modları** | Loss spike'lar, silent data corruption (SDC), pipeline bubble'lar | KV Cache bellek patlaması (OOM), bellek parçalanması, tail latency sıçramaları |
 
-### Uçtan uca küme yürüyüşü: 16 bin GPU'da 70B ve 405B modeller
+### Uçtan uca cluster analizi: 16k GPU'da 70B ve 405B modeller
 
-Üç sütunumuzu somutlaştırmak için NVIDIA H100 SuperPod üzerinde LLaMA-3 70B ve 405B modellerini inceleyelim (Meta'nın gerçek 405B kümesi InfiniBand değil, GPU başına 400 Gb/s RoCE kullandı; aşağıdaki SHARP adımı SuperPod senaryosuna aittir):
+Üç temel sütunumuzu birleştirmek için bir NVIDIA H100 SuperPod üzerinde LLaMA-3 70B ve 405B modellerinin ön eğitimini inceleyelim (Meta'nın gerçek 405B kümesi InfiniBand yerine GPU başına 400 Gb/s RoCE kullandı; aşağıdaki SHARP adımı SuperPod senaryosuna aittir):
 
-1. **8x H100 DGX Düğümünde LLaMA-3 70B:**
-   - 70 milyar parametre BF16 formatında 140 GB ağırlık belleği kaplar.
-   - 8 H100 GPU toplamda $8 \times 80 = 640 \text{ GB}$ HBM3 sunar.
-   - Tensör Paralelliği $Y = 8$ olarak ayarlanır; tüm ağırlıklar ve aktivasyonlar 3,6 TB/s biseksiyonlu NVLink alanında kalır.
-   - Her Transformer katmanı NVLink üzerinden iki AllReduce yürütür (kolektif gecikmesi: $<15 \, \mu\text{s}$).
-   - MFU %48-52 bandında çalışır.
-2. **16.384 H100 GPU'da LLaMA-3 405B (2.048 Düğüm):**
-   - 4D Paralellik: 8-way düğüm içi TP $\times$ 16-way PP $\times$ 128-way DP (ZeRO-1).
-   - TP kesinlikle 8 GPU'luk kasalar içine hapsedilir.
-   - 16 boru hattı aşaması InfiniBand üzerinden komşu aşamalarla aktivasyon takas eder (P2P paket boyutu: $\sim 16 \text{ MB}$).
-   - 128-way ZeRO-1 veri paraleli rank'ları Mellanox SHARP hızlandırmalı AllReduce ile ray switch'leri üzerinde toplanır.
-   - Depolama alt sistemi `mmap` sıfır kopya ile 2 TB/s sürekli veri akıtırken, GPUDirect Storage 7,5 TB'lık kontrol noktalarını her 15 dakikada bir yaklaşık 30 saniyelik anlık yazma ile kaydeder.
+1. **8x H100 DGX Node'unda LLaMA-3 70B:**
+   - BF16 formatında 70 milyar parametre, model ağırlıkları için 140 GB yer kaplar.
+   - 8 H100 SXM5 GPU toplamda $8 \times 80 = 640 \text{ GB}$ HBM3 sunar.
+   - Tensor Parallelism $Y = 8$ olarak ayarlanır; ağırlıklar ve aktivasyonlar tamamen 3,6 TB/s bisection bant genişliğine sahip NVLink crossbar alanında kalır.
+   - Her Transformer katmanı NVLink üzerinden iki AllReduce yürütür (collective gecikmesi: $<15 \, \mu\text{s}$).
+   - Sürdürülen MFU %48-52 bandına ulaşır.
+2. **16.384 H100 GPU'da LLaMA-3 405B (2.048 Node):**
+   - 4D Paralellik: 8-way intra-node TP $\times$ 16-way PP $\times$ 128-way DP (ZeRO-1).
+   - TP kesinlikle 8 GPU'luk bireysel şasiler içine NVLink üzerinde hapsedilir.
+   - 16 pipeline stage'i, scale-out InfiniBand üzerinden microbatch aktivasyonlarını aktarır (P2P mesaj boyutu: $\sim 16 \text{ MB}$).
+   - 128-way ZeRO-1 data-parallel rank'ları, leaf switch'ler üzerinde Mellanox SHARP donanım hızlandırmalı AllReduce ile optimizer gradyanlarını senkronize eder.
+   - Depolama katmanı zero-copy `mmap` ile kesintisiz 2 TB/s token akışı sağlarken, GPUDirect Storage 7,5 TB'lık model checkpoint'lerini yaklaşık her 15 dakikada bir ~30 saniyelik burst yazma duraklamalarıyla kaydeder.
 
 ---
 
 ## Bütün hikâye altı satırda
 
-- Modern bir GPU süper bilgisayarı birbirine bağlı üç fiziksel sütun tarafından yönetilir: Streaming Multiprocessor hesaplama, çok katmanlı ağ omurgası ve yüksek verimli depolama G/Ç.
-- Roofline modeli H100 üzerinde ~295 FLOP/baytlık kritik aritmetik yoğunluk dikte eder; bellek darboğazından kurtulmak için SM başına ~300 tokenlik batch gerekir.
-- Düğüm içi NVLink çapraz bağlantıları GPU başına 450 GB/s tek yönlü bant genişliği (3,6 TB/s biseksiyon) sunarak 8-way Tensör Paralelliğini hesaplama sınırında tutar.
-- Düğümler arası InfiniBand fat-tree ağı binlerce GPU arasında tam biseksiyon sunar; bant genişliği çip başına 50 GB/s (düğüm başına 400 GB/s) seviyesine iner.
-- Mellanox SHARP, kayan nokta toplamayı doğrudan switch ASIC'leri içinde yürüterek küme genelindeki AllReduce trafiğini ve gecikmesini yarıya indirir.
-- GPUDirect Storage, CPU bellek kopyalamalarını ortadan kaldırarak 7,5 TB'lık kontrol noktalarını saniyeler içinde kaydeder ve Young-Daly ideal aralığını koruyarak MFU'yu kurtarır.
+- Modern bir GPU süper bilgisayarı birbirine bağlı üç fiziksel sütun tarafından yönetilir: Streaming Multiprocessor hesaplama kapasitesi, çok katmanlı ağ mimarisi ve yüksek verimli depolama I/O'su.
+- Roofline modeli H100 üzerinde ~295 FLOP/baytlık kritik aritmetik yoğunluk dikte eder; memory-bound gecikmeden kaçmak için SM başına ~300 tokenlik bir batch size gerekir.
+- Intra-node NVLink crossbar'ları GPU başına 450 GB/s tek yönlü bant genişliği (3,6 TB/s bisection) sunarak 8-way Tensor Parallelism'i compute-bound sınırında tutar.
+- Scale-out InfiniBand fat-tree topolojisi binlerce GPU arasında tam bisection bant genişliği garanti eder; hat hızları çip başına 50 GB/s'ye (node başına 400 GB/s) iner.
+- Mellanox SHARP, kayan nokta toplama işlemlerini doğrudan switch ASIC crossbar'larında yürüterek küme genelindeki AllReduce trafiğini ve gecikmesini yarıya indirir.
+- GPUDirect Storage, host CPU bounce buffer'larını ortadan kaldırarak 7,5 TB'lık checkpoint'leri saniyeler içinde kaydeder ve Young-Daly optimal aralığıyla küme MFU'sunu korur.
 
 ---
 
 ## Terimler sözlüğü
 
-- **Streaming Multiprocessor (SM)** — NVIDIA GPU'larının Tensor Core, Warp Scheduler, CUDA çekirdeği ve yerleşik SRAM barındıran temel çok iş parçacıklı hesaplama hücresi.
-- **Warp** — NVIDIA mimarilerinde bir SM warp scheduler tarafından eşzamanlı olarak yürütülen 32 paralel iş parçacığından oluşan temel çizelgeleme birimi.
-- **Warp Divergence (Warp Sapması)** — Bir warp içindeki iş parçacıklarının farklı dallara sapması sonucu aktif olmayan çekirdeklerin duraklamasıyla oluşan başarım kaybı.
-- **NVLink** — H100 GPU başına tek yönde 450 GB/s (çift yönde 900 GB/s) bellek aktarımı sağlayan NVIDIA'nın tescilli yüksek bant genişlikli ara bağlantısı.
-- **NVSwitch** — Bir HGX kasasındaki 8 GPU arasında engelsiz ve tam bağlantılı (all-to-all) iletişim kuran düğüm içi çapraz bağlantı ASIC'i.
-- **InfiniBand Fat-Tree** — Küme düğümleri arasında aşırı abonelik (oversubscription) olmadan tam biseksiyon bant genişliği sağlayan hiyerarşik çok katmanlı ağ topolojisi.
-- **Mellanox SHARP** — Switch donanımında kayan nokta AllReduce işlemlerini hatta akarken toplayan ölçeklenebilir hiyerarşik toplama protokolü.
-- **Model FLOPs Utilization (MFU)** — Teorik olarak gereken model FLOP sayısının donanımın fiilen sürdürdüğü kayan nokta işlem gücüne oranı.
-- **Tensör Paralelliği (TP)** — Tekil ağırlık matrislerini GPU'lar arasında bölen ve kesinlikle NVLink bant genişliğiyle sınırlı olan katman içi paralellik boyutu.
-- **Boru Hattı Paralelliği (PP)** — Ardışık Transformer katmanlarını farklı GPU'lara atayan ve kabarcık (bubble) kaybına yol açan katmanlar arası paralellik boyutu.
-- **GPUDirect Storage (GDS)** — NVMe depolama birimlerini ana sunucu CPU önbelleklerini baypas ederek doğrudan GPU HBM belleğine bağlayan doğrudan DMA teknolojisi.
-- **Young-Daly Formülü** — Kayıt süresi ve küme MTBF değerine dayanarak ideal kontrol noktası alma aralığını belirleyen matematiksel bağıntı ($\tau = \sqrt{2 \delta M}$).
+- **Streaming Multiprocessor (SM)** — NVIDIA GPU'larının Tensor Core, Warp Scheduler, CUDA çekirdekleri ve on-chip SRAM barındıran temel çok iş parçacıklı hesaplama hücresi.
+- **Warp** — NVIDIA mimarilerinde bir SM warp scheduler tarafından eşzamanlı olarak yürütülen 32 paralel thread'den oluşan temel çizelgeleme birimi.
+- **Warp Divergence** — Bir warp içindeki thread'lerin farklı yürütme dallarına sapması sonucu inaktif çekirdeklerin beklemesiyle oluşan başarım kaybı.
+- **NVLink** — H100 GPU başına tek yönde 450 GB/s (çift yönde 900 GB/s) bellek aktarımı sağlayan NVIDIA'nın tescilli yüksek bant genişlikli interconnect teknolojisi.
+- **NVSwitch** — Bir HGX şasisindeki 8 GPU arasında non-blocking, all-to-all iletişim sağlayan node içi crossbar ASIC'i.
+- **InfiniBand Fat-Tree** — Küme node'ları arasında oversubscription (aşırı abonelik) olmadan tam bisection bant genişliği sağlayan hiyerarşik çok katmanlı ağ topolojisi.
+- **Mellanox SHARP** — Scalable Hierarchical Aggregation and Reduction Protocol; switch donanımında floating-point AllReduce işlemlerini hatta akarken (in-network reduction) toplayan donanım protokolü.
+- **Model FLOPs Utilization (MFU)** — Teorik olarak gereken model FLOP sayısının, donanımın fiilen sürdürdüğü kayan nokta işlem throughput'una oranı.
+- **Tensor Parallelism (TP)** — Tekil ağırlık matrislerini GPU'lar arasında bölen ve katı biçimde NVLink bant genişliğiyle sınırlı olan katman içi paralellik yöntemi.
+- **Pipeline Parallelism (PP)** — Ardışık Transformer katmanlarını farklı GPU'lara atayan ve pipeline bubble yükü oluşturan katmanlar arası paralellik yöntemi.
+- **GPUDirect Storage (GDS)** — NVMe depolama birimlerini host CPU page cache'lerini baypas ederek doğrudan GPU High Bandwidth Memory'ye bağlayan direct DMA teknolojisi.
+- **Young-Daly Formülü** — Snapshot yazma süresi ve küme MTBF değerine dayanarak optimal checkpoint aralığını belirleyen matematiksel formülasyon ($\tau = \sqrt{2 \delta M}$).
 
 ---
 
@@ -2483,7 +2483,7 @@ Donanım kararları model eğitimi ile yüksek hacimli çıkarım sunumu arasın
 
 - Jacob Austin, Swapnil Patil, Adam Paszke, Reiner Pope (2025). [How to Scale Your Model: How to Think About GPUs](https://jax-ml.github.io/scaling-book/gpus/). JAX-ML Scaling Book, Chapter 12.
 - SemiAnalysis (2025). [NVIDIA Tensor Core Evolution from Volta to Blackwell](https://semianalysis.com/2025/06/23/nvidia-tensor-core-evolution-from-volta-to-blackwell/). Mikro-mimari retrospektifi.
-- DeepSeek-AI (2024). [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437). arXiv:2412.19437. 2.048 H800 GPU üzerinde 64-way Uzman Paralelliği ve DualPipe uygulaması.
+- DeepSeek-AI (2024). [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437). arXiv:2412.19437. 2.048 H800 GPU üzerinde 64-way Expert Parallelism ve DualPipe uygulaması.
 - Meta AI (2024). [The Llama 3 Herd of Models](https://arxiv.org/abs/2407.21783). arXiv:2407.21783. 16.384 GPU 4D paralellik, Tectonic depolama ve eğitim altyapısı.
 - NVIDIA Corporation. [DGX SuperPOD Reference Architecture (DGX H100): Key Components](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/dgx-superpod-components.html) ve [Network Fabrics](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/network-fabrics.html). Ölçeklenebilir birimler, dört ağ, UFM yuvalı 127 düğüm ve ayrı depolama ağı; Şekil 1.1'deki diyagramlara ilham verdi.
 - NVIDIA Corporation. [Introduction to NVIDIA DGX H100/H200 Systems](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html). Düğüm donanımı: işlemciler, bellek, NIC'ler ve NVMe sürücüler; DGX H100/H200 sistem topolojisi diyagramı Şekil 1.1'deki düğüm basamağına ilham verdi.
