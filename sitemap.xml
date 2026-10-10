@@ -441,5 +441,21 @@
     <lastmod>2026-10-10</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpu-mimarisi-ve-llm-olcekleme"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling"/>
+    <lastmod>2026-10-10</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=gpu-mimarisi-ve-llm-olcekleme</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpu-mimarisi-ve-llm-olcekleme"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling"/>
+    <lastmod>2026-10-10</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>
 

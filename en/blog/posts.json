@@ -110,6 +110,25 @@
   ],
   "posts": [
     {
+      "slug": "understanding-gpus-and-llm-scaling",
+      "title": "Understanding GPU Architecture and LLM Scaling — From Silicon Compute to NVSwitch Fabrics, GPUDirect Storage to Parallelism Rooflines",
+      "date": "2026-10-10",
+      "summary": "What: The architectural, networking, and storage foundations of LLM scaling across the three physical pillars: Compute, Network, and Storage; Streaming Multiprocessor (SM) subpartitions, SIMT execution and warp divergence, Tensor Core floating-point engines (BF16, FP8, NVFP4), L1/SMEM/TMEM and HBM memory hierarchy, the Roofline model and critical arithmetic intensity, intra-node 900 GB/s NVLink/NVSwitch crossbars, inter-node InfiniBand non-blocking fat-trees, NCCL collective primitives (Ring AllGather, ReduceScatter, AllToAll), in-network hardware reduction via Mellanox SHARP, GPUDirect Storage (GDS) direct DMA, Meta Tectonic 240 PB distributed storage and 7 TB/s burst writes, the Young-Daly checkpoint formula, and 4D parallelism (TP, PP, EP, DP/FSDP) rooflines. Why it matters: Despite 1 ExaFLOP of nominal compute in a 1,024 H100 GPU cluster, Model FLOPs Utilization (MFU) can collapse below 35% if communication and I/O boundaries are violated; crossing node boundaries with Tensor Parallelism slashes bandwidth by 9x, while synchronous 7.5 TB checkpoint writes freeze multi-thousand GPU clusters for minutes at a time without GDS. How: JAX-ML Scaling Book foundations (Austin et al., 2025); Hopper GH100 and Blackwell B200 microarchitectures; FMA and BF16 Tensor Core FLOP mechanics; the alpha_crit = 295 FLOP/byte roofline knee; 3.6 TB/s bisection bandwidth in 8-GPU DGX chassis; 32-node Scalable Units with 1:1 non-blocking fat-tree InfiniBand fabrics; halving AllReduce latency via Mellanox SHARP; cuFile API and GDS zero-copy DMA; Young-Daly tau = sqrt(2*delta*M) optimal checkpoint scheduling; Megatron-LM column/row tensor sharding (Y <= F/2475); ZeRO critical batch sizes (B/X >= 2,500 tokens/GPU); and 1F1B pipeline bubble fractions (P-1)/(P-1+M). Where: Case studies of LLaMA-3 405B (16k H100s, 8-way TP, 16-way PP, 128-way DP) and DeepSeek-V3 (2,048 H800s, 64-way EP, 16-way PP, 2-way DP), grounded in a toy B=2, D=4, F=4 manual tensor walk and runnable Python verification. For whom: AI infrastructure engineers, ML platform architects, and systems researchers pre-training foundation models across large GPU clusters and optimizing distributed training and storage pipelines. When: When multi-node MFU drops below target thresholds, when evaluating Tensor vs Pipeline vs Expert parallelism trade-offs, when checkpoint writes stall GPU clusters, or when provisioning multi-thousand GPU cluster topologies.",
+      "tags": [
+        "gpu",
+        "llm",
+        "architecture",
+        "distributed-systems",
+        "hardware",
+        "systems",
+        "storage"
+      ],
+      "readingMinutes": 52,
+      "translationSlug": "gpu-mimarisi-ve-llm-olcekleme",
+      "draft": false,
+      "tagline": "Compute, Network, and Storage: Modern GPU scaling anatomy from silicon Streaming Multiprocessors to NVSwitch fabrics, collective primitives, GPUDirect Storage, and 4D parallelism."
+    },
+    {
       "slug": "inside-the-context-window",
       "title": "A Prompt's Journey (9): Inside the Context Window — From the 2K Wall to FlashAttention, RoPE/YaRN, and 2026 Hybrid Mamba Architectures",
       "date": "2026-10-10",

@@ -110,6 +110,25 @@
   ],
   "posts": [
     {
+      "slug": "gpu-mimarisi-ve-llm-olcekleme",
+      "title": "GPU Mimarisi ve LLM Ölçekleme — Silikon Hesaplamadan NVSwitch Ağlarına, GPUDirect Depolamadan Paralellik Roofline'larına",
+      "date": "2026-10-10",
+      "summary": "Ne: GPU silikon mimarisinden küme ölçeğine büyük dil modellerinin (LLM) üç kurucu sütunu: Hesaplama (Compute), Ağ (Network) ve Depolama (Storage); Streaming Multiprocessor (SM) alt bölmeleri, SIMT yürütme ve warp divergence, Tensor Core kayan nokta motorları (BF16, FP8, NVFP4), L1/SMEM/TMEM ve HBM bellek piramidi, kritik aritmetik yoğunluk (Roofline), düğüm içi 900 GB/s NVLink ve NVSwitch çapraz bağlantıları, düğümler arası InfiniBand fat-tree mimarisi, NCCL kolektif primitifleri (Ring AllGather, ReduceScatter, AllToAll), Quantum-2 switch seviyesinde donanımsal Mellanox SHARP ağ içi toplama, GPUDirect Storage (GDS) ve doğrudan DMA, Meta Tectonic 240 PB depolama ve 7 TB/s anlık yazma, Young-Daly kontrol noktası formülü ve 4D paralellik (TP, PP, EP, DP/FSDP) roofline dengesi. Neden önemli: 1.024 H100 GPU'lu bir kümede teorik 1 Eksaflopp hesaplama gücüne rağmen, Model FLOP Kullanımı (MFU) zayıf iletişim ve depolama stratejileri nedeniyle %35'in altına çakılabilir; Tensör Paralelliği düğüm sınırını aştığında hat hızı 9 kat düşerken, 405B modelinde 7,5 TB'lık kontrol noktası yazımları yetersiz G/Ç yüzünden tüm GPU kümesini dakikalarca dondurabilir. Nasıl: Austin vd. (2025) JAX-ML Scaling Book ilkeleri; Hopper GH100 ve Blackwell B200 mikro mimarisi; FMA ve BF16 Tensor Core işlem hesapları; alpha_crit = 295 FLOP/bayt çatı çizgisi; 8 GPU'lu DGX kasalarında 3,6 TB/s biseksiyon bant genişliği; 32 düğümlü Scalable Unit (SU) ve engellemesiz 1:1 şişman ağaç InfiniBand omurgası; Mellanox SHARP ile AllReduce ağ trafiğinin %50 kesilmesi; cuFile API ve GDS ile CPU önbelleklerinin baypas edilmesi; Young-Daly tau = sqrt(2*delta*M) formülüyle ideal kontrol noktası frekansının belirlenmesi; Megatron-LM sütun/satır tensör ayrıştırması (Y <= F/2475); ZeRO-1/3 veri paralelliğinde kritik batch eşiği (B/X >= 2.500 token/GPU) ve 1F1B boru hattı kabarcık oranı (P-1)/(P-1+M) matematiksel modelleri. Nerede: LLaMA-3 405B (16k H100, 8-way TP, 16-way PP, 128-way DP) ve DeepSeek-V3 (2048 H800, 64-way EP, 16-way PP, 2-way DP) mimarileri, B=2, D=4, F=4 oyuncak tensör üzerinde 2-way TP ileri geçişinin elle sayısal hesabı ve saf Python ile tam nümerik doğrulaması üzerinden. Kim için: Büyük dil modellerini binlerce GPU'lu süper kümelerde ön eğitime alan, Megatron-LM ve DeepSpeed/FSDP altyapılarını yöneten, GPU/TPU küme ağlarını ve yüksek verimli depolama hatlarını tasarlayan yapay zeka altyapı mühendisleri ve sistem mimarları. Ne zaman: Çok düğümlü eğitimde MFU beklentilerin altında kaldığında, Tensör veya Uzman Paralelliği düğüm dışına taşırılırken bant genişliği uçurumuna çarpıldığında, kontrol noktası yazımları GPU kümesini kilitlediğinde veya yeni bir GPU süper kümesi boyutlandırılırken.",
+      "tags": [
+        "gpu",
+        "llm",
+        "mimari",
+        "dagitik-sistemler",
+        "donanim",
+        "sistemler",
+        "depolama"
+      ],
+      "readingMinutes": 49,
+      "translationSlug": "understanding-gpus-and-llm-scaling",
+      "draft": false,
+      "tagline": "Hesaplama (Compute), Ağ (Network) ve Depolama (Storage): Silikondan NVSwitch kümelerine, kolektiflerden GPUDirect Storage ve 4D paralelliğe modern GPU ölçekleme anatomisi."
+    },
+    {
       "slug": "baglam-penceresi-derinlemesine",
       "title": "Bir Prompt'un Yolculuğu (9): Bağlam Penceresi (Context Window) — 2K duvarından FlashAttention, RoPE/YaRN ve 2026 hibrit Mamba modellerine",
       "date": "2026-10-10",
