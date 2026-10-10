@@ -35,42 +35,42 @@ To eliminate idle hardware cycles and maximize Model FLOPs Utilization (MFU), an
 <marker id="bp-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 </defs>
 <text x="16" y="27" text-anchor="start" style="fill:var(--c-accent);font-size:17px;font-weight:700">The Big Picture: The 3 Pillars of AI Infrastructure</text>
-<text x="16" y="48" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">From inside one H100 to a 16,384-H100 cluster: where the parts are, how data flows, where it stalls</text>
+<text x="16" y="48" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">From silicon micro-architecture to a 16,384-GPU cluster: Hardware tiers, data flow paths, and physical bottlenecks</text>
 <rect x="16" y="60" width="808" height="197" rx="10" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
 <rect x="40" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="108.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">A · Parts</text>
-<text x="108.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">SM → cluster</text>
+<text x="108.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">A · Hardware</text>
+<text x="108.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">SM → SuperPOD</text>
 <line x1="178.0" y1="96.0" x2="194.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="196" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="264.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">B · One step</text>
-<text x="264.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">data&#x27;s path</text>
+<text x="264.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">B · Training Step</text>
+<text x="264.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">End-to-End Data Path</text>
 <line x1="334.0" y1="96.0" x2="350.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="352" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="420.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">C · Walls</text>
-<text x="420.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">why it stalls</text>
+<text x="420.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">C · 3 Walls</text>
+<text x="420.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Memory · Fabric · I/O</text>
 <line x1="490.0" y1="96.0" x2="506.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="508" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="576.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">D · Speed</text>
-<text x="576.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">intuition</text>
+<text x="576.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">D · Speed &amp; Latency</text>
+<text x="576.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Bandwidth Gradient</text>
 <line x1="646.0" y1="96.0" x2="662.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
 <rect x="664" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="732.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">E · Llama 3</text>
-<text x="732.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">a real cluster</text>
-<text x="40" y="144" text-anchor="start" style="fill:var(--c-text);font-size:12px">First we meet the parts, then we watch them work together in one training step. After that we see where they stall, build a</text>
-<text x="40" y="161" text-anchor="start" style="fill:var(--c-text);font-size:12px">feel for the speeds, and check it all against a real cluster.</text>
+<text x="732.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">E · LLaMA 3 405B</text>
+<text x="732.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">16k GPU Production Cluster</text>
+<text x="40" y="144" text-anchor="start" style="fill:var(--c-text);font-size:12px">This architectural map models how hardware tiers interact from microscopic silicon to data-center scale in an LLM training iteration,</text>
+<text x="40" y="161" text-anchor="start" style="fill:var(--c-text);font-size:12px">where data flows, which physical walls the cluster hits, and how modern engineering designs circumvent them.</text>
 <rect x="28.0" y="175.0" width="784.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="194" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Reference system: H100 SXM5 → DGX H100 → DGX SuperPOD (InfiniBand). Every main number belongs to it; other GPUs</text>
-<text x="40" y="211" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">and other clusters appear only in parentheses.</text>
+<text x="40" y="194" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Reference Architecture: NVIDIA H100 SXM5 (Chip) → DGX H100 (Server Node) → DGX SuperPOD (InfiniBand Fat-Tree).</text>
+<text x="40" y="211" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">All primary FLOP/s, bandwidth, and latency figures belong to this reference system; alternative accelerators appear for comparison.</text>
 <rect x="40.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="56" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">compute</text>
-<rect x="116.1" y="236" width="11" height="11" rx="2" style="fill:var(--c-accent-2);fill-opacity:.2;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="132.1" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">network</text>
-<rect x="192.2" y="236" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="208.2" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">storage</text>
-<rect x="268.3" y="236" width="11" height="11" rx="2" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="284.3" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">wall / bottleneck</text>
-<rect x="398.9" y="236" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="414.9" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">fix</text>
+<text x="56" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Compute</text>
+<rect x="195.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-accent-2);fill-opacity:.2;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="211.0" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Network &amp; Fabric</text>
+<rect x="355.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="371.0" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Storage &amp; I/O</text>
+<rect x="525.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="541.0" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Bottleneck / Wall</text>
+<rect x="710.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="726.0" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Architectural Fix</text>
 <rect x="16" y="269" width="808" height="5562" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
 <circle cx="36" cy="293" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
 <text x="36" y="297.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">A</text>
@@ -342,7 +342,7 @@ To eliminate idle hardware cycles and maximize Model FLOPs Utilization (MFU), an
 <text x="319.0" y="1043.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">100 GbE</text>
 <line x1="352.0" y1="1039.0" x2="362.0" y2="1039.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
 <line x1="199.0" y1="1061.0" x2="361.0" y2="1061.0" marker-start="url(#bp-acc)" marker-end="url(#bp-acc)" style="stroke:var(--c-accent);stroke-width:2"/>
-<path d="M196 1071 H280 V1293" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<path d="M196 1071 H280 V1196 A 8 18 0 0 1 280 1232 V1293" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3"/>
 <rect x="40" y="1099" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
 <rect x="286" y="1099" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
 <path d="M132 1075 V1083 H69 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
@@ -393,141 +393,131 @@ To eliminate idle hardware cycles and maximize Model FLOPs Utilization (MFU), an
 <line x1="491.0" y1="1133.0" x2="491.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
 <rect x="466.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="491.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 7</text>
-<line x1="49.0" y1="1183.0" x2="49.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="54.0" y1="1183.0" x2="54.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="59.0" y1="1183.0" x2="59.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="64.0" y1="1183.0" x2="64.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="69.0" y1="1183.0" x2="69.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="74.0" y1="1183.0" x2="74.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="79.0" y1="1183.0" x2="79.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="84.0" y1="1183.0" x2="84.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="89.0" y1="1183.0" x2="89.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="107.0" y1="1183.0" x2="107.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="112.0" y1="1183.0" x2="112.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="117.0" y1="1183.0" x2="117.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="122.0" y1="1183.0" x2="122.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="127.0" y1="1183.0" x2="127.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="132.0" y1="1183.0" x2="132.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="137.0" y1="1183.0" x2="137.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="142.0" y1="1183.0" x2="142.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="147.0" y1="1183.0" x2="147.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="165.0" y1="1183.0" x2="165.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="170.0" y1="1183.0" x2="170.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="175.0" y1="1183.0" x2="175.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="180.0" y1="1183.0" x2="180.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="185.0" y1="1183.0" x2="185.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="190.0" y1="1183.0" x2="190.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="195.0" y1="1183.0" x2="195.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="200.0" y1="1183.0" x2="200.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="205.0" y1="1183.0" x2="205.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="223.0" y1="1183.0" x2="223.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="228.0" y1="1183.0" x2="228.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="233.0" y1="1183.0" x2="233.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="238.0" y1="1183.0" x2="238.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="243.0" y1="1183.0" x2="243.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="248.0" y1="1183.0" x2="248.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="253.0" y1="1183.0" x2="253.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="258.0" y1="1183.0" x2="258.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="263.0" y1="1183.0" x2="263.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="297.0" y1="1183.0" x2="297.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="302.0" y1="1183.0" x2="302.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="307.0" y1="1183.0" x2="307.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="312.0" y1="1183.0" x2="312.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="317.0" y1="1183.0" x2="317.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="322.0" y1="1183.0" x2="322.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="327.0" y1="1183.0" x2="327.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="332.0" y1="1183.0" x2="332.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="337.0" y1="1183.0" x2="337.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="355.0" y1="1183.0" x2="355.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="360.0" y1="1183.0" x2="360.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="365.0" y1="1183.0" x2="365.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="370.0" y1="1183.0" x2="370.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="375.0" y1="1183.0" x2="375.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="380.0" y1="1183.0" x2="380.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="385.0" y1="1183.0" x2="385.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="390.0" y1="1183.0" x2="390.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="395.0" y1="1183.0" x2="395.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="413.0" y1="1183.0" x2="413.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="418.0" y1="1183.0" x2="418.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="423.0" y1="1183.0" x2="423.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="428.0" y1="1183.0" x2="428.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="433.0" y1="1183.0" x2="433.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="438.0" y1="1183.0" x2="438.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="443.0" y1="1183.0" x2="443.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="448.0" y1="1183.0" x2="448.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="453.0" y1="1183.0" x2="453.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="471.0" y1="1183.0" x2="471.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="476.0" y1="1183.0" x2="476.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="481.0" y1="1183.0" x2="481.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="486.0" y1="1183.0" x2="486.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="491.0" y1="1183.0" x2="491.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="496.0" y1="1183.0" x2="496.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="501.0" y1="1183.0" x2="501.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="506.0" y1="1183.0" x2="506.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="511.0" y1="1183.0" x2="511.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="44.0" y1="1221.0" x2="516.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<line x1="78.0" y1="1221.0" x2="78.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="84.0" y1="1221.0" x2="84.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="90.0" y1="1221.0" x2="90.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="96.0" y1="1221.0" x2="96.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="102.0" y1="1221.0" x2="102.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="108.0" y1="1221.0" x2="108.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="114.0" y1="1221.0" x2="114.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="52.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="96.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 0</text>
-<line x1="182.0" y1="1221.0" x2="182.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="188.0" y1="1221.0" x2="188.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="194.0" y1="1221.0" x2="194.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="200.0" y1="1221.0" x2="200.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="206.0" y1="1221.0" x2="206.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="212.0" y1="1221.0" x2="212.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="218.0" y1="1221.0" x2="218.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="156.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="200.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 1</text>
-<line x1="342.0" y1="1221.0" x2="342.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="348.0" y1="1221.0" x2="348.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="354.0" y1="1221.0" x2="354.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="360.0" y1="1221.0" x2="360.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="366.0" y1="1221.0" x2="366.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="372.0" y1="1221.0" x2="372.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="378.0" y1="1221.0" x2="378.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="316.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="360.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 2</text>
-<line x1="446.0" y1="1221.0" x2="446.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="452.0" y1="1221.0" x2="452.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="458.0" y1="1221.0" x2="458.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="464.0" y1="1221.0" x2="464.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="470.0" y1="1221.0" x2="470.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="476.0" y1="1221.0" x2="476.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="482.0" y1="1221.0" x2="482.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="420.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="464.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 3</text>
-<rect x="250.0" y="1295.0" width="60.0" height="30" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="280" y="1308" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
-<text x="280" y="1321" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
-<path d="M96 1269 V1317 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M200 1269 V1304 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M360 1269 V1304 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M464 1269 V1317 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="280" y="1341" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">PCIe: CPU 0 → NVSwitches (management)</text>
-<line x1="48.0" y1="1361.0" x2="72.0" y2="1361.0" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<text x="78" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PCIe</text>
-<line x1="126.8" y1="1361.0" x2="150.8" y2="1361.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<text x="156.8" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVLink</text>
-<line x1="218.0" y1="1361.0" x2="242.0" y2="1361.0" style="stroke:var(--c-accent);stroke-width:2"/>
-<text x="248.0" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">CPU communication (UPI)</text>
+<!-- GPU 0 (center 69): 4 NVLink drop lines -->
+<line x1="60" y1="1181" x2="60" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="66" y1="1181" x2="66" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="72" y1="1181" x2="72" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="78" y1="1181" x2="78" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 1 (center 127): 4 NVLink drop lines -->
+<line x1="118" y1="1181" x2="118" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="124" y1="1181" x2="124" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="130" y1="1181" x2="130" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="136" y1="1181" x2="136" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 2 (center 185): 4 NVLink drop lines -->
+<line x1="176" y1="1181" x2="176" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="182" y1="1181" x2="182" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="188" y1="1181" x2="188" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="194" y1="1181" x2="194" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 3 (center 243): 4 NVLink drop lines -->
+<line x1="234" y1="1181" x2="234" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="240" y1="1181" x2="240" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="246" y1="1181" x2="246" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="252" y1="1181" x2="252" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 4 (center 317): 4 NVLink drop lines -->
+<line x1="308" y1="1181" x2="308" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="314" y1="1181" x2="314" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="320" y1="1181" x2="320" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="326" y1="1181" x2="326" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 5 (center 375): 4 NVLink drop lines -->
+<line x1="366" y1="1181" x2="366" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="372" y1="1181" x2="372" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="378" y1="1181" x2="378" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="384" y1="1181" x2="384" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 6 (center 433): 4 NVLink drop lines -->
+<line x1="424" y1="1181" x2="424" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="430" y1="1181" x2="430" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="436" y1="1181" x2="436" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="442" y1="1181" x2="442" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- GPU 7 (center 491): 4 NVLink drop lines -->
+<line x1="482" y1="1181" x2="482" y2="1202" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="488" y1="1181" x2="488" y2="1210" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="494" y1="1181" x2="494" y2="1218" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="500" y1="1181" x2="500" y2="1226" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- 4 Crossbar Horizontal Rails spanning across all 8 GPUs -->
+<line x1="56" y1="1202" x2="486" y2="1202" style="stroke:#e11d48;stroke-width:1.8"/>
+<line x1="62" y1="1210" x2="492" y2="1210" style="stroke:#0284c7;stroke-width:1.8"/>
+<line x1="68" y1="1218" x2="498" y2="1218" style="stroke:#ea580c;stroke-width:1.8"/>
+<line x1="74" y1="1226" x2="504" y2="1226" style="stroke:#9333ea;stroke-width:1.8"/>
+<!-- Feed bundles into 4 NVSwitches from respective rails -->
+<!-- Rail 0 (Pink) -> NVSwitch 0 (5 links) -->
+<line x1="88" y1="1202" x2="88" y2="1246" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="92" y1="1202" x2="92" y2="1246" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="96" y1="1202" x2="96" y2="1246" style="stroke:#e11d48;stroke-width:1.4"/>
+<line x1="100" y1="1202" x2="100" y2="1246" style="stroke:#e11d48;stroke-width:1.2"/>
+<line x1="104" y1="1202" x2="104" y2="1246" style="stroke:#e11d48;stroke-width:1.2"/>
+<!-- Rail 1 (Blue) -> NVSwitch 1 (4 links) -->
+<line x1="194" y1="1210" x2="194" y2="1246" style="stroke:#0284c7;stroke-width:1.2"/>
+<line x1="198" y1="1210" x2="198" y2="1246" style="stroke:#0284c7;stroke-width:1.3"/>
+<line x1="202" y1="1210" x2="202" y2="1246" style="stroke:#0284c7;stroke-width:1.3"/>
+<line x1="206" y1="1210" x2="206" y2="1246" style="stroke:#0284c7;stroke-width:1.2"/>
+<!-- Rail 2 (Orange) -> NVSwitch 2 (4 links) -->
+<line x1="354" y1="1218" x2="354" y2="1246" style="stroke:#ea580c;stroke-width:1.2"/>
+<line x1="358" y1="1218" x2="358" y2="1246" style="stroke:#ea580c;stroke-width:1.3"/>
+<line x1="362" y1="1218" x2="362" y2="1246" style="stroke:#ea580c;stroke-width:1.3"/>
+<line x1="366" y1="1218" x2="366" y2="1246" style="stroke:#ea580c;stroke-width:1.2"/>
+<!-- Rail 3 (Purple) -> NVSwitch 3 (5 links) -->
+<line x1="456" y1="1226" x2="456" y2="1246" style="stroke:#9333ea;stroke-width:1.2"/>
+<line x1="460" y1="1226" x2="460" y2="1246" style="stroke:#9333ea;stroke-width:1.2"/>
+<line x1="464" y1="1226" x2="464" y2="1246" style="stroke:#9333ea;stroke-width:1.4"/>
+<line x1="468" y1="1226" x2="468" y2="1246" style="stroke:#9333ea;stroke-width:1.2"/>
+<line x1="472" y1="1226" x2="472" y2="1246" style="stroke:#9333ea;stroke-width:1.2"/>
+<!-- 4 NVSwitch Chips (Green, matching NVIDIA official diagram) -->
+<rect x="52.0" y="1246.0" width="88.0" height="26" rx="5" style="fill:#10b981;fill-opacity:.20;stroke:#10b981;stroke-width:1.3"/>
+<text x="96.0" y="1263.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono);font-weight:700">NVSwitch 0</text>
+<rect x="156.0" y="1246.0" width="88.0" height="26" rx="5" style="fill:#10b981;fill-opacity:.20;stroke:#10b981;stroke-width:1.3"/>
+<text x="200.0" y="1263.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono);font-weight:700">NVSwitch 1</text>
+<rect x="316.0" y="1246.0" width="88.0" height="26" rx="5" style="fill:#10b981;fill-opacity:.20;stroke:#10b981;stroke-width:1.3"/>
+<text x="360.0" y="1263.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono);font-weight:700">NVSwitch 2</text>
+<rect x="420.0" y="1246.0" width="88.0" height="26" rx="5" style="fill:#10b981;fill-opacity:.20;stroke:#10b981;stroke-width:1.3"/>
+<text x="464.0" y="1263.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono);font-weight:700">NVSwitch 3</text>
+<!-- Bottom PCIe Switch (Purple, connecting CPU 0 to NVSwitches) -->
+<rect x="250.0" y="1296.0" width="60.0" height="26" rx="5" style="fill:#8b5cf6;fill-opacity:.18;stroke:#8b5cf6;stroke-width:1.3"/>
+<text x="280" y="1308" text-anchor="middle" style="fill:var(--c-text);font-size:10.5px;font-weight:700">PCIe</text>
+<text x="280" y="1319" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10px">switch</text>
+<!-- PCIe Management lines from PCIe Switch UP to NVSwitches (Fabric Manager control plane) -->
+<path d="M250 1318 H96 V1274" marker-end="url(#bp-mut)" style="fill:none;stroke:#8b5cf6;stroke-width:1.3"/>
+<path d="M250 1307 H200 V1274" marker-end="url(#bp-mut)" style="fill:none;stroke:#8b5cf6;stroke-width:1.3"/>
+<path d="M310 1307 H360 V1274" marker-end="url(#bp-mut)" style="fill:none;stroke:#8b5cf6;stroke-width:1.3"/>
+<path d="M310 1318 H464 V1274" marker-end="url(#bp-mut)" style="fill:none;stroke:#8b5cf6;stroke-width:1.3"/>
+<!-- Explanatory note -->
+<text x="280" y="1335" text-anchor="middle" style="fill:var(--c-text-mute);font-size:9.5px;font-style:italic">PCIe Control Path: CPU 0 → PCIe switch → 4 NVSwitches (Fabric Manager control plane)</text>
+<!-- Component Legend inside Node Box matching NVIDIA official diagram -->
+<!-- Legend Row 1: Chips & Modules -->
+<rect x="42" y="1346" width="10" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.3;stroke:var(--c-warn);stroke-width:1"/>
+<text x="56" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">ConnectX-7</text>
+<rect x="120" y="1346" width="10" height="10" rx="2" style="fill:var(--c-accent-2);fill-opacity:.3;stroke:var(--c-accent-2);stroke-width:1"/>
+<text x="134" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">CX-7 Module</text>
+<rect x="200" y="1346" width="10" height="10" rx="2" style="fill:var(--c-warn);fill-opacity:.4;stroke:var(--c-warn);stroke-width:1"/>
+<text x="214" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">NVMe</text>
+<rect x="256" y="1346" width="10" height="10" rx="2" style="fill:#8b5cf6;fill-opacity:.3;stroke:#8b5cf6;stroke-width:1"/>
+<text x="270" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">PCIe Switch</text>
+<rect x="336" y="1346" width="10" height="10" rx="2" style="fill:#10b981;fill-opacity:.3;stroke:#10b981;stroke-width:1"/>
+<text x="350" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">NVSwitch</text>
+<rect x="406" y="1346" width="10" height="10" rx="2" style="fill:#ec4899;fill-opacity:.3;stroke:#ec4899;stroke-width:1"/>
+<text x="420" y="1354" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">100 GbE</text>
+<!-- Legend Row 2: Interconnects & Fabrics -->
+<line x1="50" y1="1368" x2="72" y2="1368" style="stroke:#8b5cf6;stroke-width:1.5"/>
+<text x="76" y="1371" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">PCIe Gen5</text>
+<line x1="140" y1="1366" x2="162" y2="1366" style="stroke:#e11d48;stroke-width:1.5"/>
+<line x1="140" y1="1368" x2="162" y2="1368" style="stroke:#0284c7;stroke-width:1.5"/>
+<line x1="140" y1="1370" x2="162" y2="1370" style="stroke:#ea580c;stroke-width:1.5"/>
+<line x1="140" y1="1372" x2="162" y2="1372" style="stroke:#9333ea;stroke-width:1.5"/>
+<text x="166" y="1371" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">NVLink (4 Rails)</text>
+<line x1="250" y1="1368" x2="272" y2="1368" style="stroke:var(--c-accent);stroke-width:2"/>
+<text x="276" y="1371" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px">CPU Communication (UPI)</text>
+<!-- Question Callout Circles -->
 <circle cx="102" cy="1051" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
 <text x="102" y="1055" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
 <circle cx="52" cy="1087" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
 <text x="52" y="1091" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
-<circle cx="98" cy="1207" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="98" y="1211" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
+<circle cx="98" cy="1211" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="98" y="1215" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
 <circle cx="239" cy="1018" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
 <text x="239" y="1022" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
 <circle cx="280" cy="1061" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
 <text x="280" y="1065" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
-<circle cx="320" cy="1282" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="320" y="1286" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
+<circle cx="280" cy="1278" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="280" y="1282" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
 <rect x="540" y="959" width="126" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
 <text x="550" y="981" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">8</text>
 <text x="550" y="998" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPUs · 640 GB</text>
