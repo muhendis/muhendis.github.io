@@ -68,12 +68,13 @@ a.tag:hover { border-color: var(--c-accent); }
 .post-item__summary { color: var(--c-text-mute); margin-top: var(--sp-2); max-width: var(--measure); }
 
 .post-header { padding-block: var(--sp-8) var(--sp-5); border-bottom: 1px solid var(--c-border); margin-bottom: var(--sp-6); }
+.post-header h1 { max-width: 56rem; }
 .post-header__meta { display: flex; flex-wrap: wrap; gap: var(--sp-3); color: var(--c-text-mute); font-size: var(--fs-sm); margin-top: var(--sp-3); }
 .post-end { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin-top: var(--sp-8); }
 .read-toggle[aria-pressed="true"] { border-color: var(--c-success); color: var(--c-success); }
 
 /* Rendered Markdown body */
-.post-body { max-width: var(--container-prose); font-size: var(--fs-md); }
+.post-body { max-width: var(--container-post-prose, 58rem); font-size: var(--fs-md); }
 .post-body > * + * { margin-top: var(--sp-4); }
 .post-body h2 { font-size: var(--fs-xl); margin-top: var(--sp-8); }
 .post-body h3 { font-size: var(--fs-lg); margin-top: var(--sp-6); }
@@ -101,7 +102,7 @@ a.tag:hover { border-color: var(--c-accent); }
 .post-body .math-block .katex-display { margin: 0; }
 
 /* ---- Reading navigation (built by blog-post.js) ---- */
-.post-main { min-width: 0; }
+.post-main { min-width: 0; max-width: var(--container-post-prose, 58rem); }
 
 /* Section links: a quiet "#" after each heading that copies the URL. */
 .heading-anchor {
@@ -184,8 +185,8 @@ a.tag:hover { border-color: var(--c-accent); }
 @media (min-width: 68rem) {
   .has-aside .post-layout {
     display: grid; align-items: start;
-    grid-template-columns: 17rem minmax(0, var(--container-prose));
-    column-gap: var(--sp-6);
+    grid-template-columns: 16rem minmax(0, var(--container-post-prose, 58rem));
+    column-gap: var(--sp-8);
   }
   .post-aside:not([hidden]) {
     display: flex; flex-direction: column; gap: var(--sp-4);

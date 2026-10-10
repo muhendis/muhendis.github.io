@@ -52,7 +52,9 @@
   --shadow-md: 0 4px 14px rgb(16 32 43 / .08);
 
   --container: 72rem;
+  --container-post: 88rem;
   --container-prose: 44rem;
+  --container-post-prose: 58rem;
   --transition: 160ms cubic-bezier(.2,.6,.35,1);
 }
 

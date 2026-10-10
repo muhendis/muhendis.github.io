@@ -9,7 +9,24 @@
 }
 
 .container { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: var(--sp-4); }
+.container--post { max-width: var(--container-post, 88rem); }
 .prose { max-width: var(--container-prose); }
+
+/* In blog post detail view, expand container and bias it toward the left rail on wide screens */
+@media (min-width: 68rem) {
+  body:has(#post-article) .site-header .container,
+  body:has(#post-article) .site-footer .container {
+    max-width: var(--container-post, 88rem);
+  }
+}
+@media (min-width: 80rem) {
+  .container--post,
+  body:has(#post-article) .site-header .container,
+  body:has(#post-article) .site-footer .container {
+    margin-left: max(var(--sp-5), calc((100vw - var(--container-post, 88rem)) * 0.22));
+    margin-right: auto;
+  }
+}
 
 /* ---- Header / nav ---- */
 .site-header {
