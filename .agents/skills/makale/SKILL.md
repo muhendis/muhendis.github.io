@@ -96,22 +96,33 @@ Makale dosyalarında YAML frontmatter ve `# H1` **kullanılmaz** (başlık `post
 
 ### 3.3. Dört Basamaklı Pedagojik İlerleme
 Her teknik kavramda şu sıra izlenir:
-1. **Sezgi & Analoji:** Zihinde canlanan somut fiziksel analoji (ör. *Fener, Rozet ve Çanta*, *Pasaport Masası* veya *vLLM bir Otel Resepsiyonudur*). Konu oturmuyorsa zorlama metafor yapılmaz, doğrudan mühendislik diliyle konuşulur.
+1. **Sezgi & Zihinsel Modellerin Teknik Terimlerle Çiftlenmesi (Grounded Intuition & High-Clarity, Zero-Loss Rigor):**
+   - **Kural:** Analojiler ve sezgisel benzetmeler asla havada kalan, soyut veya edebi masallar olarak bırakılamaz. Aynı zamanda kuru, mekanik liste maddeleri yerine; bir kıdemli mühendisin beyaz tahta başında tane tane anlatması gibi **akıcı, son derece açık, kolay anlaşılır ve teknikten sıfır kayıpla** yazılmalıdır.
+   - **Üç Basamaklı Açıklık Akışı:**
+     1. *Sorun & Sezgisel Sahne (Gözde Canlanan Benzetme):* Fiziksel sorun neydi, neden tıkandı ve günlük hayatta neye benzer? (ör. 2.048 kişilik tiyatro salonunda 2049. dinleyicinin kapıda kalması; aşçının her soğan için koridoru koşup kilere gitmesi; dedektifin masasına yeni ipuçları yığıldıkça masanın çatırdayıp kırılması).
+     2. *Birebir Teknik Eşleme (Kayıpsız Terminoloji):* Benzetmedeki her bir aktörün mimari ve donanımdaki tam karşılığı net bir dille belirtilir (ör. masa = GPU VRAM ve KV Cache; kırmızı ipler = $QK^T$ dikkat katsayıları; aşçı = GPU Streaming Multiprocessor çekirdekleri; kesme tahtası = çip içi ultra hızlı SRAM; kiler = çip dışı HBM; masanın kırılması = CUDA Out of Memory).
+     3. *Mühendislik Mekanizması & Neden-Sonuç:* Donanım ve matematik seviyesinde fiziksel olarak neyin gerçekleştiği açıkça gösterilir (ör. HBM transfer darboğazı, karesel matris tahsisatı patlaması, frekans enterpolasyonu, Online Softmax döngüsü).
+   - Tarihsel evrim üç sezgisel fazda anlatılır (Faz 1: Statik kısıtlar ve duvarlar, Faz 2: Donanım farkındalığı ve akordeon illüzyonlar, Faz 3: Akışkan zihin ve bilişsel unutma). Pazarlama ile gerçeklik uçurumu (MCW vs MECW) açıkça terimleriyle gösterilir.
 2. **Matematiksel Model (KaTeX):** Blok formül `$$ ... $$`, satır içi `$ ... $`.
 3. **Sembol Okuması (Zorunlu):** Formülün altına hemen *"Şöyle okuyun:"* denilerek sembol sembol ne anlama geldiği açıklanır.
 4. **Adım Adım Küçük Sayısal Yürüyüş:**
    - Oyuncak boyut ($d=4$, 2 boyut, 3 kelime) kullanılır.
    - Ara adımlar asla atlanmaz (`bölen = \sqrt{4} = 2 \to 6 / 2 = 3` basamak basamak gösterilir).
    - Sayıların kaynağı açıkça belirtilir (öğrenilmiş mi, formülden mi hesaplanmış).
-   - Adımlar ````text``` bloğunda hizalı yazılır.
+   - Adımlar ````text``` bloğunda hizalı yazılır (Sayısal yürüyüşler ve matrisler ````text``` olarak kalır; çizimler asla ````text``` yapılmaz).
 5. **PyTorch Doğrulama Kodu:** Elle yapılan hesabın aynısını kuran, çıktısı gösterilen çalıştırılabilir kod bloğu.
 
-### 3.4. İki Mühendislik Gözü: Training vs Inference (Pazarlıksız)
+### 3.4. Çizim Formatı: Yalnızca Tema Uyumlu Inline SVG (Mermaid ve ASCII Kesinlikle Yasaktır)
+- **Tek Çizim Biçimi Inline SVG'dir:** Blogdaki tüm Mermaid ve ASCII kutu çizimleri kaldırılmıştır. Yeni bir makalede asla ` ```mermaid ` veya ` ```text ` kutu/ok çizimi **kullanılmaz**.
+- **Standart:** Şekiller `.claude/skills/cizim/` standartlarında, `svgkit` kullanılarak `viewBox="0 0 560 H"`, tema renkleri (`var(--c-accent)`, `var(--c-surface)`, `var(--c-warn)` vb.), `role="img"` ve `aria-label` ile inline SVG olarak gömülür.
+- **Doğrulama:** `python3 .claude/skills/cizim/scripts/preview.py` ile taşma, kutu dışına taşma ve çakışma denetimi yapılır (0 sorun şart).
+
+### 3.5. İki Mühendislik Gözü: Training vs Inference (Pazarlıksız)
 Her teknik makale konusunu hem **eğitim** hem **çıkarım** açısından ele alır:
 - **Training:** Gradyan davranışı, optimizer bellek faturası (AdamW 16 bayt/parametre), loss spike'lar, all-reduce iletişim maliyeti, dondurma/ince ayar etkileri.
 - **Inference:** VRAM'de yerleşik ağırlık, prefill (GEMM, compute-bound) vs decode (GEMV, memory-bandwidth-bound), KV cache faturası, TTFT/TPOT, nicemleme uygulanabilirliği.
 
-### 3.5. Sabit Kapanış Üçlüsü
+### 3.6. Sabit Kapanış Üçlüsü
 Her makale istisnasız şu üç bölümle biter:
 1. `## The whole story in six lines` / `## Bütün hikâye altı satırda` (Tam 6 net ve somut madde; kuru mecaz değil).
 2. `## Glossary` / `## Terimler sözlüğü` (Jargon + yalın karşılık + sezgi/sonuç cümlesi).

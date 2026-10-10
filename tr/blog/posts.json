@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-10-04",
+  "updated": "2026-10-10",
   "stages": [
     {
       "id": "orientation",
@@ -56,8 +56,8 @@
       "title": "Bir Prompt'un Yolculuğu",
       "stage": "architecture",
       "tagline": "Bir prompt'u tokenizer'dan transformer bloğunun çıkışına ve çıktı katmanına kadar adım adım izliyoruz.",
-      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına, tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN) ve nihayet olasılık uzayına geçişi yöneten çıktı katmanına (LM Head, Cross-Entropy, bellek duvarı ve spekülatif kod çözme) 8 bölümlük derinlemesine mimari yolculuk.",
-      "badge": "8 Bölümlük Seri",
+      "summary": "Her prompt'un modelden önce uğradığı masadan (tokenizasyon), sayılardan sürekli geometriye ve RoPE'a (embedding katmanı), anlamsal uzaydan transformer'ın kalbindeki self-attention mekanizmasına, zamanın oku nedensel dikkat (causal attention) kısıtına, çok başlıklı dikkat (multi-head attention & GQA) alt uzaylarına, tek bir transformer bloğunun tam anatomisine (residual bağlantılar, LayerNorm/RMSNorm, FFN), nihayet olasılık uzayına geçişi yöneten çıktı katmanına (LM Head, Cross-Entropy) ve 10 milyon token'a uzanan bağlam penceresi mimarisine (APE, FlashAttention, RoPE/YaRN, GQA ve 2026 hibrit Mamba modelleri) 9 bölümlük derinlemesine mimari yolculuk.",
+      "badge": "9 Bölümlük Seri",
       "posts": [
         "tokenizasyon-nasil-calisir",
         "embedding-katmani-derinlemesine",
@@ -66,7 +66,8 @@
         "causal-attention-derinlemesine",
         "multi-head-attention-derinlemesine",
         "transformer-blogu-derinlemesine",
-        "cikti-katmani-derinlemesine"
+        "cikti-katmani-derinlemesine",
+        "baglam-penceresi-derinlemesine"
       ]
     },
     {
@@ -108,6 +109,29 @@
     }
   ],
   "posts": [
+    {
+      "slug": "baglam-penceresi-derinlemesine",
+      "title": "Bir Prompt'un Yolculuğu (9): Bağlam Penceresi (Context Window) — 2K duvarından FlashAttention, RoPE/YaRN ve 2026 hibrit Mamba modellerine",
+      "date": "2026-10-10",
+      "seriesId": "bir-promptun-yolculugu",
+      "seriesPart": 9,
+      "summary": "Ne: Büyük dil modellerinde bağlam penceresinin (Context Window) mimari ve donanımsal evrimi; mutlak konumsal gömmelerin (APE) çöküşü, O(N^2) karesel bellek patlaması, HBM ve SRAM arasındaki bellek duvarı (Memory Wall), FlashAttention çip içi Online Softmax ve SRAM tiling mekaniği, RoPE ve YaRN frekans enterpolasyonu, Grouped-Query Attention (GQA) ile KV Cache sıkıştırması, Lost in the Middle dikkat çürümesi ve 2026 hibrit Transformer-SSM (Mamba) topolojileri. Neden önemli: 128k bağlamda tek bir kullanıcının KV Cache'i 16 GB VRAM tüketerek model ağırlıklarını aşar ve 1M token'da 128 GB'a fırlayarak sistemi kilitler; ayrıca prefill aşamasında yüzlerce gigabaytlık ara aktivasyon transferi ilk token gecikmesini (TTFT) dakikalar mertebesine çıkarırken, ortadaki token'larda dikkat katsayıları seyrelerek halüsinasyona yol açar. Nasıl: Vaswani 2017 sabit indis matrisi vs Su 2021 2B ortogonal rotasyonlar; Peng 2023 YaRN çok bantlı dalga boyu sıkıştırması; Dao 2022 FlashAttention ara skor matrisini HBM'e yazmadan SRAM'de bloklayan ve koşan maksimumla güncelleyen Online Softmax yinelemesi; Ainslie 2023 GQA kafa gruplaması; Gu & Dao 2023 Mamba-2 doğrusal zamanlı seçici durum uzayı h_t = A h_{t-1} + B x_t ile O(1) bellek ve O(N) prefill; RingAttention halka paralelizmi ve çalışma anında seyreltik önbellek (Sparse KV Cache) budaması; RAG, LLMLingua ve Radix Attention ön ek önbellekleme savunma hatları. Nerede: 4 token'lık ve 2 blokluk oyuncak tensör üzerinde FlashAttention Online Softmax birleştirmesi, LLaMA 3.1 8B KV Cache faturasının adım adım elle hesabı ve standart Python ile bağımsız nümerik doğrulaması üzerinden. Kim için: Büyük dil modelleri servis eden, uzun bağlamlı altyapı tasarlayan, GPU bellek darboğazlarını ve çıkarım gecikmesini en alt seviyede optimize etmek isteyen yapay zeka mühendisleri ve sistem mimarları. Ne zaman: 128k veya 1M bağlamlı modellerde CUDA OOM alındığında, TTFT gecikmesi SLA sınırlarını aştığında, döküman ortasındaki verilerde model halüsinasyon gördüğünde veya RAG ile uzun bağlam mimarisi arasında mühendislik tercihi yapılırken.",
+      "tagline": "2K duvarından başlayıp FlashAttention, RoPE/YaRN ve 2026'nın hibrit Mamba topolojilerine uzanan bağlam penceresi ve donanım mimarisini inceliyoruz.",
+      "tags": [
+        "llm",
+        "transformer",
+        "baglam-penceresi",
+        "context-window",
+        "flash-attention",
+        "rope",
+        "mamba",
+        "mimari",
+        "sistemler"
+      ],
+      "readingMinutes": 26,
+      "translationSlug": "inside-the-context-window",
+      "draft": false
+    },
     {
       "slug": "cikti-katmani-derinlemesine",
       "title": "Bir Prompt'un Yolculuğu (8): Çıktı Katmanı (LM Head) — logitler, bellek duvarı, Megatron-LM ve spekülatif kod çözme",

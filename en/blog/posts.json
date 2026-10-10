@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-10-04",
+  "updated": "2026-10-10",
   "stages": [
     {
       "id": "orientation",
@@ -56,8 +56,8 @@
       "title": "A Prompt's Journey",
       "stage": "architecture",
       "tagline": "Follow a prompt step by step, from the tokenizer through the transformer block to the final output layer.",
-      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN), and finally the output layer that governs the leap into probability space (LM Head, Cross-Entropy, the memory wall, and speculative decoding) — an 8-part architectural journey.",
-      "badge": "8-Part Series",
+      "summary": "From the desk every prompt passes before the model (tokenization), continuous geometry and RoPE (embedding layer), semantic vector space, to the self-attention engine, the arrow-of-time causal attention constraint, multi-head attention & GQA subspaces, the complete anatomy of a single Transformer block (residuals, LayerNorm/RMSNorm, FFN), the output layer that governs the leap into probability space (LM Head, Cross-Entropy), and the long-context window frontier scaling to 10M tokens (APE, FlashAttention, RoPE/YaRN, GQA, and 2026 hybrid Mamba models) — a 9-part architectural journey.",
+      "badge": "9-Part Series",
       "posts": [
         "how-tokenization-works",
         "inside-the-embedding-layer",
@@ -66,7 +66,8 @@
         "inside-causal-attention",
         "inside-multi-head-attention",
         "inside-the-transformer-block",
-        "inside-the-output-layer"
+        "inside-the-output-layer",
+        "inside-the-context-window"
       ]
     },
     {
@@ -108,6 +109,28 @@
     }
   ],
   "posts": [
+    {
+      "slug": "inside-the-context-window",
+      "title": "A Prompt's Journey (9): Inside the Context Window — From the 2K Wall to FlashAttention, RoPE/YaRN, and 2026 Hybrid Mamba Architectures",
+      "date": "2026-10-10",
+      "seriesId": "a-prompts-journey",
+      "seriesPart": 9,
+      "summary": "What: The architectural and hardware evolution of the LLM context window; the collapse of Absolute Positional Embeddings (APE), O(N^2) quadratic memory explosions, the HBM-SRAM Memory Wall, FlashAttention on-chip Online Softmax and SRAM tiling, RoPE and YaRN frequency interpolation, Grouped-Query Attention (GQA) KV cache compression, Lost in the Middle attention degradation, and 2026 hybrid Transformer-SSM (Mamba) topologies. Why it matters: At 128k context, the KV cache of a single stream consumes 16 GB of VRAM, matching the entire weight footprint of an 8B model and exploding to 128 GB at 1M tokens; intermediate activation transfers stretch Time-to-First-Token (TTFT) into dozens of seconds, while attention scores dilute in the document middle, triggering hallucinations. How: Vaswani 2017 fixed index tables vs Su 2021 2D orthogonal rotations; Peng 2023 YaRN multi-band wavelength compression; Dao 2022 FlashAttention SRAM tiling and Online Softmax streaming normalization; Ainslie 2023 GQA head sharing; Gu & Dao 2023 Mamba-2 selective state space recurrence h_t = A h_{t-1} + B x_t with O(1) memory and O(N) prefill; RingAttention cluster pipelines and runtime Sparse KV Cache eviction; precision RAG, LLMLingua compression, and Radix Attention prefix caching. Where: A 4-token 2-block toy tensor walk of FlashAttention Online Softmax, LLaMA 3.1 8B KV cache scaling calculations, and independent Python numerical verification. Target audience: AI engineers, systems architects, and infrastructure leads deploying long-context models and optimizing GPU memory walls. When: When scaling beyond 32k tokens causes CUDA OOM crashes, TTFT violates latency SLAs, models miss facts hidden in document centers, or choosing between RAG and long-context architectures.",
+      "tagline": "Follow the context window from the 2K wall through FlashAttention, RoPE/YaRN, and into 2026 hybrid Mamba topologies and hardware memory walls.",
+      "tags": [
+        "llm",
+        "transformer",
+        "context-window",
+        "flash-attention",
+        "rope",
+        "mamba",
+        "architecture",
+        "systems"
+      ],
+      "readingMinutes": 26,
+      "translationSlug": "baglam-penceresi-derinlemesine",
+      "draft": false
+    },
     {
       "slug": "inside-the-output-layer",
       "title": "A Prompt's Journey (8): The Output Layer (LM Head) — Logits, the Memory Wall, Megatron-LM, and Speculative Decoding",
