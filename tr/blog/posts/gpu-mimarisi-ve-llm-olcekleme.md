@@ -27,1503 +27,1612 @@ Dağıtık temel model eğitimi, uç sınırlarda bir ortak tasarım (co-design)
 
 Donanımın boşta kalmasını engellemek ve Model FLOP Kullanımını (MFU) maksimize etmek için bir yapay zekâ altyapı mühendisi bu üç sütunu eşzamanlı olarak yönetmek zorundadır:
 
-<svg viewBox="0 0 560 10849" role="img" aria-label="Yapay zekâ altyapısını anlatan beş bölümlük bir poster. A bölümü dört basamakta uzaklaşır. 1. basamak, Streaming Multiprocessor: dört özdeş alt bölme; her birinde döngüde 1.024 BF16 FLOP yapan bir Tensor Core, 32 thread&#x27;lik warp&#x27;ları dağıtan bir warp scheduler, 32 FP32 ALU ve 16.384 register; ayrıca 256 KiB SMEM ya da L1. Bir hat aşçısı ve tezgâhı gibidir. 132 SM bir H100 SXM5 GPU eder: 814 milimetrekare kalıp, 80 milyar transistör, 50 MB L2, 6 yuvanın 5&#x27;inde 3,35 TB/s hızlı 80 GB HBM3, 700 W&#x27;ta 990 TFLOP/s BF16; kileri HBM olan bir mutfak gibidir. 8 GPU bir DGX H100 düğümü eder: 4 NVSwitch, GPU başına 900 GB/s NVLink, 3,6 TB/s biseksiyon, PCIe Gen5 üzerinden 64 GB/s ile bağlı 2 TB RAM&#x27;li 2 Xeon işlemci, GPU başına bir 400 Gb/s hesaplama NIC&#x27;i, depolama ve yönetim için 2 çift portlu NIC ve 8 NVMe sürücü. 32 düğüm bir ölçeklenebilir birim, 4 birim 127 düğümlük, 1.016 GPU&#x27;luk bir DGX SuperPOD eder: her düğümün i. NIC&#x27;inin i. leaf&#x27;e gittiği ray uyumlu fat-tree&#x27;de 32 leaf ve 16 spine switch, düğüm başına en az 40 GB/s veren ayrı bir depolama ağı ve in-band ile OOB Ethernet yönetim ağları. B bölümü TP 8, PP 16, DP 128 düzenli Llama 3 405B&#x27;nin tek bir eğitim adımını izler: 1 depolamadan HBM&#x27;e 16 milyon token okunur; 2 ileri geçişte HBM&#x27;den Tensor Core&#x27;lara veri akar; 3 NVLink üzerinde katman başına iki tensör paralel AllReduce yapılır; 4 aktivasyonlar ağ üzerinden sonraki boru hattı aşamasına gönderilir; 5 geri geçiş aynı hatları kullanır; 6 gradyanlar ray switch&#x27;leri üzerinden diğer 127 kopyayla AllReduce edilir; 7 AdamW optimizer adımı HBM&#x27;de yapılır; 8 her 14 dakikada 7,5 TB&#x27;lık kontrol noktası depolamaya yazılır. C bölümü üç duvarı hesaplanmış eğrilerle gösterir. Bellek duvarı: H100&#x27;de Llama 3 70B MLP katmanı için elde edilen hız batch 1&#x27;de 3,3 TFLOP/s&#x27;den batch 128&#x27;de 420&#x27;ye çıkar ve batch 310 civarında 990 tavanına ulaşır; çare büyük batch, kernel füzyonu ve decode&#x27;da düşük bitli ağırlıktır. Ağ duvarı: GPU başına bant genişliği HBM&#x27;de 3,35 TB/s&#x27;den NVLink&#x27;te 450 GB/s&#x27;ye, düğüm dışında 50 GB/s&#x27;ye düşer; tensör paralelliği NVLink&#x27;te 13 GPU&#x27;ya, yani 8&#x27;e sığar, InfiniBand&#x27;de yalnızca 1,45&#x27;e; 16 aşamalı bir boru hattı 16 mikrobatch ile yüzde 48, 128 ile yüzde 10,5 boşta kalır; çare TP&#x27;yi düğüm içinde tutmak, SHARP ve iletişimi hesapla çakıştırmaktır. G/Ç duvarı: kayıt aralığına göre Young-Daly kayıp eğrileri; 25 GB/s&#x27;de en düşük kayıp 42,9 dakikada yüzde 24, 250 GB/s&#x27;de 13,6 dakikada yüzde 7,5&#x27;tir; çare GPUDirect Storage, asenkron yazma ve karekök aralığıdır. D bölümü aynı 140 GB&#x27;ın taşınma süresini verir: HBM&#x27;den 42 milisaniye, NVLink&#x27;ten 0,31 saniye, PCIe&#x27;den 2,2 saniye, GPU başına InfiniBand&#x27;den 2,8 saniye, bütün kümenin paylaştığı eski depolamadan 5,6 saniye; 8 H100&#x27;de decode saniyede yaklaşık 190 tokenle sınırlıdır. E bölümü Meta&#x27;nın Llama 3 405B eğitimini özetler: GPU başına 400 TFLOP/s ve yüzde 41 MFU ile 16.384 H100, 3.072 GPU&#x27;luk pod&#x27;lardan oluşan bir RoCE ağı, 2 TB/s sürekli ve 7 TB/s tepe hızlı 240 PB&#x27;lık Tectonic depolama ve 54 günde 466 kesinti, yani yaklaşık 3 saatte bir arıza. En yavaş halka bütün kümenin hızını belirler. Küme basamağından sonra bir kart SuperPOD&#x27;un yapı taşlarını ve her birinin neden var olduğunu sıralar: 127 DGX H100 sistemi matematiği yapar; 48 QM9700 switch her GPU&#x27;ya bir ray veren hesaplama ağını, 16 tanesi düğüm başına en az 40 GB/s&#x27;lik ayrı depolama ağını kurar; 4 UFM cihazı InfiniBand ağını izler; 8 SN4600C ve 8 SN2201 switch in-band ve OOB yönetimi taşır; 5 yönetim sunucusu kontrol yazılımlarını koşturur; 38 kabin ve 108 PDU yaklaşık 1,3 MW güç dağıtır. Yazılımda Base Command Manager düğümleri kurar, Slurm işleri zamanlar, Magnum IO veriyi NCCL, GPUDirect ve SHARP ile taşır, NGC uyumlu konteynerler sunar, Base Command Platform veri bilimcilere hizmet eder, AI Enterprise destekli araçlar ekler. Düğüm basamağı NVIDIA&#x27;nın DGX H100 sistem topolojisini yeniden çizer: UPI ile bağlı CPU 0 ve CPU 1; CPU 0 GPU 0–3 ile NIC 0–3&#x27;ü, CPU 1 GPU 4–7 ile NIC 4–7&#x27;yi besler ve her GPU&#x27;nun kendi ağ kartı vardır; üstteki iki PCIe switch çift portlu depolama kartlarını ve 4&#x27;er NVMe diski taşır; CPU 0&#x27;da iki M.2 işletim sistemi diski, CPU 1&#x27;de bir 100 GbE kartı bulunur; her GPU 18 NVLink&#x27;ini 5, 4, 4 ve 5 olarak dört NVSwitch&#x27;e gönderir; alttaki PCIe switch NVSwitch&#x27;leri yönetim için CPU 0&#x27;a bağlar. Düğüm şemasındaki altı numaralı daire, altındaki altı soruyla eşleşir: kim kimi besler (iki NUMA yarısı), GPU ağa nasıl çıkar (GPUDirect RDMA ile kendi NIC&#x27;i), GPU&#x27;lar nasıl konuşur (dört NVSwitch&#x27;e 18 NVLink), depolama trafiği nereden geçer (üstteki PCIe switch&#x27;ler), iki yarıyı ne birleştirir (CPU iletişimi, UPI) ve NVSwitch&#x27;leri kim yönetir (CPU 0&#x27;dan PCIe ile Fabric Manager). Küme basamağı H100 SXM5, DGX H100, 32 DGX&#x27;lik ölçeklenebilir birim ve 4 birimli DGX SuperPOD hiyerarşisiyle açılır. Yakından inceleme kartı portları sayar: 64 portlu her leaf 32 portunu düğümlere, 32 portunu spine&#x27;lara verir, toplam 1.024 leaf–spine kablosu vardır ve ağ engelsizdir; aynı raydaki trafik tek leaf&#x27;ten geçer, raylar arası trafik ise NCCL&#x27;in PXN&#x27;i önce NVLink&#x27;e taşımadıkça spine&#x27;dan geçer; bütün GPU&#x27;lar 50,8 TB/s gönderebilir, spine kapasitesi 51,2 TB/s&#x27;dir; 16 birimden itibaren bir core katmanı eklenir ve 2.048 DGX 512 leaf, 512 spine ve 256 core switch kullanır. Bir not SuperPOD&#x27;un neden 128 değil 127 DGX olduğunu açıklar: bir çift UFM cihazı bir DGX yuvasını alır; daha küçük kurulumlar tek birimden başlar, 31 ile 127 DGX arasındadır. Küme çizimi NVIDIA&#x27;nın hesaplama ağı şemasını izler: üstte Spine-01&#x27;den Spine-16&#x27;ya; Leaf-01-01–08 ve H100-001–032 düğümleriyle SU 1; Leaf-04-01–08, H100-097–127 düğümleri ve C-UFM 1 ile 2 UFM çiftiyle SU 4; spine–leaf hatları 2 × 400 Gb/s, DGX–leaf hatları 400 Gb/s, UFM–leaf hatları 200 Gb/s&#x27;dir. Hiyerarşinin altındaki &#x27;ne neyi yapar&#x27; tablosu her basamağı açıklar: H100 matematiği yapar ve modelin kendine düşen payını HBM&#x27;de tutar; DGX 8 GPU&#x27;yu tensör paralelliğinin yaşadığı tek bir NVLink alanında birleştirir, işlemcileri işletim sistemini ve veri yükleyiciyi koşturur; SU, aynı numaralı GPU&#x27;ların tek sıçramada buluştuğu 32 DGX ve 8 leaf switch&#x27;lik tekrar eden birimdir; SuperPOD SU&#x27;ları spine ile birleştirir, depolama, yönetim ve yazılımı ekler ve veri paralelliğini bütün kümeye yayar. Bir tanım kutusu leaf ve spine&#x27;ı açıklar: leaf, sunucuların takıldığı alt katman switch&#x27;idir, SU başına 8 tane, her ray için bir tane, 32 portu aşağı 32 portu yukarı; spine, leaf&#x27;leri birbirine bağlayan ve hiç sunucu taşımayan üst katman switch&#x27;idir, toplam 16 tane, her biri 32 leaf&#x27;in hepsine bağlıdır; her leaf her spine&#x27;a ulaştığı için herhangi iki sunucu en fazla leaf, spine, leaf yoluyla buluşur." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 840 8652" role="img" aria-label="Yapay zekâ altyapısını anlatan beş bölümlük bir poster. A bölümü dört basamakta uzaklaşır. 1. basamak, Streaming Multiprocessor: dört özdeş alt bölme; her birinde döngüde 1.024 BF16 FLOP yapan bir Tensor Core, 32 thread&#x27;lik warp&#x27;ları dağıtan bir warp scheduler, 32 FP32 ALU ve 16.384 register; ayrıca 256 KiB SMEM ya da L1. Bir hat aşçısı ve tezgâhı gibidir. 132 SM bir H100 SXM5 GPU eder: 814 milimetrekare kalıp, 80 milyar transistör, 50 MB L2, 6 yuvanın 5&#x27;inde 3,35 TB/s hızlı 80 GB HBM3, 700 W&#x27;ta 990 TFLOP/s BF16; kileri HBM olan bir mutfak gibidir. 8 GPU bir DGX H100 düğümü eder: 4 NVSwitch, GPU başına 900 GB/s NVLink, 3,6 TB/s biseksiyon, PCIe Gen5 üzerinden 64 GB/s ile bağlı 2 TB RAM&#x27;li 2 Xeon işlemci, GPU başına bir 400 Gb/s hesaplama NIC&#x27;i, depolama ve yönetim için 2 çift portlu NIC ve 8 NVMe sürücü. 32 düğüm bir ölçeklenebilir birim, 4 birim 127 düğümlük, 1.016 GPU&#x27;luk bir DGX SuperPOD eder: her düğümün i. NIC&#x27;inin i. leaf&#x27;e gittiği ray uyumlu fat-tree&#x27;de 32 leaf ve 16 spine switch, düğüm başına en az 40 GB/s veren ayrı bir depolama ağı ve in-band ile OOB Ethernet yönetim ağları. B bölümü TP 8, PP 16, DP 128 düzenli Llama 3 405B&#x27;nin tek bir eğitim adımını izler: 1 depolamadan HBM&#x27;e 16 milyon token okunur; 2 ileri geçişte HBM&#x27;den Tensor Core&#x27;lara veri akar; 3 NVLink üzerinde katman başına iki tensör paralel AllReduce yapılır; 4 aktivasyonlar ağ üzerinden sonraki boru hattı aşamasına gönderilir; 5 geri geçiş aynı hatları kullanır; 6 gradyanlar ray switch&#x27;leri üzerinden diğer 127 kopyayla AllReduce edilir; 7 AdamW optimizer adımı HBM&#x27;de yapılır; 8 her 14 dakikada 7,5 TB&#x27;lık kontrol noktası depolamaya yazılır. C bölümü üç duvarı hesaplanmış eğrilerle gösterir. Bellek duvarı: H100&#x27;de Llama 3 70B MLP katmanı için elde edilen hız batch 1&#x27;de 3,3 TFLOP/s&#x27;den batch 128&#x27;de 420&#x27;ye çıkar ve batch 310 civarında 990 tavanına ulaşır; çare büyük batch, kernel füzyonu ve decode&#x27;da düşük bitli ağırlıktır. Ağ duvarı: GPU başına bant genişliği HBM&#x27;de 3,35 TB/s&#x27;den NVLink&#x27;te 450 GB/s&#x27;ye, düğüm dışında 50 GB/s&#x27;ye düşer; tensör paralelliği NVLink&#x27;te 13 GPU&#x27;ya, yani 8&#x27;e sığar, InfiniBand&#x27;de yalnızca 1,45&#x27;e; 16 aşamalı bir boru hattı 16 mikrobatch ile yüzde 48, 128 ile yüzde 10,5 boşta kalır; çare TP&#x27;yi düğüm içinde tutmak, SHARP ve iletişimi hesapla çakıştırmaktır. G/Ç duvarı: kayıt aralığına göre Young-Daly kayıp eğrileri; 25 GB/s&#x27;de en düşük kayıp 42,9 dakikada yüzde 24, 250 GB/s&#x27;de 13,6 dakikada yüzde 7,5&#x27;tir; çare GPUDirect Storage, asenkron yazma ve karekök aralığıdır. D bölümü aynı 140 GB&#x27;ın taşınma süresini verir: HBM&#x27;den 42 milisaniye, NVLink&#x27;ten 0,31 saniye, PCIe&#x27;den 2,2 saniye, GPU başına InfiniBand&#x27;den 2,8 saniye, bütün kümenin paylaştığı eski depolamadan 5,6 saniye; 8 H100&#x27;de decode saniyede yaklaşık 190 tokenle sınırlıdır. E bölümü Meta&#x27;nın Llama 3 405B eğitimini özetler: GPU başına 400 TFLOP/s ve yüzde 41 MFU ile 16.384 H100, 3.072 GPU&#x27;luk pod&#x27;lardan oluşan bir RoCE ağı, 2 TB/s sürekli ve 7 TB/s tepe hızlı 240 PB&#x27;lık Tectonic depolama ve 54 günde 466 kesinti, yani yaklaşık 3 saatte bir arıza. En yavaş halka bütün kümenin hızını belirler. Küme basamağından sonra bir kart SuperPOD&#x27;un yapı taşlarını ve her birinin neden var olduğunu sıralar: 127 DGX H100 sistemi matematiği yapar; 48 QM9700 switch her GPU&#x27;ya bir ray veren hesaplama ağını, 16 tanesi düğüm başına en az 40 GB/s&#x27;lik ayrı depolama ağını kurar; 4 UFM cihazı InfiniBand ağını izler; 8 SN4600C ve 8 SN2201 switch in-band ve OOB yönetimi taşır; 5 yönetim sunucusu kontrol yazılımlarını koşturur; 38 kabin ve 108 PDU yaklaşık 1,3 MW güç dağıtır. Yazılımda Base Command Manager düğümleri kurar, Slurm işleri zamanlar, Magnum IO veriyi NCCL, GPUDirect ve SHARP ile taşır, NGC uyumlu konteynerler sunar, Base Command Platform veri bilimcilere hizmet eder, AI Enterprise destekli araçlar ekler. Düğüm basamağı NVIDIA&#x27;nın DGX H100 sistem topolojisini yeniden çizer: UPI ile bağlı CPU 0 ve CPU 1; CPU 0 GPU 0–3 ile NIC 0–3&#x27;ü, CPU 1 GPU 4–7 ile NIC 4–7&#x27;yi besler ve her GPU&#x27;nun kendi ağ kartı vardır; üstteki iki PCIe switch çift portlu depolama kartlarını ve 4&#x27;er NVMe diski taşır; CPU 0&#x27;da iki M.2 işletim sistemi diski, CPU 1&#x27;de bir 100 GbE kartı bulunur; her GPU 18 NVLink&#x27;ini 5, 4, 4 ve 5 olarak dört NVSwitch&#x27;e gönderir; alttaki PCIe switch NVSwitch&#x27;leri yönetim için CPU 0&#x27;a bağlar. Düğüm şemasındaki altı numaralı daire, altındaki altı soruyla eşleşir: kim kimi besler (iki NUMA yarısı), GPU ağa nasıl çıkar (GPUDirect RDMA ile kendi NIC&#x27;i), GPU&#x27;lar nasıl konuşur (dört NVSwitch&#x27;e 18 NVLink), depolama trafiği nereden geçer (üstteki PCIe switch&#x27;ler), iki yarıyı ne birleştirir (CPU iletişimi, UPI) ve NVSwitch&#x27;leri kim yönetir (CPU 0&#x27;dan PCIe ile Fabric Manager). Küme basamağı H100 SXM5, DGX H100, 32 DGX&#x27;lik ölçeklenebilir birim ve 4 birimli DGX SuperPOD hiyerarşisiyle açılır. Yakından inceleme kartı portları sayar: 64 portlu her leaf 32 portunu düğümlere, 32 portunu spine&#x27;lara verir, toplam 1.024 leaf–spine kablosu vardır ve ağ engelsizdir; aynı raydaki trafik tek leaf&#x27;ten geçer, raylar arası trafik ise NCCL&#x27;in PXN&#x27;i önce NVLink&#x27;e taşımadıkça spine&#x27;dan geçer; bütün GPU&#x27;lar 50,8 TB/s gönderebilir, spine kapasitesi 51,2 TB/s&#x27;dir; 16 birimden itibaren bir core katmanı eklenir ve 2.048 DGX 512 leaf, 512 spine ve 256 core switch kullanır. Bir not SuperPOD&#x27;un neden 128 değil 127 DGX olduğunu açıklar: bir çift UFM cihazı bir DGX yuvasını alır; daha küçük kurulumlar tek birimden başlar, 31 ile 127 DGX arasındadır. Küme çizimi NVIDIA&#x27;nın hesaplama ağı şemasını izler: üstte Spine-01&#x27;den Spine-16&#x27;ya; Leaf-01-01–08 ve H100-001–032 düğümleriyle SU 1; Leaf-02-01–08 ve H100-033–064 düğümleriyle SU 2; aynı düzeni tekrarlayan ve çizimde atlanan SU 3; Leaf-04-01–08, H100-097–127 düğümleri ve C-UFM 1 ile 2 UFM çiftiyle SU 4; spine–leaf hatları 2 × 400 Gb/s, DGX–leaf hatları 400 Gb/s, UFM–leaf hatları 200 Gb/s&#x27;dir. Hiyerarşinin altındaki &#x27;ne neyi yapar&#x27; tablosu her basamağı açıklar: H100 matematiği yapar ve modelin kendine düşen payını HBM&#x27;de tutar; DGX 8 GPU&#x27;yu tensör paralelliğinin yaşadığı tek bir NVLink alanında birleştirir, işlemcileri işletim sistemini ve veri yükleyiciyi koşturur; SU, aynı numaralı GPU&#x27;ların tek sıçramada buluştuğu 32 DGX ve 8 leaf switch&#x27;lik tekrar eden birimdir; SuperPOD SU&#x27;ları spine ile birleştirir, depolama, yönetim ve yazılımı ekler ve veri paralelliğini bütün kümeye yayar. Bir tanım kutusu leaf ve spine&#x27;ı açıklar: leaf, sunucuların takıldığı alt katman switch&#x27;idir, SU başına 8 tane, her ray için bir tane, 32 portu aşağı 32 portu yukarı; spine, leaf&#x27;leri birbirine bağlayan ve hiç sunucu taşımayan üst katman switch&#x27;idir, toplam 16 tane, her biri 32 leaf&#x27;in hepsine bağlıdır; her leaf her spine&#x27;a ulaştığı için herhangi iki sunucu en fazla leaf, spine, leaf yoluyla buluşur." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="bp-mut" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="bp-gen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 <marker id="bp-wrn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-warn)"/></marker>
 <marker id="bp-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 </defs>
-<text x="16" y="26" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">Büyük Resim: Yapay Zekâ Altyapısının 3 Sütunu</text>
-<text x="16" y="46" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Bir H100&#x27;ün içinden 16.384 H100&#x27;lük kümeye: parçalar nerede, veri nasıl akar, nerede</text>
-<text x="16" y="63" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tıkanır?</text>
-<rect x="16" y="75" width="528" height="225" rx="10" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="28" y="87" width="86" height="42" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="71" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">A · Parçalar</text>
-<text x="71" y="120" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">SM → küme</text>
-<line x1="116.0" y1="108.0" x2="130.0" y2="108.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="132" y="87" width="86" height="42" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="175" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">B · Bir adım</text>
-<text x="175" y="120" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">verinin yolu</text>
-<line x1="220.0" y1="108.0" x2="234.0" y2="108.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="236" y="87" width="86" height="42" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="279" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">C · Duvarlar</text>
-<text x="279" y="120" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">neden tıkanır</text>
-<line x1="324.0" y1="108.0" x2="338.0" y2="108.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="340" y="87" width="86" height="42" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="383" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">D · Hız</text>
-<text x="383" y="120" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sezgi</text>
-<line x1="428.0" y1="108.0" x2="442.0" y2="108.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="444" y="87" width="86" height="42" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="487" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">E · Llama 3</text>
-<text x="487" y="120" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gerçek küme</text>
-<text x="28" y="153" text-anchor="start" style="fill:var(--c-text);font-size:12px">Önce parçaları tanıyacağız, sonra bir eğitim adımında birlikte nasıl</text>
-<text x="28" y="170" text-anchor="start" style="fill:var(--c-text);font-size:12px">çalıştıklarını izleyeceğiz. Ardından nerede tıkandıklarını görecek, hızlar için</text>
-<text x="28" y="187" text-anchor="start" style="fill:var(--c-text);font-size:12px">sezgi kuracak ve hepsini gerçek bir kümeyle sınayacağız.</text>
-<rect x="28.0" y="201.0" width="504.0" height="65" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="220" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Referans sistem: H100 SXM5 → DGX H100 → DGX SuperPOD (InfiniBand). Ana</text>
-<text x="40" y="237" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">sayıların hepsi bu sisteme aittir; başka GPU&#x27;lar ve başka kümeler yalnızca</text>
-<text x="40" y="254" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">parantez içinde geçer.</text>
-<rect x="28.0" y="279" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="44" y="289" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">hesaplama</text>
-<rect x="109.0" y="279" width="11" height="11" rx="2" style="fill:var(--c-accent-2);fill-opacity:.2;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="125.0" y="289" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ağ</text>
-<rect x="151.9" y="279" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="167.9" y="289" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">depolama</text>
-<rect x="227.5" y="279" width="11" height="11" rx="2" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="243.5" y="289" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">duvar / darboğaz</text>
-<rect x="346.6" y="279" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="362.6" y="289" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">çözüm</text>
-<rect x="16" y="312" width="528" height="7322" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
-<circle cx="36" cy="336" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="36" y="340.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">A</text>
-<text x="56" y="341" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Yakınlaştır: bir SM&#x27;den bütün kümeye</text>
-<text x="28" y="362" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her basamak öncekinin ×N kopyasıdır; koyu vurgu bir önceki basamağı gösterir.</text>
-<rect x="28" y="374" width="504" height="332" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="398" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">1 · SM: GPU&#x27;nun temel işçisi</text>
-<rect x="40" y="410" width="228" height="152" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="48" y="426" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">SM</text>
-<rect x="48" y="434" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="56" y="449" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 0</text>
-<rect x="56.0" y="456.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="100.0" y="469.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
-<rect x="156" y="434" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="164" y="449" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 1</text>
-<rect x="164.0" y="456.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="208.0" y="469.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
-<rect x="48" y="484" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="56" y="499" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 2</text>
-<rect x="56.0" y="506.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="100.0" y="519.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
-<rect x="156" y="484" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="164" y="499" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 3</text>
-<rect x="164.0" y="506.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="208.0" y="519.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
-<rect x="48.0" y="536.0" width="212.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="154.0" y="550.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">SMEM / L1 · 256 KiB</text>
-<rect x="282" y="410" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="292" y="432" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">4</text>
-<text x="292" y="449" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme</text>
-<rect x="407" y="410" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="417" y="432" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">1.024</text>
-<text x="417" y="449" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">FLOP/döngü (TC)</text>
-<rect x="282" y="466" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="292" y="488" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">256 KiB</text>
-<text x="292" y="505" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">register / SM</text>
-<rect x="407" y="466" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="417" y="488" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">64</text>
-<text x="417" y="505" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">warp aynı anda</text>
-<text x="282" y="534" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her alt bölme: 1 Tensor Core,</text>
-<text x="282" y="550" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1 warp scheduler, 32 FP32 ALU,</text>
-<text x="282" y="566" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">16.384 register · 256 KiB SMEM/L1</text>
-<text x="282" y="582" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">warp = birlikte koşan 32 thread</text>
-<text x="40" y="608" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
-<text x="40" y="626" text-anchor="start" style="fill:var(--c-text);font-size:12px">Bir warp bellekten veri beklerken scheduler hemen başka bir warp&#x27;a geçer.</text>
-<text x="40" y="643" text-anchor="start" style="fill:var(--c-text);font-size:12px">SM&#x27;ler bekleme süresini böyle gizler; ama bütün warp&#x27;lar bekliyorsa</text>
-<text x="40" y="660" text-anchor="start" style="fill:var(--c-text);font-size:12px">gizleyecek iş kalmaz.</text>
-<rect x="36.0" y="674.0" width="488.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="46" y="689" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Mutfak benzetmesi: SM bir hat aşçısıdır; register ve SMEM onun tezgâhıdır.</text>
-<line x1="280.0" y1="709.0" x2="280.0" y2="731.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="292" y="724" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 132 SM = 1 GPU</text>
-<rect x="28" y="734" width="504" height="348" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="758" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">2 · GPU: H100 SXM5 çipi</text>
-<rect x="40" y="770" width="228" height="180" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="46.0" y="778.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="60.0" y="807.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
-<rect x="46.0" y="834.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="60.0" y="863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
-<rect x="46.0" y="890.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="60.0" y="919.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
-<rect x="234.0" y="778.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="248.0" y="807.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
-<rect x="234.0" y="834.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="248.0" y="863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
-<rect x="234.0" y="890.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.04;stroke:var(--c-accent);stroke-width:1.2;stroke-dasharray:4 3"/>
-<rect x="80" y="776" width="148" height="168" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<rect x="88" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.95"/>
-<rect x="100" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="782" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="793" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="804" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="815" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="826" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="837" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="872" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="883" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="894" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="905" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="916" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="100" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="112" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="124" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="136" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="148" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="160" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="172" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="184" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="196" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="208" y="927" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
-<rect x="88.0" y="850.0" width="129.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="152.5" y="863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">L2 · 50 MB</text>
-<rect x="282" y="770" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="292" y="792" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">132</text>
-<text x="292" y="809" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">SM</text>
-<rect x="407" y="770" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="417" y="792" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">990</text>
-<text x="417" y="809" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TFLOP/s (BF16)</text>
-<rect x="282" y="826" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="292" y="848" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">80 GB</text>
-<text x="292" y="865" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">HBM3 bellek</text>
-<rect x="407" y="826" width="117" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="417" y="848" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">3,35 TB/s</text>
-<text x="417" y="865" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">HBM hızı</text>
-<text x="282" y="894" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">814 mm² kalıp · 80 milyar transistör</text>
-<text x="282" y="910" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">6 HBM yuvası, 5&#x27;i etkin · 700 W</text>
-<text x="282" y="926" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ortak L2: 50 MB (~5,5 TB/s)</text>
-<text x="282" y="942" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">FP8: 1.980 TFLOP/s (yoğun)</text>
-<text x="282" y="958" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">(B200: 148 SM · 192 GB · 8 TB/s)</text>
-<text x="40" y="984" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
-<text x="40" y="1002" text-anchor="start" style="fill:var(--c-text);font-size:12px">Çip saniyede 990 trilyon işlem yapabilir ama bellekten saniyede yalnızca</text>
-<text x="40" y="1019" text-anchor="start" style="fill:var(--c-text);font-size:12px">3,35 TB okuyabilir. Okunan her bayt için ~295 işlem yapılmazsa Tensor</text>
-<text x="40" y="1036" text-anchor="start" style="fill:var(--c-text);font-size:12px">Core&#x27;lar boşta kalır.</text>
-<rect x="36.0" y="1050.0" width="488.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="46" y="1065" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">132 hat aşçısı tek mutfakta çalışır; HBM mutfağın kileri, L2 ortak raftır.</text>
-<line x1="280.0" y1="1085.0" x2="280.0" y2="1107.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="292" y="1100" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 8 GPU = 1 düğüm</text>
-<rect x="28" y="1110" width="504" height="2358" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="1134" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">3 · Düğüm: DGX H100 kasasının içi</text>
-<rect x="36" y="1146" width="488" height="418" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="44.0" y="1158.0" width="64.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="76.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4 × NVMe</text>
-<text x="76.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">U.2 veri</text>
-<rect x="130.0" y="1158.0" width="56.0" height="36" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="158.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
-<text x="158.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
-<rect x="206.0" y="1158.0" width="66.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="239.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">CX-7</text>
-<text x="239.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çift port</text>
-<rect x="288.0" y="1158.0" width="66.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="321.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">CX-7</text>
-<text x="321.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çift port</text>
-<rect x="374.0" y="1158.0" width="56.0" height="36" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="402.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
-<text x="402.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
-<rect x="452.0" y="1158.0" width="64.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="484.0" y="1172" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4 × NVMe</text>
-<text x="484.0" y="1186" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">U.2 veri</text>
-<line x1="109.0" y1="1176.0" x2="128.0" y2="1176.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="187.0" y1="1176.0" x2="204.0" y2="1176.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="356.0" y1="1176.0" x2="372.0" y2="1176.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="432.0" y1="1176.0" x2="450.0" y2="1176.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="158.0" y1="1196.0" x2="158.0" y2="1212.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="402.0" y1="1196.0" x2="402.0" y2="1212.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="120.0" y="1214.0" width="76.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="158" y="1234" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">CPU 0</text>
-<text x="158" y="1250" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Xeon 8480C</text>
-<rect x="364.0" y="1214.0" width="76.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="402" y="1234" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">CPU 1</text>
-<text x="402" y="1250" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Xeon 8480C</text>
-<rect x="210.0" y="1216.0" width="62.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.08;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="241.0" y="1230.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">2 × M.2 OS</text>
-<line x1="198.0" y1="1226.0" x2="208.0" y2="1226.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="288.0" y="1216.0" width="62.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.08;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="319.0" y="1230.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">100 GbE</text>
-<line x1="352.0" y1="1226.0" x2="362.0" y2="1226.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<line x1="199.0" y1="1248.0" x2="361.0" y2="1248.0" marker-start="url(#bp-acc)" marker-end="url(#bp-acc)" style="stroke:var(--c-accent);stroke-width:2"/>
-<path d="M196 1258 H280 V1480" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="40" y="1286" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="286" y="1286" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<path d="M132 1262 V1270 H69 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M148 1262 V1277 H127 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M164 1262 V1277 H185 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M180 1262 V1270 H243 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M376 1262 V1270 H317 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M392 1262 V1277 H375 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M408 1262 V1277 H433 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M424 1262 V1270 H491 V1292" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<rect x="46.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="69.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 0</text>
-<line x1="69.0" y1="1320.0" x2="69.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="44.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.34;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="69.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 0</text>
-<rect x="104.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="127.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 1</text>
-<line x1="127.0" y1="1320.0" x2="127.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="102.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="127.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 1</text>
-<rect x="162.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="185.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 2</text>
-<line x1="185.0" y1="1320.0" x2="185.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="160.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="185.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 2</text>
-<rect x="220.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="243.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 3</text>
-<line x1="243.0" y1="1320.0" x2="243.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="218.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="243.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 3</text>
-<rect x="294.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="317.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 4</text>
-<line x1="317.0" y1="1320.0" x2="317.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="292.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="317.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 4</text>
-<rect x="352.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="375.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 5</text>
-<line x1="375.0" y1="1320.0" x2="375.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="350.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="375.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 5</text>
-<rect x="410.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="433.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 6</text>
-<line x1="433.0" y1="1320.0" x2="433.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="408.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="433.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 6</text>
-<rect x="468.0" y="1294.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="491.0" y="1310.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 7</text>
-<line x1="491.0" y1="1320.0" x2="491.0" y2="1334.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
-<rect x="466.0" y="1336.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="491.0" y="1356.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 7</text>
-<line x1="49.0" y1="1370.0" x2="49.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="54.0" y1="1370.0" x2="54.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="59.0" y1="1370.0" x2="59.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="64.0" y1="1370.0" x2="64.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="69.0" y1="1370.0" x2="69.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="74.0" y1="1370.0" x2="74.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="79.0" y1="1370.0" x2="79.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="84.0" y1="1370.0" x2="84.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="89.0" y1="1370.0" x2="89.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="107.0" y1="1370.0" x2="107.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="112.0" y1="1370.0" x2="112.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="117.0" y1="1370.0" x2="117.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="122.0" y1="1370.0" x2="122.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="127.0" y1="1370.0" x2="127.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="132.0" y1="1370.0" x2="132.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="137.0" y1="1370.0" x2="137.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="142.0" y1="1370.0" x2="142.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="147.0" y1="1370.0" x2="147.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="165.0" y1="1370.0" x2="165.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="170.0" y1="1370.0" x2="170.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="175.0" y1="1370.0" x2="175.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="180.0" y1="1370.0" x2="180.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="185.0" y1="1370.0" x2="185.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="190.0" y1="1370.0" x2="190.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="195.0" y1="1370.0" x2="195.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="200.0" y1="1370.0" x2="200.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="205.0" y1="1370.0" x2="205.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="223.0" y1="1370.0" x2="223.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="228.0" y1="1370.0" x2="228.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="233.0" y1="1370.0" x2="233.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="238.0" y1="1370.0" x2="238.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="243.0" y1="1370.0" x2="243.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="248.0" y1="1370.0" x2="248.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="253.0" y1="1370.0" x2="253.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="258.0" y1="1370.0" x2="258.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="263.0" y1="1370.0" x2="263.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="297.0" y1="1370.0" x2="297.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="302.0" y1="1370.0" x2="302.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="307.0" y1="1370.0" x2="307.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="312.0" y1="1370.0" x2="312.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="317.0" y1="1370.0" x2="317.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="322.0" y1="1370.0" x2="322.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="327.0" y1="1370.0" x2="327.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="332.0" y1="1370.0" x2="332.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="337.0" y1="1370.0" x2="337.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="355.0" y1="1370.0" x2="355.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="360.0" y1="1370.0" x2="360.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="365.0" y1="1370.0" x2="365.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="370.0" y1="1370.0" x2="370.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="375.0" y1="1370.0" x2="375.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="380.0" y1="1370.0" x2="380.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="385.0" y1="1370.0" x2="385.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="390.0" y1="1370.0" x2="390.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="395.0" y1="1370.0" x2="395.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="413.0" y1="1370.0" x2="413.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="418.0" y1="1370.0" x2="418.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="423.0" y1="1370.0" x2="423.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="428.0" y1="1370.0" x2="428.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="433.0" y1="1370.0" x2="433.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="438.0" y1="1370.0" x2="438.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="443.0" y1="1370.0" x2="443.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="448.0" y1="1370.0" x2="448.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="453.0" y1="1370.0" x2="453.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="471.0" y1="1370.0" x2="471.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="476.0" y1="1370.0" x2="476.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="481.0" y1="1370.0" x2="481.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="486.0" y1="1370.0" x2="486.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="491.0" y1="1370.0" x2="491.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="496.0" y1="1370.0" x2="496.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="501.0" y1="1370.0" x2="501.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="506.0" y1="1370.0" x2="506.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="511.0" y1="1370.0" x2="511.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="44.0" y1="1408.0" x2="516.0" y2="1408.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<line x1="78.0" y1="1408.0" x2="78.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="84.0" y1="1408.0" x2="84.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="90.0" y1="1408.0" x2="90.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="96.0" y1="1408.0" x2="96.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="102.0" y1="1408.0" x2="102.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="108.0" y1="1408.0" x2="108.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="114.0" y1="1408.0" x2="114.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="52.0" y="1430.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="96.0" y="1447.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 0</text>
-<line x1="182.0" y1="1408.0" x2="182.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="188.0" y1="1408.0" x2="188.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="194.0" y1="1408.0" x2="194.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="200.0" y1="1408.0" x2="200.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="206.0" y1="1408.0" x2="206.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="212.0" y1="1408.0" x2="212.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="218.0" y1="1408.0" x2="218.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="156.0" y="1430.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="200.0" y="1447.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 1</text>
-<line x1="342.0" y1="1408.0" x2="342.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="348.0" y1="1408.0" x2="348.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="354.0" y1="1408.0" x2="354.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="360.0" y1="1408.0" x2="360.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="366.0" y1="1408.0" x2="366.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="372.0" y1="1408.0" x2="372.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="378.0" y1="1408.0" x2="378.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="316.0" y="1430.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="360.0" y="1447.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 2</text>
-<line x1="446.0" y1="1408.0" x2="446.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="452.0" y1="1408.0" x2="452.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="458.0" y1="1408.0" x2="458.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="464.0" y1="1408.0" x2="464.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="470.0" y1="1408.0" x2="470.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="476.0" y1="1408.0" x2="476.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<line x1="482.0" y1="1408.0" x2="482.0" y2="1430.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
-<rect x="420.0" y="1430.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="464.0" y="1447.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 3</text>
-<rect x="250.0" y="1482.0" width="60.0" height="30" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="280" y="1495" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
-<text x="280" y="1508" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
-<path d="M96 1456 V1504 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M200 1456 V1491 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M360 1456 V1491 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<path d="M464 1456 V1504 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="280" y="1528" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">PCIe: CPU 0 → NVSwitch&#x27;ler (yönetim)</text>
-<line x1="48.0" y1="1548.0" x2="72.0" y2="1548.0" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<text x="78" y="1552" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PCIe</text>
-<line x1="126.8" y1="1548.0" x2="150.8" y2="1548.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<text x="156.8" y="1552" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVLink</text>
-<line x1="218.0" y1="1548.0" x2="242.0" y2="1548.0" style="stroke:var(--c-accent);stroke-width:2"/>
-<text x="248.0" y="1552" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">CPU iletişimi (UPI)</text>
-<circle cx="102" cy="1238" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="102" y="1242" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
-<circle cx="52" cy="1274" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="52" y="1278" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
-<circle cx="98" cy="1394" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="98" y="1398" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
-<circle cx="239" cy="1205" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="239" y="1209" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
-<circle cx="280" cy="1248" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="280" y="1252" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
-<circle cx="320" cy="1469" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="320" y="1473" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
-<rect x="36" y="1574" width="488" height="733" rx="6" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="48" y="1596" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Lejant: şemadaki her parça ne?</text>
-<text x="48" y="1614" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Adlar NVIDIA&#x27;nın diyagram lejantından, renkler posterin sütun renkleridir.</text>
-<text x="48" y="1629" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Görevler DGX H100 kullanım kılavuzundan gelir; “olası” yazanlar çıkarımdır.</text>
-<rect x="48.0" y="1643.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="81.0" y="1657.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">CX-7</text>
-<text x="126" y="1657" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “ConnectX-7” · üstte, 2 adet</text>
-<text x="126" y="1673" text-anchor="start" style="fill:var(--c-text);font-size:11px">Çift portlu ağ kartı; kılavuza göre depolama ağı ve in-band yönetim</text>
-<text x="126" y="1688" text-anchor="start" style="fill:var(--c-text);font-size:11px">için. Her biri üstteki bir PCIe switch&#x27;e bağlı.</text>
-<rect x="48.0" y="1702.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="81.0" y="1716.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 0–7</text>
-<text x="126" y="1716" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “ConnectX-7 Network Module” · 8 adet</text>
-<text x="126" y="1732" text-anchor="start" style="fill:var(--c-text);font-size:11px">Tek portlu 400 Gb/s hesaplama ağı kartları, GPU başına bir tane;</text>
-<text x="126" y="1747" text-anchor="start" style="fill:var(--c-text);font-size:11px">kümeye 4 OSFP portundan çıkar. Gri çerçeveler bu kartları taşıyan</text>
-<text x="126" y="1762" text-anchor="start" style="fill:var(--c-text);font-size:11px">modüllerdir (olası).</text>
-<rect x="48.0" y="1776.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="81.0" y="1790.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVMe</text>
-<text x="126" y="1790" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVMe” · üstte, 4 + 4</text>
-<text x="126" y="1806" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri diskleri: 8 × 3,84 TB U.2 NVMe, RAID 0 önbellek; okuma ve</text>
-<text x="126" y="1821" text-anchor="start" style="fill:var(--c-text);font-size:11px">kontrol noktası için yerel alan.</text>
-<rect x="48.0" y="1835.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="81.0" y="1849.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">M.2 OS</text>
-<text x="126" y="1849" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVMe” · CPU 0&#x27;ın yanında</text>
-<text x="126" y="1865" text-anchor="start" style="fill:var(--c-text);font-size:11px">Büyük olasılıkla 2 × 1,92 TB M.2 işletim sistemi diski (RAID 1);</text>
-<text x="126" y="1880" text-anchor="start" style="fill:var(--c-text);font-size:11px">diyagram veri diskleriyle aynı simgeyi kullanır.</text>
-<rect x="48.0" y="1894.0" width="66.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="81.0" y="1908.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">PCIe sw</text>
-<text x="126" y="1908" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “PCIe Switches” · 3 adet</text>
-<text x="126" y="1924" text-anchor="start" style="fill:var(--c-text);font-size:11px">Bir CPU hattını birçok cihaza dağıtır: üstteki ikisi NVMe ve CX-7&#x27;yi</text>
-<text x="126" y="1939" text-anchor="start" style="fill:var(--c-text);font-size:11px">taşır, alttaki NVSwitch&#x27;leri CPU 0&#x27;a bağlar.</text>
-<rect x="48.0" y="1953.0" width="66.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="81.0" y="1967.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">100 GbE</text>
-<text x="126" y="1967" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “100 GbE” · CPU 1&#x27;e bağlı</text>
-<text x="126" y="1983" text-anchor="start" style="fill:var(--c-text);font-size:11px">Ek bir Ethernet kartı; görevi diyagramda yazmıyor (olası: servis ya</text>
-<text x="126" y="1998" text-anchor="start" style="fill:var(--c-text);font-size:11px">da yönetim ağı).</text>
-<rect x="48.0" y="2012.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="81.0" y="2026.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVSwitch</text>
-<text x="126" y="2026" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVSwitch” · 4 adet</text>
-<text x="126" y="2042" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;lar arası NVLink anahtarı; her GPU 18 bağlantısını bu dördüne 5</text>
-<text x="126" y="2057" text-anchor="start" style="fill:var(--c-text);font-size:11px">+ 4 + 4 + 5 olarak dağıtır.</text>
-<rect x="48.0" y="2071.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="81.0" y="2085.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">CPU</text>
-<text x="126" y="2085" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “CPU 0 / CPU 1”</text>
-<text x="126" y="2101" text-anchor="start" style="fill:var(--c-text);font-size:11px">Intel Xeon 8480C (56&#x27;şar çekirdek); her biri dört GPU&#x27;yu ve onların</text>
-<text x="126" y="2116" text-anchor="start" style="fill:var(--c-text);font-size:11px">NIC&#x27;lerini PCIe ile besler.</text>
-<line x1="48.0" y1="2140.0" x2="114.0" y2="2140.0" style="stroke:var(--c-accent);stroke-width:2"/>
-<text x="126" y="2144" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “CPU communication”</text>
-<text x="126" y="2160" text-anchor="start" style="fill:var(--c-text);font-size:11px">İki soketi birbirine bağlayan hat; Intel Xeon&#x27;da bu bağlantının adı</text>
-<text x="126" y="2175" text-anchor="start" style="fill:var(--c-text);font-size:11px">UPI&#x27;dir.</text>
-<line x1="48.0" y1="2199.0" x2="114.0" y2="2199.0" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<text x="126" y="2203" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “PCIe”</text>
-<text x="126" y="2219" text-anchor="start" style="fill:var(--c-text);font-size:11px">CPU&#x27;ları NIC&#x27;lere, GPU&#x27;lara, disklere ve NVSwitch&#x27;lere bağlayan</text>
-<text x="126" y="2234" text-anchor="start" style="fill:var(--c-text);font-size:11px">genel yol (PCIe Gen5).</text>
-<line x1="48.0" y1="2258.0" x2="114.0" y2="2258.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<text x="126" y="2262" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA lejantında yok: NVLink</text>
-<text x="126" y="2278" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;ların altındaki renkli demetler NVLink hatlarıdır: GPU başına 18</text>
-<text x="126" y="2293" text-anchor="start" style="fill:var(--c-text);font-size:11px">bağlantı, toplam 900 GB/s çift yön.</text>
-<rect x="40" y="2319" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="50" y="2341" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">8</text>
-<text x="50" y="2358" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU · 640 GB</text>
-<rect x="162" y="2319" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="172" y="2341" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">450 GB/s</text>
-<text x="172" y="2358" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVLink, tek yön</text>
-<rect x="284" y="2319" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="294" y="2341" text-anchor="start" style="fill:var(--c-text-mute);font-size:16px;font-weight:700">64 GB/s</text>
-<text x="294" y="2358" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PCIe, CPU yolu</text>
-<rect x="406" y="2319" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="416" y="2341" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">50 GB/s</text>
-<text x="416" y="2358" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ağ kartı / GPU</text>
-<text x="40" y="2393" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Topolojiyi okuma: altı soru</text>
-<text x="40" y="2412" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Şemadaki numaralı daireleri sırayla izleyin; her biri bir soruyu cevaplar.</text>
-<circle cx="49" cy="2438" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="2442" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
-<text x="66" y="2442" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Kim kimi besler?</text>
-<text x="66" y="2462" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğüm birbirinin aynası olan iki yarıdan oluşur. CPU 0, GPU 0–3&#x27;ü ve NIC</text>
-<text x="66" y="2479" text-anchor="start" style="fill:var(--c-text);font-size:12px">0–3&#x27;ü PCIe ile besler; CPU 1 de GPU 4–7&#x27;yi ve NIC 4–7&#x27;yi. Her yarının</text>
-<text x="66" y="2496" text-anchor="start" style="fill:var(--c-text);font-size:12px">kendi belleği vardır; buna NUMA alanı denir.</text>
-<text x="66" y="2515" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> GPU 5&#x27;e veri hazırlayan süreç CPU 1&#x27;de koşmalı ve CPU 1&#x27;in</text>
-<text x="66" y="2532" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">belleğini kullanmalıdır; yoksa her batch önce CPU&#x27;lar arasındaki hattı</text>
-<text x="66" y="2549" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">geçer.</text>
-<circle cx="49" cy="2575" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="2579" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
-<text x="66" y="2579" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">GPU ağa nasıl çıkar?</text>
-<text x="66" y="2599" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her GPU&#x27;nun hemen üstünde kendine ait 400 Gb/s&#x27;lik bir NIC durur (GPU i ↔</text>
-<text x="66" y="2616" text-anchor="start" style="fill:var(--c-text);font-size:12px">NIC i). GPUDirect RDMA sayesinde veri GPU belleğinden doğrudan NIC&#x27;e</text>
-<text x="66" y="2633" text-anchor="start" style="fill:var(--c-text);font-size:12px">geçer, CPU belleğine hiç uğramaz.</text>
-<text x="66" y="2652" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> kasadan 8 × 50 = 400 GB/s çıkar. Kümede NIC i, i. leaf switch&#x27;e</text>
-<text x="66" y="2669" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">takılır; farklı düğümlerdeki aynı numaralı GPU&#x27;lar bu yüzden tek</text>
-<text x="66" y="2686" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sıçramada buluşur.</text>
-<circle cx="49" cy="2712" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="2716" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
-<text x="66" y="2716" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">GPU&#x27;lar birbirleriyle nasıl konuşur?</text>
-<text x="66" y="2736" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her GPU&#x27;nun 18 NVLink&#x27;i aşağıdaki dört NVSwitch&#x27;e iner: ikisine 5&#x27;er,</text>
-<text x="66" y="2753" text-anchor="start" style="fill:var(--c-text);font-size:12px">ikisine 4&#x27;er hat. Herhangi iki GPU tek bir switch sıçramasıyla, her yönde</text>
-<text x="66" y="2770" text-anchor="start" style="fill:var(--c-text);font-size:12px">450 GB/s ile konuşur.</text>
-<text x="66" y="2789" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> bu yol ağdan 9 kat geniştir; her katmanda konuşan tensör</text>
-<text x="66" y="2806" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">paralelliği bu yüzden bu sekiz GPU&#x27;nun içinde tutulur.</text>
-<circle cx="49" cy="2832" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="2836" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
-<text x="66" y="2836" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Depolama trafiği nereden geçer?</text>
-<text x="66" y="2856" text-anchor="start" style="fill:var(--c-text);font-size:12px">Üstteki iki PCIe switch, çift portlu CX-7 kartlarını (depolama ağı ve</text>
-<text x="66" y="2873" text-anchor="start" style="fill:var(--c-text);font-size:12px">in-band yönetim) ve 4&#x27;er U.2 NVMe veri diskini taşır. CPU 0&#x27;ın yanında</text>
-<text x="66" y="2890" text-anchor="start" style="fill:var(--c-text);font-size:12px">ayrıca iki M.2 işletim sistemi diski durur.</text>
-<text x="66" y="2909" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> veri okumak ve kontrol noktası yazmak, gradyan trafiğinden</text>
-<text x="66" y="2926" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">farklı kartları ve kabloları kullanır; büyük bir kayıt AllReduce&#x27;u</text>
-<text x="66" y="2943" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">yavaşlatmaz.</text>
-<circle cx="49" cy="2969" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="2973" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
-<text x="66" y="2973" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">İki yarıyı ne birleştirir?</text>
-<text x="66" y="2993" text-anchor="start" style="fill:var(--c-text);font-size:12px">İki CPU, NVIDIA&#x27;nın “CPU communication” dediği hatla (Xeon&#x27;da UPI)</text>
-<text x="66" y="3010" text-anchor="start" style="fill:var(--c-text);font-size:12px">bağlıdır. Bu hat CPU&#x27;ların kendi trafiği içindir; iki yarıdaki GPU&#x27;lar</text>
-<text x="66" y="3027" text-anchor="start" style="fill:var(--c-text);font-size:12px">birbirleriyle CPU&#x27;lar üzerinden değil, NVLink üzerinden konuşur.</text>
-<text x="66" y="3046" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> bir CPU öbür yarının belleğine erişebilir ama daha yavaş; NUMA</text>
-<text x="66" y="3063" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sabitlemesi bu cezadan kaçınmak içindir.</text>
-<circle cx="49" cy="3089" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
-<text x="49" y="3093" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
-<text x="66" y="3093" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">NVSwitch&#x27;leri kim yönetir?</text>
-<text x="66" y="3113" text-anchor="start" style="fill:var(--c-text);font-size:12px">CPU 0&#x27;dan inen PCIe hattı, alttaki PCIe switch üzerinden dört NVSwitch&#x27;e</text>
-<text x="66" y="3130" text-anchor="start" style="fill:var(--c-text);font-size:12px">ulaşır. Bu bir kontrol yoludur: NVIDIA Fabric Manager switch&#x27;lerin</text>
-<text x="66" y="3147" text-anchor="start" style="fill:var(--c-text);font-size:12px">yönlendirme tablolarını buradan kurar; GPU verisi bu hattan akmaz.</text>
-<text x="66" y="3166" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> Fabric Manager çalışmazsa GPU&#x27;lar tek tek sağlıklı görünse bile</text>
-<text x="66" y="3183" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">NVLink ağı kurulmaz ve çok GPU&#x27;lu işler başlamaz.</text>
-<rect x="36.0" y="3205.0" width="488.0" height="102" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="48" y="3225" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Örnek yol: bir gradyanın düğümdeki yolculuğu</text>
-<text x="48" y="3243" text-anchor="start" style="fill:var(--c-text);font-size:12px">Komşu düğümden gelen bir gradyan NIC 5&#x27;e girer ve GPUDirect RDMA ile</text>
-<text x="48" y="3260" text-anchor="start" style="fill:var(--c-text);font-size:12px">doğrudan GPU 5&#x27;in belleğine yazılır; CPU 1&#x27;e hiç uğramaz. GPU 5 bu</text>
-<text x="48" y="3277" text-anchor="start" style="fill:var(--c-text);font-size:12px">gradyanı GPU 2 ile paylaşacaksa ağa ya da CPU&#x27;lara değil, NVLink üzerinden</text>
-<text x="48" y="3294" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVSwitch&#x27;lere gider.</text>
-<text x="40" y="3331" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">4 NVSwitch · biseksiyon 3,6 TB/s · 2 × Xeon 8480C (112 çekirdek), 2 TB RAM ·</text>
-<text x="40" y="3346" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 × 3,84 TB NVMe veri · güç 10,2 kW</text>
-<text x="40" y="3370" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
-<text x="40" y="3388" text-anchor="start" style="fill:var(--c-text);font-size:12px">Kasa içinde GPU&#x27;lar NVLink ile birbirinin belleğine doğrudan erişir. CPU&#x27;ya</text>
-<text x="40" y="3405" text-anchor="start" style="fill:var(--c-text);font-size:12px">giden PCIe yolu 7 kat, kasadan çıkan ağ yolu 9 kat daha dardır; bu yüzden en</text>
-<text x="40" y="3422" text-anchor="start" style="fill:var(--c-text);font-size:12px">yoğun konuşma kasanın içinde tutulur.</text>
-<rect x="36.0" y="3436.0" width="488.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="46" y="3451" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">8 mutfaklı bir restoran: NVLink mutfakları birbirine bağlayan iç koridordur.</text>
-<line x1="280.0" y1="3471.0" x2="280.0" y2="3493.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="292" y="3486" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 32 düğüm = 1 SU · × 4 SU = SuperPOD</text>
-<rect x="28" y="3496" width="504" height="1993" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="3520" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">4 · Küme: DGX SuperPOD</text>
-<text x="40" y="3542" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Hiyerarşiyi hatırla: parçadan bütüne</text>
-<rect x="40.0" y="3552.0" width="108.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="94.0" y="3566" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100 SXM5</text>
-<text x="94.0" y="3580" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">tek GPU modülü</text>
-<line x1="150.0" y1="3572.0" x2="162.0" y2="3572.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="164.0" y="3552.0" width="108.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="218.0" y="3566" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX H100</text>
-<text x="218.0" y="3580" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 GPU&#x27;lu sunucu</text>
-<line x1="274.0" y1="3572.0" x2="286.0" y2="3572.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="288.0" y="3552.0" width="108.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="342.0" y="3566" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">SU</text>
-<text x="342.0" y="3580" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 DGX = 256 GPU</text>
-<line x1="398.0" y1="3572.0" x2="410.0" y2="3572.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="412.0" y="3552.0" width="108.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="466.0" y="3566" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX SuperPOD</text>
-<text x="466.0" y="3580" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">4 SU = 127 DGX</text>
-<text x="40" y="3620" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Leaf ve spine nedir?</text>
-<rect x="40" y="3632" width="236" height="165" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="48.0" y="3640.0" width="220.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="158.0" y="3655.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">Leaf (yaprak) switch</text>
-<text x="52" y="3682" text-anchor="start" style="fill:var(--c-text);font-size:12px">Sunucuların doğrudan takıldığı alt</text>
-<text x="52" y="3699" text-anchor="start" style="fill:var(--c-text);font-size:12px">katmandır; ağacın uçları, yani</text>
-<text x="52" y="3716" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU&#x27;lara en yakın switch&#x27;lerdir.</text>
-<text x="52" y="3739" text-anchor="start" style="fill:var(--c-text);font-size:12px">SuperPOD&#x27;da: SU başına 8 tane, her</text>
-<text x="52" y="3756" text-anchor="start" style="fill:var(--c-text);font-size:12px">ray için bir tane. 64 portunun</text>
-<text x="52" y="3773" text-anchor="start" style="fill:var(--c-text);font-size:12px">32&#x27;si DGX&#x27;lere iner, 32&#x27;si</text>
-<text x="52" y="3790" text-anchor="start" style="fill:var(--c-text);font-size:12px">spine&#x27;lara çıkar.</text>
-<rect x="284" y="3632" width="236" height="165" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="292.0" y="3640.0" width="220.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="402.0" y="3655.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">Spine (omurga) switch</text>
-<text x="296" y="3682" text-anchor="start" style="fill:var(--c-text);font-size:12px">Leaf&#x27;leri birbirine bağlayan üst</text>
-<text x="296" y="3699" text-anchor="start" style="fill:var(--c-text);font-size:12px">katmandır; spine&#x27;a hiçbir sunucu</text>
-<text x="296" y="3716" text-anchor="start" style="fill:var(--c-text);font-size:12px">takılmaz.</text>
-<text x="296" y="3739" text-anchor="start" style="fill:var(--c-text);font-size:12px">SuperPOD&#x27;da: toplam 16 tane; her</text>
-<text x="296" y="3756" text-anchor="start" style="fill:var(--c-text);font-size:12px">biri 32 leaf&#x27;in hepsine ikişer</text>
-<text x="296" y="3773" text-anchor="start" style="fill:var(--c-text);font-size:12px">hatla bağlıdır ve 64 portu böyle</text>
-<text x="296" y="3790" text-anchor="start" style="fill:var(--c-text);font-size:12px">dolar.</text>
-<text x="40" y="3819" text-anchor="start" style="fill:var(--c-text);font-size:12px">İki katmanın kuralı basittir: her leaf her spine&#x27;a bağlanır. Böylece herhangi</text>
-<text x="40" y="3836" text-anchor="start" style="fill:var(--c-text);font-size:12px">iki sunucu en fazla leaf → spine → leaf yoluyla buluşur ve küme büyüdükçe yol</text>
-<text x="40" y="3853" text-anchor="start" style="fill:var(--c-text);font-size:12px">uzamaz. Sunucu eklemek için leaf, bant genişliği eklemek için spine eklenir.</text>
-<text x="40" y="3870" text-anchor="start" style="fill:var(--c-text);font-size:12px">Bu düzen telefon santrallerinden gelir (Clos, 1953); yukarı çıktıkça</text>
-<text x="40" y="3887" text-anchor="start" style="fill:var(--c-text);font-size:12px">bağlantıların kalınlaştığı hâline fat-tree, yani şişman ağaç denir</text>
-<text x="40" y="3904" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Leiserson, 1985).</text>
-<text x="40" y="3926" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Benzetme: leaf bir mahallenin santralidir, spine şehirler arasındaki ana hat.</text>
-<text x="40" y="3962" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Ne neyi yapar?</text>
-<rect x="40.0" y="3976.0" width="96.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="88.0" y="3992.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100 SXM5</text>
-<text x="148" y="3992" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Görevi:</tspan> modelin matematiğini yapar; 132 SM&#x27;deki Tensor</text>
-<text x="148" y="4009" text-anchor="start" style="fill:var(--c-text);font-size:12px">Core&#x27;lar matris çarpımlarını yürütür.</text>
-<text x="148" y="4028" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">İçinde:</tspan> ağırlıkların, aktivasyonların ve optimizer durumunun</text>
-<text x="148" y="4045" text-anchor="start" style="fill:var(--c-text);font-size:12px">bu GPU&#x27;ya düşen payı, 80 GB HBM3&#x27;te.</text>
-<text x="148" y="4064" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Bağlantı ve paralellik:</tspan> 18 NVLink ile kasadaki diğer</text>
-<text x="148" y="4081" text-anchor="start" style="fill:var(--c-text);font-size:12px">7 GPU&#x27;ya, PCIe ile CPU&#x27;ya ve kendi NIC&#x27;ine ulaşır; her</text>
-<text x="148" y="4098" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU&#x27;nun bir TP, bir PP ve bir DP koordinatı vardır.</text>
-<line x1="40.0" y1="4108.0" x2="520.0" y2="4108.0" style="stroke:var(--c-border);stroke-width:1"/>
-<rect x="40.0" y="4122.0" width="96.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="88.0" y="4138.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX H100</text>
-<text x="148" y="4138" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Görevi:</tspan> 8 GPU&#x27;yu tek bir NVLink alanında birleştirir; iki</text>
-<text x="148" y="4155" text-anchor="start" style="fill:var(--c-text);font-size:12px">Xeon işlemci işletim sistemini, veri yükleyiciyi ve GPU&#x27;lara</text>
-<text x="148" y="4172" text-anchor="start" style="fill:var(--c-text);font-size:12px">iş gönderen süreçleri koşturur.</text>
-<text x="148" y="4191" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">İçinde:</tspan> HGX taban kartında 8 GPU ve 4 NVSwitch; ayrıca 2 TB</text>
-<text x="148" y="4208" text-anchor="start" style="fill:var(--c-text);font-size:12px">RAM, 8 × 3,84 TB NVMe önbellek ve 8 + 2 ağ kartı.</text>
-<text x="148" y="4227" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Bağlantı ve paralellik:</tspan> tensör paralelliği (TP 8) bu kasanın</text>
-<text x="148" y="4244" text-anchor="start" style="fill:var(--c-text);font-size:12px">içinde kalır; kasa ağa her GPU için bir ray olmak üzere 8</text>
-<text x="148" y="4261" text-anchor="start" style="fill:var(--c-text);font-size:12px">rayla çıkar.</text>
-<line x1="40.0" y1="4271.0" x2="520.0" y2="4271.0" style="stroke:var(--c-border);stroke-width:1"/>
-<rect x="40.0" y="4285.0" width="96.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="88.0" y="4301.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">SU</text>
-<text x="148" y="4301" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">Görevi:</tspan> kurulumun ve ağın tekrar eden birimidir: 32 DGX</text>
-<text x="148" y="4318" text-anchor="start" style="fill:var(--c-text);font-size:12px">(8 kabin × 4) ve onları bağlayan 8 leaf switch.</text>
-<text x="148" y="4337" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">İçinde:</tspan> 256 GPU; her ray tek bir leaf&#x27;tir, yani Leaf-xx-0i</text>
-<text x="148" y="4354" text-anchor="start" style="fill:var(--c-text);font-size:12px">bütün düğümlerin NIC i&#x27;sini toplar.</text>
-<text x="148" y="4373" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">Bağlantı ve paralellik:</tspan> aynı numaralı GPU&#x27;lar tek sıçramada</text>
-<text x="148" y="4390" text-anchor="start" style="fill:var(--c-text);font-size:12px">buluşur; boru hattı ve veri paralelliğinin düğümler arası</text>
-<text x="148" y="4407" text-anchor="start" style="fill:var(--c-text);font-size:12px">trafiği önce burada, ray ray akar.</text>
-<line x1="40.0" y1="4417.0" x2="520.0" y2="4417.0" style="stroke:var(--c-border);stroke-width:1"/>
-<rect x="40.0" y="4431.0" width="96.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="88.0" y="4447.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX SuperPOD</text>
-<text x="148" y="4447" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">Görevi:</tspan> SU&#x27;ları spine katmanıyla tek bir engelsiz ağda</text>
-<text x="148" y="4464" text-anchor="start" style="fill:var(--c-text);font-size:12px">birleştirir; yanına ayrı depolama ve yönetim ağlarını, UFM&#x27;i</text>
-<text x="148" y="4481" text-anchor="start" style="fill:var(--c-text);font-size:12px">ve Base Command ile Slurm gibi yazılımları ekler.</text>
-<text x="148" y="4500" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">İçinde:</tspan> 127 DGX = 1.016 GPU; tek bir eğitim işi bütün kümeye</text>
-<text x="148" y="4517" text-anchor="start" style="fill:var(--c-text);font-size:12px">yayılabilir.</text>
-<text x="148" y="4536" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent-2);font-weight:700">Bağlantı ve paralellik:</tspan> veri paralelliği bütün kümeye</text>
-<text x="148" y="4553" text-anchor="start" style="fill:var(--c-text);font-size:12px">yayılır, raylar arası trafik bir spine üzerinden döner;</text>
-<text x="148" y="4570" text-anchor="start" style="fill:var(--c-text);font-size:12px">Slurm işi düğümlere yerleştirir ve arızalı düğümü devreden</text>
-<text x="148" y="4587" text-anchor="start" style="fill:var(--c-text);font-size:12px">çıkarır.</text>
-<text x="40" y="4613" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">H100 SXM5 modülleri anakarta değil, 8 GPU&#x27;yu ve 4 NVSwitch&#x27;i taşıyan HGX taban</text>
-<text x="40" y="4628" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">kartına takılır; DGX H100&#x27;ün iki işlemcisi Intel Xeon 8480C&#x27;dir. SuperPOD 32 DGX&#x27;lik</text>
-<text x="40" y="4643" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">birimlerden (SU) kurulur; referans tasarım 4 SU&#x27;dur.</text>
-<rect x="40.0" y="4655.0" width="480.0" height="118" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="52" y="4675" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Neden 128 değil 127?</tspan> Kâğıt üstünde 4 SU × 32 = 128 DGX eder. NVIDIA&#x27;nın</text>
-<text x="52" y="4692" text-anchor="start" style="fill:var(--c-text);font-size:12px">yerleşim düzeninde ise bir çift UFM cihazı bir DGX&#x27;in yerini alır</text>
-<text x="52" y="4709" text-anchor="start" style="fill:var(--c-text);font-size:12px">(NVIDIA&#x27;nın şemasında SU 4&#x27;teki C-UFM 1 ve 2); tam bir SuperPOD bu yüzden</text>
-<text x="52" y="4726" text-anchor="start" style="fill:var(--c-text);font-size:12px">en fazla 127 DGX, yani 1.016 GPU&#x27;dur. Kablo tablosu da bunu gösterir:</text>
-<text x="52" y="4743" text-anchor="start" style="fill:var(--c-text);font-size:12px">127 × 8 + 4 UFM = 1.020 kablo. Daha küçük kurulumlar tek SU&#x27;dan başlar</text>
-<text x="52" y="4760" text-anchor="start" style="fill:var(--c-text);font-size:12px">(31–127 DGX).</text>
-<rect x="36" y="4785" width="488" height="415" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="122.0" y="4799.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="160.0" y="4814.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-01</text>
-<rect x="206.0" y="4799.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="244.0" y="4814.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-02</text>
-<rect x="338.0" y="4799.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="376.0" y="4814.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-16</text>
-<text x="309" y="4814" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700">⋯</text>
-<text x="424" y="4814" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">16 × QM9700</text>
-<rect x="40" y="4851" width="226" height="176" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
-<rect x="46.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="77.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-01</text>
-<rect x="114.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="145.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-02</text>
-<rect x="200.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="231.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-08</text>
-<text x="188" y="4878" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
-<line x1="83.0" y1="4937.0" x2="77.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="83.0" y1="4937.0" x2="145.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="83.0" y1="4937.0" x2="231.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<rect x="48" y="4937" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="83" y="4953" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-001</text>
-<text x="83" y="4968" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
-<line x1="169.0" y1="4937.0" x2="77.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="169.0" y1="4937.0" x2="145.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="169.0" y1="4937.0" x2="231.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<rect x="134" y="4937" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="169" y="4953" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-032</text>
-<text x="169" y="4968" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
-<text x="126" y="4960" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
-<text x="50" y="5015" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">SU 1</text>
-<text x="92" y="5015" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">H100-001 … 032 · 8 leaf</text>
-<rect x="294" y="4851" width="226" height="176" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
-<rect x="300.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="331.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-01</text>
-<rect x="368.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="399.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-02</text>
-<rect x="454.0" y="4863.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="485.0" y="4877.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-08</text>
-<text x="442" y="4878" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
-<line x1="337.0" y1="4937.0" x2="331.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="337.0" y1="4937.0" x2="399.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="337.0" y1="4937.0" x2="485.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<rect x="302" y="4937" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="337" y="4953" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-097</text>
-<text x="337" y="4968" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
-<line x1="423.0" y1="4937.0" x2="331.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="423.0" y1="4937.0" x2="399.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<line x1="423.0" y1="4937.0" x2="485.0" y2="4883.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
-<rect x="388" y="4937" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="423" y="4953" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-127</text>
-<text x="423" y="4968" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
-<text x="380" y="4960" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
-<text x="304" y="5015" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">SU 4</text>
-<text x="346" y="5015" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">H100-097 … 127 + C-UFM</text>
-<path d="M466 4952 H463 V4883" style="fill:none;stroke:var(--c-accent);stroke-width:1.4"/>
-<rect x="466.0" y="4943.0" width="52.0" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="492.0" y="4956.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">C-UFM 1</text>
-<path d="M466 4976 H460 V4883" style="fill:none;stroke:var(--c-accent);stroke-width:1.4"/>
-<rect x="466.0" y="4967.0" width="52.0" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="492.0" y="4980.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">C-UFM 2</text>
-<text x="280" y="4960" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700">⋯</text>
-<line x1="160.0" y1="4821.0" x2="77.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="160.0" y1="4821.0" x2="145.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="160.0" y1="4821.0" x2="231.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="160.0" y1="4821.0" x2="331.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="160.0" y1="4821.0" x2="399.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="160.0" y1="4821.0" x2="485.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="77.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="145.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="231.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="331.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="399.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="244.0" y1="4821.0" x2="485.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="77.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="145.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="231.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="331.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="399.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="376.0" y1="4821.0" x2="485.0" y2="4863.0" style="stroke:var(--c-danger);stroke-width:1.5;stroke-opacity:.6"/>
-<line x1="48.0" y1="5045.0" x2="70.0" y2="5045.0" style="stroke:var(--c-danger);stroke-width:2.4"/>
-<text x="76" y="5049" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">spine–leaf: 2 × 400 Gb/s</text>
-<line x1="284.0" y1="5045.0" x2="306.0" y2="5045.0" style="stroke:var(--c-warn);stroke-width:2.4"/>
-<text x="312" y="5049" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DGX–leaf: 400 Gb/s</text>
-<line x1="48.0" y1="5063.0" x2="70.0" y2="5063.0" style="stroke:var(--c-accent);stroke-width:2.4"/>
-<text x="76" y="5067" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">UFM–leaf: 200 Gb/s</text>
-<text x="48" y="5089" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Hat renkleri NVIDIA&#x27;nın şemasındaki gibidir ve burada kablo türünü gösterir</text>
-<text x="48" y="5104" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">(posterin sütun renkleri değil). Adlar da oradan: Leaf-SU-ray; Leaf-04-08, SU 4&#x27;ün</text>
-<text x="48" y="5119" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">8. rayıdır ve her DGX&#x27;in NIC 0–7&#x27;si Leaf-xx-01 ile 08 arasına gider. SU 2 ve SU 3</text>
-<text x="48" y="5134" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">aynı düzeni tekrarlar.</text>
-<rect x="44.0" y="5148.0" width="232.0" height="40" rx="5" style="fill:var(--c-warn);fill-opacity:.10;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="54" y="5164" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">depolama ağı (ayrı InfiniBand)</text>
-<text x="54" y="5180" text-anchor="start" style="fill:var(--c-text);font-size:11px">16 switch · düğüm başına ≥ 40 GB/s</text>
-<rect x="284.0" y="5148.0" width="232.0" height="40" rx="5" style="fill:var(--c-text-mute);fill-opacity:.06;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="294" y="5164" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">yönetim ağları (Ethernet)</text>
-<text x="294" y="5180" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">in-band 100 GbE · OOB 1 GbE</text>
-<rect x="40" y="5212" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="50" y="5234" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">127</text>
-<text x="50" y="5251" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DGX düğümü</text>
-<rect x="162" y="5212" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="172" y="5234" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">1.016</text>
-<text x="172" y="5251" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU</text>
-<rect x="284" y="5212" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="294" y="5234" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">32 + 16</text>
-<text x="294" y="5251" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">leaf + spine</text>
-<rect x="406" y="5212" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="416" y="5234" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">4</text>
-<text x="416" y="5251" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ayrı ağ</text>
-<text x="40" y="5282" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">127 DGX (UFM çifti SU 4&#x27;te)</text>
-<text x="284" y="5282" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ray içi: SU&#x27;daki 31 düğüme tek sıçrama</text>
-<text x="40" y="5298" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">hesaplama: 32 leaf + 16 spine</text>
-<text x="284" y="5298" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her leaf her spine&#x27;a 2 × 400 Gb/s</text>
-<text x="40" y="5314" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1:1 fat-tree · SHARPv3</text>
-<text x="284" y="5314" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">4 ağ: hesaplama, depolama, 2 yönetim</text>
-<text x="40" y="5340" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
-<text x="40" y="5358" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her düğümün NIC 0&#x27;ı Leaf-xx-01&#x27;e, NIC 7&#x27;si Leaf-xx-08&#x27;e takılır; bu sekiz</text>
-<text x="40" y="5375" text-anchor="start" style="fill:var(--c-text);font-size:12px">şerit raylardır ve aynı numaralı GPU&#x27;lar tek sıçramada buluşur. Her leaf de</text>
-<text x="40" y="5392" text-anchor="start" style="fill:var(--c-text);font-size:12px">her spine&#x27;a ikişer 400 Gb/s hatla ulaşır; raylar arası trafik bu yüzden hep</text>
-<text x="40" y="5409" text-anchor="start" style="fill:var(--c-text);font-size:12px">bir spine üzerinden döner. Depolama ve yönetim trafiği hesaplama ağını</text>
-<text x="40" y="5426" text-anchor="start" style="fill:var(--c-text);font-size:12px">meşgul etmesin diye kendi ağlarından akar. Aynı desen 64 SU&#x27;ya büyür:</text>
-<text x="40" y="5443" text-anchor="start" style="fill:var(--c-text);font-size:12px">2.048 DGX, yani 16.384 H100; B ve C bölümleri bu ölçekte düşünür.</text>
-<rect x="36.0" y="5457.0" width="488.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="46" y="5472" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Restoran zinciri: InfiniBand şubeler arası kurye, depolama merkez depo.</text>
-<line x1="280.0" y1="5492.0" x2="280.0" y2="5514.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="292" y="5507" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">SuperPOD&#x27;un ağını yakından inceleyelim</text>
-<rect x="28" y="5517" width="504" height="930" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="5541" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">4b · SuperPOD&#x27;u yakından incele</text>
-<text x="40" y="5561" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Aynı 127 DGX&#x27;i bu kez ağ gözüyle okuyalım: ağ neden engelsiz, trafik nasıl</text>
-<text x="40" y="5578" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">yol bulur ve ne kadar büyüyebilir?</text>
-<text x="40" y="5608" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">1 · Ağ neden engelsiz (1:1)? Portları sayalım</text>
-<rect x="40.0" y="5634.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="105.0" y="5648" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">32 DGX</text>
-<text x="105.0" y="5662" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">her birinin NIC i&#x27;si</text>
-<line x1="173.0" y1="5654.0" x2="212.0" y2="5654.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.8"/>
-<text x="192" y="5646" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 port</text>
-<rect x="215.0" y="5634.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="5648" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">leaf i · QM9700</text>
-<text x="280.0" y="5662" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">64 × 400 Gb/s port</text>
-<line x1="348.0" y1="5654.0" x2="387.0" y2="5654.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.8"/>
-<text x="367" y="5646" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 port</text>
-<rect x="390.0" y="5634.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="455.0" y="5648" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">16 spine</text>
-<text x="455.0" y="5662" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">64&#x27;er port</text>
-<text x="40" y="5700" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her leaf&#x27;in 64 portunun 32&#x27;si düğümlere iner, 32&#x27;si spine&#x27;lara çıkar.</text>
-<text x="40" y="5717" text-anchor="start" style="fill:var(--c-text);font-size:12px">Aşağıdan ne kadar trafik girerse yukarı o kadar çıkabilir; bu yüzden aşırı</text>
-<text x="40" y="5734" text-anchor="start" style="fill:var(--c-text);font-size:12px">abonelik yoktur (1:1).</text>
-<rect x="40.0" y="5746.0" width="480.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.10;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="5761.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 leaf × 32 yukarı port = 1.024 kablo = 16 spine × 64 port</text>
-<text x="40" y="5788" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Kablo sayısı (NVIDIA tablosu): düğümlerden leaf&#x27;lere 1.020 (127 × 8 + 4 UFM),</text>
-<text x="40" y="5805" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">leaf&#x27;lerden spine&#x27;lara 1.024.</text>
-<text x="40" y="5839" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">2 · Trafik nasıl yol bulur?</text>
-<text x="40" y="5863" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Aynı ray: A&#x27;nın GPU 3&#x27;ü → B&#x27;nin GPU 3&#x27;ü</text>
-<rect x="400.3" y="5851.0" width="119.7" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.14;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="460.1" y="5864.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 leaf, spine yok</text>
-<rect x="40.0" y="5877.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="80.0" y="5893.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
-<line x1="122.0" y1="5889.0" x2="138.0" y2="5889.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="140.0" y="5877.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="180.0" y="5893.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 3</text>
-<line x1="222.0" y1="5889.0" x2="238.0" y2="5889.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="240.0" y="5877.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="280.0" y="5893.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · B</text>
-<text x="40" y="5929" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Farklı ray, düz yol: GPU 3 → GPU 5</text>
-<rect x="412.5" y="5917.0" width="107.5" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="466.2" y="5930.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine&#x27;dan geçer</text>
-<rect x="40.0" y="5943.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="80.0" y="5959.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
-<line x1="122.0" y1="5955.0" x2="138.0" y2="5955.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="140.0" y="5943.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="180.0" y="5959.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 3</text>
-<line x1="222.0" y1="5955.0" x2="238.0" y2="5955.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="240.0" y="5943.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="5959.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine</text>
-<line x1="322.0" y1="5955.0" x2="338.0" y2="5955.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="340.0" y="5943.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="380.0" y="5959.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 5</text>
-<line x1="422.0" y1="5955.0" x2="438.0" y2="5955.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="440.0" y="5943.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="480.0" y="5959.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · B</text>
-<text x="40" y="5995" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Farklı ray, PXN ile: önce NVLink, sonra tek leaf</text>
-<rect x="449.1" y="5983.0" width="70.9" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.14;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="484.6" y="5996.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine yok</text>
-<rect x="40.0" y="6009.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="80.0" y="6025.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
-<line x1="122.0" y1="6021.0" x2="138.0" y2="6021.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
-<rect x="140.0" y="6009.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="180.0" y="6025.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · A</text>
-<line x1="222.0" y1="6021.0" x2="238.0" y2="6021.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="240.0" y="6009.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="6025.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 5</text>
-<line x1="322.0" y1="6021.0" x2="338.0" y2="6021.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
-<rect x="340.0" y="6009.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="380.0" y="6025.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · B</text>
-<text x="40" y="6059" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA&#x27;ya göre bir raydaki trafik SU içindeki diğer 31 düğüme her zaman tek</text>
-<text x="40" y="6076" text-anchor="start" style="fill:var(--c-text);font-size:12px">sıçramadır; raylar arası trafik ise spine katmanından geçer. NCCL 2.12&#x27;deki</text>
-<text x="40" y="6093" text-anchor="start" style="fill:var(--c-text);font-size:12px">PXN, veriyi önce NVLink ile doğru raydaki GPU&#x27;ya taşıyıp spine&#x27;ı atlar;</text>
-<text x="40" y="6110" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA bu sayede all2all veriminin iki katına çıktığını raporlar.</text>
-<text x="40" y="6144" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">3 · Ölçek ve bant genişliği</text>
-<rect x="40" y="6156" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="50" y="6178" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">400 GB/s</text>
-<text x="50" y="6195" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">düğüm başına</text>
-<rect x="162" y="6156" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="172" y="6178" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">12,8 TB/s</text>
-<text x="172" y="6195" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">SU başına</text>
-<rect x="284" y="6156" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="294" y="6178" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">50,8 TB/s</text>
-<text x="294" y="6195" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">tüm GPU&#x27;lar</text>
-<rect x="406" y="6156" width="114" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="416" y="6178" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">51,2 TB/s</text>
-<text x="416" y="6195" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">spine kapasitesi</text>
-<text x="40" y="6226" text-anchor="start" style="fill:var(--c-text);font-size:12px">Bir düğüm ağa 8 × 50 GB/s = 400 GB/s basar; 32 düğümlük bir SU 12,8 TB/s</text>
-<text x="40" y="6243" text-anchor="start" style="fill:var(--c-text);font-size:12px">eder. 1.016 GPU&#x27;nun birlikte gönderebildiği (50,8 TB/s) ile 16 spine&#x27;ın</text>
-<text x="40" y="6260" text-anchor="start" style="fill:var(--c-text);font-size:12px">taşıyabildiği (16 × 64 × 50 GB/s = 51,2 TB/s) neredeyse eşittir; engelsiz</text>
-<text x="40" y="6277" text-anchor="start" style="fill:var(--c-text);font-size:12px">ağın sayılarla tanımı budur.</text>
-<text x="40" y="6311" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">4 · Daha büyüğü: üçüncü katman</text>
-<text x="40" y="6331" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA&#x27;nın tablosunda 8 SU&#x27;ya kadar iki katman (leaf + spine) yeter;</text>
-<text x="40" y="6348" text-anchor="start" style="fill:var(--c-text);font-size:12px">16 SU&#x27;dan itibaren üstlerine bir core katmanı eklenir. 2.048 DGX&#x27;lik</text>
-<text x="40" y="6365" text-anchor="start" style="fill:var(--c-text);font-size:12px">(16.384 H100) kurulum 512 leaf, 512 spine ve 256 core switch kullanır; B ve C</text>
-<text x="40" y="6382" text-anchor="start" style="fill:var(--c-text);font-size:12px">bölümleri bu ölçekte düşünür.</text>
-<text x="40" y="6408" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> NCCL kanallarını raylara göre kurar: aynı numaralı GPU&#x27;lar tek leaf</text>
-<text x="40" y="6425" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">üzerinden konuşur, raylar arası trafik ise PXN ile önce NVLink&#x27;e taşınır.</text>
-<line x1="280.0" y1="6450.0" x2="280.0" y2="6472.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<text x="292" y="6465" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">kümeyi ayakta tutan yapı taşları</text>
-<rect x="28" y="6475" width="504" height="1085" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<text x="40" y="6499" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">SuperPOD&#x27;un yapı taşları: her biri neden var?</text>
-<text x="40" y="6518" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVIDIA&#x27;nın 4 SU&#x27;luk referans tasarımı (127 DGX); adetler ve görevler NVIDIA</text>
-<text x="40" y="6533" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">belgelerinden. Şerit rengi parçanın hangi sütuna hizmet ettiğini gösterir; gri</text>
-<text x="40" y="6548" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">yönetim ve altyapıdır.</text>
-<text x="40" y="6572" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Donanım</text>
-<rect x="36" y="6582" width="240" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="6582" width="4" height="128" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
-<text x="48" y="6601" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">DGX H100 sistemi</text>
-<rect x="229.8" y="6588.0" width="38.2" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="248.9" y="6601.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×127</text>
-<text x="48" y="6618" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 H100 · 640 GB HBM3 · 900 GB/s NVLink</text>
-<text x="48" y="6636" text-anchor="start" style="fill:var(--c-text);font-size:11px">Modelin bütün matematiği burada</text>
-<text x="48" y="6651" text-anchor="start" style="fill:var(--c-text);font-size:11px">yapılır; kümedeki diğer her parça bu</text>
-<text x="48" y="6666" text-anchor="start" style="fill:var(--c-text);font-size:11px">kutuları beslemek için vardır.</text>
-<rect x="284" y="6582" width="240" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="6582" width="4" height="128" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
-<text x="296" y="6601" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Hesaplama ağı · QM9700</text>
-<rect x="483.9" y="6588.0" width="32.2" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="499.9" y="6601.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×48</text>
-<text x="296" y="6618" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">32 leaf + 16 spine · düğüm başına</text>
-<text x="296" y="6632" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 × 400 Gb/s</text>
-<text x="296" y="6650" text-anchor="start" style="fill:var(--c-text);font-size:11px">Gradyan ve aktivasyon trafiği düğümler</text>
-<text x="296" y="6665" text-anchor="start" style="fill:var(--c-text);font-size:11px">arasında tıkanmadan akmalı; bu yüzden</text>
-<text x="296" y="6680" text-anchor="start" style="fill:var(--c-text);font-size:11px">her GPU&#x27;nun kendi 400 Gb/s&#x27;lik rayı</text>
-<text x="296" y="6695" text-anchor="start" style="fill:var(--c-text);font-size:11px">vardır.</text>
-<rect x="36" y="6718" width="240" height="144" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="6718" width="4" height="144" rx="2" style="fill:var(--c-warn);fill-opacity:.85"/>
-<text x="48" y="6737" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Depolama ağı · QM9700</text>
-<rect x="235.8" y="6724.0" width="32.2" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="251.9" y="6737.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×16</text>
-<text x="48" y="6754" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">düğüm başına ≥ 40 GB/s · ~4:3</text>
-<text x="48" y="6772" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri okuma ve kontrol noktası yazma,</text>
-<text x="48" y="6787" text-anchor="start" style="fill:var(--c-text);font-size:11px">hesaplama ağındaki AllReduce trafiğine</text>
-<text x="48" y="6802" text-anchor="start" style="fill:var(--c-text);font-size:11px">karışmasın; hızı depolama dizisinin</text>
-<text x="48" y="6817" text-anchor="start" style="fill:var(--c-text);font-size:11px">tepe hızına göre seçilir.</text>
-<rect x="284" y="6718" width="240" height="144" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="6718" width="4" height="144" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
-<text x="296" y="6737" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">UFM cihazı</text>
-<rect x="489.9" y="6724.0" width="26.1" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="502.9" y="6737.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×4</text>
-<text x="296" y="6754" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">InfiniBand telemetrisi ve analitiği</text>
-<text x="296" y="6772" text-anchor="start" style="fill:var(--c-text);font-size:11px">Binlerce port ve kabloyu izleyip</text>
-<text x="296" y="6787" text-anchor="start" style="fill:var(--c-text);font-size:11px">bozulan bağlantıyı bulur (Llama 3</text>
-<text x="296" y="6802" text-anchor="start" style="fill:var(--c-text);font-size:11px">eğitiminde kesintilerin %8,4&#x27;ü switch</text>
-<text x="296" y="6817" text-anchor="start" style="fill:var(--c-text);font-size:11px">ve kablodan geldi). Bir çifti bir</text>
-<text x="296" y="6832" text-anchor="start" style="fill:var(--c-text);font-size:11px">DGX&#x27;in yerini alır, küme bu yüzden 127</text>
-<text x="296" y="6847" text-anchor="start" style="fill:var(--c-text);font-size:11px">düğümdür.</text>
-<rect x="36" y="6870" width="240" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="6870" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="48" y="6889" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">In-band yönetim · SN4600C</text>
-<rect x="241.9" y="6876.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="255.0" y="6889.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×8</text>
-<text x="48" y="6906" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">64 port × 100 GbE (Ethernet)</text>
-<text x="48" y="6924" text-anchor="start" style="fill:var(--c-text);font-size:11px">Düğüm kurulumu, kullanıcı girişi,</text>
-<text x="48" y="6939" text-anchor="start" style="fill:var(--c-text);font-size:11px">dosya sistemi ve dış erişim (NGC,</text>
-<text x="48" y="6954" text-anchor="start" style="fill:var(--c-text);font-size:11px">paket depoları) bu ağdan akar;</text>
-<text x="48" y="6969" text-anchor="start" style="fill:var(--c-text);font-size:11px">hesaplama ağı yalnız GPU trafiğine</text>
-<text x="48" y="6984" text-anchor="start" style="fill:var(--c-text);font-size:11px">kalır.</text>
-<rect x="284" y="6870" width="240" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="6870" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="296" y="6889" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">OOB yönetim · SN2201</text>
-<rect x="489.9" y="6876.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="502.9" y="6889.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×8</text>
-<text x="296" y="6906" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">48 port × 1 GbE bakır</text>
-<text x="296" y="6924" text-anchor="start" style="fill:var(--c-text);font-size:11px">Her sunucunun BMC yönetim çipine ve</text>
-<text x="296" y="6939" text-anchor="start" style="fill:var(--c-text);font-size:11px">PDU&#x27;lara ulaşır; işletim sistemi</text>
-<text x="296" y="6954" text-anchor="start" style="fill:var(--c-text);font-size:11px">kilitlense bile düğüm uzaktan</text>
-<text x="296" y="6969" text-anchor="start" style="fill:var(--c-text);font-size:11px">kapatılıp açılabilir. Kullanıcı</text>
-<text x="296" y="6984" text-anchor="start" style="fill:var(--c-text);font-size:11px">ağlarından ayrıdır.</text>
-<rect x="36" y="7007" width="240" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="7007" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="48" y="7026" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Yönetim sunucuları</text>
-<rect x="241.9" y="7013.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="255.0" y="7026.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×5</text>
-<text x="48" y="7043" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">2 soket · 24+ çekirdek · 384 GB RAM</text>
-<text x="48" y="7061" text-anchor="start" style="fill:var(--c-text);font-size:11px">Küme yönetimi ve iş zamanlama</text>
-<text x="48" y="7076" text-anchor="start" style="fill:var(--c-text);font-size:11px">yazılımları ayrı makinelerde koşar;</text>
-<text x="48" y="7091" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU düğümleri yalnızca eğitime kalır.</text>
-<rect x="284" y="7007" width="240" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="7007" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="296" y="7026" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Kabin ve güç</text>
-<rect x="453.6" y="7013.0" width="62.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="484.8" y="7026.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">38 kabin</text>
-<text x="296" y="7043" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">38 kabin · 108 PDU</text>
-<text x="296" y="7061" text-anchor="start" style="fill:var(--c-text);font-size:11px">Kabin başına 4 DGX (40,8 kW), SU</text>
-<text x="296" y="7076" text-anchor="start" style="fill:var(--c-text);font-size:11px">başına 8 DGX kabini; 127 DGX tek</text>
-<text x="296" y="7091" text-anchor="start" style="fill:var(--c-text);font-size:11px">başına 127 × 10,2 kW ≈ 1,3 MW çeker.</text>
-<text x="296" y="7106" text-anchor="start" style="fill:var(--c-text);font-size:11px">Güç ve soğutma kümenin görünmeyen</text>
-<text x="296" y="7121" text-anchor="start" style="fill:var(--c-text);font-size:11px">dördüncü sütunudur.</text>
-<text x="40" y="7162" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Yazılım</text>
-<rect x="36" y="7172" width="240" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="7172" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="48" y="7191" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Base Command Manager</text>
-<rect x="211.7" y="7178.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="239.8" y="7191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
-<text x="48" y="7208" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">küme yönetimi · otomatik kurulum</text>
-<text x="48" y="7226" text-anchor="start" style="fill:var(--c-text);font-size:11px">Binlerce düğüme aynı işletim sistemi</text>
-<text x="48" y="7241" text-anchor="start" style="fill:var(--c-text);font-size:11px">imajını kurar, günceller ve izler; 127</text>
-<text x="48" y="7256" text-anchor="start" style="fill:var(--c-text);font-size:11px">makineyi elle yönetmek gerçekçi</text>
-<text x="48" y="7271" text-anchor="start" style="fill:var(--c-text);font-size:11px">değildir.</text>
-<rect x="284" y="7172" width="240" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="7172" width="4" height="114" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
-<text x="296" y="7191" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Slurm</text>
-<rect x="447.6" y="7178.0" width="68.5" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="481.8" y="7191.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">hesaplama</text>
-<text x="296" y="7208" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">toplu iş zamanlayıcı</text>
-<text x="296" y="7226" text-anchor="start" style="fill:var(--c-text);font-size:11px">Çok düğümlü bir eğitim işinin hangi</text>
-<text x="296" y="7241" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;larda ve hangi sırayla koşacağını</text>
-<text x="296" y="7256" text-anchor="start" style="fill:var(--c-text);font-size:11px">belirler; arızalı düğümü devreden</text>
-<text x="296" y="7271" text-anchor="start" style="fill:var(--c-text);font-size:11px">çıkarıp işi yeniden kuyruğa alabilir.</text>
-<rect x="36" y="7294" width="240" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="7294" width="4" height="128" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
-<text x="48" y="7313" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Magnum IO</text>
-<rect x="175.3" y="7300.0" width="92.7" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="221.7" y="7313.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ağ + depolama</text>
-<text x="48" y="7330" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NCCL · GPUDirect RDMA / Storage ·</text>
-<text x="48" y="7344" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">SHARP</text>
-<text x="48" y="7362" text-anchor="start" style="fill:var(--c-text);font-size:11px">Verinin GPU&#x27;lar ve diskler arasındaki</text>
-<text x="48" y="7377" text-anchor="start" style="fill:var(--c-text);font-size:11px">hareketini hızlandıran kütüphane</text>
-<text x="48" y="7392" text-anchor="start" style="fill:var(--c-text);font-size:11px">yığını; B&#x27;deki 1., 3. ve 6. adımlar bu</text>
-<text x="48" y="7407" text-anchor="start" style="fill:var(--c-text);font-size:11px">katmanla yapılır.</text>
-<rect x="284" y="7294" width="240" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="7294" width="4" height="128" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
-<text x="296" y="7313" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">NGC kataloğu</text>
-<rect x="447.6" y="7300.0" width="68.5" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="481.8" y="7313.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">hesaplama</text>
-<text x="296" y="7330" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU için optimize konteynerler</text>
-<text x="296" y="7348" text-anchor="start" style="fill:var(--c-text);font-size:11px">CUDA, NCCL ve PyTorch gibi çerçeveler</text>
-<text x="296" y="7363" text-anchor="start" style="fill:var(--c-text);font-size:11px">birbirine uyan tek bir paket hâlinde</text>
-<text x="296" y="7378" text-anchor="start" style="fill:var(--c-text);font-size:11px">gelir; herkes aynı yazılım yığınıyla</text>
-<text x="296" y="7393" text-anchor="start" style="fill:var(--c-text);font-size:11px">başlar.</text>
-<rect x="36" y="7430" width="240" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36" y="7430" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="48" y="7449" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Base Command Platform</text>
-<rect x="211.7" y="7436.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="239.8" y="7449.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
-<text x="48" y="7466" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">AI eğitimi için yazılım hizmeti</text>
-<text x="48" y="7484" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri bilimcilerin iş gönderip veri</text>
-<text x="48" y="7499" text-anchor="start" style="fill:var(--c-text);font-size:11px">setlerini ve sonuçları yönettiği</text>
-<text x="48" y="7514" text-anchor="start" style="fill:var(--c-text);font-size:11px">katman; alttaki donanımı bilmeden</text>
-<text x="48" y="7529" text-anchor="start" style="fill:var(--c-text);font-size:11px">kümeyi kullandırır.</text>
-<rect x="284" y="7430" width="240" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<rect x="284" y="7430" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
-<text x="296" y="7449" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">NVIDIA AI Enterprise</text>
-<rect x="459.6" y="7436.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="487.8" y="7449.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
-<text x="296" y="7466" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">araçlar, çerçeveler, orkestrasyon</text>
-<text x="296" y="7484" text-anchor="start" style="fill:var(--c-text);font-size:11px">Geliştiriciye çerçeve ve araçları, BT</text>
-<text x="296" y="7499" text-anchor="start" style="fill:var(--c-text);font-size:11px">ekibine destekli yönetim ve</text>
-<text x="296" y="7514" text-anchor="start" style="fill:var(--c-text);font-size:11px">orkestrasyonu verir.</text>
-<rect x="28.0" y="7572.0" width="504.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="7592" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: GPU&#x27;dan uzaklaştıkça yol daralır: HBM 3,35 TB/s → NVLink</text>
-<text x="40" y="7609" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">450 GB/s → ağ 50 GB/s.</text>
-<text x="280" y="7654" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Parçaları tanıdık. Şimdi bir eğitim adımında birlikte nasıl çalıştıklarını</text>
-<text x="280" y="7671" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">izleyelim.</text>
-<line x1="280.0" y1="7679.0" x2="280.0" y2="7699.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="16" y="7703" width="528" height="1016" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
-<circle cx="36" cy="7727" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="36" y="7731.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">B</text>
-<text x="56" y="7732" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Bir eğitim adımını izle: veri nereden geçer?</text>
-<text x="28" y="7753" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">64 SU&#x27;luk H100 SuperPOD&#x27;da Llama 3 405B: TP 8 × PP 16 × DP 128 = 16.384 GPU</text>
-<rect x="28" y="7765" width="504" height="264" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="170.0" y="7777.0" width="220.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="7792.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine → diğer 127 DP kopyası</text>
-<rect x="40" y="7825" width="200" height="116" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="50" y="7841" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">düğüm A · PP aşaması s</text>
-<rect x="70.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="88.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G0</text>
-<rect x="112.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="130.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G1</text>
-<rect x="154.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="172.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G2</text>
-<rect x="196.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="214.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G3</text>
-<rect x="70.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="88.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G4</text>
-<rect x="112.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="130.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G5</text>
-<rect x="154.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="172.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G6</text>
-<rect x="196.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="214.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G7</text>
-<line x1="88.0" y1="7869.0" x2="88.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="88.0" y1="7895.0" x2="88.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="130.0" y1="7869.0" x2="130.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="130.0" y1="7895.0" x2="130.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="172.0" y1="7869.0" x2="172.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="172.0" y1="7895.0" x2="172.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="214.0" y1="7869.0" x2="214.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="214.0" y1="7895.0" x2="214.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<rect x="70.0" y="7877.0" width="162.0" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="151.0" y="7890.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch</text>
-<circle cx="54" cy="7859" r="9" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="54" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
-<circle cx="54" cy="7886" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="54" y="7890.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
-<circle cx="54" cy="7913" r="9" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="54" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">7</text>
-<rect x="320" y="7825" width="200" height="116" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
-<text x="330" y="7841" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">düğüm B · aşama s+1</text>
-<rect x="338.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="356.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G0</text>
-<rect x="380.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="398.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G1</text>
-<rect x="422.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="440.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G2</text>
-<rect x="464.0" y="7849.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="482.0" y="7863.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G3</text>
-<rect x="338.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="356.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G4</text>
-<rect x="380.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="398.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G5</text>
-<rect x="422.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="440.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G6</text>
-<rect x="464.0" y="7903.0" width="36.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="482.0" y="7917.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">G7</text>
-<line x1="356.0" y1="7869.0" x2="356.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="356.0" y1="7895.0" x2="356.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="398.0" y1="7869.0" x2="398.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="398.0" y1="7895.0" x2="398.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="440.0" y1="7869.0" x2="440.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="440.0" y1="7895.0" x2="440.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="482.0" y1="7869.0" x2="482.0" y2="7877.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="482.0" y1="7895.0" x2="482.0" y2="7903.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<rect x="338.0" y="7877.0" width="162.0" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="419.0" y="7890.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch</text>
-<rect x="256.0" y="7835.0" width="48.0" height="96" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280" y="7893" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">leaf</text>
-<circle cx="280" cy="7861" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="280" y="7865.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
-<circle cx="280" cy="7915" r="9" style="fill:var(--c-text-mute);fill-opacity:.18;stroke:var(--c-text-mute);stroke-width:1.3"/>
-<text x="280" y="7919.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
-<line x1="240.0" y1="7861.0" x2="256.0" y2="7861.0" style="stroke:var(--c-accent-2);stroke-width:1.6"/>
-<line x1="304.0" y1="7861.0" x2="318.0" y2="7861.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<line x1="320.0" y1="7915.0" x2="304.0" y2="7915.0" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 3"/>
-<line x1="256.0" y1="7915.0" x2="242.0" y2="7915.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
-<line x1="280.0" y1="7833.0" x2="280.0" y2="7801.0" marker-start="url(#bp-gen)" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
-<circle cx="298" cy="7817" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="298" y="7821.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
-<rect x="40.0" y="7977.0" width="480.0" height="40" rx="5" style="fill:var(--c-warn);fill-opacity:.10;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="280" y="7993" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">depolama sistemi (ör. Lustre · Weka)</text>
-<text x="280" y="8009" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ayrı depolama ağı · düğüm başına ≥ 40 GB/s</text>
-<line x1="90.0" y1="7975.0" x2="90.0" y2="7944.0" marker-end="url(#bp-wrn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<circle cx="108" cy="7959" r="9" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="108" y="7963.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
-<line x1="180.0" y1="7944.0" x2="180.0" y2="7975.0" marker-end="url(#bp-wrn)" style="stroke:var(--c-warn);stroke-width:1.5;stroke-dasharray:5 4"/>
-<circle cx="198" cy="7959" r="9" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="198" y="7963.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">8</text>
-<text x="400" y="7961" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">(B düğümü de aynı yolu kullanır)</text>
-<rect x="28" y="8039" width="504" height="606" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<line x1="46.0" y1="8065.0" x2="46.0" y2="8585.0" style="stroke:var(--c-border);stroke-width:2"/>
-<circle cx="46" cy="8065" r="10" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="46" y="8069.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
-<text x="66" y="8070" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Veriyi oku</text>
-<rect x="356.8" y="8057.0" width="165.2" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="439.4" y="8070.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">depolama → HBM · her adım</text>
-<text x="66" y="8089" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Bu adımın 16 milyon tokeni depodan HBM&#x27;e gelir; GDS ya da mmap sayesinde</text>
-<text x="66" y="8105" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">araya CPU kopyası girmez.</text>
-<circle cx="46" cy="8137" r="10" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="46" y="8141.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
-<text x="66" y="8142" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">İleri geçiş</text>
-<rect x="350.7" y="8129.0" width="171.3" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="436.4" y="8142.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM 3,35 TB/s · her katman</text>
-<text x="66" y="8161" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her katmanda SM&#x27;ler ağırlıkları HBM&#x27;den çekip Tensor Core&#x27;larda çarpar;</text>
-<text x="66" y="8177" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">okunan bayt başına ~295 işlem yapılırsa çekirdekler doyar.</text>
-<circle cx="46" cy="8209" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="46" y="8213.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
-<text x="66" y="8214" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">TP AllReduce</text>
-<rect x="332.5" y="8201.0" width="189.5" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="427.3" y="8214.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVLink 450 GB/s · katmanda 2×</text>
-<text x="66" y="8233" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her matris 8 GPU&#x27;ya bölündüğü için parçalı sonuçlar NVLink&#x27;te toplanır;</text>
-<text x="66" y="8249" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">TP bu yüzden kasanın dışına taşmaz.</text>
-<circle cx="46" cy="8281" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="46" y="8285.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
-<text x="66" y="8286" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Aktivasyonu gönder (PP)</text>
-<rect x="338.6" y="8273.0" width="183.4" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="430.3" y="8286.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">50 GB/s/GPU · her mikrobatch</text>
-<text x="66" y="8305" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Düğümün katmanları bitince çıktı (~16 MB) ağdan sonraki düğüme geçer; yol</text>
-<text x="66" y="8321" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">9 kat dardır ama giden veri küçüktür.</text>
-<circle cx="46" cy="8353" r="10" style="fill:var(--c-text-mute);fill-opacity:.18;stroke:var(--c-text-mute);stroke-width:1.3"/>
-<text x="46" y="8357.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
-<text x="66" y="8358" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Geri geçiş</text>
-<rect x="380.9" y="8345.0" width="141.1" height="19" rx="5" style="fill:var(--c-text-mute);fill-opacity:.12;stroke:var(--c-text-mute);stroke-width:1.2"/>
-<text x="451.5" y="8358.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">aynı hatlar, ters yön</text>
-<text x="66" y="8377" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Hata sinyali (gradyan) aynı yolu geri döner; 3. ve 4. adımlar ters yönde</text>
-<text x="66" y="8393" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tekrarlanır ve iş ileri geçişin ~2 katıdır.</text>
-<circle cx="46" cy="8425" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
-<text x="46" y="8429.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
-<text x="66" y="8430" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Gradyan AllReduce (DP)</text>
-<rect x="350.7" y="8417.0" width="171.3" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="436.4" y="8430.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ray switch&#x27;leri · her adım</text>
-<text x="66" y="8449" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 kopyanın gradyanları ortalanır ki hepsi aynı güncellemeyi yapsın;</text>
-<text x="66" y="8465" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">InfiniBand SHARP toplamayı switch içinde yapıp süreyi 2·B/W&#x27;den B/W&#x27;ye</text>
-<text x="66" y="8481" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">indirir.</text>
-<circle cx="46" cy="8513" r="10" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="46" y="8517.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">7</text>
-<text x="66" y="8518" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Optimizer adımı</text>
-<rect x="380.9" y="8505.0" width="141.1" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="451.5" y="8518.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM içinde · her adım</text>
-<text x="66" y="8537" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">AdamW ağırlıkları günceller ve her parametre için 12 bayt FP32 durum</text>
-<text x="66" y="8553" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">tutar: ana ağırlık, momentum ve varyans.</text>
-<circle cx="46" cy="8585" r="10" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
-<text x="46" y="8589.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">8</text>
-<text x="66" y="8590" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Kontrol noktası</text>
-<rect x="326.5" y="8577.0" width="195.5" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="424.2" y="8590.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM → depolama · ~14 dk&#x27;da bir</text>
-<text x="66" y="8609" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">~14 dakikada bir 7,5 TB durum diske yazılır: 250 GB/s ile ~31 s, eski</text>
-<text x="66" y="8625" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">25 GB/s ile ~5 dk sürer; arızadan sonra buradan devam edilir.</text>
-<rect x="28.0" y="8657.0" width="504.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="8677" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: bir adımda veri dört ayrı yoldan geçer (HBM, NVLink, ağ,</text>
-<text x="40" y="8694" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">depolama); adım ancak en yavaş yol kadar hızlıdır.</text>
-<text x="280" y="8739" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Peki bu yollar nerede tıkanıyor? Her sütunun bir duvarı var.</text>
-<line x1="280.0" y1="8747.0" x2="280.0" y2="8767.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="16" y="8771" width="528" height="1240" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
-<circle cx="36" cy="8795" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="36" y="8799.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">C</text>
-<text x="56" y="8800" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Üç duvar: belirti → neden → çare</text>
-<text x="28" y="8821" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Eğriler makaledeki formüllerden hesaplandı; kırmızı darboğaz, yeşil çaredir.</text>
-<rect x="28" y="8833" width="504" height="370" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="40" y="8857" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">Bellek duvarı</text>
-<text x="520" y="8857" text-anchor="end" style="fill:var(--c-accent);font-size:11px;font-weight:700">1. sütun · hesaplama</text>
-<text x="40" y="8878" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
-<text x="112" y="8878" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU meşgul görünür, ama gücünün yalnızca %1–2&#x27;si kullanılır.</text>
-<text x="40" y="8896" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
-<text x="112" y="8896" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her bayta düşen iş az: α = BDF / (B(D+F) + DF), H100&#x27;ün eşiği olan</text>
-<text x="112" y="8913" text-anchor="start" style="fill:var(--c-text);font-size:12px">295&#x27;in altında kaldıkça Tensor Core&#x27;lar veri bekler.</text>
-<line x1="80.0" y1="8928.0" x2="80.0" y2="9054.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<line x1="80.0" y1="9054.0" x2="512.0" y2="9054.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<line x1="80.0" y1="8935.2" x2="512.0" y2="8935.2" style="stroke:var(--c-text-mute);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="76" y="8939.2" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">990</text>
-<text x="76" y="9058" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
-<text x="40" y="8927.2" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TFLOP/s</text>
-<line x1="377.9" y1="8935.2" x2="377.9" y2="9054.0" style="stroke:var(--c-text-mute);stroke-width:1;stroke-dasharray:4 3"/>
-<polyline points="80.0,9053.6 84.5,9053.6 89.0,9053.5 93.5,9053.5 98.0,9053.4 102.5,9053.4 107.0,9053.3 111.5,9053.3 116.0,9053.2 120.5,9053.1 125.0,9053.0 129.5,9053.0 134.0,9052.9 138.5,9052.8 143.0,9052.6 147.5,9052.5 152.0,9052.4 156.5,9052.2 161.0,9052.1 165.5,9051.9 170.0,9051.7 174.5,9051.5 179.0,9051.3 183.5,9051.1 188.0,9050.8 192.5,9050.5 197.0,9050.2 201.5,9049.8 206.0,9049.5 210.5,9049.0 215.0,9048.6 219.5,9048.1 224.0,9047.6 228.5,9047.0 233.0,9046.4 237.5,9045.7 242.0,9044.9 246.5,9044.1 251.0,9043.2 255.5,9042.3 260.0,9041.2 264.5,9040.0 269.0,9038.8 273.5,9037.4 278.0,9035.9 282.5,9034.3 287.0,9032.5 291.5,9030.6 296.0,9028.5 300.5,9026.2 305.0,9023.8 309.5,9021.1 314.0,9018.1 318.5,9014.9 323.0,9011.4 327.5,9007.7 332.0,9003.6 336.5,8999.1 341.0,8994.2 345.5,8989.0 350.0,8983.2 354.5,8977.0 359.0,8970.3 363.5,8963.0 368.0,8955.1 372.5,8946.5 377.0,8937.2 381.5,8935.2 386.0,8935.2 390.5,8935.2 395.0,8935.2 399.5,8935.2 404.0,8935.2 408.5,8935.2 413.0,8935.2 417.5,8935.2 422.0,8935.2 426.5,8935.2 431.0,8935.2 435.5,8935.2 440.0,8935.2 444.5,8935.2 449.0,8935.2 453.5,8935.2 458.0,8935.2 462.5,8935.2 467.0,8935.2 471.5,8935.2 476.0,8935.2 480.5,8935.2 485.0,8935.2 489.5,8935.2 494.0,8935.2 498.5,8935.2 503.0,8935.2 507.5,8935.2 512.0,8935.2" style="fill:none;stroke:var(--c-accent);stroke-width:2.2"/>
-<text x="80.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">1</text>
-<text x="152.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">4</text>
-<text x="224.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">16</text>
-<text x="296.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">64</text>
-<text x="368.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">256</text>
-<text x="440.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">1.024</text>
-<text x="512.0" y="9068" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">4.096</text>
-<text x="512" y="9084" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">batch B (token, log ölçek)</text>
-<text x="150" y="8951.2" text-anchor="middle" style="fill:var(--c-danger);font-size:11px;font-weight:700">bellek sınırlı</text>
-<text x="470" y="9036" text-anchor="middle" style="fill:var(--c-success);font-size:11px;font-weight:700">hesap sınırlı</text>
-<circle cx="80.0" cy="9053.6" r="4" style="fill:var(--c-danger)"/>
-<text x="88.0" y="9044" text-anchor="start" style="fill:var(--c-text);font-size:11px">B = 1: 3,3 TFLOP/s (%0,3)</text>
-<circle cx="332.0" cy="9003.6" r="4" style="fill:var(--c-accent)"/>
-<text x="324.0" y="8997.6" text-anchor="end" style="fill:var(--c-text);font-size:11px">B = 128: 420 TFLOP/s (%42)</text>
-<circle cx="377.9" cy="8935.2" r="4" style="fill:var(--c-success)"/>
-<text x="385.9" y="8951.2" text-anchor="start" style="fill:var(--c-text);font-size:11px">B ≈ 310: tavan 990</text>
-<text x="40" y="9102" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Llama 3 70B MLP (D = 8.192, F = 28.672), H100 BF16: hız = min(990, 3,35·α)</text>
-<text x="40" y="9118" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: batch büyüdükçe okunan her bayt daha çok işe yarar; eğri B ≈ 310&#x27;da</text>
-<text x="40" y="9133" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">tavana değer.</text>
-<text x="40" y="9159" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
-<rect x="104.0" y="9145.0" width="122.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="165.4" y="9159.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">batch ≥ ~310 token</text>
-<rect x="232.9" y="9145.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="309.5" y="9159.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">füzyon / FlashAttention</text>
-<rect x="104.0" y="9171.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="180.6" y="9185.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">decode: 4–8 bit ağırlık</text>
-<rect x="28" y="9213" width="504" height="370" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="40" y="9237" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">Ağ duvarı</text>
-<text x="520" y="9237" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px;font-weight:700">2. sütun · ağ</text>
-<text x="40" y="9258" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
-<text x="112" y="9258" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğüm ekledikçe adım uzar; GPU&#x27;lar konuşmak için bekler.</text>
-<text x="40" y="9276" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
-<text x="112" y="9276" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğümden çıkan veri 9 kat daha dar bir yoldan geçer; TP gibi her</text>
-<text x="112" y="9293" text-anchor="start" style="fill:var(--c-text);font-size:12px">katmanda konuşan işler bu yolda boğulur.</text>
-<line x1="184.0" y1="9306.0" x2="184.0" y2="9390.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="184" y="9404" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 GB/s</text>
-<line x1="288.0" y1="9306.0" x2="288.0" y2="9390.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="288" y="9404" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">100 GB/s</text>
-<line x1="392.0" y1="9306.0" x2="392.0" y2="9390.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="392" y="9404" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1 TB/s</text>
-<line x1="496.0" y1="9306.0" x2="496.0" y2="9390.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="496" y="9404" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 TB/s</text>
-<text x="40" y="9324" text-anchor="start" style="fill:var(--c-text);font-size:11px">HBM (çip içi)</text>
-<rect x="184" y="9312" width="262.6" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.45;stroke:var(--c-accent);stroke-width:1"/>
-<text x="452.6" y="9324" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3,35 TB/s</text>
-<text x="40" y="9350" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink (düğüm içi)</text>
-<rect x="184" y="9338" width="171.9" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
-<text x="361.9" y="9350" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">450 GB/s</text>
-<text x="420.7" y="9350" text-anchor="start" style="fill:var(--c-danger);font-size:11px;font-weight:700">÷7,4</text>
-<text x="40" y="9376" text-anchor="start" style="fill:var(--c-text);font-size:11px">InfiniBand (düğüm dışı)</text>
-<rect x="184" y="9364" width="72.7" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
-<text x="262.7" y="9376" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">50 GB/s</text>
-<text x="314.9" y="9376" text-anchor="start" style="fill:var(--c-danger);font-size:11px;font-weight:700">÷9</text>
-<rect x="40.0" y="9416.0" width="480.0" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="280.0" y="9430.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVLink: Y ≤ F / (C/W) = 28.672 / 2.200 ≈ 13 → TP = 8 sığar ✓ (F: Llama 3 70B)</text>
-<rect x="40.0" y="9442.0" width="480.0" height="20" rx="5" style="fill:var(--c-danger);fill-opacity:.12;stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="280.0" y="9456.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">InfiniBand: Y ≤ 28.672 / 19.800 ≈ 1,45 → TP düğümden taşarsa hesap aç kalır ✗</text>
-<text x="40" y="9480" text-anchor="start" style="fill:var(--c-text);font-size:11px">PP = 16 aşama, kabarcık = 15 / (15 + M): M = 16 → %48 boşta · M = 128 → %10,5</text>
-<text x="40" y="9498" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: her çubuk bir H100&#x27;ün o hattaki bant genişliği; düğümden çıkınca çubuk</text>
-<text x="40" y="9513" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">9 kat kısalır.</text>
-<text x="40" y="9539" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
-<rect x="104.0" y="9525.0" width="104.8" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="156.4" y="9539.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">TP düğüm içinde</text>
-<rect x="214.8" y="9525.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="291.3" y="9539.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">PP ve DP düğümler arası</text>
-<rect x="373.9" y="9525.0" width="122.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="435.3" y="9539.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">SHARP: 2·B/W → B/W</text>
-<rect x="104.0" y="9551.0" width="165.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="186.6" y="9565.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">DualPipe: iletişimi gizle</text>
-<rect x="28" y="9593" width="504" height="344" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="40" y="9617" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">G/Ç duvarı</text>
-<text x="520" y="9617" text-anchor="end" style="fill:var(--c-warn);font-size:11px;font-weight:700">3. sütun · depolama</text>
-<text x="40" y="9638" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
-<text x="112" y="9638" text-anchor="start" style="fill:var(--c-text);font-size:12px">Küme her kayıtta durur; arızada son kayda geri dönülür.</text>
-<text x="40" y="9656" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
-<text x="112" y="9656" text-anchor="start" style="fill:var(--c-text);font-size:12px">7,5 TB&#x27;lık kayıt CPU sayfa önbelleğinden 25 GB/s ile yazılırsa</text>
-<text x="112" y="9673" text-anchor="start" style="fill:var(--c-text);font-size:12px">δ = 307 s sürer ve küme bu sürede bekler.</text>
-<line x1="80.0" y1="9692.0" x2="80.0" y2="9814.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<line x1="80.0" y1="9814.0" x2="512.0" y2="9814.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
-<line x1="80.0" y1="9784.0" x2="512.0" y2="9784.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="76" y="9788.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%10</text>
-<line x1="80.0" y1="9754.0" x2="512.0" y2="9754.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="76" y="9758.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%20</text>
-<line x1="80.0" y1="9724.0" x2="512.0" y2="9724.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="76" y="9728.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%30</text>
-<line x1="80.0" y1="9694.0" x2="512.0" y2="9694.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="76" y="9698.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%40</text>
-<polyline points="80.0,9814.0 512.0,9739.0" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3;stroke-dasharray:4 3"/>
-<polyline points="148.4,9694.3 149.6,9696.0 150.8,9697.6 152.0,9699.1 153.2,9700.6 154.4,9702.0 155.6,9703.4 156.8,9704.7 158.0,9705.9 159.2,9707.2 160.4,9708.3 161.6,9709.5 162.8,9710.6 164.0,9711.6 165.2,9712.7 166.4,9713.7 167.6,9714.6 168.8,9715.6 170.0,9716.5 171.2,9717.3 172.4,9718.2 173.6,9719.0 174.8,9719.8 176.0,9720.5 177.2,9721.3 178.4,9722.0 179.6,9722.7 180.8,9723.4 182.0,9724.0 183.2,9724.6 184.4,9725.3 185.6,9725.8 186.8,9726.4 188.0,9727.0 189.2,9727.5 190.4,9728.1 191.6,9728.6 192.8,9729.1 194.0,9729.5 195.2,9730.0 196.4,9730.5 197.6,9730.9 198.8,9731.3 200.0,9731.7 201.2,9732.1 202.4,9732.5 203.6,9732.9 204.8,9733.3 206.0,9733.6 207.2,9734.0 208.4,9734.3 209.6,9734.6 210.8,9734.9 212.0,9735.2 213.2,9735.5 214.4,9735.8 215.6,9736.1 216.8,9736.4 218.0,9736.6 219.2,9736.9 220.4,9737.1 221.6,9737.3 222.8,9737.6 224.0,9737.8 225.2,9738.0 226.4,9738.2 227.6,9738.4 228.8,9738.6 230.0,9738.8 231.2,9739.0 232.4,9739.2 233.6,9739.3 234.8,9739.5 236.0,9739.7 237.2,9739.8 238.4,9740.0 239.6,9740.1 240.8,9740.2 242.0,9740.4 243.2,9740.5 244.4,9740.6 245.6,9740.7 246.8,9740.8 248.0,9740.9 249.2,9741.1 250.4,9741.1 251.6,9741.2 252.8,9741.3 254.0,9741.4 255.2,9741.5 256.4,9741.6 257.6,9741.7 258.8,9741.7 260.0,9741.8 261.2,9741.9 262.4,9741.9 263.6,9742.0 264.8,9742.0 266.0,9742.1 267.2,9742.1 268.4,9742.2 269.6,9742.2 270.8,9742.2 272.0,9742.3 273.2,9742.3 274.4,9742.3 275.6,9742.3 276.8,9742.4 278.0,9742.4 279.2,9742.4 280.4,9742.4 281.6,9742.4 282.8,9742.4 284.0,9742.4 285.2,9742.4 286.4,9742.4 287.6,9742.4 288.8,9742.4 290.0,9742.4 291.2,9742.4 292.4,9742.4 293.6,9742.4 294.8,9742.4 296.0,9742.4 297.2,9742.3 298.4,9742.3 299.6,9742.3 300.8,9742.3 302.0,9742.2 303.2,9742.2 304.4,9742.2 305.6,9742.2 306.8,9742.1 308.0,9742.1 309.2,9742.0 310.4,9742.0 311.6,9742.0 312.8,9741.9 314.0,9741.9 315.2,9741.8 316.4,9741.8 317.6,9741.7 318.8,9741.7 320.0,9741.6 321.2,9741.6 322.4,9741.5 323.6,9741.4 324.8,9741.4 326.0,9741.3 327.2,9741.3 328.4,9741.2 329.6,9741.1 330.8,9741.1 332.0,9741.0 333.2,9740.9 334.4,9740.9 335.6,9740.8 336.8,9740.7 338.0,9740.6 339.2,9740.6 340.4,9740.5 341.6,9740.4 342.8,9740.3 344.0,9740.2 345.2,9740.2 346.4,9740.1 347.6,9740.0 348.8,9739.9 350.0,9739.8 351.2,9739.7 352.4,9739.6 353.6,9739.6 354.8,9739.5 356.0,9739.4 357.2,9739.3 358.4,9739.2 359.6,9739.1 360.8,9739.0 362.0,9738.9 363.2,9738.8 364.4,9738.7 365.6,9738.6 366.8,9738.5 368.0,9738.4 369.2,9738.3 370.4,9738.2 371.6,9738.1 372.8,9738.0 374.0,9737.9 375.2,9737.8 376.4,9737.7 377.6,9737.6 378.8,9737.5 380.0,9737.3 381.2,9737.2 382.4,9737.1 383.6,9737.0 384.8,9736.9 386.0,9736.8 387.2,9736.7 388.4,9736.6 389.6,9736.4 390.8,9736.3 392.0,9736.2 393.2,9736.1 394.4,9736.0 395.6,9735.8 396.8,9735.7 398.0,9735.6 399.2,9735.5 400.4,9735.4 401.6,9735.2 402.8,9735.1 404.0,9735.0 405.2,9734.9 406.4,9734.7 407.6,9734.6 408.8,9734.5 410.0,9734.4 411.2,9734.2 412.4,9734.1 413.6,9734.0 414.8,9733.9 416.0,9733.7 417.2,9733.6 418.4,9733.5 419.6,9733.3 420.8,9733.2 422.0,9733.1 423.2,9732.9 424.4,9732.8 425.6,9732.7 426.8,9732.5 428.0,9732.4 429.2,9732.3 430.4,9732.1 431.6,9732.0 432.8,9731.9 434.0,9731.7 435.2,9731.6 436.4,9731.4 437.6,9731.3 438.8,9731.2 440.0,9731.0 441.2,9730.9 442.4,9730.7 443.6,9730.6 444.8,9730.5 446.0,9730.3 447.2,9730.2 448.4,9730.0 449.6,9729.9 450.8,9729.7 452.0,9729.6 453.2,9729.5 454.4,9729.3 455.6,9729.2 456.8,9729.0 458.0,9728.9 459.2,9728.7 460.4,9728.6 461.6,9728.4 462.8,9728.3 464.0,9728.1 465.2,9728.0 466.4,9727.8 467.6,9727.7 468.8,9727.5 470.0,9727.4 471.2,9727.2 472.4,9727.1 473.6,9726.9 474.8,9726.8 476.0,9726.6 477.2,9726.5 478.4,9726.3 479.6,9726.2 480.8,9726.0 482.0,9725.9 483.2,9725.7 484.4,9725.6 485.6,9725.4 486.8,9725.3 488.0,9725.1 489.2,9724.9 490.4,9724.8 491.6,9724.6 492.8,9724.5 494.0,9724.3 495.2,9724.2 496.4,9724.0 497.6,9723.8 498.8,9723.7 500.0,9723.5 501.2,9723.4 502.4,9723.2 503.6,9723.1 504.8,9722.9 506.0,9722.7 507.2,9722.6 508.4,9722.4 509.6,9722.3 510.8,9722.1 512.0,9721.9" style="fill:none;stroke:var(--c-danger);stroke-width:2.2"/>
-<line x1="286.1" y1="9742.4" x2="286.1" y2="9814.0" style="stroke:var(--c-danger);stroke-width:1;stroke-dasharray:4 3"/>
-<circle cx="286.1" cy="9742.4" r="4" style="fill:var(--c-danger)"/>
-<text x="286.1" y="9828" text-anchor="middle" style="fill:var(--c-danger);font-size:11px;font-weight:700;font-family:var(--font-mono)">42,9</text>
-<polyline points="87.2,9710.4 88.4,9724.8 89.6,9735.5 90.8,9743.9 92.0,9750.5 93.2,9755.9 94.4,9760.3 95.6,9764.0 96.8,9767.2 98.0,9769.9 99.2,9772.3 100.4,9774.3 101.6,9776.1 102.8,9777.7 104.0,9779.1 105.2,9780.4 106.4,9781.5 107.6,9782.5 108.8,9783.4 110.0,9784.2 111.2,9785.0 112.4,9785.6 113.6,9786.2 114.8,9786.8 116.0,9787.3 117.2,9787.7 118.4,9788.1 119.6,9788.5 120.8,9788.8 122.0,9789.2 123.2,9789.4 124.4,9789.7 125.6,9789.9 126.8,9790.1 128.0,9790.3 129.2,9790.5 130.4,9790.6 131.6,9790.8 132.8,9790.9 134.0,9791.0 135.2,9791.1 136.4,9791.1 137.6,9791.2 138.8,9791.3 140.0,9791.3 141.2,9791.3 142.4,9791.4 143.6,9791.4 144.8,9791.4 146.0,9791.4 147.2,9791.4 148.4,9791.3 149.6,9791.3 150.8,9791.3 152.0,9791.3 153.2,9791.2 154.4,9791.2 155.6,9791.1 156.8,9791.1 158.0,9791.0 159.2,9790.9 160.4,9790.9 161.6,9790.8 162.8,9790.7 164.0,9790.6 165.2,9790.6 166.4,9790.5 167.6,9790.4 168.8,9790.3 170.0,9790.2 171.2,9790.1 172.4,9790.0 173.6,9789.9 174.8,9789.8 176.0,9789.7 177.2,9789.5 178.4,9789.4 179.6,9789.3 180.8,9789.2 182.0,9789.1 183.2,9788.9 184.4,9788.8 185.6,9788.7 186.8,9788.6 188.0,9788.4 189.2,9788.3 190.4,9788.2 191.6,9788.0 192.8,9787.9 194.0,9787.7 195.2,9787.6 196.4,9787.5 197.6,9787.3 198.8,9787.2 200.0,9787.0 201.2,9786.9 202.4,9786.7 203.6,9786.6 204.8,9786.4 206.0,9786.3 207.2,9786.1 208.4,9786.0 209.6,9785.8 210.8,9785.7 212.0,9785.5 213.2,9785.3 214.4,9785.2 215.6,9785.0 216.8,9784.9 218.0,9784.7 219.2,9784.5 220.4,9784.4 221.6,9784.2 222.8,9784.0 224.0,9783.9 225.2,9783.7 226.4,9783.5 227.6,9783.4 228.8,9783.2 230.0,9783.0 231.2,9782.9 232.4,9782.7 233.6,9782.5 234.8,9782.4 236.0,9782.2 237.2,9782.0 238.4,9781.8 239.6,9781.7 240.8,9781.5 242.0,9781.3 243.2,9781.1 244.4,9781.0 245.6,9780.8 246.8,9780.6 248.0,9780.4 249.2,9780.3 250.4,9780.1 251.6,9779.9 252.8,9779.7 254.0,9779.6 255.2,9779.4 256.4,9779.2 257.6,9779.0 258.8,9778.8 260.0,9778.7 261.2,9778.5 262.4,9778.3 263.6,9778.1 264.8,9777.9 266.0,9777.7 267.2,9777.6 268.4,9777.4 269.6,9777.2 270.8,9777.0 272.0,9776.8 273.2,9776.6 274.4,9776.5 275.6,9776.3 276.8,9776.1 278.0,9775.9 279.2,9775.7 280.4,9775.5 281.6,9775.3 282.8,9775.2 284.0,9775.0 285.2,9774.8 286.4,9774.6 287.6,9774.4 288.8,9774.2 290.0,9774.0 291.2,9773.8 292.4,9773.7 293.6,9773.5 294.8,9773.3 296.0,9773.1 297.2,9772.9 298.4,9772.7 299.6,9772.5 300.8,9772.3 302.0,9772.1 303.2,9771.9 304.4,9771.8 305.6,9771.6 306.8,9771.4 308.0,9771.2 309.2,9771.0 310.4,9770.8 311.6,9770.6 312.8,9770.4 314.0,9770.2 315.2,9770.0 316.4,9769.8 317.6,9769.6 318.8,9769.5 320.0,9769.3 321.2,9769.1 322.4,9768.9 323.6,9768.7 324.8,9768.5 326.0,9768.3 327.2,9768.1 328.4,9767.9 329.6,9767.7 330.8,9767.5 332.0,9767.3 333.2,9767.1 334.4,9766.9 335.6,9766.7 336.8,9766.5 338.0,9766.4 339.2,9766.2 340.4,9766.0 341.6,9765.8 342.8,9765.6 344.0,9765.4 345.2,9765.2 346.4,9765.0 347.6,9764.8 348.8,9764.6 350.0,9764.4 351.2,9764.2 352.4,9764.0 353.6,9763.8 354.8,9763.6 356.0,9763.4 357.2,9763.2 358.4,9763.0 359.6,9762.8 360.8,9762.6 362.0,9762.4 363.2,9762.2 364.4,9762.0 365.6,9761.8 366.8,9761.6 368.0,9761.4 369.2,9761.2 370.4,9761.0 371.6,9760.8 372.8,9760.6 374.0,9760.5 375.2,9760.3 376.4,9760.1 377.6,9759.9 378.8,9759.7 380.0,9759.5 381.2,9759.3 382.4,9759.1 383.6,9758.9 384.8,9758.7 386.0,9758.5 387.2,9758.3 388.4,9758.1 389.6,9757.9 390.8,9757.7 392.0,9757.5 393.2,9757.3 394.4,9757.1 395.6,9756.9 396.8,9756.7 398.0,9756.5 399.2,9756.3 400.4,9756.1 401.6,9755.9 402.8,9755.7 404.0,9755.5 405.2,9755.3 406.4,9755.1 407.6,9754.9 408.8,9754.7 410.0,9754.5 411.2,9754.3 412.4,9754.1 413.6,9753.9 414.8,9753.7 416.0,9753.5 417.2,9753.3 418.4,9753.1 419.6,9752.9 420.8,9752.7 422.0,9752.5 423.2,9752.3 424.4,9752.1 425.6,9751.9 426.8,9751.7 428.0,9751.5 429.2,9751.3 430.4,9751.1 431.6,9750.9 432.8,9750.7 434.0,9750.5 435.2,9750.3 436.4,9750.1 437.6,9749.9 438.8,9749.7 440.0,9749.5 441.2,9749.3 442.4,9749.0 443.6,9748.8 444.8,9748.6 446.0,9748.4 447.2,9748.2 448.4,9748.0 449.6,9747.8 450.8,9747.6 452.0,9747.4 453.2,9747.2 454.4,9747.0 455.6,9746.8 456.8,9746.6 458.0,9746.4 459.2,9746.2 460.4,9746.0 461.6,9745.8 462.8,9745.6 464.0,9745.4 465.2,9745.2 466.4,9745.0 467.6,9744.8 468.8,9744.6 470.0,9744.4 471.2,9744.2 472.4,9744.0 473.6,9743.8 474.8,9743.6 476.0,9743.4 477.2,9743.2 478.4,9743.0 479.6,9742.8 480.8,9742.6 482.0,9742.4 483.2,9742.2 484.4,9742.0 485.6,9741.8 486.8,9741.6 488.0,9741.4 489.2,9741.2 490.4,9741.0 491.6,9740.8 492.8,9740.5 494.0,9740.3 495.2,9740.1 496.4,9739.9 497.6,9739.7 498.8,9739.5 500.0,9739.3 501.2,9739.1 502.4,9738.9 503.6,9738.7 504.8,9738.5 506.0,9738.3 507.2,9738.1 508.4,9737.9 509.6,9737.7 510.8,9737.5 512.0,9737.3" style="fill:none;stroke:var(--c-success);stroke-width:2.2"/>
-<line x1="145.2" y1="9791.4" x2="145.2" y2="9814.0" style="stroke:var(--c-success);stroke-width:1;stroke-dasharray:4 3"/>
-<circle cx="145.2" cy="9791.4" r="4" style="fill:var(--c-success)"/>
-<text x="145.2" y="9828" text-anchor="middle" style="fill:var(--c-success);font-size:11px;font-weight:700;font-family:var(--font-mono)">13,6</text>
-<text x="80.0" y="9828" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
-<text x="224.0" y="9828" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">30</text>
-<text x="368.0" y="9828" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">60</text>
-<text x="512.0" y="9828" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">90</text>
-<text x="512" y="9844" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">kayıt aralığı τ (dakika)</text>
-<text x="40" y="9686" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kayıp</text>
-<rect x="300" y="9693" width="12" height="10" rx="2" style="fill:var(--c-danger);fill-opacity:.45;stroke:var(--c-danger);stroke-width:1"/>
-<text x="318" y="9702" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">A · 25 GB/s: en az %24 kayıp</text>
-<rect x="300" y="9710" width="12" height="10" rx="2" style="fill:var(--c-success);fill-opacity:.45;stroke:var(--c-success);stroke-width:1"/>
-<text x="318" y="9719" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">B · 250 GB/s (GDS): en az %7,5</text>
-<text x="353.6" y="9782.5" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">geri sarma τ/2M (ortak)</text>
-<text x="40" y="9862" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">M = 3 sa (16.384 H100&#x27;de ~3 saatte bir arıza) · kayıp = δ/τ + τ/2M</text>
-<text x="40" y="9878" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: sık kayıt yazmaya, seyrek kayıt geri sarmaya zaman kaybettirir; en iyi</text>
-<text x="40" y="9893" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">aralık çukurun dibidir.</text>
-<text x="40" y="9919" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
-<rect x="104.0" y="9905.0" width="116.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="162.4" y="9919.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPUDirect Storage</text>
-<rect x="226.9" y="9905.0" width="147.1" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="300.4" y="9919.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">asenkron / anlık yazma</text>
-<rect x="380.0" y="9905.0" width="98.7" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="429.3" y="9919.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">τ = √(2δM) seç</text>
-<rect x="28.0" y="9947.0" width="504.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="9967" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: üç çarenin ortak fikri aynı: veriyi az taşı, taşırken hesabı</text>
-<text x="40" y="9984" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">durdurma.</text>
-<text x="280" y="10031" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Bu farkları sezgiyle görelim: aynı yükü her yoldan geçirelim.</text>
-<line x1="280.0" y1="10039.0" x2="280.0" y2="10059.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="16" y="10063" width="528" height="408" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
-<circle cx="36" cy="10087" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="36" y="10091.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">D</text>
-<text x="56" y="10092" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Hız sezgisi: 140 GB&#x27;ı taşımak ne kadar sürer?</text>
-<text x="28" y="10113" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Llama 3 70B&#x27;nin BF16 ağırlıkları = 140 GB; aynı yük her hattan (log ölçek).</text>
-<rect x="28" y="10125" width="504" height="272" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<line x1="200.0" y1="10139.0" x2="200.0" y2="10263.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="200" y="10277" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 ms</text>
-<line x1="292.0" y1="10139.0" x2="292.0" y2="10263.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="292" y="10277" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">100 ms</text>
-<line x1="384.0" y1="10139.0" x2="384.0" y2="10263.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="384" y="10277" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1 s</text>
-<line x1="476.0" y1="10139.0" x2="476.0" y2="10263.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
-<text x="476" y="10277" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 s</text>
-<text x="40" y="10157" text-anchor="start" style="fill:var(--c-text);font-size:11px">HBM3 (tek H100)</text>
-<rect x="200" y="10145" width="57.1" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.45;stroke:var(--c-accent);stroke-width:1"/>
-<text x="263.1" y="10157" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">42 ms</text>
-<text x="40" y="10181" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink (düğüm içi)</text>
-<rect x="200" y="10169" width="137.3" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
-<text x="343.3" y="10181" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,31 s</text>
-<text x="40" y="10205" text-anchor="start" style="fill:var(--c-text);font-size:11px">PCIe Gen5 (CPU yolu)</text>
-<rect x="200" y="10193" width="215.3" height="16" rx="2" style="fill:var(--c-text-mute);fill-opacity:.45;stroke:var(--c-text-mute);stroke-width:1"/>
-<text x="421.3" y="10205" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2,2 s</text>
-<text x="40" y="10229" text-anchor="start" style="fill:var(--c-text);font-size:11px">InfiniBand (GPU başına)</text>
-<rect x="200" y="10217" width="225.1" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
-<text x="431.1" y="10229" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2,8 s</text>
-<text x="40" y="10253" text-anchor="start" style="fill:var(--c-text);font-size:11px">eski depolama (tüm küme)</text>
-<rect x="200" y="10241" width="252.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.45;stroke:var(--c-warn);stroke-width:1"/>
-<text x="458.8" y="10253" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">5,6 s</text>
-<text x="40" y="10299" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Çubuk uzadıkça yavaşlar: her çubuk aynı 140 GB&#x27;ın o hattan geçme süresidir.</text>
-<rect x="40.0" y="10309.0" width="480.0" height="38" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="50" y="10324" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">İnsan ölçeği: HBM&#x27;den 1 saniyede gelen veri</text>
-<text x="50" y="10340" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink&#x27;ten 7,4 s, PCIe&#x27;den 52 s, InfiniBand&#x27;den 67 s&#x27;de gelir.</text>
-<rect x="40.0" y="10353.0" width="480.0" height="38" rx="5" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="50" y="10368" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">Decode&#x27;un tavanı: her token bütün ağırlıkları bir kez okur</text>
-<text x="50" y="10384" text-anchor="start" style="fill:var(--c-text);font-size:11px">8 H100&#x27;de 140 GB ÷ (8 × 3,35 TB/s) ≈ 5,2 ms → batch 1&#x27;de en fazla ~190 token/s</text>
-<rect x="28.0" y="10409.0" width="504.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="40" y="10429" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: HBM&#x27;de milisaniyeler, ağda saniyeler. İyi tasarım veriyi</text>
-<text x="40" y="10446" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">hızlı katmanda tutar.</text>
-<text x="280" y="10491" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Son durak: bütün bunlar gerçek bir kümede nasıl görünüyor?</text>
-<line x1="280.0" y1="10499.0" x2="280.0" y2="10519.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
-<rect x="16" y="10523" width="528" height="318" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
-<circle cx="36" cy="10547" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
-<text x="36" y="10551.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">E</text>
-<text x="56" y="10552" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Gerçek küme: Meta&#x27;nın Llama 3 405B eğitimi</text>
-<text x="28" y="10573" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Aynı 16.384 H100, Meta&#x27;nın kendi kümesinde (ağ: RoCE); sayılar Llama 3 raporundan.</text>
-<rect x="28" y="10585" width="160" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="36.0" y="10593.0" width="144.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="108.0" y="10607.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Hesaplama</text>
-<text x="38" y="10631" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">16.384 H100</text>
-<text x="38" y="10646" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TP 8 × PP 16 × DP 128</text>
-<text x="38" y="10661" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">adım başına 16M token</text>
-<text x="38" y="10676" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU başına 400 TFLOP/s</text>
-<text x="38" y="10691" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">BF16 MFU %41</text>
-<rect x="200" y="10585" width="160" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="208.0" y="10593.0" width="144.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="280.0" y="10607.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Ağ</text>
-<text x="210" y="10631" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">RoCE · 400 Gb/s/GPU</text>
-<text x="210" y="10646" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">pod = 3.072 GPU</text>
-<text x="210" y="10661" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">pod içi tam biseksiyon</text>
-<text x="210" y="10676" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 pod arası 1:7</text>
-<text x="210" y="10691" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">(küçük modeller: InfiniBand)</text>
-<rect x="372" y="10585" width="160" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
-<rect x="380.0" y="10593.0" width="144.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="452.0" y="10607.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Depolama</text>
-<text x="382" y="10631" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">Tectonic · 240 PB</text>
-<text x="382" y="10646" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">7.500 SSD sunucusu</text>
-<text x="382" y="10661" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">2 TB/s sürekli</text>
-<text x="382" y="10676" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">7 TB/s tepe</text>
-<text x="382" y="10691" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kayıt: 1 MB–4 GB/GPU</text>
-<rect x="28.0" y="10717.0" width="504.0" height="42" rx="5" style="fill:var(--c-danger);fill-opacity:.10;stroke:var(--c-danger);stroke-width:1.2"/>
-<text x="40" y="10734" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">54 günde 466 kesinti; 419&#x27;u beklenmeyen → ortalama ~3 saatte bir arıza</text>
-<text x="40" y="10750" text-anchor="start" style="fill:var(--c-text);font-size:11px">%78 donanım (GPU %30,1 · HBM3 %17,2); otomasyonla etkin eğitim süresi &gt; %90</text>
-<text x="28" y="10775" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">MFU: 8.192 H100&#x27;de %43, 16.384&#x27;te %41, 128K bağlamda %38; ölçek büyüdükçe iletişim artar.</text>
-<rect x="28.0" y="10787.0" width="504.0" height="42" rx="5" style="fill:var(--c-success);fill-opacity:.10;stroke:var(--c-success);stroke-width:1.2"/>
-<text x="40" y="10804" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Ders: üç sütun birlikte tasarlanır.</text>
-<text x="40" y="10820" text-anchor="start" style="fill:var(--c-text);font-size:11px">En yavaş halka (HBM, ağ ya da disk) bütün kümenin hızını belirler; MFU onun aynasıdır.</text>
+<text x="16" y="27" text-anchor="start" style="fill:var(--c-accent);font-size:17px;font-weight:700">Büyük Resim: Yapay Zekâ Altyapısının 3 Sütunu</text>
+<text x="16" y="48" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Bir H100&#x27;ün içinden 16.384 H100&#x27;lük kümeye: parçalar nerede, veri nasıl akar, nerede tıkanır?</text>
+<rect x="16" y="60" width="808" height="197" rx="10" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="40" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="108.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">A · Parçalar</text>
+<text x="108.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">SM → küme</text>
+<line x1="178.0" y1="96.0" x2="194.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="196" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="264.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">B · Bir adım</text>
+<text x="264.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">verinin yolu</text>
+<line x1="334.0" y1="96.0" x2="350.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="352" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="420.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">C · Duvarlar</text>
+<text x="420.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">neden tıkanır</text>
+<line x1="490.0" y1="96.0" x2="506.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="508" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="576.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">D · Hız</text>
+<text x="576.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">sezgi</text>
+<line x1="646.0" y1="96.0" x2="662.0" y2="96.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="664" y="74" width="136" height="44" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="732.0" y="92" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">E · Llama 3</text>
+<text x="732.0" y="109" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">gerçek küme</text>
+<text x="40" y="144" text-anchor="start" style="fill:var(--c-text);font-size:12px">Önce parçaları tanıyacağız, sonra bir eğitim adımında birlikte nasıl çalıştıklarını izleyeceğiz. Ardından nerede</text>
+<text x="40" y="161" text-anchor="start" style="fill:var(--c-text);font-size:12px">tıkandıklarını görecek, hızlar için sezgi kuracak ve hepsini gerçek bir kümeyle sınayacağız.</text>
+<rect x="28.0" y="175.0" width="784.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="40" y="194" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Referans sistem: H100 SXM5 → DGX H100 → DGX SuperPOD (InfiniBand). Ana sayıların hepsi bu sisteme aittir; başka</text>
+<text x="40" y="211" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU&#x27;lar ve başka kümeler yalnızca parantez içinde geçer.</text>
+<rect x="40.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-accent);fill-opacity:.2;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="56" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">hesaplama</text>
+<rect x="127.0" y="236" width="11" height="11" rx="2" style="fill:var(--c-accent-2);fill-opacity:.2;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="143.0" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ağ</text>
+<rect x="175.9" y="236" width="11" height="11" rx="2" style="fill:var(--c-warn);fill-opacity:.2;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="191.9" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">depolama</text>
+<rect x="257.5" y="236" width="11" height="11" rx="2" style="fill:var(--c-danger);fill-opacity:.2;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="273.5" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">duvar / darboğaz</text>
+<rect x="382.6" y="236" width="11" height="11" rx="2" style="fill:var(--c-success);fill-opacity:.2;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="398.6" y="246" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">çözüm</text>
+<rect x="16" y="269" width="808" height="5594" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
+<circle cx="36" cy="293" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="297.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">A</text>
+<text x="56" y="298" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Yakınlaştır: bir SM&#x27;den bütün kümeye</text>
+<text x="28" y="319" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her basamak öncekinin ×N kopyasıdır; koyu vurgu bir önceki basamağı gösterir.</text>
+<rect x="28" y="331" width="784" height="260" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="355" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">1 · SM: GPU&#x27;nun temel işçisi</text>
+<rect x="40" y="367" width="228" height="152" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="48" y="383" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">SM</text>
+<rect x="48" y="391" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="56" y="406" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 0</text>
+<rect x="56.0" y="413.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="100.0" y="426.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
+<rect x="156" y="391" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="164" y="406" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 1</text>
+<rect x="164.0" y="413.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="208.0" y="426.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
+<rect x="48" y="441" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="56" y="456" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 2</text>
+<rect x="56.0" y="463.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="100.0" y="476.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
+<rect x="156" y="441" width="104" height="46" rx="5" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="164" y="456" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme 3</text>
+<rect x="164.0" y="463.0" width="88.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.22;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="208.0" y="476.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">Tensor Core</text>
+<rect x="48.0" y="493.0" width="212.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="154.0" y="507.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">SMEM / L1 · 256 KiB</text>
+<rect x="288" y="367" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="298" y="389" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">4</text>
+<text x="298" y="406" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">alt bölme</text>
+<rect x="416" y="367" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="426" y="389" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">1.024</text>
+<text x="426" y="406" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">FLOP/döngü (TC)</text>
+<rect x="288" y="423" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="298" y="445" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">256 KiB</text>
+<text x="298" y="462" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">register / SM</text>
+<rect x="416" y="423" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="426" y="445" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">64</text>
+<text x="426" y="462" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">warp aynı anda</text>
+<text x="288" y="493" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her alt bölme: 1 Tensor Core,</text>
+<text x="288" y="509" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1 warp scheduler, 32 FP32 ALU,</text>
+<text x="288" y="525" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">16.384 register · 256 KiB SMEM/L1</text>
+<text x="288" y="541" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">warp = birlikte koşan 32 thread</text>
+<text x="552" y="381" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
+<text x="552" y="399" text-anchor="start" style="fill:var(--c-text);font-size:12px">Bir warp bellekten veri beklerken</text>
+<text x="552" y="416" text-anchor="start" style="fill:var(--c-text);font-size:12px">scheduler hemen başka bir warp&#x27;a geçer.</text>
+<text x="552" y="433" text-anchor="start" style="fill:var(--c-text);font-size:12px">SM&#x27;ler bekleme süresini böyle gizler;</text>
+<text x="552" y="450" text-anchor="start" style="fill:var(--c-text);font-size:12px">ama bütün warp&#x27;lar bekliyorsa gizleyecek</text>
+<text x="552" y="467" text-anchor="start" style="fill:var(--c-text);font-size:12px">iş kalmaz.</text>
+<line x1="540.0" y1="367.0" x2="540.0" y2="519.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="36.0" y="559.0" width="768.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="46" y="574" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Mutfak benzetmesi: SM bir hat aşçısıdır; register ve SMEM onun tezgâhıdır.</text>
+<line x1="420.0" y1="594.0" x2="420.0" y2="616.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="432.0" y="609" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 132 SM = 1 GPU</text>
+<rect x="28" y="619" width="784" height="276" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="643" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">2 · GPU: H100 SXM5 çipi</text>
+<rect x="40" y="655" width="228" height="180" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="46.0" y="663.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="60.0" y="692.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
+<rect x="46.0" y="719.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="60.0" y="748.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
+<rect x="46.0" y="775.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="60.0" y="804.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
+<rect x="234.0" y="663.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="248.0" y="692.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
+<rect x="234.0" y="719.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="248.0" y="748.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">HBM</text>
+<rect x="234.0" y="775.0" width="28.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.04;stroke:var(--c-accent);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="80" y="661" width="148" height="168" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<rect x="88" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.95"/>
+<rect x="100" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="667" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="678" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="689" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="700" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="711" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="722" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="757" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="768" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="779" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="790" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="801" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="100" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="112" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="124" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="136" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="148" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="160" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="172" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="184" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="196" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="208" y="812" width="9" height="8" rx="1.5" style="fill:var(--c-accent);fill-opacity:.28"/>
+<rect x="88.0" y="735.0" width="129.0" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="152.5" y="748.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">L2 · 50 MB</text>
+<rect x="288" y="655" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="298" y="677" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">132</text>
+<text x="298" y="694" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">SM</text>
+<rect x="416" y="655" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="426" y="677" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">990</text>
+<text x="426" y="694" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TFLOP/s (BF16)</text>
+<rect x="288" y="711" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="298" y="733" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">80 GB</text>
+<text x="298" y="750" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">HBM3 bellek</text>
+<rect x="416" y="711" width="120" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="426" y="733" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">3,35 TB/s</text>
+<text x="426" y="750" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">HBM hızı</text>
+<text x="288" y="781" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">814 mm² kalıp · 80 milyar transistör</text>
+<text x="288" y="797" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">6 HBM yuvası, 5&#x27;i etkin · 700 W</text>
+<text x="288" y="813" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ortak L2: 50 MB (~5,5 TB/s)</text>
+<text x="288" y="829" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">FP8: 1.980 TFLOP/s (yoğun)</text>
+<text x="288" y="845" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">(B200: 148 SM · 192 GB · 8 TB/s)</text>
+<text x="552" y="669" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
+<text x="552" y="687" text-anchor="start" style="fill:var(--c-text);font-size:12px">Çip saniyede 990 trilyon işlem yapabilir</text>
+<text x="552" y="704" text-anchor="start" style="fill:var(--c-text);font-size:12px">ama bellekten saniyede yalnızca 3,35 TB</text>
+<text x="552" y="721" text-anchor="start" style="fill:var(--c-text);font-size:12px">okuyabilir. Okunan her bayt için ~295</text>
+<text x="552" y="738" text-anchor="start" style="fill:var(--c-text);font-size:12px">işlem yapılmazsa Tensor Core&#x27;lar boşta</text>
+<text x="552" y="755" text-anchor="start" style="fill:var(--c-text);font-size:12px">kalır.</text>
+<line x1="540.0" y1="655.0" x2="540.0" y2="835.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="36.0" y="863.0" width="768.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="46" y="878" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">132 hat aşçısı tek mutfakta çalışır; HBM mutfağın kileri, L2 ortak raftır.</text>
+<line x1="420.0" y1="898.0" x2="420.0" y2="920.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="432.0" y="913" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 8 GPU = 1 düğüm</text>
+<rect x="28" y="923" width="784" height="1609" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="947" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">3 · Düğüm: DGX H100 kasasının içi</text>
+<rect x="36" y="959" width="488" height="418" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="44.0" y="971.0" width="64.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="76.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4 × NVMe</text>
+<text x="76.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">U.2 veri</text>
+<rect x="130.0" y="971.0" width="56.0" height="36" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="158.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
+<text x="158.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
+<rect x="206.0" y="971.0" width="66.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="239.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">CX-7</text>
+<text x="239.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çift port</text>
+<rect x="288.0" y="971.0" width="66.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="321.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">CX-7</text>
+<text x="321.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">çift port</text>
+<rect x="374.0" y="971.0" width="56.0" height="36" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="402.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
+<text x="402.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
+<rect x="452.0" y="971.0" width="64.0" height="36" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="484.0" y="985" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4 × NVMe</text>
+<text x="484.0" y="999" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">U.2 veri</text>
+<line x1="109.0" y1="989.0" x2="128.0" y2="989.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="187.0" y1="989.0" x2="204.0" y2="989.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="356.0" y1="989.0" x2="372.0" y2="989.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="432.0" y1="989.0" x2="450.0" y2="989.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="158.0" y1="1009.0" x2="158.0" y2="1025.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="402.0" y1="1009.0" x2="402.0" y2="1025.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="120.0" y="1027.0" width="76.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="158" y="1047" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">CPU 0</text>
+<text x="158" y="1063" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Xeon 8480C</text>
+<rect x="364.0" y="1027.0" width="76.0" height="48" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="402" y="1047" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">CPU 1</text>
+<text x="402" y="1063" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Xeon 8480C</text>
+<rect x="210.0" y="1029.0" width="62.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.08;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="241.0" y="1043.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">2 × M.2 OS</text>
+<line x1="198.0" y1="1039.0" x2="208.0" y2="1039.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="288.0" y="1029.0" width="62.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.08;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="319.0" y="1043.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">100 GbE</text>
+<line x1="352.0" y1="1039.0" x2="362.0" y2="1039.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<line x1="199.0" y1="1061.0" x2="361.0" y2="1061.0" marker-start="url(#bp-acc)" marker-end="url(#bp-acc)" style="stroke:var(--c-accent);stroke-width:2"/>
+<path d="M196 1071 H280 V1293" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="40" y="1099" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="286" y="1099" width="234" height="40" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<path d="M132 1075 V1083 H69 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M148 1075 V1090 H127 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M164 1075 V1090 H185 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M180 1075 V1083 H243 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M376 1075 V1083 H317 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M392 1075 V1090 H375 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M408 1075 V1090 H433 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M424 1075 V1083 H491 V1105" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<rect x="46.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="69.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 0</text>
+<line x1="69.0" y1="1133.0" x2="69.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="44.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.34;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="69.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 0</text>
+<rect x="104.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="127.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 1</text>
+<line x1="127.0" y1="1133.0" x2="127.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="102.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="127.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 1</text>
+<rect x="162.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="185.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 2</text>
+<line x1="185.0" y1="1133.0" x2="185.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="160.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="185.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 2</text>
+<rect x="220.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="243.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 3</text>
+<line x1="243.0" y1="1133.0" x2="243.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="218.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="243.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 3</text>
+<rect x="294.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="317.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 4</text>
+<line x1="317.0" y1="1133.0" x2="317.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="292.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="317.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 4</text>
+<rect x="352.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="375.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 5</text>
+<line x1="375.0" y1="1133.0" x2="375.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="350.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="375.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 5</text>
+<rect x="410.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="433.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 6</text>
+<line x1="433.0" y1="1133.0" x2="433.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="408.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="433.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 6</text>
+<rect x="468.0" y="1107.0" width="46.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="491.0" y="1123.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 7</text>
+<line x1="491.0" y1="1133.0" x2="491.0" y2="1147.0" marker-start="url(#bp-mut)" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.3"/>
+<rect x="466.0" y="1149.0" width="50.0" height="32" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="491.0" y="1169.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">GPU 7</text>
+<line x1="49.0" y1="1183.0" x2="49.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="54.0" y1="1183.0" x2="54.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="59.0" y1="1183.0" x2="59.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="64.0" y1="1183.0" x2="64.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="69.0" y1="1183.0" x2="69.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="74.0" y1="1183.0" x2="74.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="79.0" y1="1183.0" x2="79.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="84.0" y1="1183.0" x2="84.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="89.0" y1="1183.0" x2="89.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="107.0" y1="1183.0" x2="107.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="112.0" y1="1183.0" x2="112.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="117.0" y1="1183.0" x2="117.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="122.0" y1="1183.0" x2="122.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="127.0" y1="1183.0" x2="127.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="132.0" y1="1183.0" x2="132.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="137.0" y1="1183.0" x2="137.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="142.0" y1="1183.0" x2="142.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="147.0" y1="1183.0" x2="147.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="165.0" y1="1183.0" x2="165.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="170.0" y1="1183.0" x2="170.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="175.0" y1="1183.0" x2="175.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="180.0" y1="1183.0" x2="180.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="185.0" y1="1183.0" x2="185.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="190.0" y1="1183.0" x2="190.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="195.0" y1="1183.0" x2="195.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="200.0" y1="1183.0" x2="200.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="205.0" y1="1183.0" x2="205.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="223.0" y1="1183.0" x2="223.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="228.0" y1="1183.0" x2="228.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="233.0" y1="1183.0" x2="233.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="238.0" y1="1183.0" x2="238.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="243.0" y1="1183.0" x2="243.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="248.0" y1="1183.0" x2="248.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="253.0" y1="1183.0" x2="253.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="258.0" y1="1183.0" x2="258.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="263.0" y1="1183.0" x2="263.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="297.0" y1="1183.0" x2="297.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="302.0" y1="1183.0" x2="302.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="307.0" y1="1183.0" x2="307.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="312.0" y1="1183.0" x2="312.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="317.0" y1="1183.0" x2="317.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="322.0" y1="1183.0" x2="322.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="327.0" y1="1183.0" x2="327.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="332.0" y1="1183.0" x2="332.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="337.0" y1="1183.0" x2="337.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="355.0" y1="1183.0" x2="355.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="360.0" y1="1183.0" x2="360.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="365.0" y1="1183.0" x2="365.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="370.0" y1="1183.0" x2="370.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="375.0" y1="1183.0" x2="375.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="380.0" y1="1183.0" x2="380.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="385.0" y1="1183.0" x2="385.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="390.0" y1="1183.0" x2="390.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="395.0" y1="1183.0" x2="395.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="413.0" y1="1183.0" x2="413.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="418.0" y1="1183.0" x2="418.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="423.0" y1="1183.0" x2="423.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="428.0" y1="1183.0" x2="428.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="433.0" y1="1183.0" x2="433.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="438.0" y1="1183.0" x2="438.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="443.0" y1="1183.0" x2="443.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="448.0" y1="1183.0" x2="448.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="453.0" y1="1183.0" x2="453.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="471.0" y1="1183.0" x2="471.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="476.0" y1="1183.0" x2="476.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="481.0" y1="1183.0" x2="481.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="486.0" y1="1183.0" x2="486.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="491.0" y1="1183.0" x2="491.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="496.0" y1="1183.0" x2="496.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="501.0" y1="1183.0" x2="501.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="506.0" y1="1183.0" x2="506.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="511.0" y1="1183.0" x2="511.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="44.0" y1="1221.0" x2="516.0" y2="1221.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
+<line x1="78.0" y1="1221.0" x2="78.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="84.0" y1="1221.0" x2="84.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="90.0" y1="1221.0" x2="90.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="96.0" y1="1221.0" x2="96.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="102.0" y1="1221.0" x2="102.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="108.0" y1="1221.0" x2="108.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="114.0" y1="1221.0" x2="114.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<rect x="52.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="96.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 0</text>
+<line x1="182.0" y1="1221.0" x2="182.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="188.0" y1="1221.0" x2="188.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="194.0" y1="1221.0" x2="194.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="200.0" y1="1221.0" x2="200.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="206.0" y1="1221.0" x2="206.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="212.0" y1="1221.0" x2="212.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="218.0" y1="1221.0" x2="218.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<rect x="156.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="200.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 1</text>
+<line x1="342.0" y1="1221.0" x2="342.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="348.0" y1="1221.0" x2="348.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="354.0" y1="1221.0" x2="354.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="360.0" y1="1221.0" x2="360.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="366.0" y1="1221.0" x2="366.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="372.0" y1="1221.0" x2="372.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="378.0" y1="1221.0" x2="378.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<rect x="316.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="360.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 2</text>
+<line x1="446.0" y1="1221.0" x2="446.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="452.0" y1="1221.0" x2="452.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="458.0" y1="1221.0" x2="458.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="464.0" y1="1221.0" x2="464.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="470.0" y1="1221.0" x2="470.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="476.0" y1="1221.0" x2="476.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<line x1="482.0" y1="1221.0" x2="482.0" y2="1243.0" style="stroke:var(--c-accent-2);stroke-width:1;stroke-opacity:.55"/>
+<rect x="420.0" y="1243.0" width="88.0" height="26" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="464.0" y="1260.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch 3</text>
+<rect x="250.0" y="1295.0" width="60.0" height="30" rx="5" style="fill:var(--c-text-mute);fill-opacity:.10;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="280" y="1308" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">PCIe</text>
+<text x="280" y="1321" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">switch</text>
+<path d="M96 1269 V1317 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M200 1269 V1304 H248" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M360 1269 V1304 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<path d="M464 1269 V1317 H312" marker-end="url(#bp-mut)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="280" y="1341" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">PCIe: CPU 0 → NVSwitch&#x27;ler (yönetim)</text>
+<line x1="48.0" y1="1361.0" x2="72.0" y2="1361.0" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<text x="78" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PCIe</text>
+<line x1="126.8" y1="1361.0" x2="150.8" y2="1361.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
+<text x="156.8" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVLink</text>
+<line x1="218.0" y1="1361.0" x2="242.0" y2="1361.0" style="stroke:var(--c-accent);stroke-width:2"/>
+<text x="248.0" y="1365" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">CPU iletişimi (UPI)</text>
+<circle cx="102" cy="1051" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="102" y="1055" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
+<circle cx="52" cy="1087" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="52" y="1091" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
+<circle cx="98" cy="1207" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="98" y="1211" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
+<circle cx="239" cy="1018" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="239" y="1022" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
+<circle cx="280" cy="1061" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="280" y="1065" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
+<circle cx="320" cy="1282" r="8" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="320" y="1286" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
+<rect x="540" y="959" width="126" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="550" y="981" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">8</text>
+<text x="550" y="998" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU · 640 GB</text>
+<rect x="674" y="959" width="126" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="684" y="981" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">450 GB/s</text>
+<text x="684" y="998" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVLink, tek yön</text>
+<rect x="540" y="1015" width="126" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="550" y="1037" text-anchor="start" style="fill:var(--c-text-mute);font-size:16px;font-weight:700">64 GB/s</text>
+<text x="550" y="1054" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">PCIe, CPU yolu</text>
+<rect x="674" y="1015" width="126" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="684" y="1037" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">50 GB/s</text>
+<text x="684" y="1054" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ağ kartı / GPU</text>
+<text x="540" y="1085" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">4 NVSwitch · biseksiyon 3,6 TB/s · 2 × Xeon</text>
+<text x="540" y="1100" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8480C (112 çekirdek), 2 TB RAM · 8 × 3,84 TB</text>
+<text x="540" y="1115" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVMe veri · güç 10,2 kW</text>
+<rect x="540.0" y="1133.0" width="260.0" height="177" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="552" y="1155" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Örnek yol: bir gradyanın düğümdeki</text>
+<text x="552" y="1172" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">yolculuğu</text>
+<text x="552" y="1195" text-anchor="start" style="fill:var(--c-text);font-size:12px">Komşu düğümden gelen bir gradyan NIC</text>
+<text x="552" y="1212" text-anchor="start" style="fill:var(--c-text);font-size:12px">5&#x27;e girer ve GPUDirect RDMA ile</text>
+<text x="552" y="1229" text-anchor="start" style="fill:var(--c-text);font-size:12px">doğrudan GPU 5&#x27;in belleğine yazılır;</text>
+<text x="552" y="1246" text-anchor="start" style="fill:var(--c-text);font-size:12px">CPU 1&#x27;e hiç uğramaz. GPU 5 bu gradyanı</text>
+<text x="552" y="1263" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU 2 ile paylaşacaksa ağa ya da</text>
+<text x="552" y="1280" text-anchor="start" style="fill:var(--c-text);font-size:12px">CPU&#x27;lara değil, NVLink üzerinden</text>
+<text x="552" y="1297" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVSwitch&#x27;lere gider.</text>
+<rect x="36" y="1389" width="768" height="517" rx="6" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="48" y="1411" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Lejant: şemadaki her parça ne?</text>
+<text x="48" y="1429" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Adlar NVIDIA&#x27;nın diyagram lejantından, renkler posterin sütun renkleridir. Görevler DGX H100 kullanım kılavuzundan gelir; “olası”</text>
+<text x="48" y="1444" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">yazanlar çıkarımdır.</text>
+<rect x="48.0" y="1462.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="81.0" y="1476.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">CX-7</text>
+<text x="126" y="1476" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “ConnectX-7” · üstte, 2 adet</text>
+<text x="126" y="1492" text-anchor="start" style="fill:var(--c-text);font-size:11px">Çift portlu ağ kartı; kılavuza göre depolama ağı</text>
+<text x="126" y="1507" text-anchor="start" style="fill:var(--c-text);font-size:11px">ve in-band yönetim için. Her biri üstteki bir PCIe</text>
+<text x="126" y="1522" text-anchor="start" style="fill:var(--c-text);font-size:11px">switch&#x27;e bağlı.</text>
+<rect x="48.0" y="1536.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="81.0" y="1550.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NIC 0–7</text>
+<text x="126" y="1550" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “ConnectX-7 Network Module” · 8 adet</text>
+<text x="126" y="1566" text-anchor="start" style="fill:var(--c-text);font-size:11px">Tek portlu 400 Gb/s hesaplama ağı kartları, GPU</text>
+<text x="126" y="1581" text-anchor="start" style="fill:var(--c-text);font-size:11px">başına bir tane; kümeye 4 OSFP portundan çıkar.</text>
+<text x="126" y="1596" text-anchor="start" style="fill:var(--c-text);font-size:11px">Gri çerçeveler bu kartları taşıyan modüllerdir</text>
+<text x="126" y="1611" text-anchor="start" style="fill:var(--c-text);font-size:11px">(olası).</text>
+<rect x="48.0" y="1625.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="81.0" y="1639.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVMe</text>
+<text x="126" y="1639" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVMe” · üstte, 4 + 4</text>
+<text x="126" y="1655" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri diskleri: 8 × 3,84 TB U.2 NVMe, RAID 0</text>
+<text x="126" y="1670" text-anchor="start" style="fill:var(--c-text);font-size:11px">önbellek; okuma ve kontrol noktası için yerel</text>
+<text x="126" y="1685" text-anchor="start" style="fill:var(--c-text);font-size:11px">alan.</text>
+<rect x="48.0" y="1699.0" width="66.0" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="81.0" y="1713.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">M.2 OS</text>
+<text x="126" y="1713" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVMe” · CPU 0&#x27;ın yanında</text>
+<text x="126" y="1729" text-anchor="start" style="fill:var(--c-text);font-size:11px">Büyük olasılıkla 2 × 1,92 TB M.2 işletim sistemi</text>
+<text x="126" y="1744" text-anchor="start" style="fill:var(--c-text);font-size:11px">diski (RAID 1); diyagram veri diskleriyle aynı</text>
+<text x="126" y="1759" text-anchor="start" style="fill:var(--c-text);font-size:11px">simgeyi kullanır.</text>
+<rect x="48.0" y="1773.0" width="66.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="81.0" y="1787.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">PCIe sw</text>
+<text x="126" y="1787" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “PCIe Switches” · 3 adet</text>
+<text x="126" y="1803" text-anchor="start" style="fill:var(--c-text);font-size:11px">Bir CPU hattını birçok cihaza dağıtır: üstteki</text>
+<text x="126" y="1818" text-anchor="start" style="fill:var(--c-text);font-size:11px">ikisi NVMe ve CX-7&#x27;yi taşır, alttaki NVSwitch&#x27;leri</text>
+<text x="126" y="1833" text-anchor="start" style="fill:var(--c-text);font-size:11px">CPU 0&#x27;a bağlar.</text>
+<rect x="48.0" y="1847.0" width="66.0" height="20" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="81.0" y="1861.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">100 GbE</text>
+<text x="126" y="1861" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “100 GbE” · CPU 1&#x27;e bağlı</text>
+<text x="126" y="1877" text-anchor="start" style="fill:var(--c-text);font-size:11px">Ek bir Ethernet kartı; görevi diyagramda yazmıyor</text>
+<text x="126" y="1892" text-anchor="start" style="fill:var(--c-text);font-size:11px">(olası: servis ya da yönetim ağı).</text>
+<rect x="432.0" y="1462.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="465.0" y="1476.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVSwitch</text>
+<text x="510" y="1476" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “NVSwitch” · 4 adet</text>
+<text x="510" y="1492" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;lar arası NVLink anahtarı; her GPU 18</text>
+<text x="510" y="1507" text-anchor="start" style="fill:var(--c-text);font-size:11px">bağlantısını bu dördüne 5 + 4 + 4 + 5 olarak</text>
+<text x="510" y="1522" text-anchor="start" style="fill:var(--c-text);font-size:11px">dağıtır.</text>
+<rect x="432.0" y="1536.0" width="66.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="465.0" y="1550.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">CPU</text>
+<text x="510" y="1550" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “CPU 0 / CPU 1”</text>
+<text x="510" y="1566" text-anchor="start" style="fill:var(--c-text);font-size:11px">Intel Xeon 8480C (56&#x27;şar çekirdek); her biri dört</text>
+<text x="510" y="1581" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;yu ve onların NIC&#x27;lerini PCIe ile besler.</text>
+<line x1="432.0" y1="1605.0" x2="498.0" y2="1605.0" style="stroke:var(--c-accent);stroke-width:2"/>
+<text x="510" y="1609" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “CPU communication”</text>
+<text x="510" y="1625" text-anchor="start" style="fill:var(--c-text);font-size:11px">İki soketi birbirine bağlayan hat; Intel Xeon&#x27;da</text>
+<text x="510" y="1640" text-anchor="start" style="fill:var(--c-text);font-size:11px">bu bağlantının adı UPI&#x27;dir.</text>
+<line x1="432.0" y1="1664.0" x2="498.0" y2="1664.0" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<text x="510" y="1668" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA: “PCIe”</text>
+<text x="510" y="1684" text-anchor="start" style="fill:var(--c-text);font-size:11px">CPU&#x27;ları NIC&#x27;lere, GPU&#x27;lara, disklere ve</text>
+<text x="510" y="1699" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVSwitch&#x27;lere bağlayan genel yol (PCIe Gen5).</text>
+<line x1="432.0" y1="1723.0" x2="498.0" y2="1723.0" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
+<text x="510" y="1727" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">NVIDIA lejantında yok: NVLink</text>
+<text x="510" y="1743" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;ların altındaki renkli demetler NVLink</text>
+<text x="510" y="1758" text-anchor="start" style="fill:var(--c-text);font-size:11px">hatlarıdır: GPU başına 18 bağlantı, toplam</text>
+<text x="510" y="1773" text-anchor="start" style="fill:var(--c-text);font-size:11px">900 GB/s çift yön.</text>
+<line x1="420.0" y1="1458.0" x2="420.0" y2="1892.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="1932" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Topolojiyi okuma: altı soru</text>
+<text x="40" y="1951" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Şemadaki numaralı daireleri sırayla izleyin; her biri bir soruyu cevaplar.</text>
+<circle cx="49" cy="1977" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="49" y="1981" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
+<text x="66" y="1981" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Kim kimi besler?</text>
+<text x="66" y="2001" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğüm birbirinin aynası olan iki yarıdan oluşur. CPU 0,</text>
+<text x="66" y="2018" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU 0–3&#x27;ü ve NIC 0–3&#x27;ü PCIe ile besler; CPU 1 de GPU</text>
+<text x="66" y="2035" text-anchor="start" style="fill:var(--c-text);font-size:12px">4–7&#x27;yi ve NIC 4–7&#x27;yi. Her yarının kendi belleği vardır;</text>
+<text x="66" y="2052" text-anchor="start" style="fill:var(--c-text);font-size:12px">buna NUMA alanı denir.</text>
+<text x="66" y="2071" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> GPU 5&#x27;e veri hazırlayan süreç CPU 1&#x27;de</text>
+<text x="66" y="2088" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">koşmalı ve CPU 1&#x27;in belleğini kullanmalıdır; yoksa her</text>
+<text x="66" y="2105" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">batch önce CPU&#x27;lar arasındaki hattı geçer.</text>
+<circle cx="49" cy="2131" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="49" y="2135" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
+<text x="66" y="2135" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">GPU ağa nasıl çıkar?</text>
+<text x="66" y="2155" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her GPU&#x27;nun hemen üstünde kendine ait 400 Gb/s&#x27;lik bir</text>
+<text x="66" y="2172" text-anchor="start" style="fill:var(--c-text);font-size:12px">NIC durur (GPU i ↔ NIC i). GPUDirect RDMA sayesinde</text>
+<text x="66" y="2189" text-anchor="start" style="fill:var(--c-text);font-size:12px">veri GPU belleğinden doğrudan NIC&#x27;e geçer, CPU</text>
+<text x="66" y="2206" text-anchor="start" style="fill:var(--c-text);font-size:12px">belleğine hiç uğramaz.</text>
+<text x="66" y="2225" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> kasadan 8 × 50 = 400 GB/s çıkar. Kümede NIC</text>
+<text x="66" y="2242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">i, i. leaf switch&#x27;e takılır; farklı düğümlerdeki aynı</text>
+<text x="66" y="2259" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">numaralı GPU&#x27;lar bu yüzden tek sıçramada buluşur.</text>
+<circle cx="49" cy="2285" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="49" y="2289" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
+<text x="66" y="2289" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">GPU&#x27;lar birbirleriyle nasıl konuşur?</text>
+<text x="66" y="2309" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her GPU&#x27;nun 18 NVLink&#x27;i aşağıdaki dört NVSwitch&#x27;e iner:</text>
+<text x="66" y="2326" text-anchor="start" style="fill:var(--c-text);font-size:12px">ikisine 5&#x27;er, ikisine 4&#x27;er hat. Herhangi iki GPU tek</text>
+<text x="66" y="2343" text-anchor="start" style="fill:var(--c-text);font-size:12px">bir switch sıçramasıyla, her yönde 450 GB/s ile</text>
+<text x="66" y="2360" text-anchor="start" style="fill:var(--c-text);font-size:12px">konuşur.</text>
+<text x="66" y="2379" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> bu yol ağdan 9 kat geniştir; her katmanda</text>
+<text x="66" y="2396" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">konuşan tensör paralelliği bu yüzden bu sekiz GPU&#x27;nun</text>
+<text x="66" y="2413" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">içinde tutulur.</text>
+<circle cx="441" cy="1977" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="441" y="1981" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
+<text x="458" y="1981" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">Depolama trafiği nereden geçer?</text>
+<text x="458" y="2001" text-anchor="start" style="fill:var(--c-text);font-size:12px">Üstteki iki PCIe switch, çift portlu CX-7 kartlarını</text>
+<text x="458" y="2018" text-anchor="start" style="fill:var(--c-text);font-size:12px">(depolama ağı ve in-band yönetim) ve 4&#x27;er U.2 NVMe veri</text>
+<text x="458" y="2035" text-anchor="start" style="fill:var(--c-text);font-size:12px">diskini taşır. CPU 0&#x27;ın yanında ayrıca iki M.2 işletim</text>
+<text x="458" y="2052" text-anchor="start" style="fill:var(--c-text);font-size:12px">sistemi diski durur.</text>
+<text x="458" y="2071" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> veri okumak ve kontrol noktası yazmak,</text>
+<text x="458" y="2088" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">gradyan trafiğinden farklı kartları ve kabloları</text>
+<text x="458" y="2105" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">kullanır; büyük bir kayıt AllReduce&#x27;u yavaşlatmaz.</text>
+<circle cx="441" cy="2131" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="441" y="2135" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
+<text x="458" y="2135" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">İki yarıyı ne birleştirir?</text>
+<text x="458" y="2155" text-anchor="start" style="fill:var(--c-text);font-size:12px">İki CPU, NVIDIA&#x27;nın “CPU communication” dediği hatla</text>
+<text x="458" y="2172" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Xeon&#x27;da UPI) bağlıdır. Bu hat CPU&#x27;ların kendi trafiği</text>
+<text x="458" y="2189" text-anchor="start" style="fill:var(--c-text);font-size:12px">içindir; iki yarıdaki GPU&#x27;lar birbirleriyle CPU&#x27;lar</text>
+<text x="458" y="2206" text-anchor="start" style="fill:var(--c-text);font-size:12px">üzerinden değil, NVLink üzerinden konuşur.</text>
+<text x="458" y="2225" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> bir CPU öbür yarının belleğine erişebilir ama</text>
+<text x="458" y="2242" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">daha yavaş; NUMA sabitlemesi bu cezadan kaçınmak</text>
+<text x="458" y="2259" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">içindir.</text>
+<circle cx="441" cy="2285" r="9" style="fill:var(--c-accent);fill-opacity:.25;stroke:var(--c-accent);stroke-width:1.8"/>
+<text x="441" y="2289" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
+<text x="458" y="2289" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:700">NVSwitch&#x27;leri kim yönetir?</text>
+<text x="458" y="2309" text-anchor="start" style="fill:var(--c-text);font-size:12px">CPU 0&#x27;dan inen PCIe hattı, alttaki PCIe switch</text>
+<text x="458" y="2326" text-anchor="start" style="fill:var(--c-text);font-size:12px">üzerinden dört NVSwitch&#x27;e ulaşır. Bu bir kontrol</text>
+<text x="458" y="2343" text-anchor="start" style="fill:var(--c-text);font-size:12px">yoludur: NVIDIA Fabric Manager switch&#x27;lerin yönlendirme</text>
+<text x="458" y="2360" text-anchor="start" style="fill:var(--c-text);font-size:12px">tablolarını buradan kurar; GPU verisi bu hattan akmaz.</text>
+<text x="458" y="2379" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> Fabric Manager çalışmazsa GPU&#x27;lar tek tek</text>
+<text x="458" y="2396" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">sağlıklı görünse bile NVLink ağı kurulmaz ve çok GPU&#x27;lu</text>
+<text x="458" y="2413" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">işler başlamaz.</text>
+<line x1="420.0" y1="1965.0" x2="420.0" y2="2413.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="2447" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
+<text x="40" y="2465" text-anchor="start" style="fill:var(--c-text);font-size:12px">Kasa içinde GPU&#x27;lar NVLink ile birbirinin belleğine doğrudan erişir. CPU&#x27;ya giden PCIe yolu 7 kat, kasadan çıkan ağ yolu 9</text>
+<text x="40" y="2482" text-anchor="start" style="fill:var(--c-text);font-size:12px">kat daha dardır; bu yüzden en yoğun konuşma kasanın içinde tutulur.</text>
+<rect x="36.0" y="2500.0" width="768.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="46" y="2515" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">8 mutfaklı bir restoran: NVLink mutfakları birbirine bağlayan iç koridordur.</text>
+<line x1="420.0" y1="2535.0" x2="420.0" y2="2557.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="432.0" y="2550" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">× 32 düğüm = 1 SU · × 4 SU = SuperPOD</text>
+<rect x="28" y="2560" width="784" height="1674" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="2584" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">4 · Küme: DGX SuperPOD</text>
+<text x="40" y="2606" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Hiyerarşiyi hatırla: parçadan bütüne</text>
+<rect x="40.0" y="2616.0" width="172.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="126.0" y="2630" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100 SXM5</text>
+<text x="126.0" y="2644" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">tek GPU modülü</text>
+<line x1="214.0" y1="2636.0" x2="234.0" y2="2636.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="236.0" y="2616.0" width="172.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="322.0" y="2630" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX H100</text>
+<text x="322.0" y="2644" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 GPU&#x27;lu sunucu</text>
+<line x1="410.0" y1="2636.0" x2="430.0" y2="2636.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="432.0" y="2616.0" width="172.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="518.0" y="2630" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">SU</text>
+<text x="518.0" y="2644" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 DGX = 256 GPU</text>
+<line x1="606.0" y1="2636.0" x2="626.0" y2="2636.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="628.0" y="2616.0" width="172.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="714.0" y="2630" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX SuperPOD</text>
+<text x="714.0" y="2644" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">4 SU = 127 DGX</text>
+<text x="40" y="2676" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">H100 SXM5 modülleri anakarta değil, 8 GPU&#x27;yu ve 4 NVSwitch&#x27;i taşıyan HGX taban kartına takılır; DGX H100&#x27;ün iki işlemcisi Intel Xeon</text>
+<text x="40" y="2691" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">8480C&#x27;dir. SuperPOD 32 DGX&#x27;lik birimlerden (SU) kurulur; referans tasarım 4 SU&#x27;dur.</text>
+<text x="40" y="2723" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Leaf ve spine nedir?</text>
+<rect x="40" y="2735" width="244" height="167" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="48.0" y="2743.0" width="228.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="162.0" y="2758.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">Leaf (yaprak) switch</text>
+<text x="52" y="2785" text-anchor="start" style="fill:var(--c-text);font-size:12px">Sunucuların doğrudan takıldığı alt</text>
+<text x="52" y="2802" text-anchor="start" style="fill:var(--c-text);font-size:12px">katmandır; ağacın uçları, yani</text>
+<text x="52" y="2819" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU&#x27;lara en yakın switch&#x27;lerdir.</text>
+<text x="52" y="2842" text-anchor="start" style="fill:var(--c-text);font-size:12px">SuperPOD&#x27;da: SU başına 8 tane, her</text>
+<text x="52" y="2859" text-anchor="start" style="fill:var(--c-text);font-size:12px">ray için bir tane. 64 portunun</text>
+<text x="52" y="2876" text-anchor="start" style="fill:var(--c-text);font-size:12px">32&#x27;si DGX&#x27;lere iner, 32&#x27;si</text>
+<text x="52" y="2893" text-anchor="start" style="fill:var(--c-text);font-size:12px">spine&#x27;lara çıkar.</text>
+<rect x="296" y="2735" width="244" height="167" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="304.0" y="2743.0" width="228.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="418.0" y="2758.3" text-anchor="middle" style="fill:var(--c-text);font-size:12px;font-weight:700">Spine (omurga) switch</text>
+<text x="308" y="2785" text-anchor="start" style="fill:var(--c-text);font-size:12px">Leaf&#x27;leri birbirine bağlayan üst</text>
+<text x="308" y="2802" text-anchor="start" style="fill:var(--c-text);font-size:12px">katmandır; spine&#x27;a hiçbir sunucu</text>
+<text x="308" y="2819" text-anchor="start" style="fill:var(--c-text);font-size:12px">takılmaz.</text>
+<text x="308" y="2842" text-anchor="start" style="fill:var(--c-text);font-size:12px">SuperPOD&#x27;da: toplam 16 tane; her</text>
+<text x="308" y="2859" text-anchor="start" style="fill:var(--c-text);font-size:12px">biri 32 leaf&#x27;in hepsine ikişer</text>
+<text x="308" y="2876" text-anchor="start" style="fill:var(--c-text);font-size:12px">hatla bağlıdır ve 64 portu böyle</text>
+<text x="308" y="2893" text-anchor="start" style="fill:var(--c-text);font-size:12px">dolar.</text>
+<text x="552" y="2749" text-anchor="start" style="fill:var(--c-text);font-size:12px">İki katmanın kuralı basittir: her leaf</text>
+<text x="552" y="2766" text-anchor="start" style="fill:var(--c-text);font-size:12px">her spine&#x27;a bağlanır. Böylece herhangi</text>
+<text x="552" y="2783" text-anchor="start" style="fill:var(--c-text);font-size:12px">iki sunucu en fazla leaf → spine → leaf</text>
+<text x="552" y="2800" text-anchor="start" style="fill:var(--c-text);font-size:12px">yoluyla buluşur ve küme büyüdükçe yol</text>
+<text x="552" y="2817" text-anchor="start" style="fill:var(--c-text);font-size:12px">uzamaz. Sunucu eklemek için leaf, bant</text>
+<text x="552" y="2834" text-anchor="start" style="fill:var(--c-text);font-size:12px">genişliği eklemek için spine eklenir. Bu</text>
+<text x="552" y="2851" text-anchor="start" style="fill:var(--c-text);font-size:12px">düzen telefon santrallerinden gelir</text>
+<text x="552" y="2868" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Clos, 1953); yukarı çıktıkça</text>
+<text x="552" y="2885" text-anchor="start" style="fill:var(--c-text);font-size:12px">bağlantıların kalınlaştığı hâline</text>
+<text x="552" y="2902" text-anchor="start" style="fill:var(--c-text);font-size:12px">fat-tree, yani şişman ağaç denir</text>
+<text x="552" y="2919" text-anchor="start" style="fill:var(--c-text);font-size:12px">(Leiserson, 1985).</text>
+<text x="552" y="2941" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Benzetme: leaf bir mahallenin santralidir,</text>
+<text x="552" y="2956" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">spine şehirler arasındaki ana hat.</text>
+<text x="40" y="2994" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">Ne neyi yapar?</text>
+<text x="168" y="3020" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">Görevi</text>
+<text x="384" y="3020" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">İçinde</text>
+<text x="600" y="3020" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">Bağlantı ve paralellik</text>
+<line x1="40.0" y1="3029.0" x2="800.0" y2="3029.0" style="stroke:var(--c-border);stroke-width:1.2"/>
+<rect x="40.0" y="3042.0" width="112.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="96.0" y="3058.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100 SXM5</text>
+<text x="168" y="3058" text-anchor="start" style="fill:var(--c-text);font-size:12px">modelin matematiğini yapar; 132</text>
+<text x="168" y="3075" text-anchor="start" style="fill:var(--c-text);font-size:12px">SM&#x27;deki Tensor Core&#x27;lar matris</text>
+<text x="168" y="3092" text-anchor="start" style="fill:var(--c-text);font-size:12px">çarpımlarını yürütür.</text>
+<text x="384" y="3058" text-anchor="start" style="fill:var(--c-text);font-size:12px">ağırlıkların, aktivasyonların ve</text>
+<text x="384" y="3075" text-anchor="start" style="fill:var(--c-text);font-size:12px">optimizer durumunun bu GPU&#x27;ya</text>
+<text x="384" y="3092" text-anchor="start" style="fill:var(--c-text);font-size:12px">düşen payı, 80 GB HBM3&#x27;te.</text>
+<text x="600" y="3058" text-anchor="start" style="fill:var(--c-text);font-size:12px">18 NVLink ile kasadaki diğer</text>
+<text x="600" y="3075" text-anchor="start" style="fill:var(--c-text);font-size:12px">7 GPU&#x27;ya, PCIe ile CPU&#x27;ya ve</text>
+<text x="600" y="3092" text-anchor="start" style="fill:var(--c-text);font-size:12px">kendi NIC&#x27;ine ulaşır; her</text>
+<text x="600" y="3109" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU&#x27;nun bir TP, bir PP ve bir DP</text>
+<text x="600" y="3126" text-anchor="start" style="fill:var(--c-text);font-size:12px">koordinatı vardır.</text>
+<line x1="40.0" y1="3136.0" x2="800.0" y2="3136.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="40.0" y="3150.0" width="112.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="96.0" y="3166.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX H100</text>
+<text x="168" y="3166" text-anchor="start" style="fill:var(--c-text);font-size:12px">8 GPU&#x27;yu tek bir NVLink alanında</text>
+<text x="168" y="3183" text-anchor="start" style="fill:var(--c-text);font-size:12px">birleştirir; iki Xeon işlemci</text>
+<text x="168" y="3200" text-anchor="start" style="fill:var(--c-text);font-size:12px">işletim sistemini, veri</text>
+<text x="168" y="3217" text-anchor="start" style="fill:var(--c-text);font-size:12px">yükleyiciyi ve GPU&#x27;lara iş</text>
+<text x="168" y="3234" text-anchor="start" style="fill:var(--c-text);font-size:12px">gönderen süreçleri koşturur.</text>
+<text x="384" y="3166" text-anchor="start" style="fill:var(--c-text);font-size:12px">HGX taban kartında 8 GPU ve 4</text>
+<text x="384" y="3183" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVSwitch; ayrıca 2 TB RAM,</text>
+<text x="384" y="3200" text-anchor="start" style="fill:var(--c-text);font-size:12px">8 × 3,84 TB NVMe önbellek ve 8 +</text>
+<text x="384" y="3217" text-anchor="start" style="fill:var(--c-text);font-size:12px">2 ağ kartı.</text>
+<text x="600" y="3166" text-anchor="start" style="fill:var(--c-text);font-size:12px">tensör paralelliği (TP 8) bu</text>
+<text x="600" y="3183" text-anchor="start" style="fill:var(--c-text);font-size:12px">kasanın içinde kalır; kasa ağa</text>
+<text x="600" y="3200" text-anchor="start" style="fill:var(--c-text);font-size:12px">her GPU için bir ray olmak üzere</text>
+<text x="600" y="3217" text-anchor="start" style="fill:var(--c-text);font-size:12px">8 rayla çıkar.</text>
+<line x1="40.0" y1="3244.0" x2="800.0" y2="3244.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="40.0" y="3258.0" width="112.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="96.0" y="3274.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">SU</text>
+<text x="168" y="3274" text-anchor="start" style="fill:var(--c-text);font-size:12px">kurulumun ve ağın tekrar eden</text>
+<text x="168" y="3291" text-anchor="start" style="fill:var(--c-text);font-size:12px">birimidir: 32 DGX (8 kabin × 4)</text>
+<text x="168" y="3308" text-anchor="start" style="fill:var(--c-text);font-size:12px">ve onları bağlayan 8 leaf</text>
+<text x="168" y="3325" text-anchor="start" style="fill:var(--c-text);font-size:12px">switch.</text>
+<text x="384" y="3274" text-anchor="start" style="fill:var(--c-text);font-size:12px">256 GPU; her ray tek bir</text>
+<text x="384" y="3291" text-anchor="start" style="fill:var(--c-text);font-size:12px">leaf&#x27;tir, yani Leaf-xx-0i bütün</text>
+<text x="384" y="3308" text-anchor="start" style="fill:var(--c-text);font-size:12px">düğümlerin NIC i&#x27;sini toplar.</text>
+<text x="600" y="3274" text-anchor="start" style="fill:var(--c-text);font-size:12px">aynı numaralı GPU&#x27;lar tek</text>
+<text x="600" y="3291" text-anchor="start" style="fill:var(--c-text);font-size:12px">sıçramada buluşur; boru hattı ve</text>
+<text x="600" y="3308" text-anchor="start" style="fill:var(--c-text);font-size:12px">veri paralelliğinin düğümler</text>
+<text x="600" y="3325" text-anchor="start" style="fill:var(--c-text);font-size:12px">arası trafiği önce burada, ray</text>
+<text x="600" y="3342" text-anchor="start" style="fill:var(--c-text);font-size:12px">ray akar.</text>
+<line x1="40.0" y1="3352.0" x2="800.0" y2="3352.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="40.0" y="3366.0" width="112.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="96.0" y="3382.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">DGX SuperPOD</text>
+<text x="168" y="3382" text-anchor="start" style="fill:var(--c-text);font-size:12px">SU&#x27;ları spine katmanıyla tek bir</text>
+<text x="168" y="3399" text-anchor="start" style="fill:var(--c-text);font-size:12px">engelsiz ağda birleştirir;</text>
+<text x="168" y="3416" text-anchor="start" style="fill:var(--c-text);font-size:12px">yanına ayrı depolama ve yönetim</text>
+<text x="168" y="3433" text-anchor="start" style="fill:var(--c-text);font-size:12px">ağlarını, UFM&#x27;i ve Base Command</text>
+<text x="168" y="3450" text-anchor="start" style="fill:var(--c-text);font-size:12px">ile Slurm gibi yazılımları</text>
+<text x="168" y="3467" text-anchor="start" style="fill:var(--c-text);font-size:12px">ekler.</text>
+<text x="384" y="3382" text-anchor="start" style="fill:var(--c-text);font-size:12px">127 DGX = 1.016 GPU; tek bir</text>
+<text x="384" y="3399" text-anchor="start" style="fill:var(--c-text);font-size:12px">eğitim işi bütün kümeye</text>
+<text x="384" y="3416" text-anchor="start" style="fill:var(--c-text);font-size:12px">yayılabilir.</text>
+<text x="600" y="3382" text-anchor="start" style="fill:var(--c-text);font-size:12px">veri paralelliği bütün kümeye</text>
+<text x="600" y="3399" text-anchor="start" style="fill:var(--c-text);font-size:12px">yayılır, raylar arası trafik bir</text>
+<text x="600" y="3416" text-anchor="start" style="fill:var(--c-text);font-size:12px">spine üzerinden döner; Slurm işi</text>
+<text x="600" y="3433" text-anchor="start" style="fill:var(--c-text);font-size:12px">düğümlere yerleştirir ve arızalı</text>
+<text x="600" y="3450" text-anchor="start" style="fill:var(--c-text);font-size:12px">düğümü devreden çıkarır.</text>
+<rect x="40.0" y="3485.0" width="760.0" height="84" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="52" y="3505" text-anchor="start" style="fill:var(--c-text);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Neden 128 değil 127?</tspan> Kâğıt üstünde 4 SU × 32 = 128 DGX eder. NVIDIA&#x27;nın yerleşim düzeninde ise bir çift UFM cihazı bir</text>
+<text x="52" y="3522" text-anchor="start" style="fill:var(--c-text);font-size:12px">DGX&#x27;in yerini alır (NVIDIA&#x27;nın şemasında SU 4&#x27;teki C-UFM 1 ve 2); tam bir SuperPOD bu yüzden en fazla 127 DGX, yani</text>
+<text x="52" y="3539" text-anchor="start" style="fill:var(--c-text);font-size:12px">1.016 GPU&#x27;dur. Kablo tablosu da bunu gösterir: 127 × 8 + 4 UFM = 1.020 kablo. Daha küçük kurulumlar tek SU&#x27;dan başlar</text>
+<text x="52" y="3556" text-anchor="start" style="fill:var(--c-text);font-size:12px">(31–127 DGX).</text>
+<rect x="36" y="3581" width="768" height="392" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="214.0" y="3595.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="252.0" y="3610.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-01</text>
+<rect x="318.0" y="3595.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="356.0" y="3610.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-02</text>
+<rect x="530.0" y="3595.0" width="76.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.20;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="568.0" y="3610.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Spine-16</text>
+<text x="462" y="3610" text-anchor="middle" style="fill:var(--c-text-mute);font-size:13px;font-weight:700">⋯</text>
+<text x="620" y="3610" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">16 × QM9700</text>
+<rect x="46" y="3651" width="226" height="176" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="52.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="83.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-01</text>
+<rect x="120.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="151.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-02</text>
+<rect x="206.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="237.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-01-08</text>
+<text x="194" y="3678" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<line x1="89.0" y1="3737.0" x2="83.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="89.0" y1="3737.0" x2="151.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="89.0" y1="3737.0" x2="237.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="54" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="89" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-001</text>
+<text x="89" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<line x1="175.0" y1="3737.0" x2="83.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="175.0" y1="3737.0" x2="151.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="175.0" y1="3737.0" x2="237.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="140" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="175" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-032</text>
+<text x="175" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<text x="132" y="3760" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<text x="56" y="3815" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">SU 1</text>
+<text x="98" y="3815" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">H100-001 … 032 · 8 leaf</text>
+<rect x="290" y="3651" width="226" height="176" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="296.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="327.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-02-01</text>
+<rect x="364.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="395.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-02-02</text>
+<rect x="450.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="481.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-02-08</text>
+<text x="438" y="3678" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<line x1="333.0" y1="3737.0" x2="327.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="333.0" y1="3737.0" x2="395.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="333.0" y1="3737.0" x2="481.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="298" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="333" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-033</text>
+<text x="333" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<line x1="419.0" y1="3737.0" x2="327.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="419.0" y1="3737.0" x2="395.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="419.0" y1="3737.0" x2="481.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="384" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="419" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-064</text>
+<text x="419" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<text x="376" y="3760" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<text x="300" y="3815" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">SU 2</text>
+<text x="342" y="3815" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">H100-033 … 064 · 8 leaf</text>
+<rect x="574" y="3651" width="226" height="176" rx="8" style="fill:none;stroke:var(--c-accent-2);stroke-width:1.2;stroke-dasharray:4 3"/>
+<rect x="580.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="611.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-01</text>
+<rect x="648.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="679.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-02</text>
+<rect x="734.0" y="3663.0" width="62.0" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="765.0" y="3677.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">Leaf-04-08</text>
+<text x="722" y="3678" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<line x1="617.0" y1="3737.0" x2="611.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="617.0" y1="3737.0" x2="679.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="617.0" y1="3737.0" x2="765.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="582" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="617" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-097</text>
+<text x="617" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<line x1="703.0" y1="3737.0" x2="611.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="703.0" y1="3737.0" x2="679.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<line x1="703.0" y1="3737.0" x2="765.0" y2="3683.0" style="stroke:var(--c-warn);stroke-width:1.3;stroke-opacity:.75"/>
+<rect x="668" y="3737" width="70" height="38" rx="5" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="703" y="3753" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">H100-127</text>
+<text x="703" y="3768" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 × H100</text>
+<text x="660" y="3760" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-weight:700">⋯</text>
+<text x="584" y="3815" text-anchor="start" style="fill:var(--c-accent-2);font-size:13px;font-weight:700">SU 4</text>
+<text x="626" y="3815" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">H100-097 … 127 + C-UFM</text>
+<text x="545" y="3743" text-anchor="middle" style="fill:var(--c-text-mute);font-size:16px;font-weight:700">⋯</text>
+<text x="545" y="3763" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">SU 3</text>
+<path d="M746 3752 H743 V3683" style="fill:none;stroke:var(--c-accent);stroke-width:1.4"/>
+<rect x="746.0" y="3743.0" width="52.0" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="772.0" y="3756.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">C-UFM 1</text>
+<path d="M746 3776 H740 V3683" style="fill:none;stroke:var(--c-accent);stroke-width:1.4"/>
+<rect x="746.0" y="3767.0" width="52.0" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="772.0" y="3780.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">C-UFM 2</text>
+<line x1="252.0" y1="3617.0" x2="83.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="151.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="237.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="327.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="395.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="481.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="611.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="679.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="252.0" y1="3617.0" x2="765.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="83.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="151.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="237.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="327.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="395.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="481.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="611.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="679.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="356.0" y1="3617.0" x2="765.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="83.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="151.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="237.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="327.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="395.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="481.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="611.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="679.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="568.0" y1="3617.0" x2="765.0" y2="3663.0" style="stroke:var(--c-danger);stroke-width:1.4;stroke-opacity:.55"/>
+<line x1="48.0" y1="3849.0" x2="70.0" y2="3849.0" style="stroke:var(--c-danger);stroke-width:2.4"/>
+<text x="76" y="3853" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">spine–leaf: 2 × 400 Gb/s</text>
+<line x1="300.0" y1="3849.0" x2="322.0" y2="3849.0" style="stroke:var(--c-warn);stroke-width:2.4"/>
+<text x="328" y="3853" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DGX–leaf: 400 Gb/s</text>
+<line x1="552.0" y1="3849.0" x2="574.0" y2="3849.0" style="stroke:var(--c-accent);stroke-width:2.4"/>
+<text x="580" y="3853" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">UFM–leaf: 200 Gb/s</text>
+<text x="48" y="3877" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Hat renkleri NVIDIA&#x27;nın şemasındaki gibidir ve burada kablo türünü gösterir (posterin sütun renkleri değil). Adlar da oradan:</text>
+<text x="48" y="3892" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Leaf-SU-ray; Leaf-04-08, SU 4&#x27;ün 8. rayıdır ve her DGX&#x27;in NIC 0–7&#x27;si Leaf-xx-01 ile 08 arasına gider. SU 3 (H100-065 … 096) aynı</text>
+<text x="48" y="3907" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">düzeni tekrarlar.</text>
+<rect x="44.0" y="3921.0" width="368.0" height="40" rx="5" style="fill:var(--c-warn);fill-opacity:.10;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="54" y="3937" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">depolama ağı (ayrı InfiniBand)</text>
+<text x="54" y="3953" text-anchor="start" style="fill:var(--c-text);font-size:11px">16 switch · düğüm başına ≥ 40 GB/s</text>
+<rect x="428.0" y="3921.0" width="368.0" height="40" rx="5" style="fill:var(--c-text-mute);fill-opacity:.06;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="438.0" y="3937" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">yönetim ağları (Ethernet)</text>
+<text x="438.0" y="3953" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">in-band 100 GbE · OOB 1 GbE</text>
+<rect x="40.0" y="3985" width="178.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="50.0" y="4007" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">127</text>
+<text x="50.0" y="4024" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">DGX düğümü</text>
+<rect x="234.0" y="3985" width="178.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="244.0" y="4007" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">1.016</text>
+<text x="244.0" y="4024" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU</text>
+<rect x="428.0" y="3985" width="178.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="438.0" y="4007" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">32 + 16</text>
+<text x="438.0" y="4024" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">leaf + spine</text>
+<rect x="622.0" y="3985" width="178.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="632.0" y="4007" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">4</text>
+<text x="632.0" y="4024" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ayrı ağ</text>
+<text x="40" y="4055" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">127 DGX (UFM çifti SU 4&#x27;te)</text>
+<text x="420" y="4055" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ray içi: SU&#x27;daki 31 düğüme tek sıçrama</text>
+<text x="40" y="4071" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">hesaplama: 32 leaf + 16 spine</text>
+<text x="420" y="4071" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">her leaf her spine&#x27;a 2 × 400 Gb/s</text>
+<text x="40" y="4087" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1:1 fat-tree · SHARPv3</text>
+<text x="420" y="4087" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">4 ağ: hesaplama, depolama, 2 yönetim</text>
+<text x="40" y="4115" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Neden önemli?</text>
+<text x="40" y="4133" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her düğümün NIC 0&#x27;ı Leaf-xx-01&#x27;e, NIC 7&#x27;si Leaf-xx-08&#x27;e takılır; bu sekiz şerit raylardır ve aynı numaralı GPU&#x27;lar tek</text>
+<text x="40" y="4150" text-anchor="start" style="fill:var(--c-text);font-size:12px">sıçramada buluşur. Her leaf de her spine&#x27;a ikişer 400 Gb/s hatla ulaşır; raylar arası trafik bu yüzden hep bir spine</text>
+<text x="40" y="4167" text-anchor="start" style="fill:var(--c-text);font-size:12px">üzerinden döner. Depolama ve yönetim trafiği hesaplama ağını meşgul etmesin diye kendi ağlarından akar. Aynı desen 64 SU&#x27;ya</text>
+<text x="40" y="4184" text-anchor="start" style="fill:var(--c-text);font-size:12px">büyür: 2.048 DGX, yani 16.384 H100; B ve C bölümleri bu ölçekte düşünür.</text>
+<rect x="36.0" y="4202.0" width="768.0" height="22" rx="5" style="fill:var(--c-accent);fill-opacity:.06;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="46" y="4217" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Restoran zinciri: InfiniBand şubeler arası kurye, depolama merkez depo.</text>
+<line x1="420.0" y1="4237.0" x2="420.0" y2="4259.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="432.0" y="4252" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">SuperPOD&#x27;un ağını yakından inceleyelim</text>
+<rect x="28" y="4262" width="784" height="719" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="4286" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">4b · SuperPOD&#x27;u yakından incele</text>
+<text x="40" y="4306" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Aynı 127 DGX&#x27;i bu kez ağ gözüyle okuyalım: ağ neden engelsiz, trafik nasıl yol bulur ve ne kadar büyüyebilir?</text>
+<text x="40" y="4336" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">1 · Ağ neden engelsiz (1:1)? Portları sayalım</text>
+<rect x="40.0" y="4362.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="105.0" y="4376" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">32 DGX</text>
+<text x="105.0" y="4390" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">her birinin NIC i&#x27;si</text>
+<line x1="173.0" y1="4382.0" x2="212.0" y2="4382.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.8"/>
+<text x="192" y="4374" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 port</text>
+<rect x="215.0" y="4362.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="4376" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">leaf i · QM9700</text>
+<text x="280.0" y="4390" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">64 × 400 Gb/s port</text>
+<line x1="348.0" y1="4382.0" x2="387.0" y2="4382.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.8"/>
+<text x="367" y="4374" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">32 port</text>
+<rect x="390.0" y="4362.0" width="130.0" height="40" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="455.0" y="4376" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">16 spine</text>
+<text x="455.0" y="4390" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">64&#x27;er port</text>
+<rect x="40.0" y="4418.0" width="480.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.10;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="4433.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">32 leaf × 32 yukarı port = 1.024 kablo = 16 spine × 64 port</text>
+<text x="40" y="4462" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Kablo sayısı (NVIDIA tablosu): düğümlerden leaf&#x27;lere 1.020 (127 × 8 + 4 UFM),</text>
+<text x="40" y="4479" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">leaf&#x27;lerden spine&#x27;lara 1.024.</text>
+<text x="552" y="4374" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her leaf&#x27;in 64 portunun 32&#x27;si düğümlere</text>
+<text x="552" y="4391" text-anchor="start" style="fill:var(--c-text);font-size:12px">iner, 32&#x27;si spine&#x27;lara çıkar. Aşağıdan</text>
+<text x="552" y="4408" text-anchor="start" style="fill:var(--c-text);font-size:12px">ne kadar trafik girerse yukarı o kadar</text>
+<text x="552" y="4425" text-anchor="start" style="fill:var(--c-text);font-size:12px">çıkabilir; bu yüzden aşırı abonelik</text>
+<text x="552" y="4442" text-anchor="start" style="fill:var(--c-text);font-size:12px">yoktur (1:1).</text>
+<line x1="540.0" y1="4360.0" x2="540.0" y2="4479.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="4515" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">2 · Trafik nasıl yol bulur?</text>
+<text x="40" y="4539" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Aynı ray: A&#x27;nın GPU 3&#x27;ü → B&#x27;nin GPU 3&#x27;ü</text>
+<rect x="400.3" y="4527.0" width="119.7" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.14;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="460.1" y="4540.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">1 leaf, spine yok</text>
+<rect x="40.0" y="4553.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="80.0" y="4569.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
+<line x1="122.0" y1="4565.0" x2="138.0" y2="4565.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="140.0" y="4553.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="180.0" y="4569.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 3</text>
+<line x1="222.0" y1="4565.0" x2="238.0" y2="4565.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="240.0" y="4553.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="280.0" y="4569.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · B</text>
+<text x="40" y="4605" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Farklı ray, düz yol: GPU 3 → GPU 5</text>
+<rect x="412.5" y="4593.0" width="107.5" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="466.2" y="4606.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine&#x27;dan geçer</text>
+<rect x="40.0" y="4619.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="80.0" y="4635.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
+<line x1="122.0" y1="4631.0" x2="138.0" y2="4631.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="140.0" y="4619.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="180.0" y="4635.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 3</text>
+<line x1="222.0" y1="4631.0" x2="238.0" y2="4631.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="240.0" y="4619.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="4635.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine</text>
+<line x1="322.0" y1="4631.0" x2="338.0" y2="4631.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="340.0" y="4619.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="380.0" y="4635.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 5</text>
+<line x1="422.0" y1="4631.0" x2="438.0" y2="4631.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="440.0" y="4619.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="480.0" y="4635.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · B</text>
+<text x="40" y="4671" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Farklı ray, PXN ile: önce NVLink, sonra tek leaf</text>
+<rect x="449.1" y="4659.0" width="70.9" height="18" rx="5" style="fill:var(--c-success);fill-opacity:.14;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="484.6" y="4672.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine yok</text>
+<rect x="40.0" y="4685.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="80.0" y="4701.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 3 · A</text>
+<line x1="122.0" y1="4697.0" x2="138.0" y2="4697.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:2.2"/>
+<rect x="140.0" y="4685.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="180.0" y="4701.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · A</text>
+<line x1="222.0" y1="4697.0" x2="238.0" y2="4697.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="240.0" y="4685.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="280.0" y="4701.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">leaf 5</text>
+<line x1="322.0" y1="4697.0" x2="338.0" y2="4697.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.4"/>
+<rect x="340.0" y="4685.0" width="80.0" height="24" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="380.0" y="4701.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPU 5 · B</text>
+<text x="552" y="4539" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA&#x27;ya göre bir raydaki trafik SU</text>
+<text x="552" y="4556" text-anchor="start" style="fill:var(--c-text);font-size:12px">içindeki diğer 31 düğüme her zaman tek</text>
+<text x="552" y="4573" text-anchor="start" style="fill:var(--c-text);font-size:12px">sıçramadır; raylar arası trafik ise</text>
+<text x="552" y="4590" text-anchor="start" style="fill:var(--c-text);font-size:12px">spine katmanından geçer. NCCL 2.12&#x27;deki</text>
+<text x="552" y="4607" text-anchor="start" style="fill:var(--c-text);font-size:12px">PXN, veriyi önce NVLink ile doğru</text>
+<text x="552" y="4624" text-anchor="start" style="fill:var(--c-text);font-size:12px">raydaki GPU&#x27;ya taşıyıp spine&#x27;ı atlar;</text>
+<text x="552" y="4641" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA bu sayede all2all veriminin iki</text>
+<text x="552" y="4658" text-anchor="start" style="fill:var(--c-text);font-size:12px">katına çıktığını raporlar.</text>
+<line x1="540.0" y1="4527.0" x2="540.0" y2="4709.0" style="stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="4745" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">3 · Ölçek ve bant genişliği</text>
+<rect x="40.0" y="4757" width="180.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="50.0" y="4779" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">400 GB/s</text>
+<text x="50.0" y="4796" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">düğüm başına</text>
+<rect x="228.0" y="4757" width="180.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="238.0" y="4779" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">12,8 TB/s</text>
+<text x="238.0" y="4796" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">SU başına</text>
+<rect x="40.0" y="4813" width="180.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="50.0" y="4835" text-anchor="start" style="fill:var(--c-accent);font-size:16px;font-weight:700">50,8 TB/s</text>
+<text x="50.0" y="4852" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">tüm GPU&#x27;lar</text>
+<rect x="228.0" y="4813" width="180.0" height="48" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="238.0" y="4835" text-anchor="start" style="fill:var(--c-accent-2);font-size:16px;font-weight:700">51,2 TB/s</text>
+<text x="238.0" y="4852" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">spine kapasitesi</text>
+<text x="40" y="4891" text-anchor="start" style="fill:var(--c-text);font-size:12px">Bir düğüm ağa 8 × 50 GB/s = 400 GB/s basar; 32 düğümlük bir</text>
+<text x="40" y="4908" text-anchor="start" style="fill:var(--c-text);font-size:12px">SU 12,8 TB/s eder. 1.016 GPU&#x27;nun birlikte gönderebildiği</text>
+<text x="40" y="4925" text-anchor="start" style="fill:var(--c-text);font-size:12px">(50,8 TB/s) ile 16 spine&#x27;ın taşıyabildiği</text>
+<text x="40" y="4942" text-anchor="start" style="fill:var(--c-text);font-size:12px">(16 × 64 × 50 GB/s = 51,2 TB/s) neredeyse eşittir; engelsiz</text>
+<text x="40" y="4959" text-anchor="start" style="fill:var(--c-text);font-size:12px">ağın sayılarla tanımı budur.</text>
+<text x="432" y="4745" text-anchor="start" style="fill:var(--c-accent);font-size:13px;font-weight:700">4 · Daha büyüğü: üçüncü katman</text>
+<text x="432" y="4771" text-anchor="start" style="fill:var(--c-text);font-size:12px">NVIDIA&#x27;nın tablosunda 8 SU&#x27;ya kadar iki katman (leaf +</text>
+<text x="432" y="4788" text-anchor="start" style="fill:var(--c-text);font-size:12px">spine) yeter; 16 SU&#x27;dan itibaren üstlerine bir core katmanı</text>
+<text x="432" y="4805" text-anchor="start" style="fill:var(--c-text);font-size:12px">eklenir. 2.048 DGX&#x27;lik (16.384 H100) kurulum 512 leaf,</text>
+<text x="432" y="4822" text-anchor="start" style="fill:var(--c-text);font-size:12px">512 spine ve 256 core switch kullanır; B ve C bölümleri bu</text>
+<text x="432" y="4839" text-anchor="start" style="fill:var(--c-text);font-size:12px">ölçekte düşünür.</text>
+<text x="432" y="4865" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px"><tspan style="fill:var(--c-accent);font-weight:700">Pratikte:</tspan> NCCL kanallarını raylara göre kurar: aynı numaralı</text>
+<text x="432" y="4882" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">GPU&#x27;lar tek leaf üzerinden konuşur, raylar arası trafik ise</text>
+<text x="432" y="4899" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">PXN ile önce NVLink&#x27;e taşınır.</text>
+<line x1="420.0" y1="4757.0" x2="420.0" y2="4959.0" style="stroke:var(--c-border);stroke-width:1"/>
+<line x1="420.0" y1="4984.0" x2="420.0" y2="5006.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<text x="432.0" y="4999" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700">kümeyi ayakta tutan yapı taşları</text>
+<rect x="28" y="5009" width="784" height="797" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<text x="40" y="5033" text-anchor="start" style="fill:var(--c-text);font-size:14px;font-weight:700">SuperPOD&#x27;un yapı taşları: her biri neden var?</text>
+<text x="40" y="5052" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NVIDIA&#x27;nın 4 SU&#x27;luk referans tasarımı (127 DGX); adetler ve görevler NVIDIA belgelerinden. Şerit rengi parçanın hangi sütuna hizmet</text>
+<text x="40" y="5067" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">ettiğini gösterir; gri yönetim ve altyapıdır.</text>
+<text x="40" y="5091" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Donanım</text>
+<rect x="36" y="5101" width="248" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36" y="5101" width="4" height="128" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
+<text x="48" y="5120" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">DGX H100 sistemi</text>
+<rect x="237.8" y="5107.0" width="38.2" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="256.9" y="5120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×127</text>
+<text x="48" y="5137" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 H100 · 640 GB HBM3 · 900 GB/s NVLink</text>
+<text x="48" y="5155" text-anchor="start" style="fill:var(--c-text);font-size:11px">Modelin bütün matematiği burada</text>
+<text x="48" y="5170" text-anchor="start" style="fill:var(--c-text);font-size:11px">yapılır; kümedeki diğer her parça bu</text>
+<text x="48" y="5185" text-anchor="start" style="fill:var(--c-text);font-size:11px">kutuları beslemek için vardır.</text>
+<rect x="296" y="5101" width="248" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="296" y="5101" width="4" height="128" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<text x="308" y="5120" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Hesaplama ağı · QM9700</text>
+<rect x="503.9" y="5107.0" width="32.2" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="519.9" y="5120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×48</text>
+<text x="308" y="5137" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">32 leaf + 16 spine · düğüm başına</text>
+<text x="308" y="5151" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 × 400 Gb/s</text>
+<text x="308" y="5169" text-anchor="start" style="fill:var(--c-text);font-size:11px">Gradyan ve aktivasyon trafiği düğümler</text>
+<text x="308" y="5184" text-anchor="start" style="fill:var(--c-text);font-size:11px">arasında tıkanmadan akmalı; bu yüzden</text>
+<text x="308" y="5199" text-anchor="start" style="fill:var(--c-text);font-size:11px">her GPU&#x27;nun kendi 400 Gb/s&#x27;lik rayı</text>
+<text x="308" y="5214" text-anchor="start" style="fill:var(--c-text);font-size:11px">vardır.</text>
+<rect x="556" y="5101" width="248" height="128" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="556" y="5101" width="4" height="128" rx="2" style="fill:var(--c-warn);fill-opacity:.85"/>
+<text x="568" y="5120" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Depolama ağı · QM9700</text>
+<rect x="763.9" y="5107.0" width="32.2" height="18" rx="5" style="fill:var(--c-warn);fill-opacity:.14;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="779.9" y="5120.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×16</text>
+<text x="568" y="5137" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">düğüm başına ≥ 40 GB/s · ~4:3</text>
+<text x="568" y="5155" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri okuma ve kontrol noktası yazma,</text>
+<text x="568" y="5170" text-anchor="start" style="fill:var(--c-text);font-size:11px">hesaplama ağındaki AllReduce trafiğine</text>
+<text x="568" y="5185" text-anchor="start" style="fill:var(--c-text);font-size:11px">karışmasın; hızı depolama dizisinin</text>
+<text x="568" y="5200" text-anchor="start" style="fill:var(--c-text);font-size:11px">tepe hızına göre seçilir.</text>
+<rect x="36" y="5237" width="248" height="144" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36" y="5237" width="4" height="144" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<text x="48" y="5256" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">UFM cihazı</text>
+<rect x="249.9" y="5243.0" width="26.1" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="262.9" y="5256.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×4</text>
+<text x="48" y="5273" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">InfiniBand telemetrisi ve analitiği</text>
+<text x="48" y="5291" text-anchor="start" style="fill:var(--c-text);font-size:11px">Binlerce port ve kabloyu izleyip</text>
+<text x="48" y="5306" text-anchor="start" style="fill:var(--c-text);font-size:11px">bozulan bağlantıyı bulur (Llama 3</text>
+<text x="48" y="5321" text-anchor="start" style="fill:var(--c-text);font-size:11px">eğitiminde kesintilerin %8,4&#x27;ü switch</text>
+<text x="48" y="5336" text-anchor="start" style="fill:var(--c-text);font-size:11px">ve kablodan geldi). Bir çifti bir</text>
+<text x="48" y="5351" text-anchor="start" style="fill:var(--c-text);font-size:11px">DGX&#x27;in yerini alır, küme bu yüzden 127</text>
+<text x="48" y="5366" text-anchor="start" style="fill:var(--c-text);font-size:11px">düğümdür.</text>
+<rect x="296" y="5237" width="248" height="144" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="296" y="5237" width="4" height="144" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="308" y="5256" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">In-band yönetim · SN4600C</text>
+<rect x="509.9" y="5243.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="522.9" y="5256.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×8</text>
+<text x="308" y="5273" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">64 port × 100 GbE (Ethernet)</text>
+<text x="308" y="5291" text-anchor="start" style="fill:var(--c-text);font-size:11px">Düğüm kurulumu, kullanıcı girişi, dosya</text>
+<text x="308" y="5306" text-anchor="start" style="fill:var(--c-text);font-size:11px">sistemi ve dış erişim (NGC, paket</text>
+<text x="308" y="5321" text-anchor="start" style="fill:var(--c-text);font-size:11px">depoları) bu ağdan akar; hesaplama ağı</text>
+<text x="308" y="5336" text-anchor="start" style="fill:var(--c-text);font-size:11px">yalnız GPU trafiğine kalır.</text>
+<rect x="556" y="5237" width="248" height="144" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="556" y="5237" width="4" height="144" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="568" y="5256" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">OOB yönetim · SN2201</text>
+<rect x="769.9" y="5243.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="782.9" y="5256.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×8</text>
+<text x="568" y="5273" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">48 port × 1 GbE bakır</text>
+<text x="568" y="5291" text-anchor="start" style="fill:var(--c-text);font-size:11px">Her sunucunun BMC yönetim çipine ve</text>
+<text x="568" y="5306" text-anchor="start" style="fill:var(--c-text);font-size:11px">PDU&#x27;lara ulaşır; işletim sistemi</text>
+<text x="568" y="5321" text-anchor="start" style="fill:var(--c-text);font-size:11px">kilitlense bile düğüm uzaktan kapatılıp</text>
+<text x="568" y="5336" text-anchor="start" style="fill:var(--c-text);font-size:11px">açılabilir. Kullanıcı ağlarından</text>
+<text x="568" y="5351" text-anchor="start" style="fill:var(--c-text);font-size:11px">ayrıdır.</text>
+<rect x="36" y="5389" width="248" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36" y="5389" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="48" y="5408" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Yönetim sunucuları</text>
+<rect x="249.9" y="5395.0" width="26.1" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="262.9" y="5408.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">×5</text>
+<text x="48" y="5425" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">2 soket · 24+ çekirdek · 384 GB RAM</text>
+<text x="48" y="5443" text-anchor="start" style="fill:var(--c-text);font-size:11px">Küme yönetimi ve iş zamanlama</text>
+<text x="48" y="5458" text-anchor="start" style="fill:var(--c-text);font-size:11px">yazılımları ayrı makinelerde koşar; GPU</text>
+<text x="48" y="5473" text-anchor="start" style="fill:var(--c-text);font-size:11px">düğümleri yalnızca eğitime kalır.</text>
+<rect x="296" y="5389" width="248" height="129" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="296" y="5389" width="4" height="129" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="308" y="5408" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Kabin ve güç</text>
+<rect x="473.6" y="5395.0" width="62.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="504.8" y="5408.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">38 kabin</text>
+<text x="308" y="5425" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">38 kabin · 108 PDU</text>
+<text x="308" y="5443" text-anchor="start" style="fill:var(--c-text);font-size:11px">Kabin başına 4 DGX (40,8 kW), SU başına</text>
+<text x="308" y="5458" text-anchor="start" style="fill:var(--c-text);font-size:11px">8 DGX kabini; 127 DGX tek başına</text>
+<text x="308" y="5473" text-anchor="start" style="fill:var(--c-text);font-size:11px">127 × 10,2 kW ≈ 1,3 MW çeker. Güç ve</text>
+<text x="308" y="5488" text-anchor="start" style="fill:var(--c-text);font-size:11px">soğutma kümenin görünmeyen dördüncü</text>
+<text x="308" y="5503" text-anchor="start" style="fill:var(--c-text);font-size:11px">sütunudur.</text>
+<text x="40" y="5544" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Yazılım</text>
+<rect x="36" y="5554" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36" y="5554" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="48" y="5573" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Base Command Manager</text>
+<rect x="219.7" y="5560.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="247.8" y="5573.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
+<text x="48" y="5590" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">küme yönetimi · otomatik kurulum</text>
+<text x="48" y="5608" text-anchor="start" style="fill:var(--c-text);font-size:11px">Binlerce düğüme aynı işletim sistemi</text>
+<text x="48" y="5623" text-anchor="start" style="fill:var(--c-text);font-size:11px">imajını kurar, günceller ve izler; 127</text>
+<text x="48" y="5638" text-anchor="start" style="fill:var(--c-text);font-size:11px">makineyi elle yönetmek gerçekçi</text>
+<text x="48" y="5653" text-anchor="start" style="fill:var(--c-text);font-size:11px">değildir.</text>
+<rect x="296" y="5554" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="296" y="5554" width="4" height="114" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
+<text x="308" y="5573" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Slurm</text>
+<rect x="467.6" y="5560.0" width="68.5" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="501.8" y="5573.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">hesaplama</text>
+<text x="308" y="5590" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">toplu iş zamanlayıcı</text>
+<text x="308" y="5608" text-anchor="start" style="fill:var(--c-text);font-size:11px">Çok düğümlü bir eğitim işinin hangi</text>
+<text x="308" y="5623" text-anchor="start" style="fill:var(--c-text);font-size:11px">GPU&#x27;larda ve hangi sırayla koşacağını</text>
+<text x="308" y="5638" text-anchor="start" style="fill:var(--c-text);font-size:11px">belirler; arızalı düğümü devreden</text>
+<text x="308" y="5653" text-anchor="start" style="fill:var(--c-text);font-size:11px">çıkarıp işi yeniden kuyruğa alabilir.</text>
+<rect x="556" y="5554" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="556" y="5554" width="4" height="114" rx="2" style="fill:var(--c-accent-2);fill-opacity:.85"/>
+<text x="568" y="5573" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Magnum IO</text>
+<rect x="703.4" y="5560.0" width="92.7" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.14;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="749.7" y="5573.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ağ + depolama</text>
+<text x="568" y="5590" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">NCCL · GPUDirect RDMA / Storage · SHARP</text>
+<text x="568" y="5608" text-anchor="start" style="fill:var(--c-text);font-size:11px">Verinin GPU&#x27;lar ve diskler arasındaki</text>
+<text x="568" y="5623" text-anchor="start" style="fill:var(--c-text);font-size:11px">hareketini hızlandıran kütüphane</text>
+<text x="568" y="5638" text-anchor="start" style="fill:var(--c-text);font-size:11px">yığını; B&#x27;deki 1., 3. ve 6. adımlar bu</text>
+<text x="568" y="5653" text-anchor="start" style="fill:var(--c-text);font-size:11px">katmanla yapılır.</text>
+<rect x="36" y="5676" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36" y="5676" width="4" height="114" rx="2" style="fill:var(--c-accent);fill-opacity:.85"/>
+<text x="48" y="5695" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">NGC kataloğu</text>
+<rect x="207.6" y="5682.0" width="68.5" height="18" rx="5" style="fill:var(--c-accent);fill-opacity:.14;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="241.8" y="5695.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">hesaplama</text>
+<text x="48" y="5712" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU için optimize konteynerler</text>
+<text x="48" y="5730" text-anchor="start" style="fill:var(--c-text);font-size:11px">CUDA, NCCL ve PyTorch gibi çerçeveler</text>
+<text x="48" y="5745" text-anchor="start" style="fill:var(--c-text);font-size:11px">birbirine uyan tek bir paket hâlinde</text>
+<text x="48" y="5760" text-anchor="start" style="fill:var(--c-text);font-size:11px">gelir; herkes aynı yazılım yığınıyla</text>
+<text x="48" y="5775" text-anchor="start" style="fill:var(--c-text);font-size:11px">başlar.</text>
+<rect x="296" y="5676" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="296" y="5676" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="308" y="5695" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Base Command Platform</text>
+<rect x="479.6" y="5682.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="507.8" y="5695.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
+<text x="308" y="5712" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">AI eğitimi için yazılım hizmeti</text>
+<text x="308" y="5730" text-anchor="start" style="fill:var(--c-text);font-size:11px">Veri bilimcilerin iş gönderip veri</text>
+<text x="308" y="5745" text-anchor="start" style="fill:var(--c-text);font-size:11px">setlerini ve sonuçları yönettiği</text>
+<text x="308" y="5760" text-anchor="start" style="fill:var(--c-text);font-size:11px">katman; alttaki donanımı bilmeden</text>
+<text x="308" y="5775" text-anchor="start" style="fill:var(--c-text);font-size:11px">kümeyi kullandırır.</text>
+<rect x="556" y="5676" width="248" height="114" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<rect x="556" y="5676" width="4" height="114" rx="2" style="fill:var(--c-text-mute);fill-opacity:.85"/>
+<text x="568" y="5695" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">NVIDIA AI Enterprise</text>
+<rect x="739.6" y="5682.0" width="56.4" height="18" rx="5" style="fill:var(--c-text-mute);fill-opacity:.14;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="767.8" y="5695.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">yönetim</text>
+<text x="568" y="5712" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">araçlar, çerçeveler, orkestrasyon</text>
+<text x="568" y="5730" text-anchor="start" style="fill:var(--c-text);font-size:11px">Geliştiriciye çerçeve ve araçları, BT</text>
+<text x="568" y="5745" text-anchor="start" style="fill:var(--c-text);font-size:11px">ekibine destekli yönetim ve</text>
+<text x="568" y="5760" text-anchor="start" style="fill:var(--c-text);font-size:11px">orkestrasyonu verir.</text>
+<rect x="28.0" y="5818.0" width="784.0" height="33" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="40" y="5838" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: GPU&#x27;dan uzaklaştıkça yol daralır: HBM 3,35 TB/s → NVLink 450 GB/s → ağ 50 GB/s.</text>
+<text x="420.0" y="5883" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Parçaları tanıdık. Şimdi bir eğitim adımında birlikte nasıl çalıştıklarını izleyelim.</text>
+<line x1="420.0" y1="5891.0" x2="420.0" y2="5911.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="5915" width="808" height="880" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
+<circle cx="36" cy="5939" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="5943.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">B</text>
+<text x="56" y="5944" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Bir eğitim adımını izle: veri nereden geçer?</text>
+<text x="28" y="5965" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">64 SU&#x27;luk H100 SuperPOD&#x27;da Llama 3 405B: TP 8 × PP 16 × DP 128 = 16.384 GPU</text>
+<rect x="28" y="5977" width="784" height="264" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="290.0" y="5989.0" width="260.0" height="22" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="420.0" y="6004.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">spine → diğer 127 DP kopyası</text>
+<rect x="48" y="6037" width="290" height="116" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="58" y="6053" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">düğüm A · PP aşaması s</text>
+<rect x="88.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="112.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 0</text>
+<rect x="150.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="174.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 1</text>
+<rect x="212.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="236.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 2</text>
+<rect x="274.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="298.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 3</text>
+<rect x="88.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="112.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 4</text>
+<rect x="150.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="174.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 5</text>
+<rect x="212.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="236.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 6</text>
+<rect x="274.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="298.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 7</text>
+<line x1="112.0" y1="6081.0" x2="112.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="112.0" y1="6107.0" x2="112.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="174.0" y1="6081.0" x2="174.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="174.0" y1="6107.0" x2="174.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="236.0" y1="6081.0" x2="236.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="236.0" y1="6107.0" x2="236.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="298.0" y1="6081.0" x2="298.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="298.0" y1="6107.0" x2="298.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="88.0" y="6089.0" width="234.0" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="205.0" y="6102.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch</text>
+<circle cx="64" cy="6071" r="9" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="64" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
+<circle cx="64" cy="6098" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="64" y="6102.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
+<circle cx="64" cy="6125" r="9" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="64" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">7</text>
+<rect x="502" y="6037" width="290" height="116" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1"/>
+<text x="512" y="6053" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">düğüm B · aşama s+1</text>
+<rect x="530.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="554.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 0</text>
+<rect x="592.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="616.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 1</text>
+<rect x="654.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="678.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 2</text>
+<rect x="716.0" y="6061.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="740.0" y="6075.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 3</text>
+<rect x="530.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="554.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 4</text>
+<rect x="592.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="616.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 5</text>
+<rect x="654.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="678.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 6</text>
+<rect x="716.0" y="6115.0" width="48.0" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="740.0" y="6129.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">GPU 7</text>
+<line x1="554.0" y1="6081.0" x2="554.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="554.0" y1="6107.0" x2="554.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="616.0" y1="6081.0" x2="616.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="616.0" y1="6107.0" x2="616.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="678.0" y1="6081.0" x2="678.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="678.0" y1="6107.0" x2="678.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="740.0" y1="6081.0" x2="740.0" y2="6089.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="740.0" y1="6107.0" x2="740.0" y2="6115.0" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<rect x="530.0" y="6089.0" width="234.0" height="18" rx="5" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="647.0" y="6102.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">NVSwitch</text>
+<rect x="396.0" y="6047.0" width="48.0" height="96" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="420.0" y="6105" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">leaf</text>
+<circle cx="420.0" cy="6073" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="420.0" y="6077.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
+<circle cx="420.0" cy="6127" r="9" style="fill:var(--c-text-mute);fill-opacity:.18;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<text x="420.0" y="6131.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
+<line x1="338.0" y1="6073.0" x2="396.0" y2="6073.0" style="stroke:var(--c-accent-2);stroke-width:1.6"/>
+<line x1="444.0" y1="6073.0" x2="500.0" y2="6073.0" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<line x1="502.0" y1="6127.0" x2="444.0" y2="6127.0" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:4 3"/>
+<line x1="396.0" y1="6127.0" x2="340.0" y2="6127.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
+<line x1="420.0" y1="6045.0" x2="420.0" y2="6013.0" marker-start="url(#bp-gen)" marker-end="url(#bp-gen)" style="stroke:var(--c-accent-2);stroke-width:1.5"/>
+<circle cx="438.0" cy="6029" r="9" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="438.0" y="6033.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
+<rect x="48.0" y="6189.0" width="744.0" height="40" rx="5" style="fill:var(--c-warn);fill-opacity:.10;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="420.0" y="6205" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">depolama sistemi (ör. Lustre · Weka)</text>
+<text x="420.0" y="6221" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ayrı depolama ağı · düğüm başına ≥ 40 GB/s</text>
+<line x1="108.0" y1="6187.0" x2="108.0" y2="6156.0" marker-end="url(#bp-wrn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
+<circle cx="126" cy="6171" r="9" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="126" y="6175.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
+<line x1="208.0" y1="6156.0" x2="208.0" y2="6187.0" marker-end="url(#bp-wrn)" style="stroke:var(--c-warn);stroke-width:1.5;stroke-dasharray:5 4"/>
+<circle cx="226" cy="6171" r="9" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="226" y="6175.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">8</text>
+<text x="647.0" y="6173" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">(B düğümü de aynı yolu kullanır)</text>
+<rect x="28" y="6251" width="784" height="470" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<line x1="46.0" y1="6277.0" x2="46.0" y2="6587.0" style="stroke:var(--c-border);stroke-width:2"/>
+<circle cx="46" cy="6277" r="10" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="46" y="6281.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">1</text>
+<text x="66" y="6282" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Veriyi oku</text>
+<rect x="66.0" y="6291.0" width="165.2" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="148.6" y="6304.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">depolama → HBM · her adım</text>
+<text x="66" y="6327" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Bu adımın 16 milyon tokeni depodan HBM&#x27;e gelir; GDS ya</text>
+<text x="66" y="6343" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">da mmap sayesinde araya CPU kopyası girmez.</text>
+<circle cx="46" cy="6375" r="10" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="46" y="6379.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">2</text>
+<text x="66" y="6380" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">İleri geçiş</text>
+<rect x="66.0" y="6389.0" width="171.3" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="151.7" y="6402.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM 3,35 TB/s · her katman</text>
+<text x="66" y="6425" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her katmanda SM&#x27;ler ağırlıkları HBM&#x27;den çekip Tensor</text>
+<text x="66" y="6441" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Core&#x27;larda çarpar; okunan bayt başına ~295 işlem</text>
+<text x="66" y="6457" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">yapılırsa çekirdekler doyar.</text>
+<circle cx="46" cy="6489" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="46" y="6493.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">3</text>
+<text x="66" y="6494" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">TP AllReduce</text>
+<rect x="66.0" y="6503.0" width="189.5" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="160.7" y="6516.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVLink 450 GB/s · katmanda 2×</text>
+<text x="66" y="6539" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Her matris 8 GPU&#x27;ya bölündüğü için parçalı sonuçlar</text>
+<text x="66" y="6555" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">NVLink&#x27;te toplanır; TP bu yüzden kasanın dışına taşmaz.</text>
+<circle cx="46" cy="6587" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="46" y="6591.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">4</text>
+<text x="66" y="6592" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Aktivasyonu gönder (PP)</text>
+<rect x="66.0" y="6601.0" width="183.4" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="157.7" y="6614.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">50 GB/s/GPU · her mikrobatch</text>
+<text x="66" y="6637" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Düğümün katmanları bitince çıktı (~16 MB) ağdan sonraki</text>
+<text x="66" y="6653" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">düğüme geçer; yol 9 kat dardır ama giden veri küçüktür.</text>
+<line x1="438.0" y1="6277.0" x2="438.0" y2="6619.0" style="stroke:var(--c-border);stroke-width:2"/>
+<circle cx="438" cy="6277" r="10" style="fill:var(--c-text-mute);fill-opacity:.18;stroke:var(--c-text-mute);stroke-width:1.3"/>
+<text x="438" y="6281.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">5</text>
+<text x="458" y="6282" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Geri geçiş</text>
+<rect x="458.0" y="6291.0" width="141.1" height="19" rx="5" style="fill:var(--c-text-mute);fill-opacity:.12;stroke:var(--c-text-mute);stroke-width:1.2"/>
+<text x="528.5" y="6304.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">aynı hatlar, ters yön</text>
+<text x="458" y="6327" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Hata sinyali (gradyan) aynı yolu geri döner; 3. ve 4.</text>
+<text x="458" y="6343" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">adımlar ters yönde tekrarlanır ve iş ileri geçişin ~2</text>
+<text x="458" y="6359" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">katıdır.</text>
+<circle cx="438" cy="6391" r="10" style="fill:var(--c-accent-2);fill-opacity:.18;stroke:var(--c-accent-2);stroke-width:1.3"/>
+<text x="438" y="6395.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">6</text>
+<text x="458" y="6396" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Gradyan AllReduce (DP)</text>
+<rect x="458.0" y="6405.0" width="171.3" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.12;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="543.6" y="6418.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">ray switch&#x27;leri · her adım</text>
+<text x="458" y="6441" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">128 kopyanın gradyanları ortalanır ki hepsi aynı</text>
+<text x="458" y="6457" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">güncellemeyi yapsın; InfiniBand SHARP toplamayı switch</text>
+<text x="458" y="6473" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">içinde yapıp süreyi 2·B/W&#x27;den B/W&#x27;ye indirir.</text>
+<circle cx="438" cy="6505" r="10" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="438" y="6509.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">7</text>
+<text x="458" y="6510" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Optimizer adımı</text>
+<rect x="458.0" y="6519.0" width="141.1" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.12;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="528.5" y="6532.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM içinde · her adım</text>
+<text x="458" y="6555" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">AdamW ağırlıkları günceller ve her parametre için 12</text>
+<text x="458" y="6571" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">bayt FP32 durum tutar: ana ağırlık, momentum ve</text>
+<text x="458" y="6587" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">varyans.</text>
+<circle cx="438" cy="6619" r="10" style="fill:var(--c-warn);fill-opacity:.18;stroke:var(--c-warn);stroke-width:1.3"/>
+<text x="438" y="6623.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">8</text>
+<text x="458" y="6624" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Kontrol noktası</text>
+<rect x="458.0" y="6633.0" width="195.5" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.12;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="555.8" y="6646.5" text-anchor="middle" style="fill:var(--c-text);font-size:11px">HBM → depolama · ~14 dk&#x27;da bir</text>
+<text x="458" y="6669" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">~14 dakikada bir 7,5 TB durum diske yazılır: 250 GB/s</text>
+<text x="458" y="6685" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">ile ~31 s, eski 25 GB/s ile ~5 dk sürer; arızadan sonra</text>
+<text x="458" y="6701" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">buradan devam edilir.</text>
+<line x1="420.0" y1="6265.0" x2="420.0" y2="6707.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="28.0" y="6733.0" width="784.0" height="50" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="40" y="6753" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: bir adımda veri dört ayrı yoldan geçer (HBM, NVLink, ağ, depolama); adım ancak en yavaş yol kadar</text>
+<text x="40" y="6770" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">hızlıdır.</text>
+<text x="420.0" y="6815" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Peki bu yollar nerede tıkanıyor? Her sütunun bir duvarı var.</text>
+<line x1="420.0" y1="6823.0" x2="420.0" y2="6843.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="6847" width="808" height="1050" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
+<circle cx="36" cy="6871" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="6875.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">C</text>
+<text x="56" y="6876" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Üç duvar: belirti → neden → çare</text>
+<text x="28" y="6897" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Eğriler makaledeki formüllerden hesaplandı; kırmızı darboğaz, yeşil çaredir.</text>
+<rect x="28" y="6909" width="784" height="295" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="40" y="6933" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">Bellek duvarı</text>
+<text x="800" y="6933" text-anchor="end" style="fill:var(--c-accent);font-size:11px;font-weight:700">1. sütun · hesaplama</text>
+<line x1="80.0" y1="6953.0" x2="80.0" y2="7079.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="80.0" y1="7079.0" x2="512.0" y2="7079.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="80.0" y1="6960.2" x2="512.0" y2="6960.2" style="stroke:var(--c-text-mute);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="76" y="6964.2" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">990</text>
+<text x="76" y="7083" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="40" y="6952.2" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TFLOP/s</text>
+<line x1="377.9" y1="6960.2" x2="377.9" y2="7079.0" style="stroke:var(--c-text-mute);stroke-width:1;stroke-dasharray:4 3"/>
+<polyline points="80.0,7078.6 84.5,7078.6 89.0,7078.5 93.5,7078.5 98.0,7078.4 102.5,7078.4 107.0,7078.3 111.5,7078.3 116.0,7078.2 120.5,7078.1 125.0,7078.0 129.5,7078.0 134.0,7077.9 138.5,7077.8 143.0,7077.6 147.5,7077.5 152.0,7077.4 156.5,7077.2 161.0,7077.1 165.5,7076.9 170.0,7076.7 174.5,7076.5 179.0,7076.3 183.5,7076.1 188.0,7075.8 192.5,7075.5 197.0,7075.2 201.5,7074.8 206.0,7074.5 210.5,7074.0 215.0,7073.6 219.5,7073.1 224.0,7072.6 228.5,7072.0 233.0,7071.4 237.5,7070.7 242.0,7069.9 246.5,7069.1 251.0,7068.2 255.5,7067.3 260.0,7066.2 264.5,7065.0 269.0,7063.8 273.5,7062.4 278.0,7060.9 282.5,7059.3 287.0,7057.5 291.5,7055.6 296.0,7053.5 300.5,7051.2 305.0,7048.8 309.5,7046.1 314.0,7043.1 318.5,7039.9 323.0,7036.4 327.5,7032.7 332.0,7028.6 336.5,7024.1 341.0,7019.2 345.5,7014.0 350.0,7008.2 354.5,7002.0 359.0,6995.3 363.5,6988.0 368.0,6980.1 372.5,6971.5 377.0,6962.2 381.5,6960.2 386.0,6960.2 390.5,6960.2 395.0,6960.2 399.5,6960.2 404.0,6960.2 408.5,6960.2 413.0,6960.2 417.5,6960.2 422.0,6960.2 426.5,6960.2 431.0,6960.2 435.5,6960.2 440.0,6960.2 444.5,6960.2 449.0,6960.2 453.5,6960.2 458.0,6960.2 462.5,6960.2 467.0,6960.2 471.5,6960.2 476.0,6960.2 480.5,6960.2 485.0,6960.2 489.5,6960.2 494.0,6960.2 498.5,6960.2 503.0,6960.2 507.5,6960.2 512.0,6960.2" style="fill:none;stroke:var(--c-accent);stroke-width:2.2"/>
+<text x="80.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">1</text>
+<text x="152.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">4</text>
+<text x="224.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">16</text>
+<text x="296.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">64</text>
+<text x="368.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">256</text>
+<text x="440.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">1.024</text>
+<text x="512.0" y="7093" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">4.096</text>
+<text x="512" y="7109" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">batch B (token, log ölçek)</text>
+<text x="150" y="6976.2" text-anchor="middle" style="fill:var(--c-danger);font-size:11px;font-weight:700">bellek sınırlı</text>
+<text x="470" y="7061" text-anchor="middle" style="fill:var(--c-success);font-size:11px;font-weight:700">hesap sınırlı</text>
+<circle cx="80.0" cy="7078.6" r="4" style="fill:var(--c-danger)"/>
+<text x="88.0" y="7069" text-anchor="start" style="fill:var(--c-text);font-size:11px">B = 1: 3,3 TFLOP/s (%0,3)</text>
+<circle cx="332.0" cy="7028.6" r="4" style="fill:var(--c-accent)"/>
+<text x="324.0" y="7022.6" text-anchor="end" style="fill:var(--c-text);font-size:11px">B = 128: 420 TFLOP/s (%42)</text>
+<circle cx="377.9" cy="6960.2" r="4" style="fill:var(--c-success)"/>
+<text x="385.9" y="6976.2" text-anchor="start" style="fill:var(--c-text);font-size:11px">B ≈ 310: tavan 990</text>
+<text x="40" y="7127" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Llama 3 70B MLP (D = 8.192, F = 28.672), H100 BF16: hız = min(990, 3,35·α)</text>
+<text x="40" y="7143" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: batch büyüdükçe okunan her bayt daha çok işe yarar; eğri B ≈ 310&#x27;da</text>
+<text x="40" y="7158" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">tavana değer.</text>
+<text x="552" y="6963" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
+<text x="552" y="6981" text-anchor="start" style="fill:var(--c-text);font-size:12px">GPU meşgul görünür, ama gücünün yalnızca</text>
+<text x="552" y="6998" text-anchor="start" style="fill:var(--c-text);font-size:12px">%1–2&#x27;si kullanılır.</text>
+<text x="552" y="7026" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
+<text x="552" y="7044" text-anchor="start" style="fill:var(--c-text);font-size:12px">Her bayta düşen iş az: α = BDF / (B(D+F)</text>
+<text x="552" y="7061" text-anchor="start" style="fill:var(--c-text);font-size:12px">+ DF), H100&#x27;ün eşiği olan 295&#x27;in altında</text>
+<text x="552" y="7078" text-anchor="start" style="fill:var(--c-text);font-size:12px">kaldıkça Tensor Core&#x27;lar veri bekler.</text>
+<text x="552" y="7106" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
+<rect x="552.0" y="7116.0" width="122.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="613.5" y="7130.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">batch ≥ ~310 token</text>
+<rect x="552.0" y="7142.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="628.6" y="7156.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">füzyon / FlashAttention</text>
+<rect x="552.0" y="7168.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="628.6" y="7182.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">decode: 4–8 bit ağırlık</text>
+<line x1="540.0" y1="6949.0" x2="540.0" y2="7188.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="28" y="7214" width="784" height="321" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="40" y="7238" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">Ağ duvarı</text>
+<text x="800" y="7238" text-anchor="end" style="fill:var(--c-accent-2);font-size:11px;font-weight:700">2. sütun · ağ</text>
+<line x1="184.0" y1="7256.0" x2="184.0" y2="7340.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="184" y="7354" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 GB/s</text>
+<line x1="288.0" y1="7256.0" x2="288.0" y2="7340.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="288" y="7354" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">100 GB/s</text>
+<line x1="392.0" y1="7256.0" x2="392.0" y2="7340.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="392" y="7354" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1 TB/s</text>
+<line x1="496.0" y1="7256.0" x2="496.0" y2="7340.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="496" y="7354" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 TB/s</text>
+<text x="40" y="7274" text-anchor="start" style="fill:var(--c-text);font-size:11px">HBM (çip içi)</text>
+<rect x="184" y="7262" width="262.6" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.45;stroke:var(--c-accent);stroke-width:1"/>
+<text x="452.6" y="7274" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">3,35 TB/s</text>
+<text x="40" y="7300" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink (düğüm içi)</text>
+<rect x="184" y="7288" width="171.9" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
+<text x="361.9" y="7300" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">450 GB/s</text>
+<text x="420.7" y="7300" text-anchor="start" style="fill:var(--c-danger);font-size:11px;font-weight:700">÷7,4</text>
+<text x="40" y="7326" text-anchor="start" style="fill:var(--c-text);font-size:11px">InfiniBand (düğüm dışı)</text>
+<rect x="184" y="7314" width="72.7" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
+<text x="262.7" y="7326" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">50 GB/s</text>
+<text x="314.9" y="7326" text-anchor="start" style="fill:var(--c-danger);font-size:11px;font-weight:700">÷9</text>
+<rect x="40.0" y="7366.0" width="480.0" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="280.0" y="7380.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">NVLink: Y ≤ F / (C/W) = 28.672 / 2.200 ≈ 13 → TP = 8 sığar ✓ (F: Llama 3 70B)</text>
+<rect x="40.0" y="7392.0" width="480.0" height="20" rx="5" style="fill:var(--c-danger);fill-opacity:.12;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="280.0" y="7406.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">InfiniBand: Y ≤ 28.672 / 19.800 ≈ 1,45 → TP düğümden taşarsa hesap aç kalır ✗</text>
+<text x="40" y="7430" text-anchor="start" style="fill:var(--c-text);font-size:11px">PP = 16 aşama, kabarcık = 15 / (15 + M): M = 16 → %48 boşta · M = 128 → %10,5</text>
+<text x="40" y="7448" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: her çubuk bir H100&#x27;ün o hattaki bant genişliği; düğümden çıkınca çubuk</text>
+<text x="40" y="7463" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">9 kat kısalır.</text>
+<text x="552" y="7268" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
+<text x="552" y="7286" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğüm ekledikçe adım uzar; GPU&#x27;lar</text>
+<text x="552" y="7303" text-anchor="start" style="fill:var(--c-text);font-size:12px">konuşmak için bekler.</text>
+<text x="552" y="7331" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
+<text x="552" y="7349" text-anchor="start" style="fill:var(--c-text);font-size:12px">Düğümden çıkan veri 9 kat daha dar bir</text>
+<text x="552" y="7366" text-anchor="start" style="fill:var(--c-text);font-size:12px">yoldan geçer; TP gibi her katmanda</text>
+<text x="552" y="7383" text-anchor="start" style="fill:var(--c-text);font-size:12px">konuşan işler bu yolda boğulur.</text>
+<text x="552" y="7411" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
+<rect x="552.0" y="7421.0" width="104.8" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="604.4" y="7435.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">TP düğüm içinde</text>
+<rect x="552.0" y="7447.0" width="153.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="628.6" y="7461.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">PP ve DP düğümler arası</text>
+<rect x="552.0" y="7473.0" width="122.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="613.5" y="7487.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">SHARP: 2·B/W → B/W</text>
+<rect x="552.0" y="7499.0" width="165.2" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="634.6" y="7513.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">DualPipe: iletişimi gizle</text>
+<line x1="540.0" y1="7254.0" x2="540.0" y2="7519.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="28" y="7545" width="784" height="295" rx="8" style="fill:var(--c-surface);stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="40" y="7569" text-anchor="start" style="fill:var(--c-danger);font-size:15px;font-weight:700">G/Ç duvarı</text>
+<text x="800" y="7569" text-anchor="end" style="fill:var(--c-warn);font-size:11px;font-weight:700">3. sütun · depolama</text>
+<line x1="80.0" y1="7593.0" x2="80.0" y2="7715.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="80.0" y1="7715.0" x2="512.0" y2="7715.0" style="stroke:var(--c-text-mute);stroke-width:1"/>
+<line x1="80.0" y1="7685.0" x2="512.0" y2="7685.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="76" y="7689.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%10</text>
+<line x1="80.0" y1="7655.0" x2="512.0" y2="7655.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="76" y="7659.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%20</text>
+<line x1="80.0" y1="7625.0" x2="512.0" y2="7625.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="76" y="7629.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%30</text>
+<line x1="80.0" y1="7595.0" x2="512.0" y2="7595.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="76" y="7599.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">%40</text>
+<polyline points="80.0,7715.0 512.0,7640.0" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.3;stroke-dasharray:4 3"/>
+<polyline points="148.4,7595.3 149.6,7597.0 150.8,7598.6 152.0,7600.1 153.2,7601.6 154.4,7603.0 155.6,7604.4 156.8,7605.7 158.0,7606.9 159.2,7608.2 160.4,7609.3 161.6,7610.5 162.8,7611.6 164.0,7612.6 165.2,7613.7 166.4,7614.7 167.6,7615.6 168.8,7616.6 170.0,7617.5 171.2,7618.3 172.4,7619.2 173.6,7620.0 174.8,7620.8 176.0,7621.5 177.2,7622.3 178.4,7623.0 179.6,7623.7 180.8,7624.4 182.0,7625.0 183.2,7625.6 184.4,7626.3 185.6,7626.8 186.8,7627.4 188.0,7628.0 189.2,7628.5 190.4,7629.1 191.6,7629.6 192.8,7630.1 194.0,7630.5 195.2,7631.0 196.4,7631.5 197.6,7631.9 198.8,7632.3 200.0,7632.7 201.2,7633.1 202.4,7633.5 203.6,7633.9 204.8,7634.3 206.0,7634.6 207.2,7635.0 208.4,7635.3 209.6,7635.6 210.8,7635.9 212.0,7636.2 213.2,7636.5 214.4,7636.8 215.6,7637.1 216.8,7637.4 218.0,7637.6 219.2,7637.9 220.4,7638.1 221.6,7638.3 222.8,7638.6 224.0,7638.8 225.2,7639.0 226.4,7639.2 227.6,7639.4 228.8,7639.6 230.0,7639.8 231.2,7640.0 232.4,7640.2 233.6,7640.3 234.8,7640.5 236.0,7640.7 237.2,7640.8 238.4,7641.0 239.6,7641.1 240.8,7641.2 242.0,7641.4 243.2,7641.5 244.4,7641.6 245.6,7641.7 246.8,7641.8 248.0,7641.9 249.2,7642.1 250.4,7642.1 251.6,7642.2 252.8,7642.3 254.0,7642.4 255.2,7642.5 256.4,7642.6 257.6,7642.7 258.8,7642.7 260.0,7642.8 261.2,7642.9 262.4,7642.9 263.6,7643.0 264.8,7643.0 266.0,7643.1 267.2,7643.1 268.4,7643.2 269.6,7643.2 270.8,7643.2 272.0,7643.3 273.2,7643.3 274.4,7643.3 275.6,7643.3 276.8,7643.4 278.0,7643.4 279.2,7643.4 280.4,7643.4 281.6,7643.4 282.8,7643.4 284.0,7643.4 285.2,7643.4 286.4,7643.4 287.6,7643.4 288.8,7643.4 290.0,7643.4 291.2,7643.4 292.4,7643.4 293.6,7643.4 294.8,7643.4 296.0,7643.4 297.2,7643.3 298.4,7643.3 299.6,7643.3 300.8,7643.3 302.0,7643.2 303.2,7643.2 304.4,7643.2 305.6,7643.2 306.8,7643.1 308.0,7643.1 309.2,7643.0 310.4,7643.0 311.6,7643.0 312.8,7642.9 314.0,7642.9 315.2,7642.8 316.4,7642.8 317.6,7642.7 318.8,7642.7 320.0,7642.6 321.2,7642.6 322.4,7642.5 323.6,7642.4 324.8,7642.4 326.0,7642.3 327.2,7642.3 328.4,7642.2 329.6,7642.1 330.8,7642.1 332.0,7642.0 333.2,7641.9 334.4,7641.9 335.6,7641.8 336.8,7641.7 338.0,7641.6 339.2,7641.6 340.4,7641.5 341.6,7641.4 342.8,7641.3 344.0,7641.2 345.2,7641.2 346.4,7641.1 347.6,7641.0 348.8,7640.9 350.0,7640.8 351.2,7640.7 352.4,7640.6 353.6,7640.6 354.8,7640.5 356.0,7640.4 357.2,7640.3 358.4,7640.2 359.6,7640.1 360.8,7640.0 362.0,7639.9 363.2,7639.8 364.4,7639.7 365.6,7639.6 366.8,7639.5 368.0,7639.4 369.2,7639.3 370.4,7639.2 371.6,7639.1 372.8,7639.0 374.0,7638.9 375.2,7638.8 376.4,7638.7 377.6,7638.6 378.8,7638.5 380.0,7638.3 381.2,7638.2 382.4,7638.1 383.6,7638.0 384.8,7637.9 386.0,7637.8 387.2,7637.7 388.4,7637.6 389.6,7637.4 390.8,7637.3 392.0,7637.2 393.2,7637.1 394.4,7637.0 395.6,7636.8 396.8,7636.7 398.0,7636.6 399.2,7636.5 400.4,7636.4 401.6,7636.2 402.8,7636.1 404.0,7636.0 405.2,7635.9 406.4,7635.7 407.6,7635.6 408.8,7635.5 410.0,7635.4 411.2,7635.2 412.4,7635.1 413.6,7635.0 414.8,7634.9 416.0,7634.7 417.2,7634.6 418.4,7634.5 419.6,7634.3 420.8,7634.2 422.0,7634.1 423.2,7633.9 424.4,7633.8 425.6,7633.7 426.8,7633.5 428.0,7633.4 429.2,7633.3 430.4,7633.1 431.6,7633.0 432.8,7632.9 434.0,7632.7 435.2,7632.6 436.4,7632.4 437.6,7632.3 438.8,7632.2 440.0,7632.0 441.2,7631.9 442.4,7631.7 443.6,7631.6 444.8,7631.5 446.0,7631.3 447.2,7631.2 448.4,7631.0 449.6,7630.9 450.8,7630.7 452.0,7630.6 453.2,7630.5 454.4,7630.3 455.6,7630.2 456.8,7630.0 458.0,7629.9 459.2,7629.7 460.4,7629.6 461.6,7629.4 462.8,7629.3 464.0,7629.1 465.2,7629.0 466.4,7628.8 467.6,7628.7 468.8,7628.5 470.0,7628.4 471.2,7628.2 472.4,7628.1 473.6,7627.9 474.8,7627.8 476.0,7627.6 477.2,7627.5 478.4,7627.3 479.6,7627.2 480.8,7627.0 482.0,7626.9 483.2,7626.7 484.4,7626.6 485.6,7626.4 486.8,7626.3 488.0,7626.1 489.2,7625.9 490.4,7625.8 491.6,7625.6 492.8,7625.5 494.0,7625.3 495.2,7625.2 496.4,7625.0 497.6,7624.8 498.8,7624.7 500.0,7624.5 501.2,7624.4 502.4,7624.2 503.6,7624.1 504.8,7623.9 506.0,7623.7 507.2,7623.6 508.4,7623.4 509.6,7623.3 510.8,7623.1 512.0,7622.9" style="fill:none;stroke:var(--c-danger);stroke-width:2.2"/>
+<line x1="286.1" y1="7643.4" x2="286.1" y2="7715.0" style="stroke:var(--c-danger);stroke-width:1;stroke-dasharray:4 3"/>
+<circle cx="286.1" cy="7643.4" r="4" style="fill:var(--c-danger)"/>
+<text x="286.1" y="7729" text-anchor="middle" style="fill:var(--c-danger);font-size:11px;font-weight:700;font-family:var(--font-mono)">42,9</text>
+<polyline points="87.2,7611.4 88.4,7625.8 89.6,7636.5 90.8,7644.9 92.0,7651.5 93.2,7656.9 94.4,7661.3 95.6,7665.0 96.8,7668.2 98.0,7670.9 99.2,7673.3 100.4,7675.3 101.6,7677.1 102.8,7678.7 104.0,7680.1 105.2,7681.4 106.4,7682.5 107.6,7683.5 108.8,7684.4 110.0,7685.2 111.2,7686.0 112.4,7686.6 113.6,7687.2 114.8,7687.8 116.0,7688.3 117.2,7688.7 118.4,7689.1 119.6,7689.5 120.8,7689.8 122.0,7690.2 123.2,7690.4 124.4,7690.7 125.6,7690.9 126.8,7691.1 128.0,7691.3 129.2,7691.5 130.4,7691.6 131.6,7691.8 132.8,7691.9 134.0,7692.0 135.2,7692.1 136.4,7692.1 137.6,7692.2 138.8,7692.3 140.0,7692.3 141.2,7692.3 142.4,7692.4 143.6,7692.4 144.8,7692.4 146.0,7692.4 147.2,7692.4 148.4,7692.3 149.6,7692.3 150.8,7692.3 152.0,7692.3 153.2,7692.2 154.4,7692.2 155.6,7692.1 156.8,7692.1 158.0,7692.0 159.2,7691.9 160.4,7691.9 161.6,7691.8 162.8,7691.7 164.0,7691.6 165.2,7691.6 166.4,7691.5 167.6,7691.4 168.8,7691.3 170.0,7691.2 171.2,7691.1 172.4,7691.0 173.6,7690.9 174.8,7690.8 176.0,7690.7 177.2,7690.5 178.4,7690.4 179.6,7690.3 180.8,7690.2 182.0,7690.1 183.2,7689.9 184.4,7689.8 185.6,7689.7 186.8,7689.6 188.0,7689.4 189.2,7689.3 190.4,7689.2 191.6,7689.0 192.8,7688.9 194.0,7688.7 195.2,7688.6 196.4,7688.5 197.6,7688.3 198.8,7688.2 200.0,7688.0 201.2,7687.9 202.4,7687.7 203.6,7687.6 204.8,7687.4 206.0,7687.3 207.2,7687.1 208.4,7687.0 209.6,7686.8 210.8,7686.7 212.0,7686.5 213.2,7686.3 214.4,7686.2 215.6,7686.0 216.8,7685.9 218.0,7685.7 219.2,7685.5 220.4,7685.4 221.6,7685.2 222.8,7685.0 224.0,7684.9 225.2,7684.7 226.4,7684.5 227.6,7684.4 228.8,7684.2 230.0,7684.0 231.2,7683.9 232.4,7683.7 233.6,7683.5 234.8,7683.4 236.0,7683.2 237.2,7683.0 238.4,7682.8 239.6,7682.7 240.8,7682.5 242.0,7682.3 243.2,7682.1 244.4,7682.0 245.6,7681.8 246.8,7681.6 248.0,7681.4 249.2,7681.3 250.4,7681.1 251.6,7680.9 252.8,7680.7 254.0,7680.6 255.2,7680.4 256.4,7680.2 257.6,7680.0 258.8,7679.8 260.0,7679.7 261.2,7679.5 262.4,7679.3 263.6,7679.1 264.8,7678.9 266.0,7678.7 267.2,7678.6 268.4,7678.4 269.6,7678.2 270.8,7678.0 272.0,7677.8 273.2,7677.6 274.4,7677.5 275.6,7677.3 276.8,7677.1 278.0,7676.9 279.2,7676.7 280.4,7676.5 281.6,7676.3 282.8,7676.2 284.0,7676.0 285.2,7675.8 286.4,7675.6 287.6,7675.4 288.8,7675.2 290.0,7675.0 291.2,7674.8 292.4,7674.7 293.6,7674.5 294.8,7674.3 296.0,7674.1 297.2,7673.9 298.4,7673.7 299.6,7673.5 300.8,7673.3 302.0,7673.1 303.2,7672.9 304.4,7672.8 305.6,7672.6 306.8,7672.4 308.0,7672.2 309.2,7672.0 310.4,7671.8 311.6,7671.6 312.8,7671.4 314.0,7671.2 315.2,7671.0 316.4,7670.8 317.6,7670.6 318.8,7670.5 320.0,7670.3 321.2,7670.1 322.4,7669.9 323.6,7669.7 324.8,7669.5 326.0,7669.3 327.2,7669.1 328.4,7668.9 329.6,7668.7 330.8,7668.5 332.0,7668.3 333.2,7668.1 334.4,7667.9 335.6,7667.7 336.8,7667.5 338.0,7667.4 339.2,7667.2 340.4,7667.0 341.6,7666.8 342.8,7666.6 344.0,7666.4 345.2,7666.2 346.4,7666.0 347.6,7665.8 348.8,7665.6 350.0,7665.4 351.2,7665.2 352.4,7665.0 353.6,7664.8 354.8,7664.6 356.0,7664.4 357.2,7664.2 358.4,7664.0 359.6,7663.8 360.8,7663.6 362.0,7663.4 363.2,7663.2 364.4,7663.0 365.6,7662.8 366.8,7662.6 368.0,7662.4 369.2,7662.2 370.4,7662.0 371.6,7661.8 372.8,7661.6 374.0,7661.5 375.2,7661.3 376.4,7661.1 377.6,7660.9 378.8,7660.7 380.0,7660.5 381.2,7660.3 382.4,7660.1 383.6,7659.9 384.8,7659.7 386.0,7659.5 387.2,7659.3 388.4,7659.1 389.6,7658.9 390.8,7658.7 392.0,7658.5 393.2,7658.3 394.4,7658.1 395.6,7657.9 396.8,7657.7 398.0,7657.5 399.2,7657.3 400.4,7657.1 401.6,7656.9 402.8,7656.7 404.0,7656.5 405.2,7656.3 406.4,7656.1 407.6,7655.9 408.8,7655.7 410.0,7655.5 411.2,7655.3 412.4,7655.1 413.6,7654.9 414.8,7654.7 416.0,7654.5 417.2,7654.3 418.4,7654.1 419.6,7653.9 420.8,7653.7 422.0,7653.5 423.2,7653.3 424.4,7653.1 425.6,7652.9 426.8,7652.7 428.0,7652.5 429.2,7652.3 430.4,7652.1 431.6,7651.9 432.8,7651.7 434.0,7651.5 435.2,7651.3 436.4,7651.1 437.6,7650.9 438.8,7650.7 440.0,7650.5 441.2,7650.3 442.4,7650.0 443.6,7649.8 444.8,7649.6 446.0,7649.4 447.2,7649.2 448.4,7649.0 449.6,7648.8 450.8,7648.6 452.0,7648.4 453.2,7648.2 454.4,7648.0 455.6,7647.8 456.8,7647.6 458.0,7647.4 459.2,7647.2 460.4,7647.0 461.6,7646.8 462.8,7646.6 464.0,7646.4 465.2,7646.2 466.4,7646.0 467.6,7645.8 468.8,7645.6 470.0,7645.4 471.2,7645.2 472.4,7645.0 473.6,7644.8 474.8,7644.6 476.0,7644.4 477.2,7644.2 478.4,7644.0 479.6,7643.8 480.8,7643.6 482.0,7643.4 483.2,7643.2 484.4,7643.0 485.6,7642.8 486.8,7642.6 488.0,7642.4 489.2,7642.2 490.4,7642.0 491.6,7641.8 492.8,7641.5 494.0,7641.3 495.2,7641.1 496.4,7640.9 497.6,7640.7 498.8,7640.5 500.0,7640.3 501.2,7640.1 502.4,7639.9 503.6,7639.7 504.8,7639.5 506.0,7639.3 507.2,7639.1 508.4,7638.9 509.6,7638.7 510.8,7638.5 512.0,7638.3" style="fill:none;stroke:var(--c-success);stroke-width:2.2"/>
+<line x1="145.2" y1="7692.4" x2="145.2" y2="7715.0" style="stroke:var(--c-success);stroke-width:1;stroke-dasharray:4 3"/>
+<circle cx="145.2" cy="7692.4" r="4" style="fill:var(--c-success)"/>
+<text x="145.2" y="7729" text-anchor="middle" style="fill:var(--c-success);font-size:11px;font-weight:700;font-family:var(--font-mono)">13,6</text>
+<text x="80.0" y="7729" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">0</text>
+<text x="224.0" y="7729" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">30</text>
+<text x="368.0" y="7729" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">60</text>
+<text x="512.0" y="7729" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px;font-family:var(--font-mono)">90</text>
+<text x="512" y="7745" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">kayıt aralığı τ (dakika)</text>
+<text x="40" y="7587" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kayıp</text>
+<rect x="300" y="7594" width="12" height="10" rx="2" style="fill:var(--c-danger);fill-opacity:.45;stroke:var(--c-danger);stroke-width:1"/>
+<text x="318" y="7603" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">A · 25 GB/s: en az %24 kayıp</text>
+<rect x="300" y="7611" width="12" height="10" rx="2" style="fill:var(--c-success);fill-opacity:.45;stroke:var(--c-success);stroke-width:1"/>
+<text x="318" y="7620" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">B · 250 GB/s (GDS): en az %7,5</text>
+<text x="353.6" y="7683.5" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">geri sarma τ/2M (ortak)</text>
+<text x="40" y="7763" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">M = 3 sa (16.384 H100&#x27;de ~3 saatte bir arıza) · kayıp = δ/τ + τ/2M</text>
+<text x="40" y="7779" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">Nasıl okunur: sık kayıt yazmaya, seyrek kayıt geri sarmaya zaman kaybettirir; en iyi</text>
+<text x="40" y="7794" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-style:italic">aralık çukurun dibidir.</text>
+<text x="552" y="7599" text-anchor="start" style="fill:var(--c-danger);font-size:12px;font-weight:700">Belirti</text>
+<text x="552" y="7617" text-anchor="start" style="fill:var(--c-text);font-size:12px">Küme her kayıtta durur; arızada son</text>
+<text x="552" y="7634" text-anchor="start" style="fill:var(--c-text);font-size:12px">kayda geri dönülür.</text>
+<text x="552" y="7662" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Neden</text>
+<text x="552" y="7680" text-anchor="start" style="fill:var(--c-text);font-size:12px">7,5 TB&#x27;lık kayıt CPU sayfa önbelleğinden</text>
+<text x="552" y="7697" text-anchor="start" style="fill:var(--c-text);font-size:12px">25 GB/s ile yazılırsa δ = 307 s sürer ve</text>
+<text x="552" y="7714" text-anchor="start" style="fill:var(--c-text);font-size:12px">küme bu sürede bekler.</text>
+<text x="552" y="7742" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Çare</text>
+<rect x="552.0" y="7752.0" width="116.9" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="610.4" y="7766.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">GPUDirect Storage</text>
+<rect x="552.0" y="7778.0" width="147.1" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="625.5" y="7792.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">asenkron / anlık yazma</text>
+<rect x="552.0" y="7804.0" width="98.7" height="20" rx="5" style="fill:var(--c-success);fill-opacity:.12;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="601.4" y="7818.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px">τ = √(2δM) seç</text>
+<line x1="540.0" y1="7585.0" x2="540.0" y2="7824.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="28.0" y="7850.0" width="784.0" height="33" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="40" y="7870" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: üç çarenin ortak fikri aynı: veriyi az taşı, taşırken hesabı durdurma.</text>
+<text x="420.0" y="7917" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Bu farkları sezgiyle görelim: aynı yükü her yoldan geçirelim.</text>
+<line x1="420.0" y1="7925.0" x2="420.0" y2="7945.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="7949" width="808" height="333" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
+<circle cx="36" cy="7973" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="7977.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">D</text>
+<text x="56" y="7978" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Hız sezgisi: 140 GB&#x27;ı taşımak ne kadar sürer?</text>
+<text x="28" y="7999" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Llama 3 70B&#x27;nin BF16 ağırlıkları = 140 GB; aynı yük her hattan (log ölçek).</text>
+<rect x="28" y="8011" width="784" height="214" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<line x1="200.0" y1="8025.0" x2="200.0" y2="8149.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="200" y="8163" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 ms</text>
+<line x1="292.0" y1="8025.0" x2="292.0" y2="8149.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="292" y="8163" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">100 ms</text>
+<line x1="384.0" y1="8025.0" x2="384.0" y2="8149.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="384" y="8163" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1 s</text>
+<line x1="476.0" y1="8025.0" x2="476.0" y2="8149.0" style="stroke:var(--c-border);stroke-width:1;stroke-dasharray:4 3"/>
+<text x="476" y="8163" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">10 s</text>
+<text x="40" y="8043" text-anchor="start" style="fill:var(--c-text);font-size:11px">HBM3 (tek H100)</text>
+<rect x="200" y="8031" width="57.1" height="16" rx="2" style="fill:var(--c-accent);fill-opacity:.45;stroke:var(--c-accent);stroke-width:1"/>
+<text x="263.1" y="8043" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">42 ms</text>
+<text x="40" y="8067" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink (düğüm içi)</text>
+<rect x="200" y="8055" width="137.3" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
+<text x="343.3" y="8067" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">0,31 s</text>
+<text x="40" y="8091" text-anchor="start" style="fill:var(--c-text);font-size:11px">PCIe Gen5 (CPU yolu)</text>
+<rect x="200" y="8079" width="215.3" height="16" rx="2" style="fill:var(--c-text-mute);fill-opacity:.45;stroke:var(--c-text-mute);stroke-width:1"/>
+<text x="421.3" y="8091" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2,2 s</text>
+<text x="40" y="8115" text-anchor="start" style="fill:var(--c-text);font-size:11px">InfiniBand (GPU başına)</text>
+<rect x="200" y="8103" width="225.1" height="16" rx="2" style="fill:var(--c-accent-2);fill-opacity:.45;stroke:var(--c-accent-2);stroke-width:1"/>
+<text x="431.1" y="8115" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">2,8 s</text>
+<text x="40" y="8139" text-anchor="start" style="fill:var(--c-text);font-size:11px">eski depolama (tüm küme)</text>
+<rect x="200" y="8127" width="252.8" height="16" rx="2" style="fill:var(--c-warn);fill-opacity:.45;stroke:var(--c-warn);stroke-width:1"/>
+<text x="458.8" y="8139" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-family:var(--font-mono)">5,6 s</text>
+<text x="40" y="8191" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">Çubuk uzadıkça yavaşlar: her çubuk aynı 140 GB&#x27;ın o hattan geçme süresidir.</text>
+<rect x="544.0" y="8025.0" width="256.0" height="80" rx="5" style="fill:var(--c-accent);fill-opacity:.08;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="554" y="8043" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">İnsan ölçeği: HBM&#x27;den 1 saniyede gelen</text>
+<text x="554" y="8059" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">veri</text>
+<text x="554" y="8075" text-anchor="start" style="fill:var(--c-text);font-size:11px">NVLink&#x27;ten 7,4 s, PCIe&#x27;den 52 s,</text>
+<text x="554" y="8091" text-anchor="start" style="fill:var(--c-text);font-size:11px">InfiniBand&#x27;den 67 s&#x27;de gelir.</text>
+<rect x="544.0" y="8115.0" width="256.0" height="96" rx="5" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="554" y="8133" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">Decode&#x27;un tavanı: her token bütün</text>
+<text x="554" y="8149" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">ağırlıkları bir kez okur</text>
+<text x="554" y="8165" text-anchor="start" style="fill:var(--c-text);font-size:11px">8 H100&#x27;de 140 GB ÷</text>
+<text x="554" y="8181" text-anchor="start" style="fill:var(--c-text);font-size:11px">(8 × 3,35 TB/s) ≈ 5,2 ms → batch 1&#x27;de en</text>
+<text x="554" y="8197" text-anchor="start" style="fill:var(--c-text);font-size:11px">fazla ~190 token/s</text>
+<line x1="532.0" y1="8025.0" x2="532.0" y2="8211.0" style="stroke:var(--c-border);stroke-width:1"/>
+<rect x="28.0" y="8237.0" width="784.0" height="33" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="40" y="8257" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Akılda kalsın: HBM&#x27;de milisaniyeler, ağda saniyeler. İyi tasarım veriyi hızlı katmanda tutar.</text>
+<text x="420.0" y="8302" text-anchor="middle" style="fill:var(--c-text-mute);font-size:12px;font-style:italic">Son durak: bütün bunlar gerçek bir kümede nasıl görünüyor?</text>
+<line x1="420.0" y1="8310.0" x2="420.0" y2="8330.0" marker-end="url(#bp-mut)" style="stroke:var(--c-text-mute);stroke-width:1.5"/>
+<rect x="16" y="8334" width="808" height="310" rx="12" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.4"/>
+<circle cx="36" cy="8358" r="12" style="fill:var(--c-accent);fill-opacity:.18;stroke:var(--c-accent);stroke-width:1.3"/>
+<text x="36" y="8362.7" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:700">E</text>
+<text x="56" y="8363" text-anchor="start" style="fill:var(--c-text);font-size:15px;font-weight:700">Gerçek küme: Meta&#x27;nın Llama 3 405B eğitimi</text>
+<text x="28" y="8384" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Aynı 16.384 H100, Meta&#x27;nın kendi kümesinde (ağ: RoCE); sayılar Llama 3 raporundan.</text>
+<rect x="28.0" y="8396" width="253.33333333333334" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="36.0" y="8404.0" width="237.3" height="20" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="154.7" y="8418.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Hesaplama</text>
+<text x="42.0" y="8442" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">16.384 H100</text>
+<text x="42.0" y="8457" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TP 8 × PP 16 × DP 128</text>
+<text x="42.0" y="8472" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">adım başına 16M token</text>
+<text x="42.0" y="8487" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">GPU başına 400 TFLOP/s</text>
+<text x="42.0" y="8502" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">BF16 MFU %41</text>
+<rect x="293.33333333333337" y="8396" width="253.33333333333334" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="301.3" y="8404.0" width="237.3" height="20" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.2"/>
+<text x="420.0" y="8418.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Ağ</text>
+<text x="307.3" y="8442" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">RoCE · 400 Gb/s/GPU</text>
+<text x="307.3" y="8457" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">pod = 3.072 GPU</text>
+<text x="307.3" y="8472" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">pod içi tam biseksiyon</text>
+<text x="307.3" y="8487" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">8 pod arası 1:7</text>
+<text x="307.3" y="8502" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">(küçük modeller: InfiniBand)</text>
+<rect x="558.6666666666667" y="8396" width="253.33333333333334" height="122" rx="8" style="fill:var(--c-surface);stroke:var(--c-border);stroke-width:1"/>
+<rect x="566.7" y="8404.0" width="237.3" height="20" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.2"/>
+<text x="685.3" y="8418.0" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:700">Depolama</text>
+<text x="572.7" y="8442" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">Tectonic · 240 PB</text>
+<text x="572.7" y="8457" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">7.500 SSD sunucusu</text>
+<text x="572.7" y="8472" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">2 TB/s sürekli</text>
+<text x="572.7" y="8487" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">7 TB/s tepe</text>
+<text x="572.7" y="8502" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">kayıt: 1 MB–4 GB/GPU</text>
+<text x="40" y="8538" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">MFU: 8.192 H100&#x27;de %43, 16.384&#x27;te %41, 128K bağlamda %38; ölçek büyüdükçe iletişim artar.</text>
+<rect x="28.0" y="8552.0" width="386.0" height="80" rx="5" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.2"/>
+<text x="38" y="8570" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">54 günde 466 kesinti; 419&#x27;u beklenmeyen → ortalama ~3 saatte</text>
+<text x="38" y="8586" text-anchor="start" style="fill:var(--c-text);font-size:11px;font-weight:700">bir arıza</text>
+<text x="38" y="8602" text-anchor="start" style="fill:var(--c-text);font-size:11px">%78 donanım (GPU %30,1 · HBM3 %17,2); otomasyonla etkin eğitim</text>
+<text x="38" y="8618" text-anchor="start" style="fill:var(--c-text);font-size:11px">süresi &gt; %90</text>
+<rect x="426.0" y="8552.0" width="386.0" height="80" rx="5" style="fill:var(--c-success);fill-opacity:.10;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="436.0" y="8570" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Ders: üç sütun birlikte tasarlanır.</text>
+<text x="436.0" y="8587" text-anchor="start" style="fill:var(--c-text);font-size:11px">En yavaş halka (HBM, ağ ya da disk) bütün kümenin hızını</text>
+<text x="436.0" y="8603" text-anchor="start" style="fill:var(--c-text);font-size:11px">belirler; MFU onun aynasıdır.</text>
 </svg>
 
 *Şekil 1.1: Üç sütunun büyük resmi. A: SM → GPU → DGX düğümü (sistem topolojisiyle) → SuperPOD ölçek merdiveni, SuperPOD ağının yakından incelemesi (port hesabı, trafik yolları, ölçek) ve kümeyi ayakta tutan 14 yapı taşı; B: bir eğitim adımında verinin yolu; C: üç duvar ve hesaplanmış eğrileri; D: 140 GB'lık yükle hız sezgisi; E: Llama 3 405B'nin gerçek sayıları. Kaynaklar: NVIDIA DGX H100 ve DGX SuperPOD belgeleri, The Llama 3 Herd of Models (2024).*
 
-Şekli yukarıdan aşağı okuyun. A bölümü bir SM'den 1.016 GPU'luk SuperPOD'a dört basamakta uzaklaşır ve donanım ile yazılım yapı taşlarının her birinin neden gerektiğini anlatır; B bölümü tek bir eğitim adımında verinin uğradığı sekiz durağı numaralar. C bölümündeki üç eğri bu yazının formüllerinden hesaplandı: roofline, bant genişliği basamakları ve Young-Daly kayıp eğrisi. D bölümü aynı 140 GB'ı her hattan geçirir, E bölümü ise üç sütunun Meta'nın Llama 3 405B kümesinde ölçülmüş hâlini verir. Sonraki üç bölüm sütunları sırayla açıyor.
+Şekli yukarıdan aşağı okuyun; çoğu kartta çizim solda, açıklaması sağda durur. A bölümü bir SM'den 1.016 GPU'luk SuperPOD'a dört basamakta uzaklaşır ve donanım ile yazılım yapı taşlarının her birinin neden gerektiğini anlatır; B bölümü tek bir eğitim adımında verinin uğradığı sekiz durağı numaralar. C bölümündeki üç eğri bu yazının formüllerinden hesaplandı: roofline, bant genişliği basamakları ve Young-Daly kayıp eğrisi. D bölümü aynı 140 GB'ı her hattan geçirir, E bölümü ise üç sütunun Meta'nın Llama 3 405B kümesinde ölçülmüş hâlini verir. Sonraki üç bölüm sütunları sırayla açıyor.
 
 ---
 

@@ -6,6 +6,7 @@ Kullanım:
   python3 .claude/skills/cizim/scripts/preview.py figs.json --out <scratchpad>/cizim
       -> <out>/shot_<lang>_<theme>.png  (Read ile bak)
       -> konsola taşma/çakışma raporu (boşsa "0 sorun")
+      --width 928: makale sütunu genişliğinde önizle (varsayılan 700)
 
   # 2) Gerçek makale sayfasında marked'dan sağ çıkıyor mu?
   python3 .claude/skills/cizim/scripts/preview.py --page en/how-llms-work --page tr/llm-nasil-calisir
@@ -81,7 +82,7 @@ def run(args):
                            "--virtual-time-budget=6000", *args], capture_output=True, text=True).stdout
 
 
-def preview(figs_path, out):
+def preview(figs_path, out, width=700):
     out = os.path.abspath(out)  # file:// URL'leri mutlak yol ister; göreli yol boş sayfa + sahte "0 sorun" verir
     os.makedirs(out, exist_ok=True)
     figs = json.load(open(figs_path))
@@ -93,13 +94,13 @@ def preview(figs_path, out):
             page = os.path.join(out, f"preview_{lang}_{theme}.html")
             open(page, "w").write(
                 f'<!doctype html><html data-theme="{theme}"><head><meta charset="utf-8"><style>{css}'
-                f'body{{background:var(--c-bg);width:700px;margin:0;padding:16px}}'
+                f'body{{background:var(--c-bg);width:{width}px;margin:0;padding:16px}}'
                 f'#cizim-report{{display:none}}</style></head><body>{body}{CHECK_JS}</body></html>')
             shot = os.path.join(out, f"shot_{lang}_{theme}.png")
             # pencere yüksekliği viewBox'lardan: sabit 400 px/figür uzun figürleri kesiyordu
             vb = [re.search(r'viewBox="0 0 (\d+) (\d+)"', s) for s in d.values()]
-            hgt = sum(int(int(m[2]) * 700 / int(m[1])) + 60 if m else 400 for m in vb) + 100
-            run([f"--window-size=740,{hgt}", f"--screenshot={shot}", "file://" + page])
+            hgt = sum(int(int(m[2]) * width / int(m[1])) + 60 if m else 400 for m in vb) + 100
+            run([f"--window-size={width + 40},{hgt}", f"--screenshot={shot}", "file://" + page])
             if theme == "light":  # metin ölçüleri temadan bağımsız; raporu bir kez al
                 dom = run(["--dump-dom", "file://" + page])
                 start = dom.find('<pre id="cizim-report">')
@@ -137,9 +138,11 @@ if __name__ == "__main__":
     ap.add_argument("figs", nargs="?")
     ap.add_argument("--out", default="cizim_preview")
     ap.add_argument("--page", action="append", default=[])
+    ap.add_argument("--width", type=int, default=700,
+                    help="önizleme genişliği (px); geniş tuvalli figürü makale sütununda görmek için 928")
     a = ap.parse_args()
     if a.figs:
-        preview(a.figs, a.out)
+        preview(a.figs, a.out, a.width)
     if a.page:
         check_pages(a.page)
     if not a.figs and not a.page:
