@@ -17,7 +17,7 @@ Kontroller (tarayıcıda getBBox ile):
   - iki metnin birbirine binmesi
   Döndürülmüş (transform) metinler atlanır; onlara gözle bak.
 """
-import argparse, glob, json, os, shutil, socket, subprocess, sys, time, html
+import argparse, glob, json, os, re, shutil, socket, subprocess, sys, time, html
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 TOKENS = os.path.join(ROOT, "assets/css/tokens.css")
@@ -96,7 +96,10 @@ def preview(figs_path, out):
                 f'body{{background:var(--c-bg);width:700px;margin:0;padding:16px}}'
                 f'#cizim-report{{display:none}}</style></head><body>{body}{CHECK_JS}</body></html>')
             shot = os.path.join(out, f"shot_{lang}_{theme}.png")
-            run([f"--window-size=740,{400 * len(d) + 200}", f"--screenshot={shot}", "file://" + page])
+            # pencere yüksekliği viewBox'lardan: sabit 400 px/figür uzun figürleri kesiyordu
+            vb = [re.search(r'viewBox="0 0 (\d+) (\d+)"', s) for s in d.values()]
+            hgt = sum(int(int(m[2]) * 700 / int(m[1])) + 60 if m else 400 for m in vb) + 100
+            run([f"--window-size=740,{hgt}", f"--screenshot={shot}", "file://" + page])
             if theme == "light":  # metin ölçüleri temadan bağımsız; raporu bir kez al
                 dom = run(["--dump-dom", "file://" + page])
                 start = dom.find('<pre id="cizim-report">')
