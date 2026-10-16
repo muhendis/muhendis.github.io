@@ -1,31 +1,46 @@
-A cluster of 1,024 NVIDIA H100 GPUs looks unstoppable on paper: over 1 ExaFLOP of 8-bit tensor compute, 80 Terabytes of high-bandwidth memory, and multi-terabit interconnect fabrics. Yet the moment you launch pre-training for a 70-billion-parameter foundation model, your telemetry dashboard confronts you with a sobering reality: Model FLOPs Utilization (MFU) languishes under 38%, your expensive Streaming Multiprocessors spend 40% of their clock cycles stalled on high-bandwidth memory queues, scale-out InfiniBand links are inundated with gradient synchronization bubbles, and synchronous checkpoint writes freeze the entire cluster for five minutes every few hours.
+On paper, an NVIDIA DGX SuperPOD of 127 DGX H100 nodes looks unstoppable: 1,016 H100 GPUs, 1.0 ExaFLOP/s of dense BF16 compute, 81 TB of HBM3, a 51.2 TB/s spine network and 1.39 MW of power. Meta trained Llama 3 405B on 16,384 of the same H100s, and each GPU sustained about 400 of its 990 TFLOP/s: 41% Model FLOPs Utilization (MFU), and 38% once the context grew to 128K tokens. Over the 54 days the report covers, the run was also interrupted 419 times without warning, about once every three hours.
 
-This bottleneck is not a random glitch or a software bug. It is the physical consequence of treating a modern GPU supercomputer as a uniform, monolithic computing pool. Unlike Google TPUs, which are wired into uniform 2D or 3D tori with static, synchronous communication scheduling, modern AI supercomputers are deeply hierarchical, multi-tiered systems governed by three distinct physical pillars: **Compute**, **Network**, and **Storage**. Inside each silicon die, over a hundred independent Streaming Multiprocessors compete for capacity-limited L2 caches. Inside each 8-GPU chassis, proprietary NVSwitch crossbars sustain an astonishing 900 GB/s bidirectional throughput per chip. But the moment a collective operation steps across the node boundary into the InfiniBand scale-out fabric, available bandwidth drops by nearly an order of magnitude—and if your I/O storage subsystem cannot stream tens of terabytes of checkpoints and trillions of tokens without choking host CPUs, your entire multi-million-dollar fabric grinds to a halt.
+The missing 59% is not a bug that a better kernel will fix. It is the time data spends waiting. Tensor Cores wait for operands that are ~480 cycles away in HBM. GPUs wait for gradients that leave the chassis on a road nine times narrower than NVLink. The whole cluster waits while a 7.5 TB checkpoint drains to the file system. Each part of this story has its own document: a whitepaper for the SM, a reference architecture for the SuperPOD, a paper for 4D parallelism, an operations report for failures. Read separately, each looks fine. What gets lost is how they connect, and the cluster runs only as fast as its slowest link.
 
-This article dissects the entire foundation model scaling stack across its three foundational pillars. We trace how individual warp schedulers dispatch arithmetic instructions on silicon, explore intra-node and inter-node network topologies from NVLink to rail-optimized InfiniBand fat-trees, analyze hardware-level collective acceleration like Mellanox SHARP, examine exabyte-scale I/O pipelines from GPUDirect Storage to the Young-Daly checkpoint formula, and quantify every trade-off with rigorous mathematical formulations and empirical benchmarks.
+This article puts the connections on one map. Figure 1.1 is a single poster in five parts. It zooms out from one Streaming Multiprocessor to a 16,384-GPU cluster, follows one Llama 3 405B training step through every road it uses, prices the three walls (memory, network and storage) with computed curves, pushes the same 140 GB through every link, and ends on Meta's measured numbers. The text below is the poster's legend: sections 2 to 4 give the formulas and derivations behind each card, pillar by pillar, while section 5 synthesizes the hardware hierarchy and bandwidth gaps. It is the first article of the AI Infrastructure series, and its job is to teach the structure: what the machine is made of, how its parts are wired, and which road each byte takes. The second article, [AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU](post.html?slug=from-gpus-to-ai-supercomputers), shows how this structure behaves under training load, 4D parallelism, failures, and Model FLOPs Utilization (MFU) diagnostics.
 
 **In this article**
 
-- [1. The modern AI triad: Compute, network, and storage](#1-the-modern-ai-triad-compute-network-and-storage)
-- [2. Pillar I — Compute: Streaming Multiprocessors, microarchitecture, and execution dynamics](#2-pillar-i-compute-streaming-multiprocessors-microarchitecture-and-execution-dynamics)
-- [3. Pillar II — Network: Interconnect fabrics, collectives, and multi-dimensional parallelism](#3-pillar-ii-network-interconnect-fabrics-collectives-and-multi-dimensional-parallelism)
-- [4. Pillar III — Storage: Foundation model datasets, checkpointing, and high-throughput I/O](#4-pillar-iii-storage-foundation-model-datasets-checkpointing-and-high-throughput-io)
-- [5. Synthesis: Training vs inference and operational trade-offs](#5-synthesis-training-vs-inference-and-operational-trade-offs)
+- [1. How to read the map: three pillars, five parts](#1-how-to-read-the-map-three-pillars-five-parts)
+- [2. Pillar I — Compute: inside the SM and the H100 chip](#2-pillar-i-compute-inside-the-sm-and-the-h100-chip)
+- [3. Pillar II — Network: from the NVLink chassis to the SuperPOD fabric](#3-pillar-ii-network-from-the-nvlink-chassis-to-the-superpod-fabric)
+- [4. Pillar III — Storage: Direct DMA and the high-throughput datapath](#4-pillar-iii-storage-direct-dma-and-the-high-throughput-datapath)
+- [5. Synthesis: Hardware hierarchy and latency gaps](#5-synthesis-hardware-hierarchy-and-latency-gaps)
 - [The whole story in six lines](#the-whole-story-in-six-lines)
 - [Glossary](#glossary)
 - [Going deeper](#going-deeper)
 
 ---
 
-## 1. The modern AI triad: Compute, network, and storage
+## 1. How to read the map: three pillars, five parts
 
-Distributed foundation model training is an exercise in extreme physical co-design. When engineers attempt to scale a large language model across thousands of accelerators, they inevitably crash into three physical walls:
+A modern AI supercomputer is not merely a cluster of standalone accelerators; it is an integrated **co-design** spanning silicon compute, in-chassis interconnects, cluster fabric topology, and high-throughput storage paths. This massive machine is founded upon three physical hardware pillars:
 
-1. **The Memory Wall (Compute):** While raw floating-point arithmetic throughput has exploded by more than $1,000\times$ over the past decade, high-bandwidth memory (HBM) speeds have grown by less than $30\times$. Inside each GPU, arithmetic units starve unless operational matrix dimensions provide enough data reuse to keep computational intensity above the hardware roofline knee.
-2. **The Fabric Wall (Network):** Communication bandwidth does not scale linearly with cluster size. Moving activations and weight gradients across an 8-GPU chassis over NVLink is an order of magnitude faster than routing packets across optical InfiniBand or RoCE v2 fabrics spanning hundreds of server racks. Failing to align model dimensions with this interconnect hierarchy results in crippling communication stalls.
-3. **The I/O Wall (Storage):** Foundation models are trained on 15+ trillion tokens of unstructured text and multimodal data, while their parameter states and optimizer buffers consume 7.5+ Terabytes of memory for a 405-billion parameter checkpoint. If storage access relies on legacy operating system page caches and CPU memory copies, host memory buses saturate, causing cluster-wide GPU compute lockouts during every checkpoint interval.
+1. **Compute Pillar:** The on-chip hierarchy — Streaming Multiprocessors (SMs), Warp Schedulers, Tensor Cores, and 3.35 TB/s HBM3 memory stacks.
+2. **Fabric / Interconnect Pillar:** In-chassis scale-up via 450 GB/s (unidirectional) NVLink 4 and the NVSwitch crossbar matrix; inter-chassis scale-out via a 50 GB/s (400 Gb/s) non-blocking rail-optimized InfiniBand fat-tree fabric.
+3. **Storage Pillar:** Direct DMA bypassing the host CPU and kernel page cache via GPUDirect Storage (GDS) across a dedicated storage fabric.
 
-To eliminate idle hardware cycles and maximize Model FLOPs Utilization (MFU), an AI infrastructure engineer must master all three pillars simultaneously:
+These three pillars unite across a physical scale ladder extending from microscopic threads to multi-thousand-GPU datacenters:
+
+| Level | Size | Hardware Component and Architectural Role |
+| :--- | :--- | :--- |
+| **Thread** | Smallest logical execution instance | Scalar CUDA execution lane with private register file |
+| **Warp** | 32 threads | Fundamental scheduling unit executed synchronously (SIMT) by the SM warp scheduler |
+| **SM** | Up to 64 warps, 2,048 threads | 4 subpartitions (SMSP), Tensor Cores, 256 KiB register file, and 228 KiB L1/Shared Memory |
+| **H100 SXM5** | 132 SMs, 80 GB HBM3 | 990 TFLOP/s dense BF16 compute, 50 MB L2 cache, and 3.35 TB/s HBM3 bandwidth |
+| **DGX H100** | 8 GPUs, 4 NVSwitches | 3.6 TB/s all-to-all NVLink crossbar fabric in-chassis and dual-socket host CPU |
+| **Scalable Unit (SU)** | 32 DGX, 256 GPUs | Rail-aligned connectivity mapped across 8 independent leaf switch planes |
+| **SuperPOD** | 127 DGX, 1,016 GPUs | Two-tier non-blocking rail-optimized InfiniBand fat-tree fabric |
+| **Multi-Pod Cluster** | 16,384 H100s | Datacenter-scale 3-tier spine fabric with dedicated storage network |
+
+A note on the numbers: four SUs of 32 servers are nominally 128 × 8 = 1,024 GPUs, but in NVIDIA's reference design one server slot goes to the UFM appliances, so a built SuperPOD has 127 DGX nodes and 1,016 GPUs. Both numbers appear in the literature, describing different aspects.
+
+The poster below draws all three pillars on one reference system, NVIDIA H100 SXM5 → DGX H100 → DGX SuperPOD with an InfiniBand fat-tree, and keeps every other accelerator or cluster in parentheses or in its own part:
 
 <svg viewBox="0 0 840 19489" role="img" aria-label="A five-part poster of AI infrastructure. Part A zooms out in four levels. Level 1, the Streaming Multiprocessor, one of 132 in an H100 SXM5, numbered like the SM list in the text: four identical subpartitions, each with (1) a fourth-generation Tensor Core doing 1,024 BF16 or 2,048 FP8 FLOPs per cycle, (2) a warp scheduler that issues one instruction per cycle from up to 16 warps, (3) 32 FP32 CUDA cores plus 16 INT32 and 16 FP64 units, and (4) a 64 KiB register file of 16,384 registers; the four share 256 KiB of SMEM and L1, fed from L2 and HBM by the TMA copy engine. 528 Tensor Cores times 1,024 FLOPs times 1.83 GHz give about 989 TFLOP/s. Measured load latencies on Hopper are about 29 cycles for SMEM, 41 for L1, 263 for L2 and 479 for HBM, so the scheduler hides the wait by switching every cycle to a ready warp at no cost; a timeline shows four warps that each compute for 2 units and wait 6 keeping the scheduler busy, while two warps leave it idle half the time, since warps needed are about 1 plus wait over compute. More registers per thread mean fewer resident warps: 32 registers allow 64 warps, 64 allow 32, 128 allow 16 and 255 allow 8; fast Hopper kernels such as FlashAttention-3 instead run few warps and hide latency with TMA copies and wgmma. In the kitchen model the SM is a line cook with order tickets, registers and SMEM are the counter, the Tensor Core is the knife and stove, and HBM is the shared pantry. Level 2, the H100 SXM5 chip, after the text&#x27;s memory hierarchy and roofline subsection: an 814 square millimetre GH100 die with 80 billion transistors on TSMC 4N, built as 8 GPCs of 9 TPCs with 2 SMs each, 144 slots of which 132 are enabled for yield, an NVLink 4 port with 18 links and a PCIe Gen5 x16 port, a 50 MB L2 in two partitions, and 5 active HBM3 stacks of 16 GB in 6 sites, each behind two 512-bit memory controllers; the full chip has 144 SMs, 60 MB of L2 and 6 stacks. 5,120 bits at about 5.2 Gb/s per pin give 3.35 TB/s. The memory pyramid runs from 256 KiB of registers and 256 KiB of SMEM or L1 per SM, about 33 MB each chip-wide, to 50 MB of L2 at about 263 cycles and 5.5 TB/s and 80 GB of HBM3 at about 479 cycles and 3.35 TB/s. A log-log roofline, min of 990 and 3.35 times alpha, has its ridge at alpha 295.5 FLOPs per byte: a BF16 addition at alpha 0.17 and decode at batch 1 with alpha about 1 are memory bound, batch 128 reaches 420 TFLOP/s and batch 4,096 sits on the 990 roof. In the kitchen model the GPU is the kitchen of 132 cooks, L2 the shared shelf, HBM the pantry with 5 doors, and NVLink and PCIe the service door. 8 GPUs make one DGX H100 node: 4 NVSwitches, 900 GB/s NVLink per GPU, 3.6 TB/s bisection, 2 Xeon CPUs with 2 TB RAM on PCIe Gen5 at 64 GB/s, one 400 Gb/s compute NIC per GPU, 2 dual-port NICs for storage and management, and 8 NVMe drives. The node card, after the text&#x27;s intra-node networking subsection, derives 450 GB/s as 18 links of 25 GB/s and the 3.6 TB/s bisection as 4 GPUs times 450 GB/s times 2; a link matrix shows every GPU sending 5, 4, 4 and 5 NVLinks to NVSwitches 0 to 3, which receive 40, 32, 32 and 40 of the 144 links, so the fabric is non-blocking, each 64-port NVSwitch carries 3.2 TB/s both ways and can sum data itself with NVLink SHARP. Per GPU, NVLink gives 450 GB/s, PCIe 64 GB/s and the NIC 50 GB/s: TP AllReduce uses NVLink twice per layer, PP activations and DP gradients use the NIC to leaf i, data and checkpoints use the CX-7 storage fabric, and the data loader uses PCIe from the same socket. By the text&#x27;s TP rule, Y is at most 28,672 over 2,200, about 13, on NVLink but only 1.45 on the network, so TP 8 stays in the chassis. In the restaurant model the node has eight kitchens, NVLink is the inner corridor, the CPUs are two managers and the NICs are courier doors. 32 nodes make a scalable unit and 4 make a DGX SuperPOD of 127 nodes, 1,016 GPUs: 32 leaf and 16 spine switches in a rail-optimised fat-tree where NIC i of every node goes to leaf i, a separate storage fabric with at least 40 GB/s per node, and in-band and out-of-band Ethernet management. The cluster card, after the text&#x27;s scale-out subsection, compares a top-of-rack layout, where GPU 3 of node A reaches GPU 3 of node B through leaf, spine and leaf in 3 hops, with NVIDIA&#x27;s rail layout, where every node&#x27;s NIC i goes to leaf i and the same message takes 1 hop; because TP 8 stays inside the chassis, DP and PP traffic runs between same-numbered GPUs. A scale ladder multiplies BF16 compute from 7.5 TFLOP/s per SM to 990 per H100, 7.9 PFLOP/s per DGX, 253 per SU, 1.0 EFLOP/s per SuperPOD and 16.2 EFLOP/s for 64 SUs, with HBM growing from 80 GB to 1.31 PB, while the road out narrows per GPU from 3.35 TB/s to 450 and 50 GB/s. In the restaurant-chain model leaves are local exchanges, spines trunk lines, and storage and management the depot and head office. Part B follows one training step of Llama 3 405B on 16,384 GPUs. A 4D parallelism card explains the split. The problem: training Llama 3 405B on one H100 would take about 3,000 years, and its 6,480 GB training state is 81 times the GPU&#x27;s 80 GB. Four steps each solve one problem: TP 8 splits every layer across a node&#x27;s 8 GPUs, 6,480 to 810 GB per GPU and 3,000 to 380 years; PP 16 spreads the 126 layers over 16 nodes into a 128-GPU chain, 810 to 50.6 GB and 24 years; DP 128 copies the chain for 16,384 GPUs and about 67 days; FSDP splits the optimizer state across the copies, 50.6 to 12.9 GB. A summary chart shows each step against the 80 GB line. TP 8 is the GPUs in a node, PP 16 the nodes in a chain and DP 128 the copies, so each GPU&#x27;s address is [TP rank, PP rank, DP rank], and GPUs with the same TP rank share a rail. A table says what each of the five dimensions splits, what one GPU does, where, how often it talks and why it is needed, under the rule that the more often a dimension talks the further inside it sits; EP for MoE and CP for long context are the fourth dimension, depending on the source. Four pictures contrast a small example with Llama 3&#x27;s version. Eight steps follow the data: 1 read 67 MB of tokens per step; 2 forward pass, about 2.1 s; 3 tensor-parallel AllReduce of 268 MB over NVLink about 500 times at 1 ms; 4 send a 34 MB activation slice per micro-batch over the rail; 5 backward pass, about 4.1 s; 6 FSDP gradient sync of 12.7 plus 6.3 GB, about 0.38 s, overlapped; 7 AdamW updates each GPU&#x27;s 24.7 million parameters in HBM; 8 every ~14 minutes write a 7.5 TB checkpoint, ~31 s at 250 GB/s. A budget chart puts a 6.2 s step of compute against 2.5 s at peak, 0.53 s of NVLink, 0.38 s of network sync, 0.23 s of amortised checkpoint and 0.02 s of pipeline sends. Part C shows three walls with computed curves. Memory wall: for a Llama 3 70B MLP on H100, achieved speed rises with batch size from 3.3 TFLOP/s at batch 1 to 420 at batch 128 and reaches the 990 ceiling near batch 310; fixes are bigger batches, kernel fusion and low-bit weights for decode. Network wall: bandwidth per GPU falls from 3.35 TB/s in HBM to 450 GB/s on NVLink and 50 GB/s off the node; tensor parallelism fits 13 GPUs on NVLink so 8, but only 1.45 over InfiniBand; a 16-stage pipeline idles 48 percent with 16 microbatches and 10.5 percent with 128; fixes are TP in the node, SHARP and overlapping communication. I/O wall: Young-Daly loss curves against checkpoint interval, with a minimum of 24 percent at 42.9 minutes for 25 GB/s and 7.5 percent at 13.6 minutes for 250 GB/s; fixes are GPUDirect Storage, asynchronous writes and the square-root interval. Part D times the same 140 GB load: 42 milliseconds from HBM, 0.31 s over NVLink, 2.2 s over PCIe, 2.8 s over InfiniBand per GPU, 5.6 s for legacy storage shared by the whole cluster; decode on 8 H100s is capped near 190 tokens per second. Part E lists Meta&#x27;s Llama 3 405B run: 16,384 H100s at 400 TFLOP/s and 41 percent MFU, a RoCE network with 3,072-GPU pods, Tectonic storage of 240 PB with 2 TB/s sustained and 7 TB/s peak, and 466 interruptions in 54 days, about one every 3 hours. The slowest link sets the pace of the whole cluster. After the cluster level, a building-blocks card shows a DGX&#x27;s four networks: 8 × 400 Gb/s InfiniBand to the compute fabric of 48 QM9700 switches (400 GB/s), 2 × 400 Gb/s to the storage fabric of 16 QM9700 (100 GB/s, target at least 40 GB/s), 2 × 100 GbE to 8 SN4600C in-band switches and 1 GbE from the BMC to 8 SN2201 out-of-band switches, each kept apart so its traffic doesn&#x27;t slow the AllReduce. A parts list gives each count and its origin: 127 DGX as 4 SUs × 32 slots minus one for the UFM pair, 32 leaves plus 16 spines, 4 UFM appliances, 5 management servers, 38 racks and 108 PDUs. Power adds up to 1.39 MW on average, 1.295 MW of it, 92.9%, from 127 DGX at 10.2 kW. Storage carries checkpoints, not tokens: Llama 3 70B on 1,016 GPUs reads only about 3.8 MB/s of tokens against NVIDIA&#x27;s 60 GB/s NLP target, while a 1.12 TB checkpoint stops training for 37, 14 or 4.5 seconds at 30, 80 or 250 GB/s. Six software steps carry a job: Base Command Platform submits it, Slurm allocates nodes, Base Command Manager installs one image, NGC and AI Enterprise start one stack, Magnum IO moves the data with NCCL, SHARP and GPUDirect Storage, and UFM finds failures; in Llama 3&#x27;s run only 3 of 419 interruptions needed manual intervention. In the restaurant model storage is the supply line, in-band the service corridor, out-of-band the fuse box and the schedulers the shift manager. The node level redraws NVIDIA&#x27;s DGX H100 system topology: CPU 0 and CPU 1 joined by UPI; CPU 0 feeds GPUs 0 to 3 and NICs 0 to 3, CPU 1 feeds GPUs 4 to 7 and NICs 4 to 7, each GPU paired with its own network card; two upper PCIe switches carry the dual-port storage cards and four NVMe drives each; CPU 0 has two M.2 OS drives and CPU 1 a 100 GbE card; every GPU sends 18 NVLinks, split 5, 4, 4 and 5, to four NVSwitches, which a lower PCIe switch connects to CPU 0 for management. Six numbered circles on the node diagram match six questions below it: who feeds whom (two NUMA halves), how a GPU reaches the network (its own NIC with GPUDirect RDMA), how GPUs talk (18 NVLinks to four NVSwitches), where storage traffic goes (upper PCIe switches), what joins the halves (CPU communication, UPI) and who manages the NVSwitches (Fabric Manager over PCIe from CPU 0). The cluster level opens with the hierarchy H100 SXM5, DGX H100, scalable unit of 32 DGX, and DGX SuperPOD of 4 units. A closer-look card, after the text&#x27;s scale-out and collectives subsections, counts one leaf&#x27;s ports: 32 down to the nodes, 32 up with two cables to each of the 16 spines, 1,024 leaf-spine cables in all, so the fabric is non-blocking: 16 × 64 × 50 GB/s = 51.2 TB/s of spine capacity against 1,016 × 50 GB/s = 50.8 TB/s from the GPUs. Four routes compare their price: the same rail in the same SU takes 1 switch, the same rail in another SU and cross-rail traffic take 3, and NCCL&#x27;s PXN turns cross-rail traffic into an NVSwitch hop plus 1 switch, which DeepSeek-V3 mirrors by sending tokens over IB to the same-index GPU first. For a Llama 3 70B gradient of 17.5 GB per GPU over 127 ranks, a ring AllReduce puts 34.7 GB on the wire in 0.69 s and SHARP 17.5 GB in 0.35 s. Two tiers stop at 64 leaves × 32 = 2,048 GPUs; from 16 SUs a core tier is added, 2,048 DGX use 512 leaf, 512 spine and 256 core switches, and the longest path grows from 3 to 5 switches. In the restaurant-chain model rails are same-numbered kitchens, PXN a corridor, SHARP a vote count at the exchange and the core tier a national backbone. A note explains why the SuperPOD has 127 DGX rather than 128: a pair of UFM appliances takes one DGX slot, and smaller builds start from a single unit, between 31 and 127 DGX. The cluster drawing follows NVIDIA&#x27;s compute-fabric diagram: Spine-01 to Spine-16 above; SU 1 with Leaf-01-01 to 08 and nodes H100-001 to 032; SU 2 with Leaf-02-01 to 08 and nodes H100-033 to 064; SU 3, elided, repeats the pattern; SU 4 with Leaf-04-01 to 08, nodes H100-097 to 127 and the UFM pair C-UFM 1 and 2; spine-leaf links of 2 × 400 Gb/s, DGX-leaf links of 400 Gb/s and UFM-leaf links of 200 Gb/s. Under the hierarchy, a what-does-what table explains each level: the H100 does the maths and holds its share of the model in HBM; the DGX joins 8 GPUs into one NVLink domain where tensor parallelism lives, while its CPUs run the OS and data loader; the SU is the repeating unit of 32 DGX and 8 leaf switches where same-numbered GPUs meet in one hop; the SuperPOD joins the SUs through the spine, adds storage, management and software, and spreads data parallelism over the whole cluster. A definitions box explains leaf and spine: a leaf is the lower-tier switch that servers plug into, 8 per SU, one per rail, with 32 ports down and 32 up; a spine is the upper-tier switch that joins leaves and has no servers, 16 in all, each linked to all 32 leaves; since every leaf reaches every spine, any two servers meet in at most leaf, spine, leaf." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
@@ -4199,21 +4214,66 @@ To eliminate idle hardware cycles and maximize Model FLOPs Utilization (MFU), an
 
 *Figure 1.1: The three pillars at a glance. A: the SM → GPU → DGX node (with its system topology) → SuperPOD scale ladder, a closer look at the SuperPOD's network (port count, traffic paths, scale) and the 14 building blocks that keep the cluster running; B: the path of data through one training step; C: the three walls with computed curves; D: speed intuition with a 140 GB load; E: real numbers from Llama 3 405B. Sources: NVIDIA DGX H100 and DGX SuperPOD documentation, The Llama 3 Herd of Models (2024).*
 
-Read the figure top to bottom; most cards put the drawing on the left and its explanation on the right. Part A zooms out from one SM to a 1,016-GPU SuperPOD in four levels and explains why each hardware and software building block is needed, and Part B numbers the eight stops data makes in a single training step. The three curves in Part C are computed from this article's formulas: the roofline, the bandwidth staircase and the Young-Daly loss curve. Part D pushes the same 140 GB through every link, and Part E shows the three pillars as measured on Meta's Llama 3 405B cluster. The next three sections open the pillars one by one.
+### How the poster is organized
+
+The poster organizes the entire hardware architecture into four logical panels, followed by Meta's empirical datacenter benchmark:
+
+| Section | Focus | Hardware Components and Metrics Analyzed |
+| :--- | :--- | :--- |
+| **A: Scale Ladder** | Microscopic silicon to cluster | SM subpartitions, H100 chip layout, DGX node NUMA topology, SuperPOD fat-tree |
+| **B: Execution Step** | Single training iteration | Step timeline, activation communication, gradient sync, and hardware execution |
+| **C: Hardware Gaps** | Physical hardware constraints | HBM arithmetic intensity threshold, NVLink vs network limits, I/O direct transfer |
+| **D: Latency Hierarchy** | 140 GB transit across interconnects | Latency benchmarks: HBM3 (42 ms) → NVLink (0.31 s) → PCIe (2.2 s) → InfiniBand (2.8 s) → Legacy I/O (5.6 s) |
+| **E: Datacenter Ground Truth** | Meta Llama 3 405B infrastructure | Empirical parameters: 16,384 H100s, 400 TFLOP/s sustained, 41% MFU, RoCE fabric, Tectonic storage |
+
+Part A zooms out across four hardware levels: 132 SMs form an H100 GPU, 8 H100s form a DGX node, 32 DGX nodes form a scalable unit (SU), and 4 SUs compose a 127-node DGX SuperPOD. Dedicated cards detail the fabric architecture (leaf-to-spine non-blocking wiring, in-network reduction) and physical infrastructure building blocks (dedicated compute/storage/management fabrics, 1.39 MW datacenter provisioning).
+
+Most cards follow a consistent pedagogical anatomy:
+- **Hardware schematic** with numbered references linking directly to the mathematical breakdown.
+- **First-principles derivations**, such as $990 	ext{ TFLOP/s} = 528 	ext{ Tensor Cores} 	imes 1{,}024 	ext{ FLOP} 	imes 1.83 	ext{ GHz}$.
+- **Mental models** that scale hierarchically: from line cooks in an SM to interconnected kitchens across a datacenter.
+- **Architectural rules:** "chattiest tensor parallelism stays inside the NVLink corridor; scale-out traffic is aligned to independent network rails."
+
+The three curves in Part C represent the physical rooflines: the arithmetic intensity boundary, the interconnect bandwidth cliff, and direct DMA storage throughput. Part E anchors these calculations to Meta's published datacenter metrics.
+
+> [!TIP]
+> **Part 2 of the Series: System Diagnosis**
+> While this article teaches physical hardware anatomy, the diagnostic counterpart explores why these machines stall under real pre-training workloads, analyzing MFU losses, cluster crashes, and operational bottlenecks: [AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU](post.html?slug=from-gpus-to-ai-supercomputers).
 
 ---
 
-## 2. Pillar I — Compute: Streaming Multiprocessors, microarchitecture, and execution dynamics
+## 2. Pillar I — Compute: inside the SM and the H100 chip
+
+This section is the legend for levels 1 and 2 of Part A and for the memory wall in Part C: what an SM does in one cycle, why it keeps 64 warps in flight, and why a batch of about 300 tokens separates a waiting GPU from a working one.
 
 ### Silicon-level GPU anatomy: SMs, warp schedulers, and tensor cores
 
+Calling a GPU "a more powerful processor" misses the point. A CPU spends its silicon on a few sophisticated, low-latency cores built for branch-heavy, irregular and latency-sensitive instruction streams. A GPU spends most of its silicon on execution units, so that it can run an enormous number of similar operations at the same time. That trade wins for dense matrix multiplication and stops paying off when the work is tiny or irregular, because coordination overhead then eats the parallelism.
+
 To grasp why GPUs behave so differently from TPUs, consider a commercial kitchen analogy. A Google TPU v5p behaves like a high-end French brigade run by just two colossal master chefs (the two TensorCore units). Each chef handles enormous cutting boards (Matrix Multiply Units, or MXUs) capable of processing 128x128 matrices in lockstep; if you hand them an irregular task or small batches, their massive tools sit idle. A modern NVIDIA GPU (such as Hopper H100 or Blackwell B200) is instead an army of 132 to 148 short-order line cooks, termed **Streaming Multiprocessors (SMs)**. Each line cook operates independently, executing separate tasks on modest prep stations, yet all sharing a central pantry.
 
-In hardware, an SM is broken down into four identical quadrants called **SM subpartitions**. Each subpartition contains:
-1. **A Tensor Core (TC):** A specialized systolic matrix multiplication engine. On an H100 SXM5 at its 1.83 GHz Tensor Core clock, each Tensor Core crunches roughly 1,024 BF16 floating-point operations per clock cycle—equivalent to an 8x8x8 matrix multiplication. Across 132 SMs (528 Tensor Cores total), this yields the headline 990 TFLOP/s BF16 dense throughput. On Blackwell B200, this expands to 2,048 FLOPs per cycle, reaching 2,250 TFLOP/s dense BF16.
-2. **A Warp Scheduler and Dispatch Unit:** Responsible for issuing instructions to sets of 32 threads, collectively known as a **warp**. An SM can keep up to 64 resident warps in flight simultaneously, rapidly context-switching between them on every clock cycle to hide memory load latencies.
-3. **32 FP32 CUDA Cores (ALUs):** General-purpose vector execution units that compute elementwise activations (GELU, SiLU), normalizations (RMSNorm), and additions. Across the 132 SMs of an H100, there are 16,896 CUDA cores running at ~1.98 GHz boost clock.
-4. **16,384 32-bit Registers:** Providing 64 KiB of ultra-fast register file per subpartition (256 KiB total per SM, amounting to ~33 MB chip-wide).
+In hardware, an SM is broken down into four identical quadrants called **SM subpartitions** (SMSPs). Each subpartition contains the four parts numbered 1–4 on level 1 of the poster:
+1. **A Tensor Core (TC):** a matrix multiply-accumulate engine. On an H100 SXM5 at its 1.83 GHz Tensor Core clock, each Tensor Core does 1,024 dense BF16 floating-point operations per cycle, the work of an 8×8×8 matrix product, and twice that (2,048) in FP8. On Blackwell B200, each Tensor Core does 2,048 BF16 FLOPs per cycle, reaching 2,250 TFLOP/s dense BF16.
+2. **A Warp Scheduler and Dispatch Unit:** it issues one instruction per cycle to a group of 32 threads, collectively known as a **warp**, choosing among up to 16 resident warps. With four schedulers an SM keeps up to 64 warps in flight and switches between them every cycle to hide memory load latencies.
+3. **32 FP32 CUDA Cores (ALUs)**, plus 16 INT32 and 16 FP64 units: general-purpose vector execution units that compute elementwise activations (GELU, SiLU), normalizations (RMSNorm), and additions. Across the 132 SMs of an H100, there are 16,896 CUDA cores running at ~1.98 GHz boost clock.
+4. **16,384 32-bit Registers:** 64 KiB of register file per subpartition (256 KiB per SM, ~33 MB chip-wide), where every thread's variables live and from which every instruction reads its operands.
+
+The four subpartitions share 256 KiB of L1 data cache and shared memory (SMEM), up to 228 KiB of which can be reserved as SMEM, and the **Tensor Memory Accelerator (TMA)** copies tiles from L2 or HBM into SMEM asynchronously. Multiplying the per-cycle work out gives the headline number:
+
+$$C_{\text{peak}} = N_{\text{TC}} \times \text{FLOP/cycle} \times f = 528 \times 1{,}024 \times 1.83 \times 10^{9} \approx 989 \times 10^{12} \text{ FLOP/s}$$
+
+Read this as: $N_{\text{TC}} = 132 \times 4 = 528$ Tensor Cores, each doing 1,024 BF16 FLOPs per cycle, at a clock $f$ of 1.83 GHz. That is the "990 TFLOP/s" used everywhere in this article; FP8 doubles it to ~1,979 TFLOP/s.
+
+These figures belong to the SXM module; the PCIe version of the H100 has 114 SMs. Inside an SM the four kinds of parts have clearly separate jobs:
+
+| Unit | Primary function | In the kitchen model |
+| :--- | :--- | :--- |
+| **Warp scheduler** | issues the next instruction of a warp whose operands are ready | the order rail in front of the cook |
+| **CUDA core / ALU** | additions, multiplications, elementwise ops and general arithmetic | the general workbench |
+| **Tensor Core** | fused matrix multiply-accumulate, $D = A \times B + C$, on small tiles | the knife and stove |
+| **Registers / shared memory** | the operands in active use, at the lowest latency | the counter |
+
+The linear projections and feed-forward layers of a Transformer are dense matrix multiplications, so almost all of the 990 TFLOP/s comes from the Tensor Cores. A CUDA core and a Tensor Core are different physical units, which is why `nvidia-smi` reporting 99% GPU utilization says nothing about whether the Tensor Cores are being used efficiently, or at all.
 
 The architectural layout of a modern GPU and its internal SM breakdown are illustrated in the following structural diagram:
 
@@ -4303,49 +4363,296 @@ The architectural layout of a modern GPU and its internal SM breakdown are illus
 <text x="280" y="418" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">80 GB @ 3.35 TB/s (H100) · 141 GB @ 4.8 TB/s (H200) · 192 GB @ 8.0 TB/s (B200)</text>
 </svg>
 
-Beyond this abstract view, NVIDIA's actual GH100 silicon die layout and microarchitectural schematics reveal the physical placement of these compute engines:
-
-![NVIDIA GPU Chip Layout and SM Microarchitecture](../../assets/img/gpu/gpu-diagram.png)
-*Figure 2.1: Abstract silicon layout of an H100/B200 GPU containing 132 to 148 Streaming Multiprocessors connected to High Bandwidth Memory, as described in the JAX-ML Scaling Book.*
-
-![NVIDIA H100 SM Subpartition Architecture](../../assets/img/gpu/blackwell-sm.png)
-*Figure 2.2: Detailed internal schematic of an H100 SM showing the four subpartitions, register files, Warp Schedulers, Tensor Cores, and the shared 256 KiB L1/SMEM data cache.*
-
-### SIMT execution dynamics and the threat of warp divergence
+### SIMT execution dynamics: Thread, warp, and block hierarchy
 
 Unlike the TPU's pure SIMD (Single Instruction, Multiple Data) execution, NVIDIA GPUs operate under the **SIMT (Single Instruction, Multiple Threads)** paradigm. While all 32 CUDA cores within a warp execute the same instruction in a given cycle, each thread maintains its own program counter and private register space.
 
+The units nest. A **thread** is the smallest logical instance of a program: you write one program, for example a blur filter, and the GPU launches thousands of copies of it, one per pixel. Threads are grouped into **thread blocks**, and the hardware cuts each block into **warps** of 32 threads that are scheduled together. A block runs on a single SM, and one SM can host several blocks at once as long as its registers, shared memory and warp slots last. SIMT means that every thread keeps its own registers and state, while the fetch and dispatch of each instruction is shared by the whole warp: 32 clerks applying the same formula to 32 rows of a spreadsheet.
+
+<svg viewBox="0 0 720 392" role="img" aria-label="Top: a 128-thread block is split into four warps of 32 threads each, warp 0 through warp 3. The block runs on a single SM, and an SM can host several blocks as long as its registers, shared memory and warp slots last. Bottom: warp divergence. For if x less than 0 then A else B, the same warp first runs path A with 16 lanes active and 16 masked, then path B with the other 16 active; in this equal-cost case half the lanes idle in each pass, but this is not a universal 50 percent loss." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<defs><marker id="bw-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker><marker id="bw-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker></defs>
+<text x="16" y="24" text-anchor="start" style="fill:var(--c-accent);font-size:14px;font-weight:700;letter-spacing:.03em">A thread block is cut into warps of 32</text>
+<rect x="16" y="38" width="430" height="176" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
+<text x="28" y="58" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">thread block (128 threads)</text>
+<text x="28" y="87" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Warp 0</text>
+<rect x="92" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="102" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="112" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="122" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="132" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="142" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="152" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="162" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="172" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="182" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="192" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="202" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="212" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="222" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="232" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="242" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="252" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="262" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="272" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="282" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="292" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="302" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="312" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="322" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="332" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="342" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="352" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="362" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="372" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="382" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="392" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<rect x="402" y="74" width="8" height="18" rx="2" style="fill:var(--c-accent);fill-opacity:.55"/>
+<text x="28" y="121" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Warp 1</text>
+<rect x="92" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="102" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="112" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="122" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="132" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="142" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="152" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="162" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="172" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="182" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="192" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="202" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="212" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="222" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="232" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="242" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="252" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="262" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="272" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="282" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="292" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="302" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="312" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="322" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="332" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="342" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="352" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="362" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="372" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="382" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="392" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<rect x="402" y="108" width="8" height="18" rx="2" style="fill:var(--c-success);fill-opacity:.55"/>
+<text x="28" y="155" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Warp 2</text>
+<rect x="92" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="102" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="112" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="122" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="132" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="142" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="152" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="162" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="172" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="182" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="192" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="202" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="212" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="222" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="232" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="242" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="252" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="262" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="272" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="282" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="292" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="302" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="312" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="322" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="332" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="342" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="352" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="362" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="372" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="382" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="392" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<rect x="402" y="142" width="8" height="18" rx="2" style="fill:var(--c-warn);fill-opacity:.55"/>
+<text x="28" y="189" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">Warp 3</text>
+<rect x="92" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="102" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="112" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="122" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="132" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="142" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="152" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="162" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="172" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="182" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="192" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="202" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="212" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="222" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="232" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="242" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="252" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="262" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="272" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="282" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="292" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="302" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="312" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="322" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="332" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="342" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="352" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="362" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="372" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="382" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="392" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<rect x="402" y="176" width="8" height="18" rx="2" style="fill:var(--c-accent-2);fill-opacity:.55"/>
+<text x="92" y="208" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">each square = one thread · 32 per warp</text>
+<line x1="448" y1="126" x2="478" y2="126" marker-end="url(#bw-a)" style="stroke:var(--c-accent);stroke-width:1.5"/>
+<rect x="480" y="38" width="224" height="176" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="492" y="58" text-anchor="start" style="fill:var(--c-text);font-size:12.5px;font-weight:600">one SM</text>
+<rect x="492" y="70" width="200" height="34" rx="5" style="fill:var(--c-accent);fill-opacity:.10;stroke:var(--c-accent);stroke-width:1.2"/>
+<text x="592" y="91" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">block 0</text>
+<rect x="492" y="112" width="200" height="34" rx="5" style="fill:var(--c-success);fill-opacity:.10;stroke:var(--c-success);stroke-width:1.2"/>
+<text x="592" y="133" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">block 1</text>
+<rect x="492" y="154" width="200" height="34" rx="5" style="fill:var(--c-border);fill-opacity:.05;stroke:var(--c-border);stroke-width:1.2;stroke-dasharray:4 3"/>
+<text x="592" y="175" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">+ more, while resources last</text>
+<text x="592" y="204" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10.5px">registers · shared memory · warp slots</text>
+<text x="16" y="252" text-anchor="start" style="fill:var(--c-accent);font-size:14px;font-weight:700;letter-spacing:.03em">Warp divergence: one warp, two paths, taken in turn</text>
+<text x="16" y="276" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-family:var(--font-mono)">if (x &lt; 0) { A } else { B }</text>
+<text x="16" y="307" text-anchor="start" style="fill:var(--c-text);font-size:12px">pass 1: if → A</text>
+<rect x="176" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="188" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="200" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="212" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="224" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="236" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="248" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="260" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="272" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="284" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="296" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="308" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="320" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="332" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="344" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="356" y="293" width="10" height="20" rx="2" style="fill:var(--c-accent);fill-opacity:.75"/>
+<rect x="368" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="380" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="392" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="404" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="416" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="428" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="440" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="452" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="464" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="476" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="488" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="500" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="512" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="524" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="536" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="548" y="293" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<text x="16" y="341" text-anchor="start" style="fill:var(--c-text);font-size:12px">pass 2: else → B</text>
+<rect x="176" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="188" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="200" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="212" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="224" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="236" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="248" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="260" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="272" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="284" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="296" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="308" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="320" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="332" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="344" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="356" y="327" width="10" height="20" rx="2" style="fill:var(--c-text-mute);fill-opacity:.15"/>
+<rect x="368" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="380" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="392" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="404" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="416" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="428" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="440" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="452" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="464" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="476" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="488" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="500" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="512" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="524" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="536" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<rect x="548" y="327" width="10" height="20" rx="2" style="fill:var(--c-warn);fill-opacity:.75"/>
+<text x="176" y="362" text-anchor="start" style="fill:var(--c-text-mute);font-size:11.5px">16 lanes masked off in each pass → in this equal-cost case, half the lanes idle</text>
+<text x="176" y="378" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px;font-style:italic">(not a universal 50% loss: it depends on branch costs and scheduling)</text>
+</svg>
+
 This flexibility introduces a perilous hardware penalty known as **warp divergence**. If your kernel contains a conditional branch (such as an `if/else` condition checking for MoE expert routing assignment or dynamic sequence padding), threads taking the branch cannot proceed independently. Instead, the warp scheduler executes the `if` path while masking out (stalling) the remaining cores, and then executes the `else` path while stalling the first set:
 
-![Warp Divergence in NVIDIA GPUs](../../assets/img/gpu/warp-divergence.png)
-*Figure 2.3: Hardware timeline of warp divergence. When threads within a 32-thread warp diverge along branch paths, inactive execution lanes are masked, cutting hardware efficiency in half.*
+If 16 threads take branch A and 16 take branch B and both branches cost the same, each pass leaves half of the lanes idle and that warp's throughput halves. The 50% belongs to this equal-cost case and is not a universal rule: the real penalty depends on the length of each branch, on how much independent work the instructions contain and on how the compiler schedules them.
 
-If 16 threads take branch A and 16 threads take branch B, execution time doubles and effective arithmetic throughput drops by exactly 50%.
+### Latency hiding and occupancy: why an SM keeps 64 warps
 
-<details>
-<summary>Quiz: What is the arithmetic throughput penalty of warp divergence?</summary>
+Divergence wastes lanes inside one warp; the bigger loss is a scheduler with no warp to issue at all. In the kitchen model, a cook who has sent for tomatoes from the pantry does not stand and wait: they chop onions for another order. The orders are warps, the counter in front of the cook is the register file and SMEM, and the pantry is HBM. Measured on Hopper, one load takes about 29 cycles from SMEM, 41 from L1, 263 from L2 and 479 from HBM, so a trip to HBM costs as much time as one Tensor Core needs for ~490 thousand FLOPs. Because every resident warp's registers already sit on the chip, switching to another warp costs nothing; there is no state to save and restore as in a CPU context switch.
 
-When half of the 32 threads in a warp follow a `then` branch while the other half follow an `else` branch, the hardware must serialize the two paths. During the first phase, 16 ALUs are active and 16 are masked; during the second phase, the reverse occurs. Total wall-clock time doubles, resulting in an exact 50% drop in sustained arithmetic throughput for that warp.
-</details>
+How many warps does a scheduler need so that it is never idle? If each warp computes for $t_c$ cycles and then waits $t_w$ cycles for memory, the others must fill the wait:
 
-### Memory hierarchy and the arithmetic intensity roofline
+$$N_{\text{warps}} \approx 1 + \frac{t_w}{t_c}$$
 
-Computation is meaningless without the memory bandwidth required to feed the execution units. The GPU memory subsystem forms a steep pyramid:
-- **Register File:** 256 KiB per SM (~33 MB chip-wide). Single-cycle access latency.
-- **Shared Memory (SMEM) / L1 Cache:** 256 KiB per SM (~33 MB chip-wide). Programmatically managed SRAM with ~29-cycle (~15 ns) latency, critical for caching attention tiles in FlashAttention.
+Read this as: one warp computing now, plus enough warps to cover the waiting time of that warp in units of its compute time. In the poster's toy timeline each warp computes for 2 units and waits 6, so $1 + 6/2 = 4$ warps keep the scheduler busy, while 2 warps leave it idle half the time.
+
+The pool of warps is limited by the register file of item 4: 65,536 registers per SM, shared by every resident thread. A kernel that wants $R$ registers per thread fits
+
+$$\text{warps per SM} = \min\left(64, \frac{65{,}536}{32 \cdot R}\right)$$
+
+```text
+registers/thread   warps per SM          occupancy
+  32               65,536 / 1,024 = 64   100%
+  64               65,536 / 2,048 = 32    50%
+ 128               65,536 / 4,096 = 16    25%
+ 255 → 256         65,536 / 8,192 =  8    12.5%
+```
+
+Occupancy in profiling tools is exactly this ratio. Few warps are not always bad, though. Hopper's fastest GEMM and FlashAttention-3 kernels deliberately run few warps with many registers and hide latency differently: producer warps start TMA copies from HBM into SMEM ahead of time while consumer warps compute on the Tensor Cores with `wgmma`. Either way the rule is the same: while one piece of work waits for memory, another must be ready to run.
+
+Three ideas are often blurred at this point. **Concurrency** means that many tasks are in progress in the same window. **Parallel execution** means that different hardware engines, several SMs or Tensor Cores, execute in the very same cycle. **Latency hiding** means that a scheduler interleaves ready warps while others wait for memory. High occupancy only says that the scheduler has many candidates to choose from; it does not say that the Tensor Cores are producing useful FLOPs.
+
+The warp counts in the table are upper bounds from the register budget alone. Shared memory per block, block size and allocation granularity cut them further, which is why the occupancy a profiler reports is usually lower, and the limits interact non-linearly. A kernel with 256-thread blocks that fits only one block per SM may hold more active warps with 128-thread blocks, yet that does not guarantee a faster kernel, because data reuse across the block can drop and scheduling contention can rise. Launching "more threads" without first profiling register spills, shared memory, divergence and memory access patterns often makes a kernel slower, not faster.
+
+### The H100 chip: 132 SMs, L2 cache, and HBM3 stacks
+
+Level 2 of the poster maps the SXM5 package. The GH100 die is 814 mm² with 80 billion transistors on TSMC 4N, built as 8 GPCs of 9 TPCs with 2 SMs each: 144 SM slots, of which the H100 SXM5 enables 132. A die this large rarely comes out flawless, so switching a few units off raises the yield; which six TPCs are off varies from chip to chip. The 50 MB L2 is split into two partitions, and the GPCs on each side sit closer to one of them. Five of the package's six HBM3 sites are active, each a 16 GB stack behind two 512-bit memory controllers, and the bandwidth follows from the bus width:
+
+$$W_{\text{HBM}} = \frac{5 \times 1{,}024 \text{ bit} \times 5.23 \text{ Gb/s}}{8 \text{ bit/byte}} \approx 3.35 \text{ TB/s}$$
+
+Read this as: five stacks with a 1,024-bit interface each give a 5,120-bit bus; at ~5.23 Gb/s per pin this moves 3.35 TB per second, about 670 GB/s per stack. The full GH100 has 144 SMs, 60 MB of L2 and six stacks; the board power limit of the SXM5 module is 700 W.
+
+Computation is meaningless without the memory bandwidth required to feed the execution units. The GPU memory subsystem forms a steep pyramid, small and fast at the top, large and slow at the bottom:
+- **Register File:** 256 KiB per SM (~33 MB chip-wide). Operands are read directly by the instruction, with no load at all.
+- **Shared Memory (SMEM) / L1 Cache:** 256 KiB per SM (~33 MB chip-wide). Programmatically managed SRAM with ~29-cycle (~16 ns) SMEM and ~41-cycle L1 latency, critical for caching attention tiles in FlashAttention.
 - **Tensor Memory (TMEM):** Introduced in Blackwell B200 (256 KiB per SM). Because B200 Tensor Cores produce matrix accumulators so massive they exceeded traditional register capacity, TMEM provides dedicated on-chip storage for matrix products.
-- **Shared L2 Cache:** 50 MB on Hopper H100, 126 MB on Blackwell B200. Delivers roughly 5.5 TB/s of bidirectional bandwidth.
-- **High Bandwidth Memory (HBM3 / HBM3e):** 80 GB on H100 (3.35 TB/s), 141 GB on H200 (4.8 TB/s), and 192 GB on B200 (8.0 TB/s).
+- **Shared L2 Cache:** 50 MB on Hopper H100 (~263 cycles, roughly 5.5 TB/s), 126 MB on Blackwell B200.
+- **High Bandwidth Memory (HBM3 / HBM3e):** 80 GB on H100 (~479 cycles, 3.35 TB/s), 141 GB on H200 (4.8 TB/s), and 192 GB on B200 (8.0 TB/s).
+
+Going from L2 to HBM, capacity grows 1,600 times while latency almost doubles. The SRAM inside the SMs (~33 MB of registers plus ~33 MB of SMEM/L1) is larger in total than L2, which is why good kernels keep their working set in these top levels and go to HBM as rarely as possible.
+
+Two different questions hide in the word "fast". **Bandwidth** is how many bytes per second a path carries; **latency** is how long the first byte of a request takes to arrive. An eight-lane highway 500 km long has high bandwidth and high latency at the same time. Streaming large contiguous tensors is governed by bandwidth; pointer chasing, irregular lookups and fine-grained dependencies are governed by latency. Physical distance is only part of it: HBM sits on the same package as the die, yet for a warp an operand in a register and one in HBM are worlds apart, because protocol overhead, arbitration, bank conflicts, cache hits and transfer width all add to the cost of "near".
+
+Bandwidth also has to be earned by the access pattern. **Memory coalescing** means that the 32 threads of a warp request adjacent, aligned addresses, so the memory controller can serve the whole warp with a few wide 32- or 128-byte transactions; scattered or misaligned accesses waste bus cycles on bytes nobody uses. And a peak is not a sustained rate: decimal GB is not binary GiB, and no kernel streams the full 3.35 TB/s.
 
 The balance between compute capability and memory throughput is formalized by the Roofline Model:
 
 $$\alpha_{\text{crit}} = \frac{C_{\text{peak}}}{W_{\text{mem}}}$$
 
-Read this as: $\alpha_{\text{crit}}$ is the critical arithmetic intensity in FLOPs per byte, $C_{\text{peak}}$ is peak arithmetic throughput in FLOPs per second, and $W_{\text{mem}}$ is memory bandwidth in bytes per second.
+Read this as: $\alpha_{\text{crit}}$ is the critical arithmetic intensity in FLOPs per byte, $C_{\text{peak}}$ is peak arithmetic throughput in FLOPs per second, and $W_{\text{mem}}$ is memory bandwidth in bytes per second. A kernel with intensity $\alpha$ runs at $\min($C_{\text{peak}} / W_{\text{mem}} \approx 295$ FLOP/byte)$, the roof drawn on level 2 of the poster.
 
 For an H100 SXM5 running BF16 Tensor Core operations:
 $$C_{\text{peak}} = 990 \times 10^{12} \text{ FLOP/s}, \quad W_{\text{mem}} = 3.35 \times 10^{12} \text{ B/s}$$
 $$\alpha_{\text{crit}} = \frac{990 \times 10^{12}}{3.35 \times 10^{12}} \approx 295.5 \text{ FLOP/byte}$$
+
+This number is the machine balance of dense BF16 Tensor Core math against HBM, not a rule that every kernel must do 295 FLOPs per byte. Change the data type and the knee moves with the peak: FP8 Tensor Cores at ~1,979 TFLOP/s put it near $1{,}979 / 3.35 \approx 591$ FLOP/byte, while FP32 on the CUDA cores puts it far lower.
 
 For a matrix multiplication multiplying an activation matrix $X \in \mathbb{R}^{B \times D}$ by a weight matrix $W \in \mathbb{R}^{D \times F}$ in 16-bit precision:
 - **Total Math Operations:** $2 B D F \text{ FLOPs}$
@@ -4361,27 +4668,45 @@ In this regime, the GPU is severely memory-bandwidth bound, utilizing less than 
 
 $$B \ge \frac{\alpha_{\text{crit}} \cdot D F}{D F - \alpha_{\text{crit}}(D + F)} \approx \alpha_{\text{crit}} \approx 295 \text{ tokens}$$
 
-On both Hopper H100 and Blackwell B200, a matrix multiply needs a batch of roughly 280 to 300 tokens to cross the roofline knee into the compute-bound zone (about 310 for the Llama 3 70B MLP shapes).
+The poster's roofline and memory-wall curve use the Llama 3 70B MLP sizes, $D = 8{,}192$ and $F = 28{,}672$. Walking the batch up shows the three regimes:
 
-<details>
-<summary>Quiz: Why does auto-regressive token generation achieve less than 2% MFU?</summary>
+```text
+B = 1      α = 8,192·28,672 / (1·36,864 + 234.9M)     ≈ 1.0     → 3.35 × 1.0   ≈   3.3 TFLOP/s  (0.3%)
+B = 8      α = 1.88G / (0.29M + 234.9M)               ≈ 8.0     → 3.35 × 8.0   ≈  26.8 TFLOP/s  (2.7%)
+B = 32     α = 7.52G / (1.18M + 234.9M)               ≈ 31.8    → 3.35 × 31.8  ≈ 106.7 TFLOP/s  (11%)
+B = 128    α = 30.06G / (4.72M + 234.9M)              ≈ 125.5   → 3.35 × 125.5 ≈ 420   TFLOP/s  (42%)
+B = 310    α = 72.8G / (11.4M + 234.9M)               ≈ 295.6   → at the knee      ≈ 990   TFLOP/s
+B = 512    α = 120.3G / (18.9M + 234.9M)              ≈ 473.9   → under the roof   = 990   TFLOP/s
+B = 4,096  α = 962G / (151M + 234.9M)                 ≈ 2,493   → at the roof      = 990   TFLOP/s
+```
 
-In single-token decoding ($B=1$), the GPU must stream all model weights from HBM to register files to process a single vector. The arithmetic intensity is $\alpha(1) \approx 1 \text{ FLOP/byte}$. Because the H100 requires $\alpha_{\text{crit}} \approx 295.5 \text{ FLOP/byte}$ to saturate its Tensor Cores, the execution units spend over 99% of their clock cycles waiting for memory buses, capping MFU below 1-2%.
-</details>
+On both Hopper H100 and Blackwell B200, a matrix multiply therefore needs a batch of roughly 280 to 300 tokens to cross the roofline knee into the compute-bound zone, about 310 for these Llama 3 70B shapes. For comparison, a BF16 elementwise addition does 1 FLOP per 6 bytes ($\alpha \approx 0.17$), which is why such operations are fused into neighbouring kernels rather than run alone.
+
+These points come from an idealized data-movement model, not from profiled kernels: tiling, L2 residency, register reuse, activation layouts and quantization all shift the real inflection points. The model is still enough to sort workloads into three families:
+
+| Workload | Weight or data reuse | Expected bottleneck |
+| :--- | :--- | :--- |
+| Large matrix-vector multiply (GEMV, $B = 1$) | near zero | HBM bandwidth |
+| Batched matrix-matrix multiply (GEMM, large $B$) | high | Tensor Cores (compute) |
+| Chains of elementwise kernels | low, fragmented | kernel launches and repeated HBM round trips |
+
+Faster HBM helps all three, but the largest gains come from algorithms that fetch data into on-chip SRAM once and reuse it many times before writing it back, which is the idea behind kernel fusion and FlashAttention.
 
 ### Low-precision numerical formats: From FP32 to FP8 and NVFP4
 
 To mitigate memory pressure and double arithmetic throughput, modern GPU generations have aggressively reduced numerical precision. Moving from FP32 (32 bits: 1 sign, 8 exponent, 23 mantissa) to 16-bit formats (FP16 and BF16) halved memory footprint and doubled FLOP rates.
 
-The historical evolution of Tensor Core compute engines across architecture generations is summarized below:
+The historical evolution of Tensor Core compute engines across architecture generations is summarized below. The last column applies the roofline formula to each generation, and it explains the memory wall of section 1: compute has grown faster than bandwidth, so the knee has moved up.
 
-| Architecture Generation | Compute Engine | HBM Memory & Bandwidth | BF16 / FP16 TFLOP/s | FP8 / INT8 TFLOP/s | FP4 TFLOP/s |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Volta (V100)** | 1st Gen Tensor Core | 32 GB @ 0.9 TB/s | 125 | — | — |
-| **Ampere (A100)** | 3rd Gen Tensor Core | 80 GB @ 2.0 TB/s | 312 | 624 | — |
-| **Hopper (H100)** | 4th Gen Tensor Core | 80 GB @ 3.35 TB/s | 990 | 1,980 | — |
-| **Hopper (H200)** | 4th Gen Tensor Core | 141 GB @ 4.8 TB/s | 990 | 1,980 | — |
-| **Blackwell (B200)** | 5th Gen Tensor Core | 192 GB @ 8.0 TB/s | 2,250 | 4,500 | 9,000 |
+| Architecture Generation | Compute Engine | HBM Memory & Bandwidth | BF16 / FP16 TFLOP/s | FP8 / INT8 TFLOP/s | FP4 TFLOP/s | Knee $\alpha_{\text{crit}}$ (16-bit) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Volta (V100)** | 1st Gen Tensor Core | 32 GB @ 0.9 TB/s | 125 | — | — | ~139 |
+| **Ampere (A100)** | 3rd Gen Tensor Core | 80 GB @ 2.0 TB/s | 312 | 624 | — | ~156 |
+| **Hopper (H100)** | 4th Gen Tensor Core | 80 GB @ 3.35 TB/s | 990 | 1,980 | — | ~295 |
+| **Hopper (H200)** | 4th Gen Tensor Core | 141 GB @ 4.8 TB/s | 990 | 1,980 | — | ~206 |
+| **Blackwell (B200)** | 5th Gen Tensor Core | 192 GB @ 8.0 TB/s | 2,250 | 4,500 | 9,000 | ~281 |
+
+All throughput figures are dense (without 2:4 sparsity). The DGX B200 system exposes 180 GB of the B200's HBM3e per GPU. H200 keeps H100's compute but adds 43% more bandwidth, which is why the same decode workload runs faster on it.
 
 In Hopper H100, NVIDIA introduced native hardware support for FP8 (8-bit floating point), split into two formats:
 1. **E4M3 (1 sign, 4 exponent, 3 mantissa bits):** Offers higher numerical precision for forward activations and weights, where dynamic range is well-behaved.
@@ -4395,21 +4720,23 @@ In Hopper H100, NVIDIA introduced native hardware support for FP8 (8-bit floatin
 | **FP8 (E5M2)** | 1 | 5 | 2 | $\approx \pm 57,344$ | Backward pass gradient propagation |
 | **NVFP4 (E2M1)** | 1 | 2 | 1 | Block-scaled | Blackwell ultra-dense GEMM acceleration |
 
-With Blackwell B200, NVIDIA advanced further with **NVFP4 (4-bit Microscaling)**. By using 4-bit numbers paired with fine-grained 8-bit or 16-bit scale factors across 16-element vectors, B200 delivers a staggering 4,500 TFLOP/s dense compute per chip, enabling massive matrix multiplications to run entirely within on-chip TMEM and L2 cache boundaries.
+With Blackwell B200, NVIDIA went one step further with **NVFP4**, a block-scaled 4-bit format. Each element is an E2M1 number; every block of 16 elements shares one FP8 (E4M3) scale factor, and a per-tensor FP32 scale sits on top. The small blocks let the scale follow local outliers, which is what makes 4 bits usable at all. B200 runs these at 9,000 TFLOP/s dense, twice its FP8 rate and four times its BF16 rate, while every weight takes a quarter of the bytes it needs in BF16, which also helps decode, where bytes rather than FLOPs set the speed.
 
 ---
 
-## 3. Pillar II — Network: Interconnect fabrics, collectives, and multi-dimensional parallelism
+## 3. Pillar II — Network: from the NVLink chassis to the SuperPOD fabric
+
+This section is the legend for levels 3, 4 and 4b of Part A, for Part B and for the network wall in Part C. Its single idea is the bandwidth staircase: per GPU, 3.35 TB/s in HBM, 450 GB/s on NVLink and 50 GB/s on the network. Every parallelism decision below is a decision about which step of the staircase a piece of traffic is allowed to use.
 
 ### Intra-node networking: NVLink and NVSwitch fabrics
 
 When scaling beyond a single chip, standard PCIe buses (delivering a paltry 64 GB/s on PCIe Gen 5) become an intolerable choke point. NVIDIA bypasses PCIe through **NVLink** and **NVSwitch**.
 
-Inside a standard DGX H100 or HGX H100 chassis, 8 GPUs are paired with 4 custom NVSwitch Gen 4 ASICs. Each H100 chip features 18 NVLink 4 ports. Each port transmits at 25 GB/s in each direction (50 GB/s bidirectional), aggregating to:
+Inside a standard DGX H100 or HGX H100 chassis, 8 GPUs are paired with 4 custom NVSwitch Gen 4 ASICs on the HGX baseboard. Each H100 chip features 18 NVLink 4 ports. Each port transmits at 25 GB/s in each direction (50 GB/s bidirectional), aggregating to:
 $$W_{\text{GPU egress}} = 18 \times 25 \text{ GB/s} = 450 \text{ GB/s unidirectional } (900 \text{ GB/s bidirectional})$$
 
-The 4 central NVSwitches form a non-blocking crossbar fabric. The total switching capacity inside the node is:
-$$4 \text{ switches} \times 1.6 \text{ TB/s} = 6.4 \text{ TB/s switching bandwidth}$$
+Each NVSwitch chip has 64 NVLink ports, so it carries $64 \times 25 = 1.6$ TB/s in each direction (3.2 TB/s both ways). The 4 NVSwitches together form a non-blocking crossbar fabric with a total switching capacity of:
+$$4 \text{ switches} \times 1.6 \text{ TB/s} = 6.4 \text{ TB/s switching bandwidth (one way)}$$
 
 Because each of the 8 GPUs can egress 450 GB/s, any even bisection partition of the node (splitting 4 GPUs against 4 GPUs) transmits:
 $$\text{Bisection Bandwidth} = 4 \text{ GPUs} \times 450 \text{ GB/s} \times 2 \text{ directions} = 3.6 \text{ TB/s}$$
@@ -4483,26 +4810,37 @@ This intra-node crossbar network architecture is shown in the following system d
 <text x="28" y="386" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">delivering 900 GB/s bidirectional full bisection bandwidth.</text>
 </svg>
 
-The physical hardware packaging of these 8-GPU baseboards and the internal crossbar routing of the NVSwitch 4 ASIC are documented below:
-
-![NVIDIA HGX Intra-Node NVLink Topology](../../assets/img/gpu/nvlink-nodes.png)
-*Figure 3.1: Physical architecture of the HGX 8-GPU baseboard, routing high-density NVLink traces between GPUs and the 4 onboard NVSwitches.*
-
-![NVIDIA NVLink 4 Switch Crossbar Architecture](../../assets/img/gpu/nvlink4.png)
-*Figure 3.2: Internal crossbar schematic of the 64-port NVLink 4 switch ASIC presented at Hot Chips 34, capable of routing 3.2 TB/s of bi-directional packet traffic with hardware reduction capability.*
+The poster's link matrix counts how the 18 links are spread. Every GPU sends 5, 4, 4 and 5 NVLinks to NVSwitches 0 to 3, so the switches receive 40, 32, 32 and 40 links: $8 \times 18 = 144$ in total. Because every GPU's full 450 GB/s lands on the switches, all eight GPUs can send at full speed at once, and any GPU reaches any other in a single switch hop. NVSwitch can also do the summing itself (**NVLink SHARP**), so in an AllReduce the data travels to the switch only once.
 
 With the Blackwell generation, NVIDIA fundamentally altered this equation with the **GB200 NVL72**. Instead of confining the NVLink domain to an 8-GPU chassis, liquid-cooled racks integrate 72 B200 GPUs interconnected by 18 NVSwitch 5 ASICs over copper backplanes:
 
-![GB200 NVL72 Rack Architecture](../../assets/img/gpu/b200-node.png)
-*Figure 3.3: Construction of a GB200 NVL72 rack, integrating 72 GPUs and 18 NVLink switches into a single, unified 900 GB/s NVLink domain.*
-
 In NVL72, all 72 GPUs share a single NVLink domain where any chip can access any other chip's memory at a staggering 900 GB/s unidirectional rate, expanding the single-node boundary by 9x.
 
-<details>
-<summary>Quiz: How many NVLink ports does an H100 SXM5 GPU have, and what is its aggregate throughput?</summary>
+### Inside the DGX H100: two NUMA halves and four roads
 
-An H100 SXM5 features 18 NVLink 4 ports. Each port operates at 25 GB/s per direction, yielding 450 GB/s unidirectional and 900 GB/s bidirectional aggregate throughput per chip.
-</details>
+NVLink is only one of the roads out of a GPU. Level 3 of the poster redraws NVIDIA's DGX H100 system topology, and its six numbered questions are worth answering in prose, because each one turns into a configuration rule.
+
+1. **Who feeds whom?** The node is two mirror-image halves. CPU 0 (a 56-core Xeon 8480C) feeds GPUs 0–3 and network cards 0–3 over PCIe Gen5; CPU 1 feeds GPUs 4–7 and cards 4–7. Each half has its own memory, a **NUMA** domain, and the two sockets are joined by UPI. The process that prepares data for GPU 5 should therefore run on CPU 1 and use CPU 1's memory.
+2. **How does a GPU reach the network?** Right above every GPU sits its own single-port 400 Gb/s ConnectX-7 card (GPU $i$ ↔ NIC $i$). With **GPUDirect RDMA**, data goes from GPU memory straight to the NIC and never stops in CPU memory. Eight such cards give $8 \times 50 = 400$ GB/s out of the chassis.
+3. **How do GPUs talk to each other?** Over the 18 NVLinks to the four NVSwitches, as counted above.
+4. **Where does storage traffic go?** Two upper PCIe switches carry two dual-port ConnectX-7 cards (storage fabric and in-band management) and four U.2 NVMe drives each: 8 × 3.84 TB in total, used as a local RAID 0 cache. Reading data and writing checkpoints therefore use different cards and cables from gradient traffic.
+5. **What joins the halves?** UPI carries the CPUs' own traffic. GPUs in different halves never talk through it; they use NVLink.
+6. **Who manages the NVSwitches?** A PCIe control path from CPU 0 reaches the four NVSwitches through a third PCIe switch. **NVIDIA Fabric Manager** sets up the switches' routing tables over it, and no GPU data flows on it. If Fabric Manager is not running, the NVLink fabric never comes up and multi-GPU jobs fail to start, even though every GPU looks healthy on its own.
+
+Put together, one GPU has four roads, and every step of the training loop in Part B picks one of them:
+
+| Road (per GPU, one way) | Bandwidth | Traffic that uses it | How often |
+| :--- | :--- | :--- | :--- |
+| NVLink through NVSwitch | 450 GB/s | Tensor-parallel AllReduce | twice per layer, forward and backward |
+| Compute NIC → leaf switch $i$ | 50 GB/s | Pipeline activations, data-parallel gradients | per micro-batch, per step |
+| Storage CX-7 → storage fabric | shared, ≥ 40 GB/s per node | Reading data, writing checkpoints | per step, every ~14 minutes |
+| PCIe Gen5 to the CPU | 64 GB/s | Data loader, host copies | always, from the same socket |
+
+The tensor-parallel rule of the next subsections gives the reason for the first row: NVLink is nine times wider than the network, so the traffic that talks in every layer stays inside these eight GPUs, and the chassis wall is also the tensor-parallelism wall.
+
+Two precisions about these roads. PCIe Gen5 ×16 runs 16 lanes at 32 GT/s with 128b/130b encoding, about 63 GB/s per direction before protocol overhead, so the 64 GB/s on the poster is the rounded line rate. And **GPUDirect RDMA** is not **GPUDirect Storage**: RDMA is the NIC ↔ HBM path that carries gradients and activations between nodes, while GDS is the storage ↔ HBM path opened in section 4. Storage systems often use RDMA transports underneath, but the two address different subsystems.
+
+The NVSwitch domain is also where **scale-up** ends. Inside it, GPUs form one tightly coupled, high-bandwidth domain; growing beyond it means **scale-out**, connecting autonomous nodes over the compute fabric. For H100 systems that boundary is the 8-GPU chassis.
 
 ### Scaling beyond the node: SuperPods and rail-optimized fat-tree topologies
 
@@ -4513,16 +4851,20 @@ In a 1,016-GPU DGX H100 SuperPod (127 nodes; a pair of UFM appliances takes the 
 - Each node houses 8 ConnectX-7 400 Gbps (NDR) NICs, providing $8 \times 50 \text{ GB/s} = 400 \text{ GB/s}$ of scale-out network egress per node (or 50 GB/s per GPU).
 - Each SU contains 8 Leaf switches. Across 4 SUs, 16 central Spine switches connect the fabric into a non-blocking 1:1 **Fat-Tree topology** providing 51.2 TB/s of aggregate switching capacity.
 
-Crucially, modern clusters employ **Rail-Optimized wiring**. In this topology, GPU rank $i$ in every node is wired to the exact same Leaf switch $i$. When GPUs with the same index on nodes of the same SU run data-parallel or pipeline-parallel collectives, packets travel purely within their designated rail without crossing the spine switches, eliminating spine hops and preventing fabric congestion:
+A **leaf** is the lower-tier switch that servers plug into; a **spine** is the upper-tier switch that joins leaves and has no servers attached. Every leaf connects to every spine, so any two servers meet in at most leaf → spine → leaf, and the path does not get longer as the cluster grows: to add servers you add leaves, to add bandwidth you add spines. The pattern comes from telephone exchanges (Clos, 1953); when the links thicken toward the top it is called a fat-tree (Leiserson, 1985).
 
-<svg viewBox="0 0 560 440" role="img" aria-label="1024-GPU DGX H100 SuperPod Fat-Tree InfiniBand network topology diagram." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+A **hop** is one pass through a switch ASIC. **Bisection bandwidth** is the capacity between two equal halves of the network under the worst possible split, and a non-blocking or full-bisection fabric guarantees that no permutation of traffic is throttled by the uplinks under balanced routing. In practice, hash collisions between flows, full switch buffers and short microbursts can still add tail latency, which is why traffic patterns are measured rather than assumed.
+
+Crucially, modern clusters employ **Rail-Optimized wiring**. In this topology, GPU rank $i$ in every node is wired to the exact same Leaf switch $i$, the switch of rail $i$. When GPUs with the same index on nodes of the same SU run data-parallel or pipeline-parallel collectives, packets travel purely within their designated rail without crossing the spine switches, eliminating spine hops and preventing fabric congestion. In a classic top-of-rack layout, where all eight NICs of a node go to the same leaf, GPU 3 of node A would reach GPU 3 of node B through leaf → spine → leaf in three hops; with rails the same message takes one. It works because tensor parallelism stays inside the chassis: GPU $i$ of every node then holds the same slice of the model, so its pipeline and data-parallel partners are also GPU $i$ elsewhere.
+
+<svg viewBox="0 0 560 440" role="img" aria-label="1,016-GPU DGX H100 SuperPod Fat-Tree InfiniBand network topology diagram." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="sp-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="sp-arr-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
 <marker id="sp-arr-gen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
 </defs>
 <text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">SuperPod Fat-Tree Scaling Topology</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1024 GPUs · Full Bisection Bandwidth</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">1,016 GPUs · Full Bisection Bandwidth</text>
 <rect x="16" y="48" width="528" height="62" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="280" y="68" text-anchor="middle" style="fill:var(--c-accent-2);font-size:15px;font-weight:700;letter-spacing:.06em">16x InfiniBand Spine Switches</text>
 <text x="280" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Quantum-2 400 Gbps NDR · 51.2 TB/s Aggregate Switching Capacity</text>
@@ -4564,7 +4906,7 @@ Crucially, modern clusters employ **Rail-Optimized wiring**. In this topology, G
 <text x="346.0" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8x 400 Gbps CX7 NICs</text>
 <text x="346.0" y="314" text-anchor="middle" style="fill:var(--c-accent);font-size:10px;font-family:var(--font-mono)">Egress: 400 GB/s</text>
 <rect x="418" y="248" width="124" height="76" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="480.0" y="266" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-weight:600">32 Nodes (256 Chips)</text>
+<text x="480.0" y="266" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-weight:600">31 Nodes (248 Chips)</text>
 <text x="480.0" y="282" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8 GPUs per node</text>
 <text x="480.0" y="298" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">8x 400 Gbps CX7 NICs</text>
 <text x="480.0" y="314" text-anchor="middle" style="fill:var(--c-accent);font-size:10px;font-family:var(--font-mono)">Egress: 400 GB/s</text>
@@ -4580,43 +4922,48 @@ Crucially, modern clusters employ **Rail-Optimized wiring**. In this topology, G
 <text x="28" y="408" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">Zero oversubscription: collective communication scales without fabric bottleneck.</text>
 </svg>
 
-The official structural topology of the H100 and GB200 SuperPods is detailed below:
+**Why "non-blocking" holds: count one leaf's ports.** Each leaf is a Quantum-2 QM9700 with 64 ports of 400 Gb/s. 32 ports go down, one to NIC $i$ of each of the 32 nodes in its SU, and 32 go up, two cables to each of the 16 spines. Whatever enters from below can leave upward, so the oversubscription ratio is 1:1. The same count at the top of the tree:
 
-![NVIDIA SuperPod InfiniBand Network Topology](../../assets/img/gpu/superpod-diagram.png)
-*Figure 3.4: Logical layout of an NVIDIA SuperPod showing leaf-and-spine connections between compute nodes and storage fabrics.*
+$$\underbrace{16 \times 64 \times 50 \text{ GB/s}}_{\text{spine capacity}} = 51.2 \text{ TB/s} \;\ge\; \underbrace{1{,}016 \times 50 \text{ GB/s}}_{\text{all GPUs sending}} = 50.8 \text{ TB/s}$$
 
-![DGX H100 SuperPod Cluster Architecture](../../assets/img/gpu/h100-superpod.png)
-*Figure 3.5: Physical deployment of a 1,016-GPU H100 SuperPod consisting of 127 DGX nodes (a pair of UFM appliances takes the 128th slot), rail-optimized InfiniBand switches, and dedicated management racks.*
+Read this as: 16 spines with 64 ports of 50 GB/s each (400 Gb/s ÷ 8) can carry everything that all 1,016 GPUs can push into the fabric at once. The 32 leaves × 32 uplinks = 1,024 cables exactly fill 16 spines × 64 ports. Do not mix this up with the "51.2 Tb/s" in NVIDIA's QM9700 manual: that is one switch, both directions, in bits; the 51.2 TB/s here is 16 spines, one direction, in bytes.
 
-![GB200 NVL72 SuperPod Architecture](../../assets/img/gpu/gb200-superpod.png)
-*Figure 3.6: Multi-rack scale-out topology of the Blackwell GB200 NVL72 SuperPod, connecting 576 B200 GPUs over Quantum-X800 800 Gbps InfiniBand switches.*
+**Why 127 nodes, not 128.** On paper 4 SUs × 32 = 128 DGX. In NVIDIA's deployment pattern a pair of UFM appliances, which watch the InfiniBand fabric, takes one DGX's place in SU 4, so a full SuperPOD holds at most 127 DGX: 1,016 GPUs. NVIDIA's cable table shows it too: 127 × 8 + 4 UFM ports = 1,020 node-to-leaf cables. Smaller builds start from a single SU, anywhere between 31 and 127 DGX.
 
-### Collective communication: From ring algorithms to in-network SHARP
+**Four routes, four prices.** The rail layout makes some traffic cheap and some expensive, and card 4b of the poster prices each route:
 
-Distributed training relies on fundamental collective communication primitives implemented in NCCL (NVIDIA Collective Communications Library):
-1. **AllGather:** Each rank holds a tensor slice of size $B/N$ and gathers all slices to assemble the complete tensor of size $B$.
-2. **ReduceScatter:** Each rank holds an input tensor of size $B$; elements are summed elementwise across ranks and scattered so rank $i$ holds only the $i$-th slice of size $B/N$.
-3. **AllReduce:** Equivalent to ReduceScatter followed by AllGather. Computes the elementwise sum across all ranks and replicates the final tensor of size $B$ across all $N$ GPUs.
-4. **AllToAll:** Each rank transmits a distinct tensor slice to every other rank, forming the backbone of Mixture of Experts (MoE) dispatching.
+| Route | Typical traffic | Switches crossed |
+| :--- | :--- | :--- |
+| Same rail, same SU | Data-parallel gradients, pipeline activations | 1 (leaf $i$) |
+| Same rail, another SU | Data parallelism across SUs | 3 (leaf → spine → leaf) |
+| Different rail, direct | MoE AllToAll | 3 (leaf → spine → leaf) |
+| Different rail, with PXN | MoE AllToAll in NCCL ≥ 2.12 | NVLink hop + 1 switch |
 
-The flow of an AllGather collective is illustrated in the following animation:
+PXN (PCIe × NVLink) in NCCL 2.12 first moves a cross-rail message over NVSwitch to the GPU in the same node that sits on the destination's rail, then sends it without leaving that rail. The eight GPUs of a node thus gather their messages for the same destination on one GPU and send them together; NVIDIA reports that this doubles all2all performance. DeepSeek-V3, trained on 2,048 H800s, does the mirror image: a token first travels over InfiniBand to the GPU with the same in-node index on the target node, staying on its own rail, and is then forwarded over NVLink to the expert's GPU.
 
-![AllGather Collective Communication Step](../../assets/img/gpu/all-gather.gif)
-*Figure 3.7: Step-by-step communication pattern of an AllGather collective across four participating GPUs.*
+**How far does the fabric grow?** A spine's 64 ports reach at most 64 leaves, and each leaf carries 32 GPUs, so two tiers stop at $64 \times 32 = 2{,}048$ GPUs: exactly 8 SUs. From 16 SUs on, NVIDIA adds a core tier above the spines, and the longest path grows from 3 switches (leaf, spine, leaf) to 5 (leaf, spine, core, spine, leaf):
 
-In a standard **Ring AllGather** running across $N$ devices with network egress bandwidth $W$:
-- Each device divides its tensor into $N$ chunks of size $B/N$.
-- In each step, every rank sends one chunk to its neighbor while receiving another.
-- The ring takes $N-1$ steps to complete:
+| SUs | DGX | GPUs | Leaf | Spine | Core | Tiers | Longest path |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
+| 1 | 31 | 248 | 8 | 4 | – | 2 | 3 switches |
+| 4 | 127 | 1,016 | 32 | 16 | – | 2 | 3 switches |
+| 8 | 256 | 2,048 | 64 | 32 | – | 2 | 3 switches |
+| 16 | 512 | 4,096 | 128 | 128 | 64 | 3 | 5 switches |
+| 64 | 2,048 | 16,384 | 512 | 512 | 256 | 3 | 5 switches |
 
-$$T_{\text{AllGather, Ring}} = (N - 1) \cdot \frac{B / N}{W} = \frac{N - 1}{N} \cdot \frac{B}{W} \approx \frac{B}{W}$$
+The 1 and 4 SU rows come from NVIDIA's SuperPOD table, where one slot goes to UFM; the larger rows come from its scaling table, which counts 32 DGX per SU (that table labels the last row "56 SU", but $2{,}048 \div 32 = 64$). Three tiers reach up to $64 \times 32 \times 32 = 65{,}536$ GPUs. Meta's Llama 3 cluster, built on RoCE Ethernet with 24K GPUs, also has three tiers but is not non-blocking end to end: its 3,072-GPU pods are 1:1 inside and 1:7 between pods, which is why Meta made its parallelism layout and job scheduler aware of the network topology, keeping the heaviest traffic inside a pod.
 
-Because an AllReduce requires both a ReduceScatter and an AllGather, a classical ring AllReduce transfers $2 \times \frac{N-1}{N} B$ bytes, taking:
+The poster's scale ladder sums the zoom up: each level multiplies BF16 compute (7.5 TFLOP/s per SM, 990 per H100, 7.9 PFLOP/s per DGX, 253 per SU, 1.0 EFLOP/s per SuperPOD and 16.2 EFLOP/s for 64 SUs) while the road out narrows per GPU from 3.35 TB/s to 450 GB/s to 50 GB/s.
+
+### In-network hardware acceleration: Mellanox SHARP and PXN
+
+When scaling across thousands of GPUs, transferring massive model and gradient tensors creates extreme pressure on the network fabric. In traditional collective communication (such as the AllReduce primitive implemented in NCCL), data moves across logical GPU rings in two successive passes: first a ReduceScatter to form partial sums, followed by an AllGather to replicate the accumulated result. Across $N$ GPUs and network egress bandwidth $W$, a classic ring AllReduce transfers roughly $2B$ bytes per GPU:
+
 $$T_{\text{AllReduce, Ring}} \approx 2 \cdot \frac{B}{W}$$
 
-To eliminate this $2\times$ overhead, modern InfiniBand switches employ **Mellanox SHARP (Scalable Hierarchical Aggregation and Reduction Protocol)**. SHARP embeds floating-point arithmetic hardware directly into the Quantum switch ASICs:
+This mechanism forces all tensor slices to traverse the leaf and spine switch fabric twice. To eliminate this $2\times$ bandwidth penalty, modern InfiniBand fabrics employ **Mellanox SHARP (Scalable Hierarchical Aggregation and Reduction Protocol)**. SHARP embeds floating-point reduction logic directly into the Quantum switch ASICs:
 
-<svg viewBox="0 0 560 400" role="img" aria-label="Ring-based collective communication versus Quantum switch in-network SHARP reduction." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 400" role="img" aria-label="Comparison between ring-based collective communication and Quantum switch SHARP in-network reduction." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="col-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="col-arr-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
@@ -4624,9 +4971,9 @@ To eliminate this $2\times$ overhead, modern InfiniBand switches employ **Mellan
 <marker id="col-arr-suc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
 </defs>
 <text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">Collective Communication Primitives</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Ring AllGather vs In-Network SHARP AllReduce</text>
+<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">Ring AllGather vs SHARP Hardware AllReduce</text>
 <rect x="16" y="48" width="256" height="276" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="144" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Classical Ring Collective</text>
+<text x="144" y="68" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Classic Ring Collective</text>
 <text x="144" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">AllGather &amp; ReduceScatter (NCCL)</text>
 <rect x="48" y="102" width="60" height="42" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="78" y="127" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">GPU 0</text>
@@ -4644,15 +4991,15 @@ To eliminate this $2\times$ overhead, modern InfiniBand switches employ **Mellan
 <text x="144" y="237" text-anchor="middle" style="fill:var(--c-accent);font-size:9.5px">B / 4 Chunk</text>
 <line x1="78" y1="200" x2="78" y2="146" marker-end="url(#col-arr-acc)" style="stroke:var(--c-accent);stroke-width:1.5"/>
 <text x="64" y="176" text-anchor="middle" style="fill:var(--c-accent);font-size:9.5px">B / 4 Chunk</text>
-<text x="144" y="270" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">Time: T ≈ B / W_egress</text>
-<text x="144" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Circulates in N-1 hops</text>
-<text x="144" y="302" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">2x transfer cost for AllReduce (RS + AG)</text>
+<text x="144" y="270" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">Duration: T ≈ 2B / W_egress</text>
+<text x="144" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">2(N-1) steps ring traversal</text>
+<text x="144" y="302" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">2x transfer for AllReduce (RS + AG)</text>
 <rect x="288" y="48" width="256" height="276" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="416" y="68" text-anchor="middle" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">In-Network Reduction (SHARP)</text>
 <text x="416" y="84" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Quantum-2 Hardware Summation</text>
 <rect x="348" y="104" width="136" height="46" rx="5" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="416" y="123" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Quantum Switch</text>
-<text x="416" y="138" text-anchor="middle" style="fill:var(--c-accent-2);font-size:10px;font-weight:600">In-ASIC FP Aggregation</text>
+<text x="416" y="138" text-anchor="middle" style="fill:var(--c-accent-2);font-size:10px;font-weight:600">In-ASIC FP Summation</text>
 <rect x="300" y="204" width="52" height="38" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="326" y="226" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">G0</text>
 <rect x="358" y="204" width="52" height="38" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
@@ -4665,218 +5012,74 @@ To eliminate this $2\times$ overhead, modern InfiniBand switches employ **Mellan
 <line x1="384" y1="202" x2="380" y2="152" marker-end="url(#col-arr-suc)" style="stroke:var(--c-success);stroke-width:1.3"/>
 <line x1="442" y1="202" x2="450" y2="152" marker-end="url(#col-arr-suc)" style="stroke:var(--c-success);stroke-width:1.3"/>
 <line x1="500" y1="202" x2="450" y2="152" marker-end="url(#col-arr-suc)" style="stroke:var(--c-success);stroke-width:1.3"/>
-<text x="416" y="180" text-anchor="middle" style="fill:var(--c-success);font-size:10.5px;font-weight:600">Single-phase sum and multicast</text>
-<text x="416" y="270" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">Time: T ≈ B / W_egress (1x)</text>
-<text x="416" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Cuts network traffic by 50%</text>
+<text x="416" y="180" text-anchor="middle" style="fill:var(--c-success);font-size:10.5px;font-weight:600">Aggregate and broadcast in 1 pass</text>
+<text x="416" y="270" text-anchor="middle" style="fill:var(--c-text);font-size:11px;font-weight:600">Duration: T ≈ B / W_egress (1x)</text>
+<text x="416" y="286" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Reduces wire traffic by 50%</text>
 <text x="416" y="302" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">Halves AllReduce latency</text>
 <rect x="16" y="334" width="528" height="56" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="354" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Intra-node NVLink AllGather time: T ≈ B / 450 GB/s (H100).</text>
-<text x="28" y="372" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">With SHARP active, AllReduce matches single-pass transfer time instead of 2x (RS + AG).</text>
+<text x="28" y="354" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Intra-node AllGather over NVLink: T ≈ B / 450 GB/s (H100).</text>
+<text x="28" y="372" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">With SHARP enabled, AllReduce completes in single-pass duration instead of 2x (RS + AG).</text>
 </svg>
 
-Instead of circulating tensors around a ring, each GPU transmits its tensor up to the switch once. The switch ASIC accumulates the numbers in hardware and multicasts the reduced tensor back down to all GPUs in a single pass:
+Rather than passing tensors through an iterative bucket ring, each GPU streams its tensor slice up to the switch once. The switch ASIC accumulates vectors in-flight and multicasts the reduced tensor back down in a single pass:
 
 $$T_{\text{AllReduce, SHARP}} \approx \frac{B}{W}$$
 
-SHARP cuts network traffic by exactly 50% and slashes AllReduce latency in half.
+On large, bandwidth-bound transfers, SHARP cuts the wire traffic per GPU by 50% and brings AllReduce latency directly in half. The rail-optimized cabling maps naturally into this reduction tree: GPU $i$ of every server in an SU converges on leaf $i$, and partial sums across SUs meet at the spine switches.
 
-Empirical bandwidth curves measured across varying tensor sizes on GPU and TPU clusters highlight how bandwidth scales with buffer volume:
+**Cross-Rail Bridge: PXN (PCIe Acceleration / NVLink)**
 
-![GPU AllGather Bandwidth vs Buffer Size](../../assets/img/gpu/gpu-all-gather-bw.png)
-*Figure 3.8: Empirical throughput of AllGather on H100 clusters as a function of tensor size, showing saturation above 16 MB.*
+In a rail-optimized cluster, every GPU connects directly to its designated leaf switch ($i$-th GPU $\rightarrow$ $i$-th leaf). However, whenever cross-rail communication is needed (for example, GPU 0 in node A communicating with GPU 3 in node B), a standard packet would have to climb from the leaf to a spine switch, traverse down to the destination rail's leaf, and finally enter node B. This spine detour injects unnecessary latency and congestion into the upper fabric.
 
-![GPU AllReduce Bandwidth vs Buffer Size](../../assets/img/gpu/gpu-all-reduce-bw.png)
-*Figure 3.9: Empirical throughput of AllReduce collectives over intra-node NVLink and scale-out InfiniBand.*
+NVIDIA NCCL's **PXN (PCIe Acceleration / NVLink)** mechanism resolves this bottleneck by leveraging the high-speed intra-node mesh: the source GPU routes the packet over intra-chassis 450 GB/s NVLink to the local GPU belonging to the target rail, which then transmits it directly over its dedicated NIC to the remote server in a single hop. The spine switches remain entirely bypassed.
 
-![TPU AllGather Bandwidth vs Buffer Size](../../assets/img/gpu/tpu-all-gather-bw.png)
-*Figure 3.10: AllGather throughput on Google TPU v4/v5p 3D torus fabrics for comparison.*
+This hierarchical interconnect topology—spanning PCIe, NVLink, and NUMA—can be verified on any HGX node using `nvidia-smi topo -m`:
 
-![TPU AllReduce Bandwidth vs Buffer Size](../../assets/img/gpu/tpu-all-reduce-bw.png)
-*Figure 3.11: AllReduce throughput on Google TPU clusters.*
+```text
+        GPU0  GPU1  GPU2  GPU3  GPU4  GPU5  GPU6  GPU7  NIC0  NIC1  CPU0  CPU1
+GPU0     X    NV18  NV18  NV18  NV18  NV18  NV18  NV18  PIX   PXB   SYS   SYS
+GPU1    NV18   X    NV18  NV18  NV18  NV18  NV18  NV18  PIX   PXB   SYS   SYS
+GPU2    NV18  NV18   X    NV18  NV18  NV18  NV18  NV18  PXB   PIX   SYS   SYS
+GPU3    NV18  NV18  NV18   X    NV18  NV18  NV18  NV18  PXB   PIX   SYS   SYS
+GPU4    NV18  NV18  NV18  NV18   X    NV18  NV18  NV18  SYS   SYS   SYS   SYS
+```
 
-The latency profiles of sharded AllGather and SHARP hardware acceleration are compared below:
-
-![Sharded AllGather Communication Cost](../../assets/img/gpu/sharded-all-gather-cost.png)
-*Figure 3.12: Mathematical latency breakdown of sharded AllGather operations across increasing cluster scales.*
-
-![Mellanox SHARP Tree-Based Reduction Algorithm](../../assets/img/gpu/sharp-algorithm.png)
-*Figure 3.13: In-network aggregation tree executed by Mellanox Quantum switch ASICs during a SHARP AllReduce.*
-
-![SHARP AllReduce Acceleration vs Ring Collective](../../assets/img/gpu/sharp-all-reduce-cost.png)
-*Figure 3.14: Measured latency reduction of SHARP in-network compute compared to traditional two-pass host ring algorithms.*
-
-For Mixture of Experts (MoE) architectures, token routing relies on irregular, sparse **AllToAll** communication:
-
-![Sparse MoE AllToAll Communication Cost Approximation](../../assets/img/gpu/all-to-all-approx.png)
-*Figure 3.15: Comparison between combinatorial expectation and analytical approximation for sparse MoE token dispatching.*
-
-<details>
-<summary>Quiz: How much network traffic does Mellanox SHARP eliminate compared to a classical ring AllReduce?</summary>
-
-A classical ring AllReduce requires two passes (a ReduceScatter transferring $\frac{N-1}{N}B$ bytes, followed by an AllGather transferring $\frac{N-1}{N}B$ bytes), moving a total of nearly $2B$ bytes per GPU. SHARP reduces tensors in-flight inside the switch ASICs and multicasts the result in a single pass ($B$ bytes), cutting total wire traffic by exactly 50%.
-</details>
-
-### 4D parallelism rooflines for LLM scaling
-
-Training frontier models requires combining four distinct parallelism dimensions: **Tensor Parallelism (TP)**, **Pipeline Parallelism (PP)**, **Expert Parallelism (EP)**, and **Data Parallelism (DP / FSDP)**.
-
-#### Tensor Parallelism (TP) and the 8-GPU NVLink Ceiling
-
-In Megatron-LM style tensor parallelism, the Transformer MLP block is sliced across $Y$ GPUs: $W_{\text{in}}$ is split column-wise ($[D, F/Y]$), and $W_{\text{out}}$ is split row-wise ($[F/Y, D]$).
-- **Forward Math Time:** $T_{\text{math}} = \frac{4 B D F}{Y \cdot C_{\text{peak}}}$
-- **Communication Time:** One AllReduce on activations: $T_{\text{comms}} = \frac{4 B D}{W_{\text{collective}}}$
-
-For computation to stay faster than communication ($T_{\text{math}} \ge T_{\text{comms}}$):
-
-$$Y \le \frac{F \cdot W_{\text{collective}}}{C_{\text{peak}}} = \frac{F}{\alpha_{\text{crit}}}$$
-
-For an H100 using intra-node NVLink ($W_{\text{collective}} = 450 \text{ GB/s}$, $C_{\text{peak}} = 990 \text{ TFLOP/s}$):
-$$\frac{C_{\text{peak}}}{W_{\text{collective}}} = \frac{990 \times 10^{12}}{450 \times 10^9} = 2,200$$
-
-For LLaMA-3 70B ($F = 28,672$):
-$$Y \le \frac{28,672}{2,200} \approx 13.03 \implies Y = 8 \text{ GPUs}$$
-
-This mathematical limit proves **why Tensor Parallelism is strictly confined to the 8 GPUs inside a single NVLink chassis**. Attempting to run TP across nodes over InfiniBand ($W_{\text{collective}} = 400 \text{ GB/s}$ node egress, or 50 GB/s per GPU) inflates $C/W$ to 19,800, dropping allowable $Y$ below 1.5 and causing MFU to collapse.
-
-> [!NOTE]
-> **Field Note: Why $\text{TP} = 8$ is the Industry Standard (HGX & GLM-5.1)**
->
-> In inference engines (vLLM, SGLang), Tensor Parallelism universally defaults to $\text{TP} = 8$ due to three rigid constraints:
->
-> 1. **Single-Node (HGX) NVLink Boundary:** Standard AI servers (HGX H100/H200, MI300X) house 8 GPUs linked via $900 \text{ GB/s}$ NVLink. Because TP requires a blocking per-layer AllReduce, crossing nodes ($\text{TP} = 16$) drops link speeds to network transceivers ($50 \text{ GB/s}$), causing communication to choke compute.
-> 2. **VRAM Footprint & Model Capacity:** Large models like GLM-5.1 ($754\text{B}$ MoE) require $\sim 800 \text{ GB}$ in FP8. A single GPU or even $8 \times \text{H100}$ ($640 \text{ GB}$) falls short; an $8 \times \text{H200}$ node ($1,128 \text{ GB}$) is required to hold weights while reserving ample headroom for KV cache.
-> 3. **Mathematical Divisibility:** Attention heads must divide cleanly across ranks ($h \pmod{\text{TP}} = 0$). GLM-5's Multi-Head Latent Attention (MLA) projections and top-8 ($k=8$) MoE routing are natively aligned with 8-way hardware parallelism.
-
-#### Pipeline Parallelism (PP) and Pipeline Bubbles
-
-Pipeline parallelism partitions model layers across $P$ pipeline stages. Adjacent stages exchange boundary activations of size $2BD / N_{\text{MB}}$ per microbatch over simple peer-to-peer links, making network volume trivial.
-
-However, pipelining introduces the **Pipeline Bubble**—idle GPU time while waiting for microbatches to fill and drain the pipeline:
-
-$$\text{Bubble Fraction} = \frac{P - 1}{P - 1 + M}$$
-
-Read this as: $P$ is the number of pipeline stages, and $M$ is the number of microbatches per global batch.
-
-![Pipeline Bubble Schedule in 1F1B](../../assets/img/gpu/pipeline-bubble.png)
-*Figure 3.16: Pipeline execution schedule with 2 stages and 2 microbatches. White blocks represent idle bubble cycles, while 'G' represents gradient synchronization.*
-
-![Activation Transfer Delay Impact on Pipeline Bubbles](../../assets/img/gpu/pipeline-transfer.png)
-*Figure 3.17: Inter-stage activation transfer latency shifts pipeline execution, widening the bubble penalty.*
-
-#### Data Parallelism (DP & FSDP) and Critical Batch Size
-
-In Data Parallelism (including ZeRO-3 / FSDP), model weights and gradients are replicated or sharded across $X$ devices:
-$$T_{\text{math}} = \frac{6 B D F}{X \cdot C_{\text{peak}}}, \quad T_{\text{comms}} = \frac{2 \cdot 2 \cdot DF \cdot (X - 1)}{X \cdot W_{\text{collective}}}$$
-
-From $T_{\text{math}} \ge T_{\text{comms}}$, we derive the **Critical Local Batch Size**:
-
-$$\frac{B}{X} \ge \frac{2}{3} \cdot \frac{C_{\text{peak}}}{W_{\text{collective}}} \approx 2,475 \text{ tokens per GPU}$$
-
-If the per-GPU batch size falls below ~2,500 tokens, scale-out gradient synchronization takes longer than forward-backward math, and GPUs idle.
-
-For Mixture of Experts (MoE) with $E$ total experts and $k$ active experts per token, this threshold expands dramatically:
-
-$$\left(\frac{B}{X}\right)_{\text{crit, MoE}} \ge \frac{E}{k} \cdot \frac{C_{\text{peak}}}{W_{\text{collective}}}$$
-
-In an architecture with $E = 128$ and $k = 4$, the critical batch size is multiplied by $32\times$, demanding over 79,000 tokens per GPU—an impossible requirement unless expert parameters are decoupled via Expert Parallelism (EP).
-
-The four-dimensional parallelism decision tree and its governing roofline boundaries are summarized in the following structural matrix:
-
-<svg viewBox="0 0 560 440" role="img" aria-label="LLM 4D parallelism decision matrix: Tensor, Pipeline, Expert, and Data Parallelism rooflines." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
-<defs>
-<marker id="par-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
-<marker id="par-arr-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
-<marker id="par-arr-gen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent-2)"/></marker>
-</defs>
-<text x="16" y="22" text-anchor="start" style="fill:var(--c-accent);font-size:15px;font-weight:700;letter-spacing:.06em">LLM Parallelism Matrix and Roofline Trade-offs</text>
-<text x="16" y="38" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">TP · PP · EP · DP / FSDP Decision Map</text>
-<rect x="16" y="48" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="30" y="68" text-anchor="start" style="fill:var(--c-accent);font-size:12px;font-weight:700">Tensor Parallelism (TP)</text>
-<text x="30" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Scope: Single Node (NVLink)</text>
-<rect x="30" y="92" width="228" height="19" rx="5" style="fill:var(--c-accent);fill-opacity:.16;stroke:var(--c-accent);stroke-width:1.3"/><text x="144.0" y="104.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">AllGather + ReduceScatter</text>
-<text x="30" y="128" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Rule: Y ≤ F / 2475 (LLaMA: Y ≤ 8)</text>
-<text x="30" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Cross-node TP quickly becomes comms-bound</text>
-<text x="30" y="164" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Compute vs Communication Roofline Bound</text>
-<rect x="288" y="48" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
-<text x="302" y="68" text-anchor="start" style="fill:var(--c-accent-2);font-size:12px;font-weight:700">Pipeline Parallelism (PP)</text>
-<text x="302" y="84" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Scope: Cross-Node Layer Stages</text>
-<rect x="302" y="92" width="228" height="19" rx="5" style="fill:var(--c-accent-2);fill-opacity:.16;stroke:var(--c-accent-2);stroke-width:1.3"/><text x="416.0" y="104.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">P2P Activation Passing</text>
-<text x="302" y="128" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Rule: Bubble = (P-1) / (P-1+M)</text>
-<text x="302" y="146" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Minimal wire cost, complex schedules</text>
-<text x="302" y="164" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Compute vs Communication Roofline Bound</text>
-<rect x="16" y="192" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
-<text x="30" y="212" text-anchor="start" style="fill:var(--c-warn);font-size:12px;font-weight:700">Expert Parallelism (EP)</text>
-<text x="30" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Scope: MoE (1-8 Nodes)</text>
-<rect x="30" y="236" width="228" height="19" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="248.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Ragged AllToAll Routing</text>
-<text x="30" y="272" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Rule: 1-2 nodes if small F; multi-node if large</text>
-<text x="30" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Solves parameter memory explosion</text>
-<text x="30" y="308" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Compute vs Communication Roofline Bound</text>
-<rect x="288" y="192" width="256" height="134" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
-<text x="302" y="212" text-anchor="start" style="fill:var(--c-success);font-size:12px;font-weight:700">Data Parallelism (DP / FSDP)</text>
-<text x="302" y="228" text-anchor="start" style="fill:var(--c-text);font-size:10.5px;font-weight:600">Scope: Full Cluster (ZeRO-1 / 3)</text>
-<rect x="302" y="236" width="228" height="19" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="416.0" y="248.8" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">AllReduce / ReduceScatter</text>
-<text x="302" y="272" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Rule: B_local ≥ 2500 tokens / GPU</text>
-<text x="302" y="290" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Critical batch size inflates by E/k for MoE</text>
-<text x="302" y="308" text-anchor="start" style="fill:var(--c-text-mute);font-size:9.5px;font-family:var(--font-mono)">Compute vs Communication Roofline Bound</text>
-<rect x="16" y="336" width="528" height="92" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="356" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Parallelism Recipes of Frontier Models:</text>
-<text x="28" y="374" text-anchor="start" style="fill:var(--c-accent-2);font-size:10.5px;font-family:var(--font-mono)">DeepSeek-V3 (2048x H800): 64-way EP (8 nodes) + 16-way PP + 2-way DP (ZeRO-1)</text>
-<text x="28" y="392" text-anchor="start" style="fill:var(--c-accent);font-size:10.5px;font-family:var(--font-mono)">LLaMA-3 405B (16k H100):  8-way TP (1 node) + 16-way PP + 128-way DP (FSDP)</text>
-<text x="28" y="410" text-anchor="start" style="fill:var(--c-text-mute);font-size:10.5px">Principle: TP stays intra-node, PP and EP cross nodes, DP scales across the cluster.</text>
-</svg>
-
-Frontier models conquer this trade-off space using distinct production recipes:
-- **LLaMA-3 405B (16,384 H100):** 8-way intra-node TP $\times$ 16-way PP $\times$ 128-way DP (FSDP, sharding optimizer states and gradients).
-- **DeepSeek-V3 (2,048 H800):** 64-way EP (spanning 8 nodes over InfiniBand) $\times$ 16-way PP $\times$ 2-way DP (ZeRO-1), with 30,720 tokens per GPU.
-
-The hyperparameter space of 3D parallelism explored by Megatron-LM is illustrated below:
-
-![Megatron-LM 3D Parallelism Tuning Space](../../assets/img/gpu/megatron-hparams.png)
-*Figure 3.18: Parameter efficiency landscapes of TP, PP, and DP across varying cluster dimensions from Megatron-LM research.*
-
-### Frontier engineering: DeepSeek-V3 DualPipe and communication overlap
-
-When running 64-way Expert Parallelism across nodes, routing tokens via AllToAll collectives threatens to swamp scale-out InfiniBand links. To eliminate this bottleneck, DeepSeek-V3 introduced **DualPipe**.
-
-DualPipe executes two independent pipeline schedules simultaneously in opposite directions (forward and backward). By breaking layers into fine-grained chunks, the engine dispatches inter-node AllToAll token routing in the background while the GPU's Tensor Cores compute dense attention and feed-forward GEMMs for the other chunk. By perfectly overlapping communication with computation, DeepSeek hides over 95% of scale-out network latency, sustaining near-peak MFU even over constrained H800 fabrics.
+Here `NV18` represents 18 4th-generation NVLink connections between GPUs (900 GB/s bidirectional), `PIX` denotes direct traversal through a single PCIe switch, and `SYS` traverses NUMA CPU interconnects. This microsecond-level hardware clarity demonstrates why modern cluster fabrics coordinate communication paths across physical tiers rather than relying on generic network routing.
 
 ---
 
-## 4. Pillar III — Storage: Foundation Model Datasets, Checkpointing, and High-Throughput I/O
+## 4. Pillar III — Storage: Direct DMA and the high-throughput datapath
 
-### The storage crisis in modern foundation model pre-training
+In an AI supercomputer, the storage subsystem must satisfy two fundamentally different workloads: continuous dataset streaming without GPU starvation, and writing model checkpoints without freezing the compute fabric.
 
-While compute and networking dominate AI research discussions, foundation model training clusters spend thousands of hours paralyzed by storage I/O. In modern pre-training, storage systems face two severe challenges:
+### Four networks per node: why storage gets its own fabric
 
-1. **Continuous Dataset Ingestion:** Training a frontier model like LLaMA 3 requires streaming 15+ trillion tokens of unstructured text, code, and multimodal tokens. Across 16,384 GPUs that is about 2.7 million tokens per second (16,384 × 400 TFLOP/s ÷ (6 × 405 billion)); at 4 bytes per token ID it is only ~11 MB/s. The challenge is not raw bandwidth but feeding every GPU without stalls: no dropped batches and no blocked PyTorch worker threads (image and video data are far heavier).
-2. **The Checkpointing Crisis:** Foundation model states must be snapshotted to persistent storage periodically to protect against hardware crashes. Consider the exact memory footprint of a 405-billion parameter model during training:
+Inspecting the rear of a DGX H100 reveals four physically isolated network fabrics rather than a shared set of cables. The compute network carries strictly GPU-to-GPU traffic: forward activations, backward passes, and gradient AllReduce operations. If checkpoint saves or OS container pulls shared these cables, compute traffic would immediately suffer severe latency jitter. Consequently, each traffic class is isolated onto dedicated links:
 
-$$S_{\text{state}} = S_{\text{weights}} + S_{\text{gradients}} + S_{\text{AdamW}} = 2M + 2M + 12M = 16M \text{ bytes}$$
+| Network | Per DGX | Switches (4 SU) | Per-Node Bandwidth | Primary Traffic |
+| :--- | :--- | :--- | :--- | :--- |
+| Compute network | 8 × 400 Gb/s InfiniBand | 48 × QM9700, 1:1 | 400 GB/s | Inter-node GPU traffic |
+| Storage network | 2 × 400 Gb/s InfiniBand | 16 × QM9700, ~4:3 | 100 GB/s | Dataset streaming, checkpoint writes |
+| In-band management | 2 × 100 GbE | 8 × SN4600C | 25 GB/s | OS, orchestration, cluster services |
+| Out-of-band management | 1 × 1 GbE (BMC) | 8 × SN2201 | 0.125 GB/s | Hardware telemetry and power control |
 
-For $M = 405 \times 10^9$ parameters:
-- **BF16 Model Weights:** $405 \times 10^9 \times 2 \text{ bytes} = 810 \text{ GB}$
-- **BF16 Gradients:** $405 \times 10^9 \times 2 \text{ bytes} = 810 \text{ GB}$
-- **FP32 AdamW Optimizer State:** Master weights (4 bytes) + Momentum (4 bytes) + Variance (4 bytes) = $405 \times 10^9 \times 12 \text{ bytes} = 4,860 \text{ GB} = 4.86 \text{ TB}$
-
-Summing these yields $6,480 \text{ GB} \approx 6.48 \text{ TB}$. Adding activation buffers, random number generator (RNG) states, and optimizer step metadata expands the total checkpoint snapshot to **~7.5 Terabytes**.
-
-If a cluster writes this 7.5 TB snapshot synchronously over a legacy 25 GB/s shared storage fabric, **the entire 16,384-GPU cluster must freeze for over 5 minutes ($307 \text{ seconds}$)**. In a multi-week training run, these checkpoint pauses waste millions of dollars in idle GPU cycles.
+Closest to the GPUs, each node also carries 8 × 3.84 TB U.2 NVMe drives configured as a local RAID 0 cache. Text pre-training datasets are frequently cached in this local NVMe tier. The shared external high-throughput storage cluster is primarily sized to absorb periodic bursts of multi-gigabyte checkpoint snapshots.
 
 ### The traditional I/O bottleneck: Host CPU page cache and bounce buffers
 
-The root cause of storage stalls in traditional GPU clusters is the multi-hop legacy I/O architecture:
-1. **NVMe Read/Write:** Data travels from the NVMe SSD over PCIe into the host CPU root complex.
-2. **Kernel Page Cache Copy:** The Linux storage stack copies data into the kernel page cache in host DDR5 system memory.
-3. **User Space Bounce Buffer:** PyTorch or the checkpoint manager copies data from kernel space into user space host RAM.
-4. **Host-to-Device Transfer:** The host CPU initiates a secondary DMA transfer over PCIe Gen 5 to stream data into GPU High Bandwidth Memory (HBM).
+In conventional server architectures, a storage transfer traverses a multi-hop CPU detour:
+1. **NVMe Read:** Data moves from local SSDs over PCIe to the host CPU root complex.
+2. **Kernel Page Cache Copy:** The Linux kernel copies data into page cache buffers in system DDR5 RAM.
+3. **User Space Bounce Buffer:** The application or I/O library performs a `memcpy` from kernel space to user space memory.
+4. **Device Transmission:** The host CPU issues a second DMA command to stream data over PCIe Gen5 into GPU High Bandwidth Memory (HBM).
 
-This legacy path forces every byte to cross the PCIe bus twice and undergo two CPU memory copies (`memcpy`). A modern dual-socket host CPU saturates its memory bus at 50 to 100 GB/s while running at 100% CPU core utilization, turning storage I/O into a crippling bottleneck.
+This legacy datapath imposes two severe penalties: data must traverse the PCIe bus twice, and gigabytes of memory copies saturate host CPU cores, turning them into memory-copy engines rather than data-preparation workers. As a result, I/O throughput drops to the speed of the slowest `memcpy` loop.
 
-### GPUDirect Storage (GDS) and direct DMA pipelines
+### GPUDirect Storage (GDS): Direct DMA from NVMe to GPU memory
 
-To eliminate this bottleneck, modern AI supercomputers implement **GPUDirect Storage (GDS)**:
+Modern AI supercomputers eliminate this bottleneck using the **GPUDirect Storage (GDS)** architecture:
 
-<svg viewBox="0 0 560 420" role="img" aria-label="Comparison of traditional CPU-buffered storage I/O with GPUDirect Storage direct DMA architecture." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 560 420" role="img" aria-label="Comparison between conventional CPU bounce buffer I/O and GPUDirect Storage direct DMA architecture." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="gds-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="gds-arr-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-accent)"/></marker>
@@ -4897,9 +5100,9 @@ To eliminate this bottleneck, modern AI supercomputers implement **GPUDirect Sto
 <rect x="32" y="96" width="224" height="36" rx="4" style="fill:var(--c-surface);stroke:var(--c-accent-2);stroke-width:1.2"/>
 <text x="144" y="118" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">GPU HBM3 (3.35 TB/s)</text>
 <line x1="144" y1="250" x2="144" y2="206" marker-end="url(#gds-arr-warn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="150" y="232" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Hop 1</text>
+<text x="150" y="232" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Step 1</text>
 <line x1="144" y1="148" x2="144" y2="134" marker-end="url(#gds-arr-warn)" style="stroke:var(--c-warn);stroke-width:1.5"/>
-<text x="150" y="142" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Hop 2</text>
+<text x="150" y="142" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">I/O Step 2</text>
 <rect x="24" y="302" width="240" height="22" rx="5" style="fill:var(--c-warn);fill-opacity:.16;stroke:var(--c-warn);stroke-width:1.3"/><text x="144.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Bottleneck: CPU &amp; RAM Bounce</text>
 <rect x="288" y="48" width="256" height="286" rx="6" style="fill:var(--c-surface);stroke:var(--c-success);stroke-width:1.2"/>
 <text x="416" y="68" text-anchor="middle" style="fill:var(--c-success);font-size:15px;font-weight:700;letter-spacing:.06em">GPUDirect Storage (GDS)</text>
@@ -4916,87 +5119,37 @@ To eliminate this bottleneck, modern AI supercomputers implement **GPUDirect Sto
 <text x="424" y="232" text-anchor="start" style="fill:var(--c-success);font-size:10px;font-weight:600">Direct DMA</text>
 <rect x="296" y="302" width="240" height="22" rx="5" style="fill:var(--c-success);fill-opacity:.16;stroke:var(--c-success);stroke-width:1.3"/><text x="416.0" y="316.3" text-anchor="middle" style="fill:var(--c-text);font-size:9.5px;font-family:var(--font-mono)">Zero CPU Overhead · Direct DMA</text>
 <rect x="16" y="344" width="528" height="64" rx="6" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="364" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Checkpointing Challenge: 405B model saves ~7.5 TB state periodically.</text>
-<text x="28" y="382" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">With GDS, storage streams directly into GPU HBM bypassing system RAM,</text>
-<text x="28" y="398" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">eliminating CPU bounce latency and preventing training stalls.</text>
+<text x="28" y="364" text-anchor="start" style="fill:var(--c-text);font-size:13px;font-weight:600">Checkpoint Challenge: Frontier models snapshot massive state periodically.</text>
+<text x="28" y="382" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">With GDS, storage streams directly to GPU HBM bypassing system RAM,</text>
+<text x="28" y="398" text-anchor="start" style="fill:var(--c-text-mute);font-size:12px">eliminating CPU bounce latency and preventing cluster training stalls.</text>
 </svg>
 
-GDS relies on the `cuFile` API and the `nvidia-fs.ko` kernel driver. It establishes a direct DMA (Direct Memory Access) channel between local NVMe drives (or remote NVMe-oF over InfiniBand) and GPU High Bandwidth Memory through the PCIe switch fabric, completely bypassing the host CPU, user space bounce buffers, and the Linux kernel page cache.
+GDS operates through the NVIDIA `cuFile` API and the `nvidia-fs.ko` kernel driver. It establishes a direct DMA (Direct Memory Access) datapath between local NVMe drives (or NVMe-oF network storage) and GPU HBM over the PCIe switch fabric:
+- Data traverses the PCIe bus exactly once; host memory intermediate copies are entirely eliminated.
+- Host CPU cores are freed from `memcpy` operations to focus on dataloading and token preprocessing.
+- Latency jitter drops significantly, aligning the I/O datapath with physical PCIe Gen5 line rates (~64 GB/s per direction).
 
-By eliminating CPU memory copies:
-- Storage throughput jumps to line-rate PCIe Gen 5 speeds (**64+ GB/s per NIC/SSD controller**).
-- End-to-end I/O latency drops by **80%**.
-- Host CPU utilization plummets from **100% to near 0%**, leaving host cores free for token preprocessing and orchestration.
+Within a DGX H100 system, storage NICs and local NVMe drives sit directly on the same PCIe switches as the GPUs in their respective NUMA half. This ensures that direct DMA transfers complete within the local PCIe switch without crossing inter-socket UPI interconnects. At the code level, direct DMA access is invoked via the `cuFile` API:
 
-<details>
-<summary>Quiz: Why does GPUDirect Storage (GDS) reduce CPU utilization to near zero during checkpointing?</summary>
+```cpp
+// cuFile API: Direct DMA from NVMe to GPU HBM (CPU bounce buffer bypassed)
+CUfileDescr_t cf_descr;
+cf_descr.handle.fd = fd;
+cf_descr.type = CU_FILE_HANDLE_TYPE_OPAQUE_FD;
+cuFileHandleRegister(&cf_handle, &cf_descr);
 
-Traditional I/O requires the host CPU to execute memory copy instructions (`memcpy`) moving gigabytes of data between kernel page cache buffers and user space memory. GDS programs the PCIe DMA engines to stream data directly between NVMe storage controllers and GPU HBM, completely bypassing host CPU cores and system DDR5 RAM.
-</details>
-
-### Exabyte-scale distributed filesystems: The Meta Tectonic case study
-
-In a production cluster spanning thousands of nodes, local NVMe drives cannot store global checkpoints. Instead, clusters connect to exabyte-scale distributed filesystems.
-
-In Meta's official LLaMA 3 infrastructure report, the 16,384-GPU cluster is backed by **Tectonic**, Meta's distributed filesystem:
-- **Scale:** 7,500 dedicated SSD-backed storage servers providing 240 Petabytes of storage capacity.
-- **Sustained Throughput:** **2 TB/s** of sustainable throughput across the 2,048 compute nodes, far above the ~11 MB/s token stream; Meta names the bursty checkpoint writes that saturate the storage fabric for short periods as the main challenge.
-- **Burst Checkpoint Throughput:** Sustains **7 TB/s of peak burst write throughput**, enabling the cluster to snapshot a 7.5 TB checkpoint across all ranks in approximately **one second** using asynchronous copy-on-write buffers.
-- **Reliability:** Uses Reed-Solomon erasure coding ($9+3$ chunks) to survive multi-drive and rack-level storage server failures without corrupting model state.
-
-### High-throughput dataloading: Token binary indexing and zero-copy mmap
-
-Feeding tokens to thousands of GPUs requires specialized dataloader engineering:
-- **Why standard PyTorch DataLoader fails:** Loading raw JSONL or text files forces Python workers to parse strings, tokenize text, and allocate dynamic Python objects, causing the Python Global Interpreter Lock (GIL) to stall worker threads.
-- **Contiguous Binary Layout (.bin / .idx):** Production frameworks (such as Megatron-LM and Lit-GPT) pre-tokenize datasets into monolithic binary arrays of `uint16` or `int32` token IDs contiguous on disk (`.bin`), accompanied by an index file (`.idx`) mapping document byte offsets.
-- **Zero-Copy Memory Mapping (`mmap`):** Worker processes use POSIX `mmap()` to map the binary dataset directly into the process virtual address space. The operating system transparently pages in token blocks on demand without user-space buffer allocations.
-- **NUMA-Aware Prefetching:** Compute nodes feature two CPU sockets, each tied to a dedicated NUMA node and 4 GPUs (in the node topology of Figure 1.1, CPU 0 feeds GPUs 0–3 and CPU 1 feeds GPUs 4–7). Workers are pinned to the specific CPU socket physically wired to the GPU's PCIe root complex, utilizing asynchronous CUDA streams (`pin_memory=True`) to stream tokens into HBM without crossing NUMA interconnects.
-
-### Cluster MTBF, fault tolerance, and the Young-Daly checkpoint formula
-
-In a cluster of 16,384 GPUs (2,048 nodes), hardware failures are not rare anomalies—they are continuous operating conditions:
-- If a single DGX node has a Mean Time Between Failures (MTBF) of 3 years (~26,000 hours), the aggregate cluster MTBF is:
-
-$$M_{\text{cluster}} = \frac{26,000 \text{ hours}}{2,048 \text{ nodes}} \approx 12.7 \text{ hours}$$
-
-In practice, factoring in silent data corruption (SDC), HBM3 ECC errors, optical transceiver drops, and network timeouts, a 16k GPU cluster experiences a fatal interruption every **2 to 3 hours**.
-
-When a node crashes, all GPUs must restart from the last saved checkpoint. This introduces a fundamental mathematical trade-off:
-- If you checkpoint too frequently, you waste massive time writing data ($\delta$).
-- If you checkpoint too infrequently, you waste hours of computation re-running lost steps after a crash.
-
-The mathematically optimal checkpoint interval is governed by the classical **Young-Daly Formula**:
-
-$$\tau_{\text{opt}} = \sqrt{2 \cdot \delta \cdot M}$$
-
-Where:
-- $\delta$ is the time required to save a checkpoint snapshot (in seconds).
-- $M$ is the cluster Mean Time Between Failures (MTBF, in seconds).
-- $\tau_{\text{opt}}$ is the optimal time between consecutive checkpoints.
-
-Let us evaluate this trade-off for LLaMA-3 405B on 16k GPUs ($M = 3 \text{ hours} = 10,800 \text{ seconds}$):
-- **Scenario A: Legacy Storage Fabric (25 GB/s cluster aggregate write speed):**
-  $$\delta = \frac{7.5 \times 1024 \text{ GB}}{25 \text{ GB/s}} \approx 307.2 \text{ s} \approx 5.12 \text{ minutes}$$
-  $$\tau_{\text{opt}} = \sqrt{2 \cdot 307.2 \cdot 10,800} \approx \sqrt{6,635,520} \approx 2,576 \text{ s} \approx 42.9 \text{ minutes}$$
-  Writing checkpoints every 43 minutes causes $\frac{5.12}{42.9} \approx 11.9\%$ direct checkpoint overhead, plus $\frac{\tau}{2M} \approx 11.9\%$ expected recomputation loss—**wasting nearly 24% of the entire supercomputer's compute capacity!**
-- **Scenario B: GPUDirect Storage & Tectonic Burst (250 GB/s write fabric):**
-  $$\delta = \frac{7.5 \times 1024 \text{ GB}}{250 \text{ GB/s}} \approx 30.72 \text{ s} \approx 0.51 \text{ minutes}$$
-  $$\tau_{\text{opt}} = \sqrt{2 \cdot 30.72 \cdot 10,800} \approx \sqrt{663,552} \approx 814.6 \text{ s} \approx 13.6 \text{ minutes}$$
-  Checkpoint overhead becomes $\frac{0.51}{13.6} \approx 3.8\%$ and the expected recomputation loss $\frac{\tau}{2M} \approx 3.8\%$, so total lost compute drops **from 24% to about 7.5%**, recovering millions of dollars in productive training time. A 10× faster write cuts the loss by $\sqrt{10} \approx 3.2\times$, because at $\tau_{\text{opt}}$ both loss terms scale with $\sqrt{\delta}$.
-
-<details>
-<summary>Quiz: What is the optimal checkpoint interval for a cluster with MTBF = 4 hours and checkpoint duration = 2 minutes?</summary>
-
-Applying the Young-Daly equation:
-$\tau_{\text{opt}} = \sqrt{2 \cdot \delta \cdot M} = \sqrt{2 \cdot 2 \text{ min} \cdot 240 \text{ min}} = \sqrt{960} \approx 30.98 \text{ minutes}$.
-Checkpointing roughly every 31 minutes minimizes total lost training time.
-</details>
+// Direct read into device pointer without host RAM bounce
+cuFileRead(cf_handle, dev_ptr, size, file_offset, 0);
+cuFileHandleDeregister(cf_handle);
+```
 
 ---
 
-## 5. Synthesis: Training vs inference and operational trade-offs
+## 5. Synthesis: Hardware hierarchy and latency gaps
 
-### The two engineering lenses: Training vs inference
+The architectural decisions across the three pillars place hardware under fundamentally contrasting operating regimes between pre-training and high-throughput inference serving:
+
+### Two engineering lenses: Training and inference hardware regimes
 
 Hardware requirements diverge sharply between foundation model pre-training and real-time inference:
 
@@ -5004,79 +5157,69 @@ Hardware requirements diverge sharply between foundation model pre-training and 
 | :--- | :--- | :--- |
 | **Primary Memory Footprint** | Weights ($2B$) + Gradients ($2B$) + AdamW ($12-16B$) + Activations | Model Weights ($4-8$ bit quantized) + Dynamically allocated KV Cache |
 | **Compute / Memory Regime** | Heavily **Compute-Bound** (GEMM with thousands of tokens per batch) | Prefill is **Compute-Bound**; Decode is strictly **Memory-Bandwidth-Bound** ($B=1$, GEMV) |
-| **Dominant Network Primitive** | High-throughput **AllReduce** & **ReduceScatter** over InfiniBand | Ultra-low latency **AllGather** & **P2P Tensor Parallelism** over NVLink |
+| **Dominant Network Primitive** | High-throughput **AllReduce** & **ReduceScatter** over InfiniBand | Low-latency tensor-parallel **AllReduce** over NVLink, once or twice per layer per token |
 | **Key Performance Metrics** | Model FLOPs Utilization (MFU), Step Time (ms), Gradient Stability | Time to First Token (TTFT), Inter-Token Latency (TPOT), Concurrent Requests |
 | **Critical Failure Modes** | Loss spikes, silent data corruption (SDC), pipeline bubbles | KV Cache Out-of-Memory (OOM), memory fragmentation, tail latency spikes |
 
-### End-to-end cluster walkthrough: 70B and 405B models on 16k GPUs
+Part D of the poster makes the inference column tangible. Push 140 GB of BF16 model weights through every link and the layers separate by orders of magnitude:
 
-To consolidate our three pillars, consider pre-training LLaMA-3 70B and 405B on an NVIDIA H100 SuperPod (Meta's actual 405B cluster used 400 Gb/s RoCE per GPU rather than InfiniBand, so the SHARP step below belongs to the SuperPod scenario):
+```text
+link                         time for 140 GB
+HBM3 (one H100, 3.35 TB/s)   140 ÷ 3,350  ≈ 0.042 s  =  42 ms
+NVLink (450 GB/s)            140 ÷ 450    ≈ 0.31 s
+PCIe Gen5 (64 GB/s)          140 ÷ 64     ≈ 2.2 s
+InfiniBand (50 GB/s per GPU) 140 ÷ 50     =  2.8 s
+legacy storage (25 GB/s)     140 ÷ 25     =  5.6 s
+```
 
-1. **LLaMA-3 70B on 8x H100 DGX Node:**
-   - 70 billion parameters in BF16 consume 140 GB for weights.
-   - 8 H100 SXM5 GPUs provide $8 \times 80 = 640 \text{ GB}$ of HBM3.
-   - Tensor Parallelism is set to $Y = 8$, fitting weights and activations entirely within the 3.6 TB/s NVLink crossbar domain.
-   - Every Transformer layer performs two AllReduces over NVLink (~0.5 ms each for an 8,192-token microbatch: $2 \cdot \tfrac{7}{8} \cdot 134 \text{ MB} / 450 \text{ GB/s}$).
-   - Sustained MFU exceeds 48-52%.
-2. **LLaMA-3 405B on 16,384 H100 GPUs (2,048 Nodes):**
-   - 4D Parallelism: 8-way intra-node TP $\times$ 16-way PP $\times$ 128-way DP (FSDP).
-   - TP is strictly confined to individual 8-GPU chassis over NVLink.
-   - 16 pipeline stages exchange microbatch activations over scale-out InfiniBand (P2P message size: $\sim 34 \text{ MB}$ per GPU, i.e. 8,192 tokens × 16,384 × 2 bytes ÷ 8 TP ranks).
-   - 128-way FSDP data-parallel ranks reduce-scatter FP32 gradients (12.7 GB per GPU) and all-gather BF16 weights (6.3 GB), about 0.38 s at 50 GB/s and overlapped with the backward pass; on a SuperPod, Mellanox SHARP can do this summation inside the switches.
-   - Storage streams only ~11 MB/s of token IDs (2.7 million tokens per second) using zero-copy `mmap`, while GPUDirect Storage snapshots 7.5 TB model checkpoints every ~15 minutes with ~30-second burst write pauses.
+In human terms, data that arrives from HBM in one second takes 7.4 s over NVLink, 52 s over PCIe, and 67 s over InfiniBand. The decode phase is bound by the top row: every generated token reads all weights once. This hardware hierarchy connects directly to how multi-GPU clusters scale, how MFU losses are managed under real workloads, and how operational failure mechanisms are mitigated in the second article of this series: [AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU](post.html?slug=from-gpus-to-ai-supercomputers).
 
 ---
 
 ## The whole story in six lines
 
-- A modern GPU supercomputer is governed by three interconnected physical pillars: Streaming Multiprocessor compute, multi-tiered network fabrics, and high-throughput storage I/O.
-- The roofline model dictates a critical arithmetic intensity of ~295 FLOP/byte on H100, requiring a batch size of ~300 tokens per SM to escape memory-bound latency.
-- Intra-node NVLink crossbars sustain 450 GB/s unidirectional bandwidth per GPU (3.6 TB/s bisection), keeping 8-way Tensor Parallelism compute-bound.
-- Scale-out InfiniBand fat-trees guarantee full bisection bandwidth across thousands of GPUs, dropping link speeds to 50 GB/s per chip (400 GB/s per node).
-- Mellanox SHARP performs floating-point accumulation directly inside switch crossbars, cutting cluster-wide AllReduce traffic and latency in half.
-- GPUDirect Storage eliminates host CPU bounce buffers to snapshot 7.5 TB checkpoints in seconds, matching the Young-Daly optimal interval to protect cluster MFU.
+- **Three Pillars Co-Design:** An AI supercomputer does not function as isolated chips; compute (SM/Tensor Core), network fabric (NVLink/InfiniBand), and storage (NVMe/GDS) must be balanced with matched bandwidths.
+- **SM and Tensor Core Anatomy:** The H100 chip delivers 990 TFLOP/s BF16 across 132 SMs and 528 Tensor Cores; to overcome the memory wall, each SM maintains up to 64 resident warps to hide ~480-cycle HBM3 access latencies.
+- **In-Chassis NVLink Crossbar:** Eight H100 GPUs connect across 4 NVSwitch ASICs in a non-blocking crossbar; 450 GB/s unidirectional bandwidth per GPU enables seamless intra-layer tensor parallel exchanges.
+- **SuperPOD and Rail-Aligned Fat-Tree:** Clusters are built from 32-DGX Scalable Units (SUs) wired into a two-tier non-blocking fat-tree; rail optimization guarantees that GPUs sharing the same model slice communicate in a single switch hop.
+- **In-Network Hardware Acceleration (SHARP & PXN):** Quantum-2 switch ASICs aggregate AllReduce reductions in-flight, cutting network traffic by 50%; PXN routes cross-rail packets across local NVLink to bypass spine congestion.
+- **Direct Storage DMA (GDS):** Four independent network fabrics isolate traffic per node; GPUDirect Storage bypasses CPU page caches and host RAM bounce buffers to stream directly between NVMe and GPU HBM via PCIe DMA.
 
 ---
 
 ## Glossary
 
 - **Streaming Multiprocessor (SM)** — The core multi-threaded execution cell of an NVIDIA GPU containing Tensor Cores, Warp Schedulers, CUDA cores, and on-chip SRAM.
-- **Warp** — The basic scheduling unit in NVIDIA architectures, consisting of 32 parallel threads executed synchronously by an SM warp scheduler.
-- **Warp Divergence** — Performance loss occurring when threads within a single warp branch into divergent execution paths, forcing inactive cores to stall.
+- **Warp** — The fundamental scheduling unit in NVIDIA architectures, consisting of 32 parallel threads executed synchronously by an SM warp scheduler.
+- **Warp Divergence** — Performance penalty occurring when threads within a single warp branch into different execution paths, forcing inactive cores to stall.
+- **Occupancy** — The fraction of an SM's 64 warp slots actively occupied by a kernel; decreases as registers per thread increase and serves as the SM's mechanism for latency hiding.
+- **Critical Arithmetic Intensity ($\alpha_{\text{crit}}$)** — The ratio of peak compute throughput to memory bandwidth ($C_{\text{peak}} / W_{\text{mem}} \approx 295$ FLOP/byte); operations below this ridge run memory-bound.
 - **NVLink** — NVIDIA's proprietary high-bandwidth interconnect providing 450 GB/s unidirectional (900 GB/s bidirectional) memory transfer per H100 GPU.
 - **NVSwitch** — On-node crossbar ASIC enabling non-blocking, all-to-all communication across all 8 GPUs in an HGX chassis.
-- **InfiniBand Fat-Tree** — A hierarchical multi-tier network topology ensuring full bisection bandwidth without oversubscription across cluster nodes.
-- **Mellanox SHARP** — Scalable Hierarchical Aggregation and Reduction Protocol; switch hardware that executes floating-point AllReduces in-flight.
-- **Model FLOPs Utilization (MFU)** — The ratio of theoretically required model FLOPs to the actual sustained hardware floating-point throughput.
-- **Tensor Parallelism (TP)** — Intra-layer model partitioning that splits individual weight matrices across GPUs, bounded strictly by NVLink bandwidth.
-- **Pipeline Parallelism (PP)** — Inter-layer model partitioning that assigns consecutive Transformer layers to distinct GPUs, incurring bubble overhead.
-- **GPUDirect Storage (GDS)** — Direct DMA technology connecting NVMe storage directly to GPU High Bandwidth Memory, bypassing host CPU page caches.
-- **Young-Daly Formula** — Mathematical formulation ($\tau = \sqrt{2 \delta M}$) determining the optimal checkpoint interval based on write duration and cluster MTBF.
+- **Fabric Manager** — NVIDIA's software service that configures NVSwitch routing tables over PCIe; without it, the NVLink mesh does not initialize.
+- **NUMA Domain** — A CPU socket with its dedicated memory and attached PCIe devices; a DGX H100 has two NUMA halves, and data pipelines must align to the local half.
+- **Scalable Unit (SU)** — The modular building block of a DGX SuperPOD: 32 DGX nodes (256 GPUs) and the 8 leaf switches interconnecting them.
+- **Leaf and Spine Switch** — The two tiers of a fat-tree network: compute nodes connect to leaf switches, leaves connect to every spine, and any two servers communicate within at most three switches.
+- **Rail-Optimized Cabling** — Interconnect topology wiring NIC $i$ of every server to leaf switch $i$, allowing GPUs holding identical tensor partitions to meet in a single hop.
+- **PXN (PCIe Acceleration / NVLink)** — Hardware/NCCL feature routing cross-rail packets across local NVLink to reach the target rail's NIC, bypassing spine switches.
+- **Mellanox SHARP** — Scalable Hierarchical Aggregation and Reduction Protocol; Quantum switch hardware that computes floating-point AllReduce operations in-flight.
+- **GPUDirect Storage (GDS)** — Direct DMA technology connecting NVMe storage directly to GPU High Bandwidth Memory, bypassing host CPU page caches and bounce buffers.
 
 ---
 
 ## Going deeper
 
+- On this blog: [AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU](post.html?slug=from-gpus-to-ai-supercomputers).
 - Jacob Austin, Swapnil Patil, Adam Paszke, Reiner Pope (2025). [How to Scale Your Model: How to Think About GPUs](https://jax-ml.github.io/scaling-book/gpus/). JAX-ML Scaling Book, Chapter 12.
 - SemiAnalysis (2025). [NVIDIA Tensor Core Evolution from Volta to Blackwell](https://semianalysis.com/2025/06/23/nvidia-tensor-core-evolution-from-volta-to-blackwell/). Microarchitectural retrospective.
-- DeepSeek-AI (2024). [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437). arXiv:2412.19437. Detailed 64-way Expert Parallelism and DualPipe implementation on 2,048 H800 GPUs.
-- Meta AI (2024). [The Llama 3 Herd of Models](https://arxiv.org/abs/2407.21783). arXiv:2407.21783. 16,384 GPU 4D parallelism, Tectonic storage, and training infrastructure.
+- NVIDIA Corporation (2022). [NVIDIA H100 Tensor Core GPU Architecture Whitepaper](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/hopper-architecture-whitepaper.pdf). Official microarchitecture guide: GPCs, TPCs, SM subpartitions, HBM3 stacks and memory controllers.
+- NVIDIA Corporation. [NVIDIA Hopper Tuning Guide](https://docs.nvidia.com/cuda/hopper-tuning-guide/index.html). The SM limits behind Figure 1.1: 64 warps and 64K registers per SM, at most 255 registers per thread, up to 228 KB of shared memory, and the TMA copy engine.
+- Weile Luo et al. (2024). [Benchmarking and Dissecting the Nvidia Hopper GPU Architecture](https://arxiv.org/abs/2402.13499). arXiv:2402.13499. Measured Hopper load latencies used in Figure 1.1: SMEM ~29, L1 ~41, L2 ~263 and global memory ~479 cycles.
 - NVIDIA Corporation. [DGX SuperPOD Reference Architecture (DGX H100): Key Components](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/dgx-superpod-components.html) and [Network Fabrics](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/network-fabrics.html). Scalable units, the four networks, 127 nodes with a UFM slot, and the separate storage fabric; diagrams in Figure 1.1 were inspired by these.
 - NVIDIA Corporation. [Introduction to NVIDIA DGX H100/H200 Systems](https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html). Node hardware: CPUs, memory, NICs and NVMe drives; its DGX H100/H200 system topology diagram inspired the node level of Figure 1.1.
 - NVIDIA Corporation. [Fabric Manager for NVIDIA NVSwitch Systems](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html). How the 18 NVLinks of each H100 split as 5 + 4 + 4 + 5 over four NVSwitches, and why the NVLink fabric does not come up without Fabric Manager.
 - NVIDIA Corporation. [DGX SuperPOD Architecture (DGX H100)](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/dgx-superpod-architecture.html). Scaling table: two tiers up to 8 SUs, a core tier from 16 SUs; 512 leaf, 512 spine and 256 core switches for 2,048 DGX.
-- NVIDIA Corporation. [DGX SuperPOD Data Center Design (H100): Planning](https://docs.nvidia.com/dgx-superpod/design-guides/dgx-superpod-data-center-design-h100/latest/planning.html). Why a full SuperPOD has 127 DGX (a pair of UFM appliances takes one slot), 31 to 127 DGX per build, and 4 DGX (40.8 kW) per rack.
-- NVIDIA Developer Blog (2022). [Doubling all2all Performance with NVIDIA Collective Communication Library 2.12](https://developer.nvidia.com/blog/doubling-all2all-performance-with-nvidia-collective-communication-library-2-12/). PXN: moving cross-rail traffic onto NVLink first so it skips the spine.
 - NVIDIA Corporation. [QM97X0 NDR 400Gb/s InfiniBand Switch Systems User Manual: Introduction](https://docs.nvidia.com/networking/display/qm97x0um/introduction). Quantum-2 QM9700: 64 NDR 400 Gb/s ports, 51.2 Tb/s aggregate bidirectional throughput per switch, SHARP in-network reduction.
-- Deepak Narayanan et al. (2021). [Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM](https://arxiv.org/abs/2104.04473). arXiv:2104.04473. Why tensor parallelism stays on NVLink inside a server while pipeline and data parallelism run across servers.
 - Charles Clos (1953). [A Study of Non-Blocking Switching Networks](https://doi.org/10.1002/j.1538-7305.1953.tb01433.x). Bell System Technical Journal 32(2), 406–424. The multi-stage switching idea behind today's leaf–spine networks.
 - Charles E. Leiserson (1985). [Fat-trees: Universal Networks for Hardware-Efficient Supercomputing](https://doi.org/10.1109/TC.1985.6312192). IEEE Transactions on Computers C-34(10), 892–901. Where the fat-tree name comes from: links that thicken toward the top.
-- NVIDIA Corporation (2022). [NVIDIA H100 Tensor Core GPU Architecture Whitepaper](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/hopper-architecture-whitepaper.pdf). Official microarchitecture guide.
-- NVIDIA Corporation. [NVIDIA Hopper Tuning Guide](https://docs.nvidia.com/cuda/hopper-tuning-guide/index.html). The SM limits behind Figure 1.1: 64 warps and 64K registers per SM, at most 255 registers per thread, up to 228 KB of shared memory, and the TMA copy engine.
-- Weile Luo et al. (2024). [Benchmarking and Dissecting the Nvidia Hopper GPU Architecture](https://arxiv.org/abs/2402.13499). arXiv:2402.13499. Measured Hopper load latencies used in Figure 1.1: SMEM ~29, L1 ~41, L2 ~263 and global memory ~479 cycles.
-- Jay Shah, Ganesh Bikshandi, Ying Zhang, Vijay Thakkar, Pradeep Ramani, Tri Dao (2024). [FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision](https://arxiv.org/abs/2407.08608). arXiv:2407.08608. Warp specialization on Hopper: producer warps issue TMA copies while consumer warps run wgmma, hiding latency with few warps.
-- vLLM Team (2025). [GLM-5 Model Serving and Parallelism Scaling Guide](https://docs.vllm.ai/projects/recipes/en/stable/GLM/GLM5.html). Single-node HGX 8-way Tensor Parallelism (TP=8) and FP8 deployment guidelines.
-- GMI Cloud (2025). [Where to Run GLM-5 in the Cloud: GPU Requirements and Scaling Considerations](https://www.gmicloud.ai/en/blog/where-to-run-glm-5-inference-in-the-cloud-gpu-requirements-deployment-options-and-scaling-considerations). Memory analysis of 754B MoE models on H100 vs H200 clusters and KV cache headroom.
-- Sebastian Raschka (2025). [Multi-Head Latent Attention (MLA) Architecture](https://sebastianraschka.com/llm-architecture-gallery/mla/). Low-latency inference via head compression and matrix projection.
-- On this blog: [A Prompt's Journey (8): The Output Layer (LM Head) — Megatron-LM and the Memory Wall](post.html?slug=inside-the-output-layer).
-- On this blog: [A Prompt's Journey (9): Inside the Context Window — From the 2K Wall to FlashAttention](post.html?slug=inside-the-context-window).
+- NVIDIA Developer Blog (2022). [Doubling all2all Performance with NVIDIA Collective Communication Library 2.12](https://developer.nvidia.com/blog/doubling-all2all-performance-with-nvidia-collective-communication-library-2-12/). PXN: moving cross-rail traffic onto NVLink first so it skips the spine.

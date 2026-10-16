@@ -111,10 +111,11 @@
       "id": "ai-infrastructure",
       "title": "AI Infrastructure",
       "stage": "systems",
-      "tagline": "From GPU silicon to 16,384-GPU clusters, distributed parallelism, and resilient enterprise production systems.",
-      "summary": "Understanding why a 1,024-H100 supercomputer with 1 ExaFLOP on paper stalls at 38% MFU across compute, memory, network, and storage hierarchies.",
-      "badge": "1-Part Series",
+      "tagline": "From GPU silicon to 16,384-GPU clusters, hardware anatomy to distributed parallelism and production systems.",
+      "summary": "Understanding why a 1,024-H100 supercomputer with 1 ExaFLOP on paper sustains only 38% MFU across compute, memory, network, and storage hierarchies.",
+      "badge": "2-Part Series",
       "posts": [
+        "understanding-gpus-and-llm-scaling",
         "from-gpus-to-ai-supercomputers"
       ]
     }
@@ -122,10 +123,10 @@
   "posts": [
     {
       "slug": "from-gpus-to-ai-supercomputers",
-      "title": "AI Infrastructure (1): From GPUs to AI Supercomputers — Why 1,024 H100s Stall at 38% MFU",
+      "title": "AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU",
       "date": "2026-10-16",
       "seriesId": "ai-infrastructure",
-      "seriesPart": 1,
+      "seriesPart": 2,
       "summary": "What: An end-to-end architectural anatomy of why a supercomputer with 1,024 NVIDIA H100 SXM GPUs achieves only 38% Model FLOPs Utilization (MFU) despite 1 ExaFLOP of peak BF16 compute on paper; spanning 32-thread warp execution, SM and Tensor Core microarchitectures, HBM3 memory hierarchy, 8-GPU DGX nodes, NVSwitch and InfiniBand fat-tree network topologies, 4D parallelism strategies (TP, PP, DP/FSDP, CP, EP), GPUDirect Storage I/O paths, production inference disaggregation, VLM/VQA workloads, cluster reliability, fault recovery, and FinOps design. Why it matters: Large-scale AI is not merely a compute problem, but a data delivery problem under strict latency and security boundaries; hitting the Memory Wall, Fabric Wall, or I/O Wall leaves GPUs idle and wastes millions of dollars in capital expenditure. How: 32-thread SIMT execution, warp divergence, and latency hiding; 295 FLOP/byte critical arithmetic intensity (Roofline) balancing H100 SXM's 3.35 TB/s HBM3 bandwidth against 1,979 TFLOP/s BF16 Tensor Core ceiling; 900 GB/s NVLink 4 intra-node interconnects and 400 Gb/s Quantum-2 InfiniBand inter-node fabric; NCCL collective algorithms (Ring AllReduce, AllGather, ReduceScatter, AllToAll); disaggregated serving isolating prefill and decode pools; Young-Daly optimal checkpoint formulation; empirical validations and numerical Python simulations modeled after LLaMA-3 405B and DeepSeek-V3 cluster architectures. Where: At datacenter scale across 1,024-H100 SuperPOD deployments, DGX H100 servers, 70B enterprise LLM and VLM serving infrastructures, Lustre/Ceph GPUDirect Storage clusters, and distributed AI gateways. For whom: AI infrastructure engineers, systems architects, and researchers training foundation models on thousands of GPUs, designing cluster networks and high-throughput storage pipelines, and operating enterprise serving platforms. When: When multi-node training MFU falls below expectations, Tensor Parallelism crosses node boundaries into network bottlenecks, KV cache memory pressure inflates serving latency (TTFT/TPOT), or when sizing a new AI supercomputing cluster.",
       "tags": [
         "gpu",
@@ -145,22 +146,26 @@
     },
     {
       "slug": "understanding-gpus-and-llm-scaling",
-      "title": "Understanding GPU Architecture and LLM Scaling — From Silicon Compute to NVSwitch Fabrics, GPUDirect Storage to Parallelism Rooflines",
+      "title": "AI Infrastructure (1): Anatomy of an AI Supercomputer — From a Single SM to 16,384 GPUs on One Map",
       "date": "2026-10-10",
-      "summary": "What: The architectural, networking, and storage foundations of LLM scaling across the three physical pillars: Compute, Network, and Storage; Streaming Multiprocessor (SM) subpartitions, SIMT execution and warp divergence, Tensor Core floating-point engines (BF16, FP8, NVFP4), L1/SMEM/TMEM and HBM memory hierarchy, the Roofline model and critical arithmetic intensity, intra-node 900 GB/s NVLink/NVSwitch crossbars, inter-node InfiniBand non-blocking fat-trees, NCCL collective primitives (Ring AllGather, ReduceScatter, AllToAll), in-network hardware reduction via Mellanox SHARP, GPUDirect Storage (GDS) direct DMA, Meta Tectonic 240 PB distributed storage and 7 TB/s burst writes, the Young-Daly checkpoint formula, and 4D parallelism (TP, PP, EP, DP/FSDP) rooflines. Why it matters: Despite 1 ExaFLOP of nominal compute in a 1,024 H100 GPU cluster, Model FLOPs Utilization (MFU) can collapse below 35% if communication and I/O boundaries are violated; crossing node boundaries with Tensor Parallelism slashes bandwidth by 9x, while synchronous 7.5 TB checkpoint writes freeze multi-thousand GPU clusters for minutes at a time without GDS. How: JAX-ML Scaling Book foundations (Austin et al., 2025); Hopper GH100 and Blackwell B200 microarchitectures; FMA and BF16 Tensor Core FLOP mechanics; the alpha_crit = 295 FLOP/byte roofline knee; 3.6 TB/s bisection bandwidth in 8-GPU DGX chassis; 32-node Scalable Units with 1:1 non-blocking fat-tree InfiniBand fabrics; halving AllReduce latency via Mellanox SHARP; cuFile API and GDS zero-copy DMA; Young-Daly tau = sqrt(2*delta*M) optimal checkpoint scheduling; Megatron-LM column/row tensor sharding (Y <= F/2475); ZeRO critical batch sizes (B/X >= 2,500 tokens/GPU); and 1F1B pipeline bubble fractions (P-1)/(P-1+M). Where: Case studies of LLaMA-3 405B (16k H100s, 8-way TP, 16-way PP, 128-way DP) and DeepSeek-V3 (2,048 H800s, 64-way EP, 16-way PP, 2-way DP), grounded in a toy B=2, D=4, F=4 manual tensor walk and runnable Python verification. For whom: AI infrastructure engineers, ML platform architects, and systems researchers pre-training foundation models across large GPU clusters and optimizing distributed training and storage pipelines. When: When multi-node MFU drops below target thresholds, when evaluating Tensor vs Pipeline vs Expert parallelism trade-offs, when checkpoint writes stall GPU clusters, or when provisioning multi-thousand GPU cluster topologies.",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 1,
+      "summary": "What: A visual guide to AI supercomputer hardware anatomy built around a five-part poster that zooms out from a single Streaming Multiprocessor to the H100 chip, the 8-GPU DGX H100 node, the 127-node DGX SuperPOD, and a 16,384-GPU cluster, mapping compute, fabric, and storage hierarchies. Why it matters: An AI supercomputer is not just a collection of GPUs; it is an integrated co-designed machine spanning Tensor Cores and HBM3 bandwidth within the SM, a 450 GB/s NVLink/NVSwitch crossbar within the chassis, a two-tier non-blocking rail-optimized InfiniBand fat-tree across the cluster, and GPUDirect Storage direct DMA datapaths. How: 990 TFLOP/s compute architecture derived from 528 Tensor Cores × 1,024 FLOP × 1.83 GHz; latency hiding with up to 64 warps per SM; the DGX H100 topology with dual NUMA domains, a NIC per GPU, and dedicated PCIe switching; a 51.2 TB/s bisection bandwidth rail-optimized fat-tree; Mellanox SHARP in-network reduction; and GPUDirect Storage bypassing host CPU bounce buffers. Where: NVIDIA H100 SXM5, DGX H100, and DGX SuperPOD reference architecture. For whom: Infrastructure engineers, system architects, and researchers seeking a clear, unified understanding of AI supercomputer hardware from silicon to cluster scale. When: As the foundational architectural guide to the AI Infrastructure series.",
       "tags": [
         "gpu",
+        "infrastructure",
+        "h100",
         "llm",
-        "architecture",
         "distributed-systems",
+        "networking",
+        "storage",
         "hardware",
-        "systems",
-        "storage"
+        "systems"
       ],
-      "readingMinutes": 52,
+      "readingMinutes": 15,
       "translationSlug": "gpu-mimarisi-ve-llm-olcekleme",
       "draft": false,
-      "tagline": "Compute, Network, and Storage: Modern GPU scaling anatomy from silicon Streaming Multiprocessors to NVSwitch fabrics, collective primitives, GPUDirect Storage, and 4D parallelism."
+      "tagline": "From single SM silicon to 16,384-GPU clusters, NVLink chassis fabrics to SuperPOD InfiniBand backbones: The physical anatomy of an AI supercomputer."
     },
     {
       "slug": "inside-the-context-window",

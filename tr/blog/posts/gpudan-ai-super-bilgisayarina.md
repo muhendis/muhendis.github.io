@@ -31,6 +31,10 @@ Bunu gerçekten anlamak için önce GPU'nun içine bakacağız. Thread nedir, wa
 
 > **Sayısal doğruluk notu:** H100'le ilgili özellikler aksi belirtilmedikçe **H100 SXM** sürümü ve ilgili DGX H100 referans mimarisi içindir. “Teorik tavan”, “öğretici varsayım” ve “gerçek raporlanmış ölçüm” birbirinden farklıdır. Yazının sonunda [K1]–[K51] kaynaklarını bulacaksınız. Makale, [Understanding GPUs and LLM Scaling](https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling) bağlamıyla ve önceki Türkçe taslakla birleştirilerek yeniden kaleme alınmıştır.
 
+> [!NOTE]
+> **Serinin 1. Bölümü: Donanım Anatomisi**
+> Bir yapay zekâ süper bilgisayarının fiziksel katmanlarını (SM mikro-mimarisi, HBM3 bellek hiyerarşisi, NVLink kasa içi crossbar'ı ve SuperPOD rail-optimized fat-tree kumaşı) detaylı mimari haritalarla incelemek için serinin ilk yazısına bakabilirsiniz: [Yapay Zekâ Altyapısı (1): Bir AI Süper Bilgisayarının Anatomisi — Tek Bir SM'den 16.384 GPU'ya Tek Harita](post.html?slug=gpu-mimarisi-ve-llm-olcekleme).
+
 ---
 
 ### Bu yazının yöntemi: Ezber yerine zihinsel model
@@ -7322,7 +7326,3 @@ Aşağıdaki kaynakların bir bölümü **orijinal teknik bağlam**, bir bölüm
 - **[K55] SuperPOD ölçekleme:** NVIDIA, [*DGX SuperPOD Architecture (DGX H100)*](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/dgx-superpod-architecture.html). 8 SU'ya kadar iki katman, 16 SU'dan itibaren core katmanı; 2.048 DGX için 512 leaf, 512 spine ve 256 core switch.
 - **[K56] GPU nesli veri sayfaları:** NVIDIA, [V100](https://www.nvidia.com/en-us/data-center/v100/), [A100](https://www.nvidia.com/en-us/data-center/a100/), [H200](https://www.nvidia.com/en-us/data-center/h200/) ve [DGX B200](https://www.nvidia.com/en-us/data-center/dgx-b200/). HBM kapasitesi ve bant genişliği, yoğun tensor tepe değerleri.
 - **[K57] 4-bit kayan nokta:** NVIDIA, [*Introducing NVFP4 for Efficient and Accurate Low-Precision Inference*](https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/). E2M1 değerler, E4M3 ölçekli 16'lık bloklar, FP32 tensör ölçeği ve MXFP4 karşılaştırması.
-
-### Yayın ve kullanım notu
-
-Bu makale, farklı teknik kaynaklardan edinilen bilgileri **Türkçe, özgün ve öğretici bir anlatımla bir araya getiren bilgi paylaşımıdır**. Bir üretim sistemine özel kurulum, güvenlik, arıza müdahalesi veya optimizasyon prosedürü sunmaz. Sayılar üç türde değerlendirilmelidir: **üretici teknik özellikleri**, **bağımsız çalışmalarda raporlanmış ölçümler** ve **varsayım içeren öğretici modeller**. Çalıştırılan platform, firmware, sürücü, sayısal hassasiyet ve workload'a bağlı değişebilen ölçümler için gerçek sistem benchmark'ı gereklidir.

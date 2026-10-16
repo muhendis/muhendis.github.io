@@ -31,6 +31,10 @@ To truly understand this, we must first look inside the GPU itself. What is a th
 
 > **Numerical Accuracy Note:** Unless specified otherwise, specifications regarding the H100 refer to the **H100 SXM** form factor and its associated DGX H100 reference architecture. "Theoretical ceiling", "pedagogical assumption", and "reported empirical measurement" represent distinct categories and should not be conflated. You will find references [K1]–[K51] at the end of the article. This piece has been re-architected and expanded by synthesizing the context of [Understanding GPUs and LLM Scaling](https://muhendis.github.io/en/blog/post.html?slug=understanding-gpus-and-llm-scaling) with prior technical drafts.
 
+> [!NOTE]
+> **Part 1 of the Series: Hardware Anatomy**
+> To explore the physical hardware layers of an AI supercomputer (SM microarchitecture, HBM3 memory hierarchy, in-chassis NVLink crossbars, and SuperPOD rail-optimized fat-tree fabrics) via detailed structural maps, see the first article in this series: [AI Infrastructure (1): Anatomy of an AI Supercomputer — From a Single SM to 16,384 GPUs on One Map](post.html?slug=understanding-gpus-and-llm-scaling).
+
 ---
 
 ### The Methodology: A Mental Model Instead of Rote Memorization
@@ -7373,7 +7377,3 @@ A portion of the references below represents **original technical context**, whi
 - **[K55] SuperPOD scaling:** NVIDIA, [*DGX SuperPOD Architecture (DGX H100)*](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-h100/latest/dgx-superpod-architecture.html). Two tiers up to 8 SUs, a core tier from 16 SUs; 512 leaf, 512 spine and 256 core switches for 2,048 DGX.
 - **[K56] GPU generation datasheets:** NVIDIA, [V100](https://www.nvidia.com/en-us/data-center/v100/), [A100](https://www.nvidia.com/en-us/data-center/a100/), [H200](https://www.nvidia.com/en-us/data-center/h200/) and [DGX B200](https://www.nvidia.com/en-us/data-center/dgx-b200/). HBM capacity and bandwidth, dense tensor peaks.
 - **[K57] 4-bit floating point:** NVIDIA, [*Introducing NVFP4 for Efficient and Accurate Low-Precision Inference*](https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/). E2M1 values, 16-value blocks with E4M3 scales, an FP32 tensor scale, and the comparison with MXFP4.
-
-### Publication and usage note
-
-This article is an **original, didactic synthesis** bringing together insights gathered from various technical literature and engineering resources. It does not constitute a custom installation, security hardening, incident response, or optimization manual for any specific production environment. Numerical values must be evaluated across three distinct categories: **vendor hardware specifications**, **measurements reported in independent empirical research**, and **didactic models built upon baseline assumptions**. Because real-world metrics depend heavily on deployed platforms, firmware versions, drivers, numerical precision, and specific workload profiles, empirical benchmarking on actual target systems remains indispensable.
