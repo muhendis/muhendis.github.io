@@ -457,5 +457,21 @@
     <lastmod>2026-10-10</lastmod>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=from-gpus-to-ai-supercomputers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=from-gpus-to-ai-supercomputers"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpudan-ai-super-bilgisayarina"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=from-gpus-to-ai-supercomputers"/>
+    <lastmod>2026-10-16</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=gpudan-ai-super-bilgisayarina</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=from-gpus-to-ai-supercomputers"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpudan-ai-super-bilgisayarina"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=from-gpus-to-ai-supercomputers"/>
+    <lastmod>2026-10-16</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>
 

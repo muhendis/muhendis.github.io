@@ -35,8 +35,12 @@ Blogun temel ilkesi **"sıfır dedikodu, sıfır ikincil aktarım"**dır. Makale
   - `site:huggingface.co "google/gemma-3-1b" "config.json"`
 - `read_url_content` ile bulunan sayfanın orijinal metni, denklem ve tabloları doğrudan çekilip taranır.
 
-### 1.3. Sayısal Kesinlik ve Donanım Kısıtları
-- **Sayı Uydurmak Yasaktır:** Her sayısal iddia birincil kaynaktan doğrulanır; teyit edilemeyen sayılar makaleye sokulmaz ya da "yaklaşık" ifadesiyle sınırlandırılır.
+### 1.3. Sayısal Kesinlik ve Üçlü Hakikat Disiplini
+- **Sayı Uydurmak Kesinlikle Yasaktır:** Her sayısal iddia birincil kaynaktan doğrulanır; teyit edilemeyen sayılar metne sokulmaz ya da "yaklaşık" ifadesiyle sınırlandırılır.
+- **Üçlü Sayısal Hakikat Ayrımı (Pazarlıksız):** Makaledeki sayılar üç kategoriye ayrılır ve asla birbirine karıştırılmaz:
+  1. *Üretici Teknik Özellikleri / Tepe Değerler (Vendor Peak Specs):* (ör. H100 SXM5 990 TFLOP/s BF16 non-sparse, 3,35 TB/s HBM3).
+  2. *Bağımsız / Sahada Raporlanmış Gerçek Ölçümler (Empirical Benchmarks):* (ör. LLaMA 3 405B %38–41 MFU, MegaScale %55,2, Lambda Blackwell ölçümleri).
+  3. *Varsayım İçeren Öğretici Modeller (Pedagogical Toy Models):* (ör. B=1..512 matris veri hareketi, idealize edilmiş bellek okuması).
 - **Tarihsel ve Donanımsal "Neden" Arayışı:** Bir mimari kararın arkasındaki donanım gerçeği araştırılır (ör. TPU HBM bellek darboğazı, GPU bellek bant genişliği vs compute-bound dengesi, sequential RNN bellek patlaması).
 - Kapsamlı araştırma rehberi: [bilgi_arama_ve_kaynak_dogrulama.md](./references/bilgi_arama_ve_kaynak_dogrulama.md)
 - Bellek ve donanım formülleri el kitabı: [muhendislik_hesaplari_ve_formuller.md](./references/muhendislik_hesaplari_ve_formuller.md)
@@ -80,62 +84,97 @@ flowchart TD
 
 ---
 
-## 3. Makale Şablonu ve Pedagojik Standartlar
+## 3. Makale Şablonu, Pedagojik Standartlar ve Yazma Tonu
 
 Makale dosyalarında YAML frontmatter ve `# H1` **kullanılmaz** (başlık `posts.json`'dan dinamik gelir); gövde doğrudan belirti-önce girişle başlar ve `##` başlıklarıyla yapılandırılır.
 
-### 3.1. Belirti-Önce Giriş (Symptom-First Hook)
-- Başlıksız 2–3 paragraf ile açılır.
+### 3.1. Canlı Zihinsel Sahne ve Belirti-Önce Giriş (Symptom-First Hook)
+- **Başlıksız 2–4 paragraf ile açılır.**
 - **Okura Ödev Verilmez:** *"Şunu kurun, şu kodu çalıştırın"* kalıbı yasaktır. Okur daha konuyu neden umursayacağını bilmezken laboratuvar kurmaz.
-- **Somut Mühendislik Gerilimi:** Okurun içinde bulunduğu sahne veya paradoks anlatılır (*"strawberry kelimesindeki r'leri sayma arızası"*, *"1B modelin parametrelerinin %30'unu yutan lookup tablosu"*, *"GPU belleğinin %92'si tahsisliyken throughput'un çökmesi"*).
-- Gerilim ölçülebilir bir kaynakla ifade edilir (VRAM, gecikme, FLOP, parametre payı).
-- Girişin son cümlesi makalenin yol haritasını çizer (*"Bu yazı..."*).
+- **Gözde Canlanan Canlı Mühendislik Sahnesi ("Hayal Edin"):** Okur doğrudan fiziksel bir sahnenin içine alınır (*"Bir veri merkezine girdiğinizi hayal edin. Karşınızda sıra sıra sunucular, her birinin içinde binlerce paralel işlemi gerçekleştirebilen GPU'lar var. Toplamda 1.024 NVIDIA H100 satın aldınız... İlk ölçümler geliyor: MFU = %38. Birisi soruyor: 'Peki kalan %62 nerede?' Bu çok iyi bir soru. Fakat cevabı 'GPU'lar boş' kadar basit değil..."*).
+- **Temel Fikir / Pusula Cümlesi (Anchor Principle):** Giriş bölümü konunun zihinsel pusulasını tek bir çarpıcı cümleyle çizer (*"Bu yazının temel fikri şu: Büyük ölçekli yapay zekâ, yalnızca hesaplama gücü problemi değildir. Aynı zamanda veriyi doğru yere, doğru zamanda, doğru güvenlik sınırları içinde ve en düşük maliyetle ulaştırma problemidir."*).
+- **Okuma Pusulası & Birlikte Yolculuk:** *"Nasıl okuyabilirsiniz?"* ve *"Birlikte izleyeceğimiz öğrenme yolculuğu"* ile okura ezber yerine sistemin davranışını birlikte anlama vaadi verilir.
 
 ### 3.2. İçindekiler Tablosu (TOC)
 - Girişin hemen ardından `**In this article**` (EN) veya `**Bu yazıda**` (TR) başlığı altında manuel anchor listesi yer alır.
 
-### 3.3. Dört Basamaklı Pedagojik İlerleme
-Her teknik kavramda şu sıra izlenir:
-1. **Sezgi & Zihinsel Modellerin Teknik Terimlerle Çiftlenmesi (Grounded Intuition & High-Clarity, Zero-Loss Rigor):**
-   - **Kural:** Analojiler ve sezgisel benzetmeler asla havada kalan, soyut veya edebi masallar olarak bırakılamaz. Aynı zamanda kuru, mekanik liste maddeleri yerine; bir kıdemli mühendisin beyaz tahta başında tane tane anlatması gibi **akıcı, son derece açık, kolay anlaşılır ve teknikten sıfır kayıpla** yazılmalıdır.
-   - **Üç Basamaklı Açıklık Akışı:**
-     1. *Sorun & Sezgisel Sahne (Gözde Canlanan Benzetme):* Fiziksel sorun neydi, neden tıkandı ve günlük hayatta neye benzer? (ör. 2.048 kişilik tiyatro salonunda 2049. dinleyicinin kapıda kalması; aşçının her soğan için koridoru koşup kilere gitmesi; dedektifin masasına yeni ipuçları yığıldıkça masanın çatırdayıp kırılması).
-     2. *Birebir Teknik Eşleme (Kayıpsız Terminoloji):* Benzetmedeki her bir aktörün mimari ve donanımdaki tam karşılığı net bir dille belirtilir (ör. masa = GPU VRAM ve KV Cache; kırmızı ipler = $QK^T$ dikkat katsayıları; aşçı = GPU Streaming Multiprocessor çekirdekleri; kesme tahtası = çip içi ultra hızlı SRAM; kiler = çip dışı HBM; masanın kırılması = CUDA Out of Memory).
-     3. *Mühendislik Mekanizması & Neden-Sonuç:* Donanım ve matematik seviyesinde fiziksel olarak neyin gerçekleştiği açıkça gösterilir (ör. HBM transfer darboğazı, karesel matris tahsisatı patlaması, frekans enterpolasyonu, Online Softmax döngüsü).
-   - Tarihsel evrim üç sezgisel fazda anlatılır (Faz 1: Statik kısıtlar ve duvarlar, Faz 2: Donanım farkındalığı ve akordeon illüzyonlar, Faz 3: Akışkan zihin ve bilişsel unutma). Pazarlama ile gerçeklik uçurumu (MCW vs MECW) açıkça terimleriyle gösterilir.
-2. **Matematiksel Model (KaTeX):** Blok formül `$$ ... $$`, satır içi `$ ... $`.
-3. **Sembol Okuması (Zorunlu):** Formülün altına hemen *"Şöyle okuyun:"* denilerek sembol sembol ne anlama geldiği açıklanır.
-4. **Adım Adım Küçük Sayısal Yürüyüş:**
-   - Oyuncak boyut ($d=4$, 2 boyut, 3 kelime) kullanılır.
-   - Ara adımlar asla atlanmaz (`bölen = \sqrt{4} = 2 \to 6 / 2 = 3` basamak basamak gösterilir).
-   - Sayıların kaynağı açıkça belirtilir (öğrenilmiş mi, formülden mi hesaplanmış).
-   - Adımlar ````text``` bloğunda hizalı yazılır (Sayısal yürüyüşler ve matrisler ````text``` olarak kalır; çizimler asla ````text``` yapılmaz).
-5. **PyTorch Doğrulama Kodu:** Elle yapılan hesabın aynısını kuran, çıktısı gösterilen çalıştırılabilir kod bloğu.
+### 3.3. Dört Basamaklı Zihinsel Model Metodolojisi
+Her teknik kavramda ve bölümde istisnasız şu dört basamak işletilir:
 
-### 3.4. Çizim Formatı: Yalnızca Tema Uyumlu Inline SVG (Mermaid ve ASCII Kesinlikle Yasaktır)
+```mermaid
+flowchart LR
+    A["1. Sezgi (Grounded Scene)<br>Günlük hayat / fiziksel sahne"] --> B["2. Mekanizma (Hardware/Software)<br>Bileşenler & veri yolları"]
+    B --> C["3. Matematik (Bottleneck Equations)<br>Darboğazı gösteren yalın denklem"]
+    C --> D["4. Sınır & Gerçeklik Payı<br>Denklemin & modelin sınırları"]
+```
+
+1. **Sezgi (Grounded Intuition & Familiar Scene):**
+   - Problemi fiziksel dünyadan tanıdık bir sahneyle hissettirin (ör. restoran zinciri, hat aşçısı, mutfak tezgâhı, kiler, koridor, lojistik yolları; kamyonun taşıma kapasitesi vs yolun uzunluğu).
+   - Analojiyi havada bırakmayın; baştan sona tutarlı şekilde geliştirin.
+2. **Mekanizma (Physical Hardware & Software Reality):**
+   - Donanımda ve yazılımda gerçekte hangi aktörlerin çalıştığını net terimlerle eşleyin (ör. tezgâh = Register/SMEM; aşçı = SM / Warp Scheduler; kiler = HBM; koridor = NVSwitch; lojistik = InfiniBand; merkez depo = Dağıtık depolama).
+   - Donanım ve mimari seviyesinde fiziksel olarak neyin tıkandığını adım adım açın (HBM transfer darboğazı, karesel KV cache patlaması, tail latency, warp divergence).
+3. **Matematik (Transparent, Analytical Equations):**
+   - Darboğazı görünür kılan yalın denklemler kurun (Roofline $\alpha = \frac{\text{FLOP}}{\text{Byte}}$, Little's Law $L = \lambda W$, GEMM/GEMV veri-hareketi oranı, Young-Daly arıza optimizasyonu).
+   - **Sembol Okuması Zorunludur:** Formülün hemen altına *"Şöyle okuyun:"* denilerek sembol sembol ne anlama geldiği açıklanır.
+   - **Adım Adım Küçük Sayısal Yürüyüş:** Oyuncak boyut ($d=4$, 2 boyut, 3 kelime) kullanılır; ara adımlar asla atlanmaz (`\sqrt{4} = 2 \to 6 / 2 = 3` tek tek gösterilir); ````text``` bloğunda hizalı yazılır.
+4. **Sınır & Gerçeklik Payı (Boundary / Reality Caveat):**
+   - Denklemin, öğretici varsayımın ve benzetmenin nerede yetersiz kaldığı, donanım nesline, compiler optimizasyonuna veya iş yüküne göre nerede değiştiği açıkça konuşulur (*"Bu sayı bir doğa kanunu değildir; belirli bir veri tipi ve donanım kesişimidir"*).
+
+### 3.4. Sistemin Temel Omurgası: "Bir Byte'ın Yolculuğu" ve İki Kurucu İlke
+Ezber terimler listelemek yerine daima şu soruya geri dönülür:
+> **"Bir byte veri nereden geliyor, hangi işlemi mümkün kılıyor, sonra nereye gidiyor ve o yolculukta kim kimi bekliyor?"**
+
+Bu soru iki evrensel sistem tasarımı ilkesi üzerinden çözülür:
+1. **Veriyi Mümkün Olduğunca Yakın Tutmak (Data Locality):**
+   - Register $\to$ Shared Memory/SRAM $\to$ L2 $\to$ HBM $\to$ NVLink alanı $\to$ Düğümler arası ağ $\to$ Depolama.
+   - Tiling, kernel fusion, flash attention ve düğüm içi tensör paralelliği hep bu ilkenin tezahürüdür.
+2. **Kaçınılmaz Beklemeyi Başka Faydalı İşle Doldurmak (Latency Hiding & Overlap):**
+   - Fiziksel gecikme sihirle sıfırlanmaz; başka işle örtülür.
+   - SM düzeyinde warp switching, donanımda TMA asenkron kopyaları, dağıtık eğitimde 1F1B pipeline zamanlaması, backward hesaplama ile AllReduce iletişiminin örtüştürülmesi, depolamada asenkron checkpointing hep bu ilkeyle çalışır.
+
+### 3.5. Pedagojik Duraklar: Düşünce Deneyi, Öğrenme Kontrolü ve Ara Durak
+Okurun pasif okuyucu olmasını engelleyen özel duraklar yerleştirilir:
+- **Öğrenme Kontrolü (Learning Check):** Okurun ezber yapmasını ve yaygın yanılgılara düşmesini engelleyen refleks uyarıları (*"Öğrenme kontrolü: Bir kernel'i hızlandırmak için 'daha çok thread' açmak isteyebilirsiniz. Önce register spill, shared memory kullanımı ve occupancy dengesini ölçmeden bunu yapmak performansı kötüleştirebilir"*).
+- **Düşünce Deneyi (Thought Experiment):** Okuru aktif akıl yürütmeye sevk eden varsayımsal senaryolar (*"Düşünce deneyi: Bir kernel 256 thread'lik bloklarla çalışırken aynı SM'de yalnızca bir blok yerleşebiliyorsa, blok büyüklüğünü 128'e indirmek neden bazen daha fazla aktif warp sağlayabilir?"*).
+- **Ara Durak (Concept Untangling):** Birbirine karışan teknik kavramları netleştiren mola bölümleri:
+  - *Bandwidth vs Latency* (Otoyolun şerit sayısı vs yolun kilometre uzunluğu; kamyonun taşıma kapasitesi vs depoya gidiş-dönüş süresi).
+  - *Concurrency vs Parallel Execution vs Latency Hiding* (Aşçıların ocaktayken sebze doğraması vs 8 aşçının aynı anda tabak pişirmesi vs fırını beklerken diğer siparişe geçmesi).
+  - *Occupancy vs Tensor Core Doluluğu vs MFU* (SM'in aktif görünmesi ile Tensor Core'ların faydalı FLOP üretmesi arasındaki fark).
+  - *Strong Scaling vs Weak Scaling*.
+
+### 3.6. Çizim Formatı: Yalnızca Tema Uyumlu Inline SVG (Mermaid ve ASCII Kesinlikle Yasaktır)
 - **Tek Çizim Biçimi Inline SVG'dir:** Blogdaki tüm Mermaid ve ASCII kutu çizimleri kaldırılmıştır. Yeni bir makalede asla ` ```mermaid ` veya ` ```text ` kutu/ok çizimi **kullanılmaz**.
-- **Standart:** Şekiller `.claude/skills/cizim/` standartlarında, `svgkit` kullanılarak `viewBox="0 0 560 H"`, tema renkleri (`var(--c-accent)`, `var(--c-surface)`, `var(--c-warn)` vb.), `role="img"` ve `aria-label` ile inline SVG olarak gömülür.
+- **Standart:** Şekiller `.claude/skills/cizim/` standartlarında, `svgkit` kullanılarak `viewBox="0 0 560 H"` (veya poster tipi `viewBox="0 0 840 H"`), tema renkleri (`var(--c-accent)`, `var(--c-surface)`, `var(--c-warn)` vb.), `role="img"` ve `aria-label` ile inline SVG olarak gömülür.
 - **Doğrulama:** `python3 .claude/skills/cizim/scripts/preview.py` ile taşma, kutu dışına taşma ve çakışma denetimi yapılır (0 sorun şart).
 
-### 3.5. İki Mühendislik Gözü: Training vs Inference (Pazarlıksız)
-Her teknik makale konusunu hem **eğitim** hem **çıkarım** açısından ele alır:
-- **Training:** Gradyan davranışı, optimizer bellek faturası (AdamW 16 bayt/parametre), loss spike'lar, all-reduce iletişim maliyeti, dondurma/ince ayar etkileri.
-- **Inference:** VRAM'de yerleşik ağırlık, prefill (GEMM, compute-bound) vs decode (GEMV, memory-bandwidth-bound), KV cache faturası, TTFT/TPOT, nicemleme uygulanabilirliği.
+### 3.7. Üç Mühendislik Gözü: Training vs Prefill vs Decode (Pazarlıksız)
+Her teknik makale konusunu üç ayrı çalışma rejiminde ele alır:
+- **Eğitim (Training):** Büyük batch boyutu, GEMM ağırlıklı, compute-bound'a yakın rejim; ağırlıklar + gradyanlar + optimizer durumları (AdamW 16 bayt/parametre), backward pass FLOP maliyeti, all-reduce iletişim senkronizasyonu.
+- **Ön-doldurma / Çıkarım (Prefill):** Büyük prompt bağlamının tek seferde işlenmesi, paralel GEMM, compute-bound; ilk token gecikmesi (Time-To-First-Token / TTFT).
+- **Kod Çözme / Çıkarım (Decode):** Teker teker token üretimi, küçük batch boyutu, GEMV ağırlıklı, bellek bant genişliği darboğazı (memory-bandwidth bound, <1 FLOP/bayt); token başına gecikme (Time-Per-Output-Token / TPOT), KV cache büyümesi.
 
-### 3.6. Sabit Kapanış Üçlüsü
-Her makale istisnasız şu üç bölümle biter:
-1. `## The whole story in six lines` / `## Bütün hikâye altı satırda` (Tam 6 net ve somut madde; kuru mecaz değil).
-2. `## Glossary` / `## Terimler sözlüğü` (Jargon + yalın karşılık + sezgi/sonuç cümlesi).
-3. `## Going deeper` / `## Daha derine inmek için` (arXiv birincil linkleri + blog içi `post.html?slug=...` çapraz linkleri).
+### 3.8. Sabit Kapanış Yapısı
+Her makale istisnasız şu bölümlerle tamamlanır:
+1. `### Okuyucu artık hangi sorulara kendi başına yanıt verebilir?` (Okurun kazandığı zihinsel model soruları: "Bir byte nereden geliyor? Kim kimi bekliyor? Hangi darboğaz yaşanıyor?").
+2. `## The whole story in six lines` / `## Bütün hikâye altı satırda` (Tam 6 somut ve net ilke cümlesi).
+3. `## Glossary` / `## Terimler sözlüğü` (Jargon + yalın karşılık + sezgi/fiziksel sonuç cümlesi).
+4. `## Going deeper` / `## Kaynaklar ve doğrulama bağlantıları` (Birincil teknik kaynaklar, orijinal arXiv makaleleri, `config.json` bağlantıları ve blog içi `post.html?slug=...` çapraz linkleri: [K1] - [Kn]).
 
 - Detaylı pedagoji ve şablon kuralları: [sablon_ve_pedagoji_rehberi.md](./references/sablon_ve_pedagoji_rehberi.md)
 - Örnek makale taslağı: [ornek_makale_sablonu_tr.md](./examples/ornek_makale_sablonu_tr.md)
 
 ---
 
-## 4. Türkçe Dil Kuralları ve Çift Dilli Eşzamanlılık
+## 4. Türkçe Dil Kuralları, Üslup ve Çift Dilli Eşzamanlılık
 
-- **TR Bağımsız Okunur:** TR sürüm asla yapay zeka çevirisi gibi kokmamalıdır; Türkçe teknik makale yazan deneyimli bir mühendisin elinden çıkmış gibi akıcı olmalıdır.
+- **Kolektif Yol Arkadaşı Tonu (Collaborative Mentorship):**
+  - Anlatıcı tepeden bakan bir hoca veya soğuk bir kılavuz yazarı değildir; okurla aynı masada beyaz tahta başına geçmiş kıdemli bir sistem mühendisidir.
+  - 1. çoğul şahıs ve davetkâr geçişler kullanılır: *"birlikte anlamaya çalışalım"*, *"Önce hesaplamanın en küçük birimini... anlamaya çalışacağız"*, *"Şimdi ilginç bir soruya geldik"*, *"Biraz düşünün"*, *"Peki bu 32 kişilik ekipler nerede çalışıyor?"*, *"Mantıklı görünüyor, değil mi? Fakat her warp'ın bir maliyeti var."*
+- **Mühendislik Alçakgönüllülüğü ve Ödünleşim (Trade-off) Disiplini:**
+  - *"Sihirli reçete veya gümüş kurşun yoktur."*
+  - Her mimari kararın bir bedeli ve ödünleşimi dürüstçe gösterilir: Daha çok thread açmak register baskısı yapar; TP'yi büyütmek kasayı aşınca ağ uçurumuna çarpar; checkpoint'i sıklaştırmak arıza kaybını azaltır ama I/O duraklaması yaratır; disaggregated serving TTFT/TPOT'u ayırır ama KV taşıma trafiği getirir.
+- **TR Bağımsız Okunur:** TR sürüm asla yapay zeka çevirisi gibi kokmamalıdır; Türkçe teknik makale yazan deneyimli bir mühendisin elinden çıkmış gibi akıcı, berrak ve doğal olmalıdır.
 - **Bölüm Bölüm Karşılaştırma:** EN'de düzeltilen veya güncellenen bir sayı, tablo veya formül TR'de de bağımsız olarak güncellenir.
 - **Terim Kuralı:** Metot ve desen adları İngilizce kalır; İLK geçişte parantez içinde yerleşik Türkçe karşılığı verilir:
   - *self-attention (öz-dikkat)*, *context vector (bağlam vektörü)*, *tied embeddings (bağlı embedding katmanları)*, *emergent (ölçekle beliren)*, *reinforcement learning (pekiştirmeli öğrenme)*.

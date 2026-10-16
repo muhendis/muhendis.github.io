@@ -1,73 +1,79 @@
-Giriş paragrafı 1: Okurun içinde bulunduğu sahne veya paradoksu anlat. Örnek: Pano GPU belleğinin %92'sinin tahsis edildiğini söylüyor, ancak işlem hacmi benchmark'ın üçte birinde sürünüyor. Kullanıcıya "kod yazın" diye ödev verme; doğrudan arızayı ve sahneyi yaşat.
+Giriş paragrafı 1 (Canlı Zihinsel Sahne / "Hayal Edin"): Okuru doğrudan fiziksel bir sahnenin içine alın. Örnek: Bir veri merkezine girdiğinizi hayal edin. Karşınızda sıra sıra sunucular, her birinin içinde binlerce paralel işlemi gerçekleştirebilen GPU'lar var. Toplamda 1.024 NVIDIA H100 satın aldınız... İlk ölçümler geliyor: MFU = %38. Birisi soruyor: "Bu kadar GPU aldık, peki kalan %62 nerede?" Bu çok iyi bir soru. Fakat cevabı "GPU'lar boş" kadar basit değil.
 
-Giriş paragrafı 2: Mühendislik gerilimini ölçülebilir bir kaynakla bağla (VRAM, gecikme, FLOP, parametre payı). Bu sahnede neyin neden kırıldığını ve teorik beklenti ile pratik gerçek arasındaki uçurumu aç.
+Giriş paragrafı 2 (Ölçülebilir Gerilim ve Sistemik Neden): Mühendislik paradoksunu donanımsal ve sistemsel gerçekle bağlayın. Bir GPU hesaplama yaparken bellekten veri bekleyebilir; bir diğeri ağdan gradyan bekler; depolama checkpoint yazarken tüm küme kilitlenir. Kâğıt üzerindeki tepe güç ile fiili verim arasındaki uçurum bir aksaklık değil, sistemik tasarım sonucudur.
 
-Giriş paragrafı 3: Makalenin kapsamını ve yol haritasını çizen kilit cümle: Bu yazı, serimizin X. adımı olarak kaynak metindeki tüm mekanizmayı adım adım açıyor; sezgisel temelini, matematiksel ayrışma gerekçesini, elle yapılan küçük boyutlu hesap yürüyüşünü ve PyTorch doğrulamasını bütüncül bir dille ortaya koyuyor.
+Giriş paragrafı 3 (Temel Fikir / Pusula Cümlesi): Konunun zihinsel omurgasını tek bir net cümleyle kurun: "Bu yazının temel fikri şu: Büyük ölçekli yapay zekâ, yalnızca hesaplama gücü problemi değildir. Aynı zamanda veriyi doğru yere, doğru zamanda, doğru güvenlik sınırları içinde ve en düşük maliyetle ulaştırma problemidir."
+
+Giriş paragrafı 4 (Okuma Pusulası & Birlikte Yolculuk): Okurla yol arkadaşı dili kurun: "Nasıl okuyabilirsiniz? Bir kavram ilk kez geçtiğinde önce ne işe yaradığını ve basit bir benzetmesini vereceğiz. Ardından teknik tanımını, donanımsal mekanizmasını ve küçük bir hesaplamasını göstereceğiz. Tablolar ve sayılar ezberlemek için değil; sistemin davranışını zihinde canlandırabilmek için var."
 
 **Bu yazıda**
 
-- [1. En yalın hâliyle temel sezgi: Analoji başlığı](#1-en-yalın-hâliyle-temel-sezgi-analoji-başlığı)
-- [2. Matematiksel model ve formalizm](#2-matematiksel-model-ve-formalizm)
-- [3. Adım adım elle sayısal hesap yürüyüşü](#3-adım-adım-elle-sayısal-hesap-yürüyüşü)
-- [4. İki mühendislik gözü: Eğitim ve çıkarım ayrımı](#4-i̇ki-mühendislik-gözü-eğitim-ve-çıkarım-ayrımı)
+- [1. Üç fiziksel duvar: Compute, Network, Storage](#1-üç-fiziksel-duvar-compute-network-storage)
+- [2. Donanım mekanizması: SM, Tensor Core ve veri akışı](#2-donanım-mekanizması-sm-tensor-core-ve-veri-akışı)
+- [3. Bellek hiyerarşisi ve Roofline sınırı](#3-bellek-hiyerarşisi-ve-roofline-sınırı)
+- [4. Üç mühendislik gözü: Training, Prefill ve Decode](#4-üç-mühendislik-gözü-training-prefill-ve-decode)
 - [5. PyTorch ile adım adım tam doğrulama](#5-pytorch-ile-adım-adım-tam-doğrulama)
+- [Okuyucu artık hangi sorulara kendi başına yanıt verebilir?](#okuyucu-artık-hangi-sorulara-kendi-başına-yanıt-verebilir)
 - [Bütün hikâye altı satırda](#bütün-hikâye-altı-satırda)
 - [Terimler sözlüğü](#terimler-sözlüğü)
-- [Daha derine inmek için](#daha-derine-inmek-için)
+- [Kaynaklar ve doğrulama bağlantıları](#kaynaklar-ve-doğrulama-bağlantıları)
 
 ---
 
-## 1. En yalın hâliyle temel sezgi: Analoji başlığı
+## 1. Üç fiziksel duvar: Compute, Network, Storage
 
-Kavramı zihinde somutlaştıran berrak bir analoji kurun (ör. Fener/Rozet/Çanta veya Pasaport Masası). Tek bir metafor seçin ve bölüm boyunca onu taşıyın. Zorlama metafor yapmayın; konu mühendislik odaklıysa doğrudan teknik bileşenlerle konuşun.
+### 1. Sezgi (Gözde Canlanan Sahne)
+Bir restoran zinciri düşünelim. Yönetim, üretimi artırmak için her şubeye iki kat fazla aşçı gönderiyor. Ama şubelerdeki malzeme depoları aynı; dağıtım kamyonları aynı; mutfak kapılarından malzeme geçişi de aynı. Acaba iki kat fazla yemek üretilebilir mi? Muhtemelen hayır. Çünkü bu sistemde darboğaz artık aşçı sayısı değil...
 
-```mermaid
-flowchart TD
-    Girdi["Girdi Vektörü (z)"] --> Q["Query (q)"]
-    Girdi --> K["Key (k)"]
-    Girdi --> V["Value (v)"]
-```
+### 2. Mekanizma (Fiziksel Donanım / Yazılım Gerçeği)
+Bir yapay zekâ kümesini restoran zinciri gibi düşünün:
+- **Streaming Multiprocessor (SM):** Yemek hazırlayan küçük mutfak istasyonu.
+- **Tensor Core:** Çok sayıda benzer matematiksel işi aynı anda yapan özel makine.
+- **Register / Shared Memory:** Aşçının elinin altındaki tezgâh.
+- **HBM:** Restoranın hızlı fakat sınırlı ortak deposu.
+- **NVLink / NVSwitch:** Aynı binadaki mutfaklar arasındaki geniş servis koridoru.
+- **InfiniBand / RoCE:** Farklı binalar arasındaki lojistik yolları.
+- **Dağıtık depolama:** Hammaddenin ve işletmenin kayıtlarının tutulduğu merkez ambar.
 
----
+<!-- Çizimler kesinlikle inline SVG olarak gömülür (Mermaid/ASCII yasaktır): -->
+<svg viewBox="0 0 560 200" role="img" aria-label="Donanım hiyerarşisi ve veri yolları" style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+  <!-- svgkit standartlarında SVG içeriği -->
+</svg>
 
-## 2. Matematiksel model ve formalizm
+### 3. Matematik ve Darboğaz Denklemi
+Roofline kırılma noktası:
 
-Matematiksel formülü blok olarak sunun:
+$$\alpha_{\mathrm{crit}} = \frac{C_{\mathrm{peak}}}{W_{\mathrm{mem}}} = \frac{990\ \mathrm{TFLOP/s}}{3{,}35\ \mathrm{TB/s}} \simeq 295{,}5\ \mathrm{FLOP/byte}$$
 
-$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$$
-
-Şöyle okuyun: $Q$ sorgu matrisi, $K$ anahtar matrisi, $V$ ise aktarılacak değer matrisidir; $\sqrt{d_k}$ böleni iç çarpım varyansını $1$'e sabitleyerek softmax doygunluğunu önler.
-
-> **Self-Attention (Öz-Dikkat)** = dizideki her token'ın diğer tüm token'larla anlamsal ilişkisini hesaplayıp ağırlıklı temsil üreten mekanizma.
-
----
-
-## 3. Adım adım elle sayısal hesap yürüyüşü
-
-Oyuncak boyut ($d=4$, 3 token) kullanarak tüm ara basamakları gösterin.
+Şöyle okuyun: $C_{\mathrm{peak}}$ donanımın teorik hesaplama tavanı, $W_{\mathrm{mem}}$ bellek bant genişliği, $\alpha_{\mathrm{crit}}$ ise hesaplama birimlerini tam kapasite beslemek için gereken kritik aritmetik yoğunluk eşiğidir.
 
 ```text
-Girdi Tensörü Z (3 token, d=4):
-z_1 = [0.20, 0.80, 0.10, 0.40]
-z_2 = [0.90, 0.10, 0.30, 0.20]
-
-Adım 1: Ham iç çarpım hesabı
-s_12 = (0.20 * 0.90) + (0.80 * 0.10) + (0.10 * 0.30) + (0.40 * 0.20)
-     = 0.18 + 0.08 + 0.03 + 0.08 = 0.37
-
-Adım 2: Ölçekleme (d_k = 4, sqrt(4) = 2)
-s_scaled = 0.37 / 2 = 0.185
+Adım adım veri-hareketi hesabı (Llama 3 70B MLP, D=8192, F=28672):
+B = 1   -> FLOP = 2*1*D*F,  Byte = 2*D*F -> alpha = 1,0 FLOP/byte   [Aşırı Memory-bound]
+B = 128 -> FLOP = 2*128*D*F,             -> alpha = 125,5 FLOP/byte [HBM sınırında]
+B = 310 -> FLOP = 2*310*D*F,             -> alpha = 295,6 FLOP/byte [Compute tavanı mümkün]
 ```
+
+### 4. Sınır & Gerçeklik Payı
+Bu sayı bir doğa kanunu değildir; BF16 Tensor Core ve HBM kesişimi için teorik sınırdır. FP32 veya FP8 kullanıldığında tavan değişir. Ayrıca cache reuse ve kernel fusion gibi yazılımsal optimizasyonlar veri hareketini azaltarak davranışı dönüştürebilir.
+
+> **Öğrenme kontrolü:** Bir kernel'i hızlandırmak için 'daha çok thread' açmak isteyebilirsiniz. Önce register spill, shared memory kullanımı ve occupancy dengesini ölçmeden bunu yapmak performansı kötüleştirebilir.
 
 ---
 
-## 4. İki mühendislik gözü: Eğitim ve çıkarım ayrımı
+### Ara Durak: Bandwidth ile Latency Aynı Şey Değildir
+Bir kamyon aynı anda kaç koli taşıyabilir (Bandwidth - GB/s) ve kamyonun depoya gidip gelmesi kaç dakika sürer (Latency - ns)? Bir yolun sekiz şeritli olması yüksek bant genişliği, o yolun 500 kilometre olması yüksek gecikme sezgisidir. Büyük blok veri taşımada bant genişliği, bağımlı küçük işlemlerde ise gecikme belirleyicidir.
 
-| Boyut | Eğitim Tarafı (Training) | Çıkarım Tarafı (Inference) |
-| :--- | :--- | :--- |
-| **Bellek** | Ağırlıklar + Gradyanlar + AdamW 1. ve 2. momentleri (16B/parametre) | Yalnızca Ağırlıklar (FP16: 2B) + KV Cache ($O(L)$) |
-| **Hesap Kısıtı** | Compute-bound (GEMM); Forward + Backward (~6P FLOP) | Prefill: Compute-bound, Decode: Memory-bandwidth-bound |
-| **Kritik Risk** | Loss spike, all-reduce iletişim gecikmesi | TTFT/TPOT, KV cache bellek taşması |
+---
+
+## 4. Üç mühendislik gözü: Training, Prefill ve Decode
+
+| Boyut | Eğitim (Training) | Ön-Doldurma / Çıkarım (Prefill) | Kod Çözme / Çıkarım (Decode) |
+| :--- | :--- | :--- | :--- |
+| **İş Yükü Biçimi** | Büyük batch, GEMM yoğunluklu | Uzun prompt sekansı, GEMM | Teker teker token üretimi, GEMV |
+| **Donanım Rejimi** | Compute-bound (Tensor Core) | Compute-bound (Parallel GEMM) | Memory-bandwidth-bound (<1 FLOP/bayt) |
+| **Bellek Faturası** | Ağırlık + Gradyan + Optimizer (AdamW 16B/param) | Model Ağırlıkları (FP16/FP8) | Model Ağırlıkları + Büyüyen KV Cache |
+| **Kritik Risk** | AllReduce senkronizasyonu, checkpoint durması | İlk Token Gecikmesi (TTFT) | Token Başına Gecikme (TPOT), Throughput |
 
 ---
 
@@ -75,45 +81,49 @@ s_scaled = 0.37 / 2 = 0.185
 
 ```python
 import torch
-import math
 
-# 1. Girdi ve ağırlık tensörleri
-Z = torch.tensor([[0.20, 0.80, 0.10, 0.40]], dtype=torch.float32)
-W_Q = torch.eye(4)
-
-# 2. Projeksiyon ve skor
-Q = Z @ W_Q
-print("Q tensörü:\n", Q)
+# Elle yapılan hesabın kod seviyesinde teyidi
+# Sayısal doğrulamayı çalıştırıp konsol çıktısını ekleyin
 ```
 
 Konsol çıktısı:
 
 ```text
-Q tensörü:
- tensor([[0.2000, 0.8000, 0.1000, 0.4000]])
+Doğrulandı: ...
 ```
+
+---
+
+### Okuyucu artık hangi sorulara kendi başına yanıt verebilir?
+
+İlk sayfadaki 1.024 H100 ve %38 MFU örneğine geri dönelim. Bu sayı bize artık "GPU'lar kapalı" demiyor. Bir soru işareti gösteriyor ve şu sorular üzerinden teşhis yapabiliyoruz:
+- Bir byte nereden geliyor, kaç kez kullanılıyor, nereye taşınıyor?
+- SM içindeki bir hesaplama başka hangi bellek ya da ağ sonucunu bekliyor?
+- Sistem genelinde veri, güvenilirlik ve servis hedefleri darboğazı nasıl etkiliyor?
 
 ---
 
 ## Bütün hikâye altı satırda
 
-- Birinci temel mimari gerçek ve mekanizmanın varoluş sebebi.
-- İkinci ilke: Query, Key, Value veya bileşen rollerinin ayrışma gerekçesi.
-- Üçüncü ilke: Matematiksel formülasyon ve varyans/ölçekleme normalizasyonu.
-- Dördüncü ilke: Eğitim ile çıkarım arasındaki temel donanımsal asimetri.
-- Beşinci ilke: Mimarideki emergent (kendiliğinden beliren) davranışlar ve donanım kazanımı.
-- Altıncı ilke: Üretim sistemlerinde bu bileşenin maliyet, gecikme ve ölçeklenme faturası.
+- Birinci ilke: Büyük ölçekli yapay zekâ yalnızca hesaplama değil; veriyi yerinde tutma ve gecikmeyi örtme sanatıdır.
+- İkinci ilke: SM içindeki warp scheduler'ın yaptığı bekleme gizleme ile kümedeki 1F1B pipeline zamanlaması aynı prensiptir.
+- Üçüncü ilke: Aritmetik yoğunluk donanım tavanını aşmadıkça en pahalı hızlandırıcılar bile saat döngülerini HBM kuyruğunda bekleyerek harcar.
+- Dördüncü ilke: İletişim hiyerarşisi kasayı aşıp optik ağa çıktığı anda bant genişliği bir mertebe düşer; model bölüşümü bu sınıra uymak zorundadır.
+- Beşinci ilke: Depolama katmanı yalnızca token değil checkpoint taşır; yetersiz G/Ç tüm hesaplama omurgasını kilitler.
+- Altıncı ilke: Gümüş kurşun yoktur; en yüksek tepe değeri değil, arıza ve yoğunluk altında hedef deneyimi koruyan dengeli mimari kazanır.
 
 ---
 
 ## Terimler sözlüğü
 
-- **Self-Attention (Öz-Dikkat)** — token'lar arası dinamik ağırlıklı bağ kurma mekanizması; statik kelimeleri yaşayan bağlam vektörlerine dönüştürür.
-- **Context Vector (Bağlam Vektörü)** — bir token'ın cümlenin geri kalanından topladığı ağırlıklı değer gösterimi; tek global vektör darboğazını ortadan kaldırır.
+- **Streaming Multiprocessor (SM)** — GPU içindeki bağımsız hesaplama istasyonu; warp scheduler, Tensor Core ve yerel bellekleri barındırır.
+- **Model FLOPs Utilization (MFU)** — donanımın teorik tepe hesap gücüne kıyasla modelin faydalı iş için harcadığı fiili oran.
+- **Latency Hiding (Gecikme Gizleme)** — bir işlemin bekleme süresinde hazır başka bir işi yürüterek donanımı dolu tutma tekniği.
 
 ---
 
-## Daha derine inmek için
+## Kaynaklar ve doğrulama bağlantıları
 
-- Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017) — Orijinal Transformer ve Multi-Head Attention makalesi.
-- Bu blogda: [Bir Prompt'un Yolculuğu (1): Tokenizasyon](post.html?slug=tokenizasyon-nasil-calisir) — masanın ilk adımı: metinden token ID'sine.
+- **[K1]** Birincil kaynak / orijinal makale
+- **[K2]** Resmi mimari dokümantasyonu (NVIDIA / Google / Meta)
+- **[Kn]** Bu blogda: [GPU Mimarisi ve LLM Ölçekleme](post.html?slug=gpu-mimarisi-ve-llm-olcekleme)

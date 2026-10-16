@@ -106,9 +106,43 @@
         "vektor-veritabani-derinlemesine",
         "hangi-rag-deseni"
       ]
+    },
+    {
+      "id": "yapay-zeka-altyapisi",
+      "title": "Yapay Zekâ Altyapısı",
+      "stage": "systems",
+      "tagline": "GPU silikonundan 16.384 GPU'luk kümeye, dağıtık paralellikten güvenli ve sürdürülebilir üretim sistemlerine.",
+      "summary": "1.024 H100 GPU'luk bir süper bilgisayarın kâğıt üzerindeki 1 ExaFLOP gücünün neden %38 MFU'da kaldığını; hesaplama, bellek, ağ ve depolama hiyerarşisi üzerinden uçtan uca anlamak.",
+      "badge": "1 Bölümlük Seri",
+      "posts": [
+        "gpudan-ai-super-bilgisayarina"
+      ]
     }
   ],
   "posts": [
+    {
+      "slug": "gpudan-ai-super-bilgisayarina",
+      "title": "Yapay Zekâ Altyapısı (1): GPU'dan AI Süper Bilgisayarına — 1.024 H100 Neden %38 MFU'da Kalır?",
+      "date": "2026-10-16",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 1,
+      "summary": "Ne: 1.024 adet NVIDIA H100 SXM GPU içeren bir süper bilgisayarın kâğıt üzerindeki 1 ExaFLOP BF16 hesaplama gücüne rağmen neden %38 Model FLOPs Utilization (MFU) seviyesinde kaldığı; 32 thread'lik warp yürütmesinden SM ve Tensor Core mikro mimarisine, HBM3 bellek hiyerarşisinden sekiz GPU'lu DGX düğümüne, NVSwitch ve InfiniBand fat-tree ağ topolojilerinden 4D paralellik (TP, PP, DP/FSDP, CP, EP) stratejilerine, GPUDirect Storage I/O hatlarından üretim çıkarımı, VLM/VQA iş yükleri, güvenilirlik, arıza yönetimi ve FinOps mimarisine uzanan uçtan uca altyapı anatomisi. Neden önemli: Büyük ölçekli yapay zekâ yalnızca hesaplama gücü değil, veriyi doğru yere, doğru zamanda ve en düşük gecikmeyle ulaştırma problemidir; bellek duvarı (Memory Wall), ağ duvarı (Fabric Wall) veya depolama duvarından (I/O Wall) birine takılan bir sistemde GPU'lar idle kalır ve milyonlarca dolarlık donanım yatırımı boşa harcanır. Nasıl: 32 thread'lik SIMT yürütme modeli, warp divergence ve latency hiding mekanizmaları; H100 SXM'in 3,35 TB/s HBM3 bant genişliği ve 1.979 TFLOP/s BF16 Tensor Core tavanı arasındaki 295 FLOP/byte kritik aritmetik yoğunluk (Roofline) eşiği; 900 GB/s NVLink 4 düğüm içi bağlantısı ve 400 Gb/s Quantum-2 InfiniBand düğümler arası omurgası; NCCL kolektif haberleşme algoritmaları (Ring AllReduce, AllGather, ReduceScatter, AllToAll); disaggregated serving ile prefill ve decode havuzlarının ayrılması; Young-Daly optimal kontrol noktası (checkpoint) formülü; LLaMA-3 405B ve DeepSeek-V3 büyük ölçekli küme mimarileri üzerinden nümerik doğrulamalar ve Python benzetimleri. Nerede: Veri merkezi ölçeğinde 1.024 H100 SuperPOD kurulumu, DGX H100 sunucuları, 70B kurumsal LLM ve VLM üretim sistemleri, Lustre/Ceph GPUDirect Storage kümeleri ve dağıtık çıkarım geçitleri üzerinde. Kim için: Büyük dil ve vizyon modellerini binlerce GPU üzerinde eğiten, küme ağlarını ve depolama hatlarını tasarlayan, yüksek verimli çıkarım (serving) sistemlerini ve kurumsal AI platformlarını yöneten altyapı mühendisleri, sistem mimarları ve araştırmacılar. Ne zaman: Çok düğümlü eğitimde MFU beklentilerin altında kaldığında, Tensör Paralelliği düğüm sınırını aşıp ağ darboğazına girdiğinde, KV cache bellek baskısı çıkarım gecikmesini (TTFT/TPOT) patlattığında veya yeni bir yapay zekâ süper bilgisayarı boyutlandırılırken.",
+      "tags": [
+        "gpu",
+        "altyapi",
+        "h100",
+        "llm",
+        "dagitik-sistemler",
+        "ag",
+        "depolama",
+        "mfu",
+        "sistemler"
+      ],
+      "readingMinutes": 55,
+      "translationSlug": "from-gpus-to-ai-supercomputers",
+      "draft": false,
+      "tagline": "32 thread'lik warp'tan 16.384 GPU'luk kümeye, silikon hesaplamadan ağ topolojilerine ve üretim mimarisine: Bir AI süper bilgisayarının uçtan uca anatomisi."
+    },
     {
       "slug": "gpu-mimarisi-ve-llm-olcekleme",
       "title": "GPU Mimarisi ve LLM Ölçekleme — Silikon Hesaplamadan NVSwitch Ağlarına, GPUDirect Depolamadan Paralellik Roofline'larına",
