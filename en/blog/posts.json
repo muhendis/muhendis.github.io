@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-10-10",
+  "updated": "2026-10-17",
   "stages": [
     {
       "id": "orientation",
@@ -28,12 +28,13 @@
       "id": "the-big-picture",
       "title": "The Big Picture",
       "stage": "orientation",
-      "tagline": "See how an LLM works end to end in one sitting; the deep-dive modules then open up each part of this map.",
+      "tagline": "See how LLMs and AI infrastructure work end to end in one sitting; the deep-dive modules then open up each part of this map.",
       "pinned": true,
-      "summary": "Start here: the whole LLM machine end to end in plain language — tokens, embeddings, attention, prefill and decode, KV cache, sampling, and why models hallucinate — before the deep-dive series zoom into each piece.",
-      "badge": "Start Here",
+      "summary": "Start here: from the software and algorithm foundations of the LLM machine (tokens, attention, KV cache) to the physical hardware journey from silicon to a 16,384-GPU supercomputer.",
+      "badge": "2-Part Series",
       "posts": [
-        "how-llms-work"
+        "how-llms-work",
+        "how-ai-infrastructure-works"
       ]
     },
     {
@@ -111,23 +112,44 @@
       "id": "ai-infrastructure",
       "title": "AI Infrastructure",
       "stage": "systems",
-      "tagline": "From GPU silicon to 16,384-GPU clusters, hardware anatomy to distributed parallelism and production systems.",
-      "summary": "Understanding why a 1,024-H100 supercomputer with 1 ExaFLOP on paper sustains only 38% MFU across compute, memory, network, and storage hierarchies.",
-      "badge": "2-Part Series",
+      "tagline": "From GPU silicon to clusters, reading workloads, HBM, interconnects, storage, power, and physical placement as one hardware system.",
+      "summary": "A five-article series spanning GPU microarchitecture, training and inference behavior, multi-GPU fabrics, storage, power, failure diagnosis, and balanced hardware-platform design.",
+      "badge": "5-Part Series",
       "posts": [
         "understanding-gpus-and-llm-scaling",
-        "from-gpus-to-ai-supercomputers"
+        "gpu-workloads-and-production-inference",
+        "multi-gpu-networks-and-distributed-training",
+        "from-gpus-to-ai-supercomputers",
+        "enterprise-ai-platform-architecture"
       ]
     }
   ],
   "posts": [
     {
-      "slug": "from-gpus-to-ai-supercomputers",
-      "title": "AI Infrastructure (2): Diagnosing an AI Supercomputer — Why 1,024 H100s Stall at 38% MFU",
-      "date": "2026-10-16",
-      "seriesId": "ai-infrastructure",
+      "slug": "how-ai-infrastructure-works",
+      "title": "The Big Picture (2): AI Infrastructure, End to End — From Silicon to Supercomputers, The Physical Lifecycle of a Tensor",
+      "date": "2026-10-17",
+      "summary": "What: The complete panoramic blueprint of AI infrastructure from silicon microarchitecture up to a 16,384-GPU supercomputer. Why it matters: Unifying memory, network, and power bottlenecks into a coherent mental model when algorithms meet physics. How: Via SM anatomy, prefill/decode duality, rail-optimized fabrics, 4D parallelism, Young-Daly checkpointing, and FinOps metrics. Where: Across modern H100/H200 DGX and SuperPOD data centers. For whom: Senior software engineers, systems architects, and platform teams. When: Designing large-scale LLM training or inference infrastructure.",
+      "tags": [
+        "infrastructure",
+        "gpu",
+        "hardware",
+        "distributed-systems"
+      ],
+      "readingMinutes": 25,
+      "translationSlug": "ai-altyapisi-nasil-calisir",
+      "draft": false,
+      "seriesId": "the-big-picture",
       "seriesPart": 2,
-      "summary": "What: An end-to-end architectural anatomy of why a supercomputer with 1,024 NVIDIA H100 SXM GPUs achieves only 38% Model FLOPs Utilization (MFU) despite 1 ExaFLOP of peak BF16 compute on paper; spanning 32-thread warp execution, SM and Tensor Core microarchitectures, HBM3 memory hierarchy, 8-GPU DGX nodes, NVSwitch and InfiniBand fat-tree network topologies, 4D parallelism strategies (TP, PP, DP/FSDP, CP, EP), GPUDirect Storage I/O paths, production inference disaggregation, VLM/VQA workloads, cluster reliability, fault recovery, and FinOps design. Why it matters: Large-scale AI is not merely a compute problem, but a data delivery problem under strict latency and security boundaries; hitting the Memory Wall, Fabric Wall, or I/O Wall leaves GPUs idle and wastes millions of dollars in capital expenditure. How: 32-thread SIMT execution, warp divergence, and latency hiding; 295 FLOP/byte critical arithmetic intensity (Roofline) balancing H100 SXM's 3.35 TB/s HBM3 bandwidth against 1,979 TFLOP/s BF16 Tensor Core ceiling; 900 GB/s NVLink 4 intra-node interconnects and 400 Gb/s Quantum-2 InfiniBand inter-node fabric; NCCL collective algorithms (Ring AllReduce, AllGather, ReduceScatter, AllToAll); disaggregated serving isolating prefill and decode pools; Young-Daly optimal checkpoint formulation; empirical validations and numerical Python simulations modeled after LLaMA-3 405B and DeepSeek-V3 cluster architectures. Where: At datacenter scale across 1,024-H100 SuperPOD deployments, DGX H100 servers, 70B enterprise LLM and VLM serving infrastructures, Lustre/Ceph GPUDirect Storage clusters, and distributed AI gateways. For whom: AI infrastructure engineers, systems architects, and researchers training foundation models on thousands of GPUs, designing cluster networks and high-throughput storage pipelines, and operating enterprise serving platforms. When: When multi-node training MFU falls below expectations, Tensor Parallelism crosses node boundaries into network bottlenecks, KV cache memory pressure inflates serving latency (TTFT/TPOT), or when sizing a new AI supercomputing cluster.",
+      "tagline": "From silicon microarchitecture to a 16,384-GPU supercomputer: SMs, memory walls, 4D parallelism, failures, and the 20-Megawatt data center bill in one panoramic read."
+    },
+    {
+      "slug": "enterprise-ai-platform-architecture",
+      "title": "AI Infrastructure (5): How Do You Design AI Hardware? — GPUs, Network, Storage, and Power",
+      "date": "2026-10-17",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 5,
+      "summary": "What: Translates training, fine-tuning, and inference into requirements for GPUs, HBM, NVLink, scale-out networking, storage, power, and cooling. Why it matters: The fastest GPU cannot determine cluster performance when fabric, storage, or power is unbalanced. How: Uses workload signatures, node design, physical placement, a 70B memory model, and layered benchmarks. Where: 70B serving, PEFT, full fine-tuning, and pretraining pools. For whom: AI infrastructure, HPC, platform, and data-center engineers. When: When buying, scaling, or redesigning a GPU cluster.",
       "tags": [
         "gpu",
         "infrastructure",
@@ -139,14 +161,83 @@
         "mfu",
         "systems"
       ],
-      "readingMinutes": 55,
+      "readingMinutes": 35,
+      "translationSlug": "kurumsal-ai-platform-mimarisi",
+      "draft": false,
+      "tagline": "Combining GPUs, HBM, NVLink, scale-out networking, storage, power, and failure domains into balanced hardware designs for training, fine-tuning, and inference."
+    },
+    {
+      "slug": "from-gpus-to-ai-supercomputers",
+      "title": "AI Infrastructure (4): Why Does an AI Cluster Slow Down? — Storage, Failures, and MFU",
+      "date": "2026-10-16",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 4,
+      "summary": "What: Explains storage stalls, checkpoint cost, failure recovery, and low Model FLOPs Utilization in large AI clusters. Why it matters: Individual failures become frequent at 16,384-GPU scale, while weak metrics confuse GPU activity with useful model work. How: Uses GPUDirect Storage, Young–Daly checkpoint intervals, RPO/RTO, MFU versus HFU, controlled experiments, DCGM/NCCL telemetry, and FinOps measures. Where: Llama 3 405B, DeepSeek-V3, MegaScale, and H100 clusters. For whom: SREs, infrastructure engineers, and architects operating AI platforms. When: When training repeatedly stops, checkpoints stretch, or MFU falls below expectations.",
+      "tags": [
+        "gpu",
+        "infrastructure",
+        "h100",
+        "llm",
+        "distributed-systems",
+        "networking",
+        "storage",
+        "mfu",
+        "systems"
+      ],
+      "readingMinutes": 35,
       "translationSlug": "gpudan-ai-super-bilgisayarina",
       "draft": false,
-      "tagline": "From 32-thread warps to 16,384-GPU clusters, silicon compute to network fabrics and production architectures: The end-to-end anatomy of an AI supercomputer."
+      "tagline": "Evidence-based diagnosis from checkpoint paths and failure recovery to MFU decomposition and observability."
+    },
+    {
+      "slug": "multi-gpu-networks-and-distributed-training",
+      "title": "AI Infrastructure (3): How Do GPUs Work Together? — NVLink, InfiniBand, and Parallelism",
+      "date": "2026-10-17",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 3,
+      "summary": "What: Explains how GPUs cooperate through NVLink, NVSwitch, and InfiniBand and how models are partitioned with TP, PP, DP/FSDP, CP, and EP. Why it matters: Placing a chatty tensor on the wrong link makes GPUs wait for collectives instead of computing. How: Uses DGX NUMA topology, rail-optimized fat-trees, Ring AllReduce, SHARP, compute–communication overlap, and a complete training-step walkthrough. Where: DGX H100, SuperPOD, Llama 3 405B, and DeepSeek-V3. For whom: Distributed-training and cluster-network engineers. When: When NCCL time grows, parallelism dimensions must be chosen, or a model no longer fits on one node.",
+      "tags": [
+        "gpu",
+        "infrastructure",
+        "h100",
+        "llm",
+        "distributed-systems",
+        "networking",
+        "storage",
+        "mfu",
+        "systems"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "coklu-gpu-aglari-ve-dagitik-egitim",
+      "draft": false,
+      "tagline": "Following data paths from one H100 to a SuperPOD and mapping TP, PP, DP/FSDP, CP, and EP onto the physical topology."
+    },
+    {
+      "slug": "gpu-workloads-and-production-inference",
+      "title": "AI Infrastructure (2): How Does an LLM Use a GPU? — Training, Prefill, and Decode",
+      "date": "2026-10-17",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 2,
+      "summary": "What: Explains the memory, compute, and KV-cache behavior of training, prefill, and decode on GPUs. Why it matters: The same model reaches different bottlenecks in each regime, and a wrong capacity model inflates TTFT, TPOT, and cost. How: Uses Roofline, batching, PagedAttention, prefix caching, disaggregated serving, and Little’s Law. Where: H100 and Llama 3.1 70B teaching examples. For whom: Engineers and architects building LLM inference systems. When: When KV-cache OOM, high TTFT/TPOT, or low serving goodput appears.",
+      "tags": [
+        "gpu",
+        "infrastructure",
+        "h100",
+        "llm",
+        "distributed-systems",
+        "networking",
+        "storage",
+        "mfu",
+        "systems"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "gpu-is-yukleri-ve-uretim-cikarimi",
+      "draft": false,
+      "tagline": "Why the same GPU reaches different bottlenecks in training, prefill, and decode, explained through KV cache, batching, and production traffic."
     },
     {
       "slug": "understanding-gpus-and-llm-scaling",
-      "title": "AI Infrastructure (1): Anatomy of an AI Supercomputer — From a Single SM to 16,384 GPUs on One Map",
+      "title": "AI Infrastructure (1): How Does a GPU Work? — From One SM to 16,384 GPUs",
       "date": "2026-10-10",
       "seriesId": "ai-infrastructure",
       "seriesPart": 1,
@@ -162,7 +253,7 @@
         "hardware",
         "systems"
       ],
-      "readingMinutes": 15,
+      "readingMinutes": 35,
       "translationSlug": "gpu-mimarisi-ve-llm-olcekleme",
       "draft": false,
       "tagline": "From single SM silicon to 16,384-GPU clusters, NVLink chassis fabrics to SuperPOD InfiniBand backbones: The physical anatomy of an AI supercomputer."

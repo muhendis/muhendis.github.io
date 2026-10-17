@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-10-10",
+  "updated": "2026-10-17",
   "stages": [
     {
       "id": "orientation",
@@ -28,12 +28,13 @@
       "id": "buyuk-resim",
       "title": "Büyük Resim",
       "stage": "orientation",
-      "tagline": "Bir LLM'in uçtan uca nasıl çalıştığını tek oturuşta görün; derin modüller bu haritanın parçalarını tek tek açar.",
+      "tagline": "Büyük dil modellerinin ve yapay zekâ altyapısının uçtan uca nasıl çalıştığını tek oturuşta görün; derin modüller bu haritanın parçalarını tek tek açar.",
       "pinned": true,
-      "summary": "Buradan başlayın: LLM makinesinin baştan sona sade bir anlatımı — token'lar, embedding'ler, attention, prefill ve decode, KV cache, örnekleme ve modellerin neden uydurduğu — derinlemesine seriler her parçayı tek tek açmadan önce.",
-      "badge": "Buradan Başlayın",
+      "summary": "Buradan başlayın: Hem yazılım/algoritma tarafında LLM makinesinin (token, attention, KV cache), hem de donanım tarafında silikondan 16.384 GPU'luk kümeye uzanan AI altyapısının eksiksiz panoraması.",
+      "badge": "2 Bölümlük Seri",
       "posts": [
-        "llm-nasil-calisir"
+        "llm-nasil-calisir",
+        "ai-altyapisi-nasil-calisir"
       ]
     },
     {
@@ -111,23 +112,44 @@
       "id": "yapay-zeka-altyapisi",
       "title": "Yapay Zekâ Altyapısı",
       "stage": "systems",
-      "tagline": "GPU silikonundan 16.384 GPU'luk kümeye, donanım anatomisinden dağıtık paralellik ve üretim sistemlerine.",
-      "summary": "1.024 H100 GPU'luk bir süper bilgisayarın mimari anatomisinden büyük model ön eğitimine; hesaplama, bellek, ağ ve depolama hiyerarşisi üzerinden uçtan uca altyapı mühendisliği.",
-      "badge": "2 Bölümlük Seri",
+      "tagline": "GPU silikonundan kümeye; iş yükü, HBM, bağlantı, depolama, güç ve fiziksel yerleşimi tek donanım resmi içinde okuyoruz.",
+      "summary": "GPU mikro-mimarisinden training ve inference davranışına, çoklu GPU ağlarından depolama, güç, arıza teşhisi ve dengeli donanım platformu tasarımına uzanan beş yazılık seri.",
+      "badge": "5 Bölümlük Seri",
       "posts": [
         "gpu-mimarisi-ve-llm-olcekleme",
-        "gpudan-ai-super-bilgisayarina"
+        "gpu-is-yukleri-ve-uretim-cikarimi",
+        "coklu-gpu-aglari-ve-dagitik-egitim",
+        "gpudan-ai-super-bilgisayarina",
+        "kurumsal-ai-platform-mimarisi"
       ]
     }
   ],
   "posts": [
     {
-      "slug": "gpudan-ai-super-bilgisayarina",
-      "title": "Yapay Zekâ Altyapısı (2): Bir AI Süper Bilgisayarının Teşhisi — 1.024 H100 Neden %38 MFU'da Kalır?",
-      "date": "2026-10-16",
-      "seriesId": "yapay-zeka-altyapisi",
+      "slug": "ai-altyapisi-nasil-calisir",
+      "title": "Büyük Resim (2): Baştan Sona Yapay Zekâ Altyapısı — Silikondan Süper Bilgisayara, Bir Tensörün Fiziksel Yolculuğu",
+      "date": "2026-10-17",
+      "summary": "Ne: Silikon mikro-mimarisinden 16.384 GPU'luk süper bilgisayara uzanan AI altyapısının eksiksiz panoraması. Neden önemli: Algoritmik kod fiziksel donanıma çarptığında yaşanan bellek, iletişim ve güç darboğazlarını tek bir zihinsel modelde birleştirmek. Nasıl: SM anatomisi, prefill/decode asimetrisi, rail-optimized kumaş, 4D paralellik, Young-Daly checkpointing ve FinOps analiziyle. Nerede: Modern veri merkezlerinde H100/H200, DGX ve SuperPOD sistemlerinde. Kim için: Kıdemli yazılım mühendisleri, sistem mimarları ve veri merkezi ekipleri. Ne zaman: Büyük ölçekli LLM eğitimi veya çıkarımı tasarlarken.",
+      "tags": [
+        "altyapı",
+        "gpu",
+        "donanım",
+        "dağıtık-sistemler"
+      ],
+      "readingMinutes": 25,
+      "translationSlug": "how-ai-infrastructure-works",
+      "draft": false,
+      "seriesId": "buyuk-resim",
       "seriesPart": 2,
-      "summary": "Ne: 1.024 adet NVIDIA H100 SXM GPU içeren bir süper bilgisayarın kâğıt üzerindeki 1 ExaFLOP BF16 hesaplama gücüne rağmen neden %38 Model FLOPs Utilization (MFU) seviyesinde kaldığı; 32 thread'lik warp yürütmesinden SM ve Tensor Core mikro mimarisine, HBM3 bellek hiyerarşisinden sekiz GPU'lu DGX düğümüne, NVSwitch ve InfiniBand fat-tree ağ topolojilerinden 4D paralellik (TP, PP, DP/FSDP, CP, EP) stratejilerine, GPUDirect Storage I/O hatlarından üretim çıkarımı, VLM/VQA iş yükleri, güvenilirlik, arıza yönetimi ve FinOps mimarisine uzanan uçtan uca altyapı anatomisi. Neden önemli: Büyük ölçekli yapay zekâ yalnızca hesaplama gücü değil, veriyi doğru yere, doğru zamanda ve en düşük gecikmeyle ulaştırma problemidir; bellek duvarı (Memory Wall), ağ duvarı (Fabric Wall) veya depolama duvarından (I/O Wall) birine takılan bir sistemde GPU'lar idle kalır ve milyonlarca dolarlık donanım yatırımı boşa harcanır. Nasıl: 32 thread'lik SIMT yürütme modeli, warp divergence ve latency hiding mekanizmaları; H100 SXM'in 3,35 TB/s HBM3 bant genişliği ve 1.979 TFLOP/s BF16 Tensor Core tavanı arasındaki 295 FLOP/byte kritik aritmetik yoğunluk (Roofline) eşiği; 900 GB/s NVLink 4 düğüm içi bağlantısı ve 400 Gb/s Quantum-2 InfiniBand düğümler arası omurgası; NCCL kolektif haberleşme algoritmaları (Ring AllReduce, AllGather, ReduceScatter, AllToAll); disaggregated serving ile prefill ve decode havuzlarının ayrılması; Young-Daly optimal kontrol noktası (checkpoint) formülü; LLaMA-3 405B ve DeepSeek-V3 büyük ölçekli küme mimarileri üzerinden nümerik doğrulamalar ve Python benzetimleri. Nerede: Veri merkezi ölçeğinde 1.024 H100 SuperPOD kurulumu, DGX H100 sunucuları, 70B kurumsal LLM ve VLM üretim sistemleri, Lustre/Ceph GPUDirect Storage kümeleri ve dağıtık çıkarım geçitleri üzerinde. Kim için: Büyük dil ve vizyon modellerini binlerce GPU üzerinde eğiten, küme ağlarını ve depolama hatlarını tasarlayan, yüksek verimli çıkarım (serving) sistemlerini ve kurumsal AI platformlarını yöneten altyapı mühendisleri, sistem mimarları ve araştırmacılar. Ne zaman: Çok düğümlü eğitimde MFU beklentilerin altında kaldığında, Tensör Paralelliği düğüm sınırını aşıp ağ darboğazına girdiğinde, KV cache bellek baskısı çıkarım gecikmesini (TTFT/TPOT) patlattığında veya yeni bir yapay zekâ süper bilgisayarı boyutlandırılırken.",
+      "tagline": "Silikon mikro-mimarisinden 16.384 GPU'luk süper bilgisayara: SM'ler, bellek duvarı, 4D paralellik, arızalar ve 20 Megavatlık veri merkezi faturası tek bir panoramik okumada."
+    },
+    {
+      "slug": "kurumsal-ai-platform-mimarisi",
+      "title": "Yapay Zekâ Altyapısı (5): AI Donanım Kümesi Nasıl Tasarlanır? — GPU, Ağ, Depolama ve Güç",
+      "date": "2026-10-17",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 5,
+      "summary": "Ne: Training, fine-tuning ve inference iş yüklerini GPU, HBM, NVLink, scale-out ağ, depolama, güç ve soğutma gereksinimlerine dönüştürür. Neden önemli: En hızlı GPU, ağ veya güç dengesi kurulmadığında küme performansını tek başına belirleyemez. Nasıl: İş yükü imzası, düğüm tasarımı, fiziksel yerleşim, 70B bellek hesabı ve katmanlı benchmark yaklaşımıyla ilerler. Nerede: 70B serving, PEFT, full fine-tuning ve pretraining havuzlarında. Kim için: AI altyapı, HPC, platform ve veri merkezi mühendisleri için. Ne zaman: GPU kümesi satın alınırken, büyütülürken veya yeniden yerleştirilirken.",
       "tags": [
         "gpu",
         "altyapi",
@@ -139,14 +161,83 @@
         "mfu",
         "sistemler"
       ],
-      "readingMinutes": 55,
+      "readingMinutes": 35,
+      "translationSlug": "enterprise-ai-platform-architecture",
+      "draft": false,
+      "tagline": "Training, fine-tuning ve inference için GPU, HBM, NVLink, ağ, depolama, güç ve hata alanlarını dengeli bir donanım tasarımında birleştirmek."
+    },
+    {
+      "slug": "gpudan-ai-super-bilgisayarina",
+      "title": "Yapay Zekâ Altyapısı (4): AI Kümesi Neden Yavaşlar? — Depolama, Arızalar ve MFU",
+      "date": "2026-10-16",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 4,
+      "summary": "Ne: Büyük AI kümelerinde depolama beklemelerini, checkpoint maliyetini, arıza toparlanmasını ve düşük Model FLOPs Utilization teşhisini açıklar. Neden önemli: 16.384 GPU’luk bir sistemde tekil arızalar sıklaşır; yanlış ölçüm GPU kullanımını faydalı model işiyle karıştırır. Nasıl: GPUDirect Storage, Young–Daly checkpoint aralığı, RPO/RTO, MFU–HFU ayrımı, kontrollü deneyler, DCGM/NCCL telemetrisi ve FinOps ölçüleriyle inceler. Nerede: Llama 3 405B, DeepSeek-V3, MegaScale ve H100 kümelerinde. Kim için: AI platformu işleten SRE, altyapı mühendisi ve mimarlar için. Ne zaman: Eğitim sık kesildiğinde, checkpoint’ler uzadığında veya MFU beklentinin altında kaldığında.",
+      "tags": [
+        "gpu",
+        "altyapi",
+        "h100",
+        "llm",
+        "dagitik-sistemler",
+        "ag",
+        "depolama",
+        "mfu",
+        "sistemler"
+      ],
+      "readingMinutes": 35,
       "translationSlug": "from-gpus-to-ai-supercomputers",
       "draft": false,
-      "tagline": "32 thread'lik warp'tan 16.384 GPU'luk kümeye, silikon hesaplamadan ağ topolojilerine ve üretim mimarisine: Bir AI süper bilgisayarının uçtan uca anatomisi."
+      "tagline": "Checkpoint yolundan arıza toparlanmasına, MFU ayrıştırmasından gözlemlenebilirliğe: AI kümelerinde kanıta dayalı teşhis."
+    },
+    {
+      "slug": "coklu-gpu-aglari-ve-dagitik-egitim",
+      "title": "Yapay Zekâ Altyapısı (3): GPU'lar Nasıl Birlikte Çalışır? — NVLink, InfiniBand ve Paralellik",
+      "date": "2026-10-17",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 3,
+      "summary": "Ne: Birden çok GPU’nun NVLink, NVSwitch ve InfiniBand üzerinden nasıl ortak çalıştığını ve modelin TP, PP, DP/FSDP, CP ile EP boyutlarında nasıl dağıtıldığını açıklar. Neden önemli: Sık konuşan tensör yanlış bağlantıya yerleştiğinde GPU’lar hesaplamak yerine kolektif iletişimi bekler. Nasıl: DGX NUMA topolojisi, rail-optimized fat-tree, Ring AllReduce, SHARP, iletişim–hesap örtüşmesi ve tek bir training step yürüyüşüyle inceler. Nerede: DGX H100, SuperPOD, Llama 3 405B ve DeepSeek-V3 örneklerinde. Kim için: Dağıtık eğitim ve küme ağı tasarlayan mühendisler için. Ne zaman: NCCL süresi büyüdüğünde, paralellik boyutları seçilirken veya model tek düğüme sığmadığında.",
+      "tags": [
+        "gpu",
+        "altyapi",
+        "h100",
+        "llm",
+        "dagitik-sistemler",
+        "ag",
+        "depolama",
+        "mfu",
+        "sistemler"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "multi-gpu-networks-and-distributed-training",
+      "draft": false,
+      "tagline": "Bir H100’den SuperPOD’a uzanan veri yollarını ve TP, PP, DP/FSDP, CP, EP boyutlarının topolojiye nasıl yerleştirildiğini izlemek."
+    },
+    {
+      "slug": "gpu-is-yukleri-ve-uretim-cikarimi",
+      "title": "Yapay Zekâ Altyapısı (2): LLM GPU'yu Nasıl Kullanır? — Training, Prefill ve Decode",
+      "date": "2026-10-17",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 2,
+      "summary": "Ne: GPU üzerindeki training, prefill ve decode iş yüklerinin bellek, hesaplama ve KV cache davranışını açıklar. Neden önemli: Aynı model farklı çalışma evrelerinde bambaşka darboğazlara girer; yanlış kapasite hesabı TTFT, TPOT ve maliyeti büyütür. Nasıl: Roofline, batching, PagedAttention, prefix caching, disaggregated serving ve Little’s Law ile adım adım inceler. Nerede: H100 ve Llama 3.1 70B tabanlı öğretici kapasite örneklerinde. Kim için: LLM çıkarım altyapısı tasarlayan mühendisler ve mimarlar için. Ne zaman: KV cache OOM, yüksek TTFT/TPOT veya düşük serving goodput görüldüğünde.",
+      "tags": [
+        "gpu",
+        "altyapi",
+        "h100",
+        "llm",
+        "dagitik-sistemler",
+        "ag",
+        "depolama",
+        "mfu",
+        "sistemler"
+      ],
+      "readingMinutes": 35,
+      "translationSlug": "gpu-workloads-and-production-inference",
+      "draft": false,
+      "tagline": "Aynı GPU’nun eğitimde, prefill’de ve decode’da neden farklı darboğazlara girdiğini; KV cache, batching ve üretim trafiği üzerinden anlamak."
     },
     {
       "slug": "gpu-mimarisi-ve-llm-olcekleme",
-      "title": "Yapay Zekâ Altyapısı (1): Bir AI Süper Bilgisayarının Anatomisi — Tek Bir SM'den 16.384 GPU'ya Tek Harita",
+      "title": "Yapay Zekâ Altyapısı (1): GPU Nasıl Çalışır? — SM'den 16.384 GPU'ya",
       "date": "2026-10-10",
       "seriesId": "yapay-zeka-altyapisi",
       "seriesPart": 1,
@@ -162,7 +253,7 @@
         "donanim",
         "sistemler"
       ],
-      "readingMinutes": 15,
+      "readingMinutes": 35,
       "translationSlug": "understanding-gpus-and-llm-scaling",
       "draft": false,
       "tagline": "Tek bir SM silikonundan 16.384 GPU'luk kümeye, NVLink kasa içi bağlantıdan SuperPOD InfiniBand omurgasına: Bir AI süper bilgisayarının fiziksel anatomisi."
