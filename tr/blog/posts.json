@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-10-17",
+  "updated": "2026-10-18",
   "stages": [
     {
       "id": "orientation",
@@ -113,18 +113,42 @@
       "title": "Yapay Zekâ Altyapısı",
       "stage": "systems",
       "tagline": "GPU silikonundan kümeye; iş yükü, HBM, bağlantı, depolama, güç ve fiziksel yerleşimi tek donanım resmi içinde okuyoruz.",
-      "summary": "GPU mikro-mimarisinden training ve inference davranışına, çoklu GPU ağlarından depolama, güç, arıza teşhisi ve dengeli donanım platformu tasarımına uzanan beş yazılık seri.",
-      "badge": "5 Bölümlük Seri",
+      "summary": "GPU mikro-mimarisinden training ve inference davranışına, çoklu GPU ağlarından depolama, güç, arıza teşhisi, dengeli donanım platformu tasarımı ve veri sayfası okuryazarlığına uzanan altı yazılık seri.",
+      "badge": "6 Bölümlük Seri",
       "posts": [
         "gpu-mimarisi-ve-llm-olcekleme",
         "gpu-is-yukleri-ve-uretim-cikarimi",
         "coklu-gpu-aglari-ve-dagitik-egitim",
         "gpudan-ai-super-bilgisayarina",
-        "kurumsal-ai-platform-mimarisi"
+        "kurumsal-ai-platform-mimarisi",
+        "gpu-datasheet-nasil-okunur"
       ]
     }
   ],
   "posts": [
+    {
+      "slug": "gpu-datasheet-nasil-okunur",
+      "title": "Yapay Zekâ Altyapısı (6): Bir GPU Datasheet'i Nasıl Okunur? — Ev mi, Veri Merkezi mi? DGX Station (GB300) Teardown'u",
+      "date": "2026-10-18",
+      "seriesId": "yapay-zeka-altyapisi",
+      "seriesPart": 6,
+      "summary": "Ne: NVIDIA DGX Station (GB300) örneği üzerinden bir GPU veri sayfasındaki tepe değerleri, mikromimari kısıtları ve donanımın ev/ofis/veri merkezi konumlandırmasını parçalara ayırır. Neden önemli: 20 PFLOPS ve 748 GB gibi parlatılmış üretici manşetleri; yoğun matris matematiği, 18 katlık bellek bant genişliği uçurumu ve 1.600W'lık termal/ev prizi sınırları hesaba katılmadığında yanıltıcıdır. Nasıl: Ev vs veri merkezi ayrımı, 2:4 yapısal seyreklik, HBM3e vs LPDDR5X/NVLink-C2C bellek hiyerarşisi, 1T/405B/70B model decode gecikmesi, Roofline aritmetik yoğunluk eşiği ve 1.600W güç bütçesiyle inceler. Nerede: Masaüstü AI iş istasyonlarında ve kurumsal Ar-Ge laboratuvarlarında. Kim için: Sistem mimarları, yapay zekâ mühendisleri ve donanım satın alma liderleri için. Ne zaman: Yeni bir GPU veya AI iş istasyonu değerlendirilirken, boyutlandırılırken ya da satın alınırken.",
+      "tags": [
+        "gpu",
+        "altyapi",
+        "donanim",
+        "blackwell",
+        "gb300",
+        "dgx",
+        "llm",
+        "roofline",
+        "sistemler"
+      ],
+      "readingMinutes": 28,
+      "translationSlug": "how-to-read-a-gpu-datasheet",
+      "draft": false,
+      "tagline": "Ev kullanıcısı için mi, veri merkezi için mi? 20 PFLOPS seyreklik illüzyonundan 18 katlık bellek uçurumuna ve 1.600W prize: DGX Station GB300 teardown'u."
+    },
     {
       "slug": "ai-altyapisi-nasil-calisir",
       "title": "Büyük Resim (2): Baştan Sona Yapay Zekâ Altyapısı — Silikondan Süper Bilgisayara, Bir Tensörün Fiziksel Yolculuğu",

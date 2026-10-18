@@ -537,4 +537,20 @@
     <lastmod>2026-10-18</lastmod>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://muhendis.github.io/en/blog/post.html?slug=how-to-read-a-gpu-datasheet</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-to-read-a-gpu-datasheet"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpu-datasheet-nasil-okunur"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-to-read-a-gpu-datasheet"/>
+    <lastmod>2026-10-18</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/blog/post.html?slug=gpu-datasheet-nasil-okunur</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-to-read-a-gpu-datasheet"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=gpu-datasheet-nasil-okunur"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/blog/post.html?slug=how-to-read-a-gpu-datasheet"/>
+    <lastmod>2026-10-18</lastmod>
+    <priority>0.7</priority>
+  </url>
 </urlset>

@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-10-17",
+  "updated": "2026-10-18",
   "stages": [
     {
       "id": "orientation",
@@ -113,18 +113,42 @@
       "title": "AI Infrastructure",
       "stage": "systems",
       "tagline": "From GPU silicon to clusters, reading workloads, HBM, interconnects, storage, power, and physical placement as one hardware system.",
-      "summary": "A five-article series spanning GPU microarchitecture, training and inference behavior, multi-GPU fabrics, storage, power, failure diagnosis, and balanced hardware-platform design.",
-      "badge": "5-Part Series",
+      "summary": "A six-article series spanning GPU microarchitecture, training and inference behavior, multi-GPU fabrics, storage, power, failure diagnosis, balanced hardware-platform design, and hardware datasheet teardowns.",
+      "badge": "6-Part Series",
       "posts": [
         "understanding-gpus-and-llm-scaling",
         "gpu-workloads-and-production-inference",
         "multi-gpu-networks-and-distributed-training",
         "from-gpus-to-ai-supercomputers",
-        "enterprise-ai-platform-architecture"
+        "enterprise-ai-platform-architecture",
+        "how-to-read-a-gpu-datasheet"
       ]
     }
   ],
   "posts": [
+    {
+      "slug": "how-to-read-a-gpu-datasheet",
+      "title": "AI Infrastructure (6): How to Read a GPU Datasheet — Home or Datacenter? The DGX Station (GB300) Teardown",
+      "date": "2026-10-18",
+      "seriesId": "ai-infrastructure",
+      "seriesPart": 6,
+      "summary": "What: Dissects a GPU hardware datasheet into silicon limits, microarchitectural gating, and deployment reality (home vs. office vs. datacenter) using the NVIDIA DGX Station (GB300). Why it matters: Headline numbers like 20 PFLOPS and 748 GB are misleading without factoring in dense matrix math, an 18x memory bandwidth cliff, and 1,600W thermal/power boundaries. How: Analyzes the deskside vs. datacenter divide, 2:4 structured sparsity, HBM3e vs LPDDR5X/NVLink-C2C tiers, 1T/405B/70B decoding latencies, Roofline operational intensities, and office electrical codes. Where: Across enterprise deskside workstations and AI research labs. For whom: Systems architects, AI engineers, and procurement leads. When: Sizing, evaluating, or benchmarking new GPUs and AI workstations.",
+      "tags": [
+        "gpu",
+        "infrastructure",
+        "hardware",
+        "blackwell",
+        "gb300",
+        "dgx",
+        "llm",
+        "roofline",
+        "systems"
+      ],
+      "readingMinutes": 28,
+      "translationSlug": "gpu-datasheet-nasil-okunur",
+      "draft": false,
+      "tagline": "Home user or datacenter monster? From the 20 PFLOPS sparsity illusion to the 18x memory cliff and 1,600W wall limits: The DGX Station GB300 teardown."
+    },
     {
       "slug": "how-ai-infrastructure-works",
       "title": "The Big Picture (2): AI Infrastructure, End to End — From Silicon to Supercomputers, The Physical Lifecycle of a Tensor",
