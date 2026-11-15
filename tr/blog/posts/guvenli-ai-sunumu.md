@@ -577,7 +577,7 @@ Bir siber casusluk grubu, hedef şirketin veritabanı sunucularının barındı�
 - **Spekülatif Geri Çekme (Speculative Rollback):** Bekletme penceresinde bir ihlal görüldüğünde gateway'in gönderilmemiş metni atması ve istemciye ekrandaki yarım yanıtı geri çekmesini bildirmesi.
 - **TTFT (Time-to-First-Token):** Kullanıcının isteği göndermesiyle modelin ilk token'ı üretmesi arasında geçen süre.
 - **Yan Kanal Saldırısı (Side-Channel Attack):** Şifreli verinin kendisini kırmak yerine, paket boyutları ve token üretim sürelerindeki zamanlama desenlerinden veri çıkarımı yapılması.
-- **Fail-Closed (Kapalı Başarısız Olma):** Bir güvenlik kontrolü zaman aşımına uğradığında veya çöktüğünde işlemin güvenliği korumak amacıyla reddedilmesi ilkesi.
+- **Fail-Closed (Hata Anında Güvenli Durumda Kalma):** Bir güvenlik kontrolü zaman aşımına uğradığında veya çöktüğünde işlemin güvenliği korumak amacıyla reddedilmesi ve sistemin güvenli durumda kilitlenmesi ilkesi.
 
 ---
 

@@ -21,7 +21,7 @@ Bu yazı destek asistanı için kayıtları ve müdahaleyi tasarlıyor. Trace'le
 - [3. İkinci bir sızıntı olmadan gözlemlenebilirlik](#3-ikinci-bir-sızıntı-olmadan-gözlemlenebilirlik)
 - [4. Kalıcı teslimat ve örneklemenin matematiği](#4-kalıcı-teslimat-ve-örneklemenin-matematiği)
   - [4.1. Denetim olayları neden örneklenmemeli?](#41-denetim-olayları-neden-örneklenmemeli)
-  - [4.2. Güvenli biçimde başarısız olan teslimat](#42-güvenli-biçimde-başarısız-olan-teslimat)
+  - [4.2. Hata anında güvenli kalan teslimat mimarisi (Fail-safe delivery)](#42-hata-anında-güvenli-kalan-teslimat-mimarisi-fail-safe-delivery)
   - [4.3. Sonucu bilinmeyen işlemler](#43-sonucu-bilinmeyen-işlemler)
 - [5. Olayları tespit etmek](#5-olayları-tespit-etmek)
 - [6. Müdahale: Kontrol altına al, geri al, toparlan, öğren](#6-müdahale-kontrol-altına-al-geri-al-toparlan-öğren)
@@ -201,11 +201,11 @@ s = 0,01, 300 istekten oluşan bir saldırı:     1 − 0,99^300 = 0,951   → %
 
 Yalnızca bir avuç isteğe ihtiyaç duyan dikkatli bir saldırgan, örneklenmiş veride neredeyse görünmezdir. Bir istek tutulsa bile, olayın kapsamını belirlemek için gereken diğerleri tutulmamıştır. Bu yüzden güvenlik kararlarına ait denetim olayları (eşiğin üzerindeki her dedektör bulgusu, riski $\ge 1$ olan bir araç için her politika kararı, her onay ve her çalıştırma) **her** istek için kaydedilir. Hacimleri küçüktür, çünkü içerik değil, kimlik ve hash içerirler.
 
-### 4.2. Güvenli biçimde başarısız olan teslimat
+### 4.2. Hata anında güvenli kalan teslimat mimarisi (Fail-safe delivery)
 
 Kaybolan bir denetim olayı, hiç yazılmamış bir olay kadar kötüdür. Üç mekanizma teslimatı kalıcı kılar:
 
-1. **İşlemden önce yaz.** Yüksek etkili araçlarda yürütücü, aracı çağırmadan *önce* "karar" olayını kalıcı depoya, sonra da "sonuç" olayını yazar. Karar olayı yazılamıyorsa işlem gerçekleşmez: Birinci bölümün yüksek etkili işlemler için karar verdiği gibi, kapalı kalarak başarısız olur.
+1. **İşlemden önce yaz.** Yüksek etkili araçlarda yürütücü, aracı çağırmadan *önce* "karar" olayını kalıcı depoya, sonra da "sonuç" olayını yazar. Karar olayı yazılamıyorsa işlem gerçekleşmez: Tıpkı Birinci Bölüm'de yüksek riskli eylemler için belirlediğimiz kural gibi, denetim kaydının yazılamaması durumunda sistem güvenli duruma geçer ve işlemi kilitler (fail-closed).
 2. **İşlemsel giden kutusu (transactional outbox).** Olaylar durum değişikliğiyle aynı işlem (transaction) içinde yerel ve kalıcı bir giden kutusuna yazılır; ayrı bir süreç onları yeniden denemelerle denetim deposuna iletir. Bir ağ kesintisi olayları geciktirir, kaybettirmez.
 3. **Boşluk tespiti.** Olaylar üretici başına sıra numaraları taşır. Denetim deposu boşluklarda alarm verir; böylece "işlem hattı geçen hafta olayları sessizce düşürdü", "işlem hattı saat 14.02'de 7 numaralı üreticinin 312 olayı atladığı alarmını verdi"ye dönüşür.
 

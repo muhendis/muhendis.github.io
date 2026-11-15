@@ -2,7 +2,7 @@ Canlıya geçişe iki hafta kala büyük bir müşteri bir soru formu gönderdi:
 
 Sorun eksik kontroller değildi. Eksik olan bir **zincirdi**: bir belgedeki bir gereksinimden onu karşılayan kontrole, kontrolü gerçekleştiren özelliğe ya da politikaya, onu sınayan teste, testin belirli bir sürümde geçtiğini gösteren kanıta ve geriye kalan riske uzanan bir zincir. Bu zincirle dürüst yanıt hem daha kısa hem daha güçlüdür: *"Kontrollerimiz ISO/IEC 27090, OWASP AISVS Seviye 2 ve OWASP LLM ile Ajan Top 10 kategorileriyle eşlenmiştir; 2026-11 sürümü için kanıt dizini ekte. Uygulanabilir AISVS gereksinimlerinin %87,5'i doğrulanmıştır, kalan açıklar sahipleri ve tarihleriyle listelenmiştir."*
 
-Serinin bu son bölümü o zinciri kuruyor. Belgeleri ne tür bir şey olduklarına ve neyi iddia etmenize izin verdiklerine göre ayıracak, ISO/IEC 42001, 23894, 42005 ve 27090'ı rollerine yerleştirecek, kanıt zincirini ve kapsama oranını tanımlayacak, destek asistanının on iki bölümden oluşan birleşik referans mimarisini kuracak ve bir eşleştirme matrisi, bir kanıt dizini ve riske dayalı bir canlıya geçiş kontrol listesiyle bitireceğiz.
+Serinin bu son bölümü o kanıt zincirini kuruyor. Standart ve kılavuz belgelerini yapısal niteliklerine, temsil ettikleri kanıt türüne ve ne kadarlık bir güvence sağladıklarına göre sınıflandıracak; ISO/IEC 42001, 23894, 42005 ve 27090'ı mimarideki rollerine yerleştirecek, kanıt zincirini ve kapsama oranını tanımlayacak, destek asistanının on iki bölümden oluşan birleşik referans mimarisini kuracak ve bir eşleştirme matrisi, bir kanıt dizini ve riske dayalı bir canlıya geçiş kontrol listesiyle seriyi tamamlayacağız.
 
 > **Önceki yazılardan devraldığımız fikir:** Her şey. [Birinci bölümün](post.html?slug=yapay-zeka-guvenligi-tasarimda-baslar) varlıkları ve sahipleri, [İkinci bölümün](post.html?slug=ai-tehdit-modelleme-ve-guven-sinirlari) tehdit kaydı, Üçüncü ile Dokuzuncu bölümler arasındaki kontroller, [Onuncu bölümün](post.html?slug=ai-guvenligini-olcmek) değerlendirme raporu ve [On birinci bölümün](post.html?slug=ai-izlenebilirlik-ve-olay-mudahalesi) denetim izi tek bir kanıt zincirinin halkalarına dönüşüyor.
 
@@ -63,7 +63,7 @@ Bu serinin planındaki bir dürüstlük kuralı burada özellikle güçlü biçi
 
 ## 3. Dürüstçe ne iddia edebilirsiniz?
 
-Bir standardın adını içeren herhangi bir cümle yazmadan önce onu üç soruyla kontrol edin: *Belge ne tür bir şey? Tam olarak ne, hangi sürüme karşı, kim tarafından değerlendirildi? Kapsam ne?*
+Bir standardın adını içeren herhangi bir cümle yazmadan önce onu üç soruyla kontrol edin: *Belgenin kurumsal ve teknik niteliği nedir? Tam olarak hangi sistem, hangi sürüme karşı, kim tarafından değerlendirildi? Kapsam ve yasal dayanak nedir?*
 
 | Kaçının | Bunun yerine yazın |
 | --- | --- |

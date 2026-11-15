@@ -211,7 +211,7 @@ Zehirleme aynı yaşam döngüsünün bütünlük tarafıdır. Anthropic, Birle�
 | SBOM / AI-BOM | İçinde hangi bileşenler var? |
 | Köken (SLSA) | Nasıl, nerede ve hangi girdilerden üretildi? |
 
-Bölümün anahtar cümlesi akılda tutulmaya değer: *bu mekanizmaların her biri "bu, onayladığım artefakt mı?" sorusunu cevaplar; hiçbiri "bunu onaylamalı mıydım?" sorusunu cevaplamaz.* İkinci soru değerlendirme ister. Biçim de önemlidir: bir pickle dosyasını yüklemek, yükleyicinin kimlik bilgileriyle rastgele kod çalıştırabilir; safetensors dosyası ise bir başlık ve ham baytlardan ibarettir ve bir fonksiyon çağıramaz. PyTorch 2.6'dan beri `torch.load` varsayılan olarak `weights_only=True` kullanır. MCP sunucuları yeni bir kıvrım ekler: araç açıklamaları modelin okuduğu metindir, yani değişen bir açıklama değişen bir talimattır. Araç tanımlarını hash'le sabitleyin, değiştiklerinde yeniden onaylayın. Her model, prompt, politika ya da araç değişikliği bir yayındır: gerileme kapısı, yükleme anında kapalı kalarak başarısız olan imza doğrulaması ve sürüm değiştirmekten ibaret bir geri alma.
+Bölümün anahtar cümlesi akılda tutulmaya değer: *bu mekanizmaların her biri "bu, onayladığım artefakt mı?" sorusunu cevaplar; hiçbiri "bunu onaylamalı mıydım?" sorusunu cevaplamaz.* İkinci soru değerlendirme ister. Biçim de önemlidir: bir pickle dosyasını yüklemek, yükleyicinin kimlik bilgileriyle rastgele kod çalıştırabilir; safetensors dosyası ise bir başlık ve ham baytlardan ibarettir ve bir fonksiyon çağıramaz. PyTorch 2.6'dan beri `torch.load` varsayılan olarak `weights_only=True` kullanır. MCP sunucuları yeni bir kıvrım ekler: araç açıklamaları modelin okuduğu metindir, yani değişen bir açıklama değişen bir talimattır. Araç tanımlarını hash'le sabitleyin, değiştiklerinde yeniden onaylayın. Her model, prompt, politika ya da araç değişikliği bir yayındır: gerileme kapısı, yükleme anında imza doğrulanamadığında güvenli durumda kilitlenen (fail-closed) bir yapı ve sürüm değiştirmekten ibaret bir geri alma.
 
 ## 4. Bağlama giriş: tespit neden sınır olamaz
 
@@ -346,7 +346,7 @@ send_email öncesi: C_FP = 1 (fazladan bir onay tıklaması), C_FN = 50 (kayıt 
   t* = 5 / (5 + 2) = 5/7 ≈ 0,71     → yalnızca güçlü şüphede harekete geç
 ```
 
-Şikâyetimizin puanı 0,07. Özet girdisi olarak 0,71'in altında: en fazla bir uyarı bandı alır. `send_email` öncesinde ise 0,02'nin üstünde; politika onay ister. Tek dedektör, iki işlem, iki eşik. "Harekete geçmek" de nadiren "engellemek" demektir: bir sonraki, daha ucuz güvenceyi devreye almak demektir. 6. bölüm ayrıca sağlama toplamlı regex'ten güvenlik SLM'lerine ve LLM hakemlerine uzanan araç kutusunu (yapısı gereği doğru olabilen en ucuz yöntemi seçin), Türkçe normalleştirmeyi (NFKC, İ ve ı için yerele duyarlı büyük-küçük harf katlama, düşen şapkalar ve noktalar), seri, paralel ve kademeli düzenler için gecikme bütçelerini ve işlem başına hata davranışını ele alır: yüksek etkili işlemler için kapalı kalarak başarısız ol, mahremiyette asla açık kalarak başarısız olma.
+Şikâyetimizin puanı 0,07. Özet girdisi olarak 0,71'in altında: en fazla bir uyarı bandı alır. `send_email` öncesinde ise 0,02'nin üstünde; politika onay ister. Tek dedektör, iki işlem, iki eşik. "Harekete geçmek" de nadiren "engellemek" demektir: bir sonraki, daha ucuz güvenceyi devreye almak demektir. 6. bölüm ayrıca sağlama toplamlı regex'ten güvenlik SLM'lerine ve LLM hakemlerine uzanan araç kutusunu (yapısı gereği doğru olabilen en ucuz yöntemi seçin), Türkçe normalleştirmeyi (NFKC, İ ve ı için yerele duyarlı büyük-küçük harf katlama, düşen şapkalar ve noktalar), seri, paralel ve kademeli düzenler için gecikme bütçelerini ve işlem başına hata davranışını ele alır: yüksek etkili işlemlerde hata anında kapalı kal (fail-closed), mahremiyette asla hata anında açık kalma (fail-open).
 
 ## 6. Retrieval ve bellek: fotokopi odası
 
@@ -368,7 +368,7 @@ k = 5
   k'yı 20'ye çıkarmak dört kat bağlam maliyetiyle yine 0,9^20 ≈ %12 boş bırakır
 ```
 
-Hem doğru hem eksiksiz olan tek yer **ön filtrelemedir** (pre-filtering): arama, kullanıcının izinli kümesinin içinde, uygulamanın kimliği doğrulanmış oturumdan türettiği bir kimlikle çalışır; modelin yazdığı bir filtreyle asla. İzinler dizinleme anında kopyalanır ve tazelenir; bayat izin verisi kapalı kalarak başarısız olur. Bölümün deyişiyle: *bayat bir izin, bayat bir redden kötüdür*.
+Hem doğru hem eksiksiz olan tek yer **ön filtrelemedir** (pre-filtering): arama, kullanıcının izinli kümesinin içinde, uygulamanın kimliği doğrulanmış oturumdan türettiği bir kimlikle çalışır; modelin yazdığı bir filtreyle asla. İzinler dizinleme anında kopyalanır ve tazelenir; güncelliğini yitirmiş izin verisinde sistem kapalı kalır (fail-closed). Bölümün deyişiyle: *bayat bir izin, bayat bir redden kötüdür*.
 
 İkinci yarı bütünlüktür. Retrieval benzerliğe göre sıralar, doğruluğa ya da yetkiye göre değil; bu yüzden yetki açık bir özellik hâline getirilmelidir. Onaylı politika belgeleri $\tau = 1$ olan bir koleksiyonda, şikâyetler $\tau = 0$ olan bir koleksiyonda durur; bir şikâyet, müşterinin ne dediğinin kanıtı olarak alıntılanabilir ama asla politika olarak kullanılamaz. **Bellek yazmaları yan etkidir**, tıpkı `send_email` gibi: $\tau = 0$ olan bir bağlamdan yazılan anı, kullanıcı onu açık bir dille onaylayana kadar karantinaya gider. Yoksa 09.14'teki cümlemiz kalıcı bir "tercih" olup gelecekteki her konuşmayı yönlendirebilirdi. Son olarak, *erişilebilir ≠ yetkili ≠ doğru*: ön filtreleme erişilebilir olanı yetkili kılar, deterministik bir kaynak kontrolü atıf yapılan her parçanın bu kullanıcı için gerçekten getirildiğini doğrular, olasılıksal bir dayanak (groundedness) kontrolü de şüpheli cevapları bir insana yönlendirir.
 
@@ -423,7 +423,7 @@ $$
   yalnızca denetim yapan post-call kontrolü            Δt = 0, sızıntı penceresi = bütün cevap
 ```
 
-Açık kalarak başarısız olmanın da bir bedeli vardır. %99,5 erişilebilir olan ve çöktüğünde açık kalan bir güvenlik servisi günde $100.000 \times 0{,}005 = 500$ denetlenmemiş istek bırakır ve bunlar saldırganın yaratabileceği yük zirvelerinde kümelenir. `send_email` için güvenlik servisi kapalı kalarak başarısız olmalıdır.
+Hata anında açık kalmanın (fail-open) da bir bedeli vardır. %99,5 erişilebilir olan ve çöktüğünde açık kalan bir güvenlik servisi günde $100.000 \times 0{,}005 = 500$ denetlenmemiş istek bırakır ve bunlar saldırganın kasıtlı yaratabileceği yük zirvelerinde kümelenir. `send_email` gibi dış dünyayı etkileyen işlemler için güvenlik servisi hata anında mutlaka kapalı kalmalıdır (fail-closed).
 
 ## 9. Katmanlar neden işe yarar, ne zaman yaramaz
 

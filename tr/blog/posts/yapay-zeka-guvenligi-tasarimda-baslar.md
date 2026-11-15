@@ -187,7 +187,7 @@ Klasik siber güvenlik, varlıkların korunmasını üç temel sütunla tarif ed
 
 Fakat klasik CIA üçlüsü modern yapay zekânın en sinsi tehlikesini tarif etmekte yetersiz kalır: **Güvenli davranış** (*Safe Behavior*).
 
-Bir sistem tüm sırlarını koruyabilir, veritabanı bütünlüğü eksiksiz olabilir ve %100 kesintisiz çalışabilir. Buna rağmen bir dil modeli bir müşteriye yasal olarak yanıltıcı bir taahhüt verebilir, nefret söylemi üretebilir veya tehlikeli bir kimyasal karışım tarifi sunabilir. Bu bir gizlilik veya erişilebilirlik arızası değildir; doğrudan sistemin *davranışsal hizalanma* arızasıdır.
+Bir sistem tüm sırlarını koruyabilir, veritabanı bütünlüğü eksiksiz olabilir ve %100 kesintisiz çalışabilir. Buna rağmen bir dil modeli bir müşteriye yasal olarak bağlayıcı iftira niteliğinde iddialar üretebilir, nefret söylemi yayabilir veya adım adım kimyasal silah sentezi tarifi verebilir. Bu bir klasik güvenlik arızası değildir; doğrudan sistemin *davranışsal hizalanma* arızasıdır.
 
 > **Akılda kalsın:** Yapay zekâ sistemlerinde bir *bütünlük* ihlali, diskte saklanan tek bir veriyi değiştirmeden gerçekleşebilir. Saldırgan bağlamdaki *girdiyi* saptırır; sapan girdi modelin *muhakemesini* bozar; bozulan muhakeme ise yetkisiz bir *işleme* dönüşür. Bu serideki her kontrol mekanizması o ölümcül zinciri kırmak için tasarlanmıştır.
 
@@ -228,10 +228,10 @@ Güvenliği asla tek bir filtreye, tek bir guardrail modeline veya tek bir promp
 
 - *Mimari Test:* Yüksek etkili her işlem için şu listeyi yapın: Bu işlemin yetkisiz gerçekleşmesi için aynı anda başarısız olması gereken **bağımsız kontrol noktalarını** sayın. Sayı 1 ise sisteminizde katmanlı savunma yoktur; tek bir kör noktada çöker.
 
-### 5.3. Güvenli varsayılanlar ve kapalı kalarak başarısız olma (Fail-Closed Defaults)
+### 5.3. Güvenli varsayılanlar ve hata anında güvenli durumda kalma (Fail-Closed Defaults)
 Varsayılan yapılandırma daima en kısıtlı durum olmalıdır. Bir güvenlik katmanı çöktüğünde veya zaman aşımına uğradığında sistem riski göze alarak çalışmaya devam etmemeli; güvenli duruma çekilmelidir (*fail-closed*).
 
-- *Uygulama:* Guardrail sınıflandırıcı servisi 500 ms içinde yanıt vermezse, `send_email` gibi dış dünyayı etkileyen işlemler "kullanıcı beklemesin" denilerek onaylanamaz; işlem derhal durdurulur. Buna karşın düşük riskli işlemler (şikâyet metnini özetlemek) kademeli olarak bozulabilir (*graceful degradation* — genel bir hata mesajı dönerek).
+- *Uygulama:* Guardrail sınıflandırıcı servisi 500 ms içinde yanıt vermezse, `send_email` gibi dış dünyayı etkileyen işlemler "kullanıcı beklemesin" denilerek onaylanamaz; işlem derhal durdurulur (fail-closed). Buna karşın düşük riskli işlemler (şikâyet metnini özetlemek) kademeli olarak bozulabilir (*graceful degradation* — genel bir hata mesajı dönerek).
 - *Mimari Test:* Test ortamında guardrail servisini aniden kapatın. Sistem e-posta göndermeyi durduruyor mu (*fail-closed*), yoksa kontrolleri atlayıp göndermeye devam mı ediyor (*fail-open*)? Gerçek dünya sızıntılarının büyük bölümü sessizce *fail-open* kalan sistemlerden kaynaklanır.
 
 ### 5.4. Anlamlı insan denetimi (Meaningful Human-in-the-Loop)
@@ -454,7 +454,7 @@ Kendi projenizin mimari tasarım belgesine (RFC / ADR) doğrudan ekleyebileceği
 4. **Araçlar kullanıcının kimlik kapsamıyla sınırlandırılmıştır.** Araçlar genel yönetici hesaplarıyla değil; oturum açmış kullanıcının izinleriyle çalışır.
 5. **Yüksek etkili işlemler çalıştırma noktasında deterministik allowlist ile korunur.** Bu kontroller modelin metin analizine dayanmaz.
 6. **İnsan onayları tam parametre özetine (HMAC) bağlanır.** Onaylanan metin ile gönderilen metin arasında tek bir karakter dahi değişirse eylem reddedilir.
-7. **Yüksek riskli kontroller kapalı kalarak başarısız olur (fail-closed).** Guardrail servisi çöktüğünde işlem durdurulur.
+7. **Yüksek riskli kontroller hata anında güvenli durumda kalır (fail-closed).** Guardrail servisi çöktüğünde veya zaman aşımına uğradığında işlem durdurulur.
 8. **Her isteğin token, adım sayısı, gecikme ve maliyet tavanı tanımlıdır.**
 9. **Kurulum zamanı artefaktlarının kökeni kriptografik olarak imzalanmıştır.** Model ağırlıkları, adaptörler ve veri setleri SBOM ile taranır.
 10. **Denetim logları OpenTelemetry standartlarına uyar ve tuzlu token hash'leri ile saklanır.** Hassas kullanıcı verisi loglara sızdırılmaz.
