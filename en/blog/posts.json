@@ -1,6 +1,6 @@
 {
   "lang": "en",
-  "updated": "2026-10-30",
+  "updated": "2026-11-15",
   "stages": [
     {
       "id": "orientation",
@@ -166,7 +166,8 @@
       "readingMinutes": 37,
       "translationSlug": "yapay-zeka-guvenligi-nasil-calisir",
       "draft": false,
-      "tagline": "Follow one hidden instruction in a customer email through an AI assistant and see which design decision stops it at each step, from threat model to audit evidence."
+      "tagline": "Follow one hidden instruction in a customer email through an AI assistant and see which design decision stops it at each step, from threat model to audit evidence.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "from-standards-to-evidence",
@@ -187,7 +188,8 @@
       "readingMinutes": 18,
       "translationSlug": "standarttan-kanita",
       "draft": false,
-      "tagline": "Replacing 'we are compliant and secure' with an evidence chain from requirement to residual risk, and a go-live decision someone can sign."
+      "tagline": "Replacing 'we are compliant and secure' with an evidence chain from requirement to residual risk, and a go-live decision someone can sign.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-observability-and-incident-response",
@@ -208,7 +210,8 @@
       "readingMinutes": 17,
       "translationSlug": "ai-izlenebilirlik-ve-olay-mudahalesi",
       "draft": false,
-      "tagline": "Recording every AI decision with its versions, keeping telemetry from becoming a second leak, and preparing the levers that contain an incident in minutes."
+      "tagline": "Recording every AI decision with its versions, keeping telemetry from becoming a second leak, and preparing the levers that contain an incident in minutes.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "measuring-ai-security",
@@ -229,7 +232,8 @@
       "readingMinutes": 19,
       "translationSlug": "ai-guvenligini-olcmek",
       "draft": false,
-      "tagline": "Turning '98% of attacks blocked' into evidence: paired test cases, native Turkish sets, clean data splits, confidence intervals and a judge measured against humans."
+      "tagline": "Turning '98% of attacks blocked' into evidence: paired test cases, native Turkish sets, clean data splits, confidence intervals and a judge measured against humans.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "secure-ai-serving",
@@ -237,7 +241,7 @@
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
       "seriesPart": 9,
-      "summary": "What: A secure AI serving architecture decoupling gateway, security service, and model server, featuring NVIDIA H100 TEEs, PCIe IDE encryption, PagedAttention prefix cache isolation, and speculative streaming rollbacks. Why it matters: vLLM API keys leave administrative routes exposed; post-call streaming filters cannot retract displayed tokens; multi-tenant prefix caches risk cross-tenant bleed; unshielded fallback routes leave platforms vulnerable during outages. How: LiteLLM and vLLM reference deployment, H100 Confidential Computing with SPDM hardware attestation, CPU-to-GPU wire-speed PCIe IDE encryption, tenant-salted HMAC Radix tree prefix caches, sliding-window speculative rollback buffers, token-timing side-channel mitigations, and S-1 to S-10 acceptance test suites. Where: On-premise and cloud GPU clusters, AI Gateway proxies, and vLLM inference nodes. For whom: MLOps engineers, AI platform developers, and infrastructure security architects. When: Before exposing LLM inference endpoints or activating multi-tenant streaming and fallback routes.",
+      "summary": "What: A secure AI serving architecture decoupling gateway, security service, and model server, covering GPU confidential computing, per-tenant prefix-cache salting, and holdback-window streaming guards. Why it matters: vLLM API keys leave administrative routes exposed; post-call streaming filters cannot retract displayed tokens; a shared prefix cache leaks other tenants' prompts through response timing; unshielded fallback routes leave platforms vulnerable during outages. How: LiteLLM and vLLM reference deployment, H100 confidential computing with attestation, SPDM and encrypted transfers (and where PCIe IDE fits), a gateway-set per-tenant cache_salt for vLLM's prefix cache, sliding holdback windows with speculative rollback, token-length and cache-timing side-channel mitigations, and S-1 to S-10 acceptance test suites. Where: On-premise and cloud GPU clusters, AI Gateway proxies, and vLLM inference nodes. For whom: MLOps engineers, AI platform developers, and infrastructure security architects. When: Before exposing LLM inference endpoints or activating multi-tenant streaming and fallback routes.",
       "tags": [
         "security",
         "serving",
@@ -250,7 +254,8 @@
       "readingMinutes": 21,
       "translationSlug": "guvenli-ai-sunumu",
       "draft": false,
-      "tagline": "Making the gateway the only path to the model: closed vLLM endpoints, guarded fallbacks, streaming holdback and acceptance tests for every bypass."
+      "tagline": "Making the gateway the only path to the model: closed vLLM endpoints, guarded fallbacks, streaming holdback and acceptance tests for every bypass.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "least-privilege-for-ai-agents",
@@ -258,7 +263,7 @@
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
       "seriesPart": 8,
-      "summary": "What: An autonomous agent execution architecture separating proposal from execution via PEP/PDP, featuring Macaroon object capabilities, MCP schema pinning, and Saga compensating rollbacks. Why it matters: Agents running under ambient service accounts induce Confused Deputy vulnerabilities; retrying operations without idempotency keys and compensating transactions causes irreversible unauthorized financial side effects. How: Proposal versus execution separation (PEP/PDP), privilege intersection theorem (P_U ∩ P_A ∩ P_T), decentralized Macaroon HMAC caveat chaining, RFC 8785 canonical JSON schema pinning against MCP dynamic rug-pulls, canonical parameter-bound HMAC approval tokens, multi-dimensional rate budgets, and Saga rollback coordinators. Where: Autonomous agents executing database mutations, payment transactions, email dispatch, and MCP tools. For whom: AI security architects, agent platform engineers, and backend system developers. When: Before provisioning agents with state-mutating tools or deploying multi-agent topologies.",
+      "summary": "What: An autonomous agent execution architecture separating proposal from execution via PEP/PDP, featuring Macaroon object capabilities, MCP schema pinning, and Saga compensating rollbacks. Why it matters: Agents running under ambient service accounts induce Confused Deputy vulnerabilities; retrying operations without idempotency keys and compensating transactions causes irreversible unauthorized financial side effects. How: Proposal versus execution separation (PEP/PDP), privilege intersection rule (P_U ∩ P_A ∩ P_T), decentralized Macaroon HMAC caveat chaining, RFC 8785 canonical JSON schema pinning against MCP dynamic rug-pulls, canonical parameter-bound HMAC approval tokens, multi-dimensional rate budgets, and Saga coordinators that compensate what can be compensated. Where: Autonomous agents executing database mutations, payment transactions, email dispatch, and MCP tools. For whom: AI security architects, agent platform engineers, and backend system developers. When: Before provisioning agents with state-mutating tools or deploying multi-agent topologies.",
       "tags": [
         "security",
         "agents",
@@ -271,7 +276,8 @@
       "readingMinutes": 24,
       "translationSlug": "ajanlarda-en-az-yetki",
       "draft": false,
-      "tagline": "Putting least privilege where agents act: an executor that holds the credentials, delegated permissions as intersections, and approvals bound to exact parameters."
+      "tagline": "Putting least privilege where agents act: an executor that holds the credentials, delegated permissions as intersections, and approvals bound to exact parameters.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "rag-and-memory-security",
@@ -292,7 +298,8 @@
       "readingMinutes": 26,
       "translationSlug": "rag-ve-bellek-guvenligi",
       "draft": false,
-      "tagline": "Keeping a RAG index from becoming a side door: permissions inside the vector query, trust-separated collections and a memory write path with quarantine."
+      "tagline": "Keeping a RAG index from becoming a side door: permissions inside the vector query, trust-separated collections and a memory write path with quarantine.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "layered-guardrails",
@@ -313,7 +320,8 @@
       "readingMinutes": 21,
       "translationSlug": "katmanli-guardrails",
       "draft": false,
-      "tagline": "Separating findings from decisions, choosing between regex, NER, classifiers, safety SLMs and LLM judges, and setting thresholds from real base rates."
+      "tagline": "Separating findings from decisions, choosing between regex, NER, classifiers, safety SLMs and LLM judges, and setting thresholds from real base rates.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "prompt-injection-and-the-trust-boundary",
@@ -334,7 +342,8 @@
       "readingMinutes": 23,
       "translationSlug": "prompt-injection-guven-siniri",
       "draft": false,
-      "tagline": "Why a 99% injection detector still loses to a persistent attacker, and how trust propagation keeps untrusted text from choosing actions."
+      "tagline": "Why a 99% injection detector still loses to a persistent attacker, and how trust propagation keeps untrusted text from choosing actions.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "securing-the-ai-supply-chain",
@@ -355,7 +364,8 @@
       "readingMinutes": 22,
       "translationSlug": "ai-tedarik-zinciri-guvenligi",
       "draft": false,
-      "tagline": "Proving that the model, tokenizer, packages and MCP tools you run are exactly the ones you approved, and that loading them cannot run code."
+      "tagline": "Proving that the model, tokenizer, packages and MCP tools you run are exactly the ones you approved, and that loading them cannot run code.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "securing-ai-data-from-source-to-deletion",
@@ -376,7 +386,8 @@
       "readingMinutes": 23,
       "translationSlug": "guvenli-ai-verisi",
       "draft": false,
-      "tagline": "Following one complaint through nine copies, finding personal data with checksums and NER, and making deletion actually complete."
+      "tagline": "Following one complaint through nine copies, finding personal data with checksums and NER, and making deletion actually complete.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-threat-modeling-and-trust-boundaries",
@@ -384,7 +395,7 @@
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
       "seriesPart": 2,
-      "summary": "What: An enterprise threat modeling methodology for LLM applications based on the Von Neumann breakdown and directed information flow. Why it matters: Data can execute as code in LLMs; a single request crosses seven trust boundaries, an unauthenticated attacker can reach tool execution, and a 95% effective filter collapses with 99.41% certainty against a 100-attempt automated adversary. How: A seven-boundary DFD (TB1-TB7), NIST AI 100-2 and MITRE ATLAS mapping, the four gates of untrusted text, STRIDE per element, a deterministic graph cut breaking the lethal trifecta, persistent adversary probability math, and an operational threat register. Where: Assistants and agents reading external content and executing tools. For whom: AI security architects, systems engineers, and application security leads. When: When architecting new AI agent features or integrating external tools.",
+      "summary": "What: An enterprise threat modeling methodology for LLM applications based on the in-band instruction problem (no enforced separation of data and instructions) and directed information flow. Why it matters: Data can execute as code in LLMs; a single request crosses seven trust boundaries, an unauthenticated attacker can reach tool execution, and a 95% effective filter collapses with 99.41% certainty against a 100-attempt automated adversary. How: A seven-boundary DFD (TB1-TB7), NIST AI 100-2 and MITRE ATLAS mapping, the four gates of untrusted text, STRIDE per element, a deterministic graph cut breaking the lethal trifecta, persistent adversary probability math, and an operational threat register. Where: Assistants and agents reading external content and executing tools. For whom: AI security architects, systems engineers, and application security leads. When: When architecting new AI agent features or integrating external tools.",
       "tags": [
         "security",
         "threat-modeling",
@@ -398,7 +409,7 @@
       "translationSlug": "ai-tehdit-modelleme-ve-guven-sinirlari",
       "draft": false,
       "tagline": "Drawing the data flow of an AI assistant, marking where untrusted text meets action authority and turning every threat into a tested control.",
-      "updated": "2026-11-01"
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-security-starts-at-design",
@@ -406,7 +417,7 @@
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
       "seriesPart": 1,
-      "summary": "What: The architectural foundations of secure AI design, demonstrated on a synthetic support assistant traversing six trust zones. Why it matters: A single tool transforms a text generator into an active agent; model outputs must remain unverified proposals, and a 4% shared systemic blind spot renders layered defenses 41 times weaker than naive paper estimates. How: Six trust zones (Z0-Z5), the Propose vs. Commit invariant, four asset classes, CIA plus safe behavior, clear taxonomy of security, safety, privacy and reliability, four design principles with verification tests, reliability engineering's Beta-factor model and an enterprise RACI matrix. Where: LLM, RAG and agent applications. For whom: AI security architects, software/platform teams and technical engineering leads. When: Before the initial architectural design review and threat modeling of an AI application.",
+      "summary": "What: The architectural foundations of secure AI design, demonstrated on a synthetic support assistant traversing six trust zones. Why it matters: A single tool transforms a text generator into an active agent; model outputs must remain unverified proposals, and a 5% shared blind spot makes three layered defenses 9.3 times weaker than the paper estimate. How: Six trust zones (Z0-Z5), the Propose vs. Commit invariant, four asset classes, CIA plus safe behavior, clear taxonomy of security, safety, privacy and reliability, four design principles with verification tests, reliability engineering's Beta-factor model and an enterprise RACI matrix. Where: LLM, RAG and agent applications. For whom: AI security architects, software/platform teams and technical engineering leads. When: Before the initial architectural design review and threat modeling of an AI application.",
       "tags": [
         "security",
         "llm",
@@ -419,7 +430,7 @@
       "translationSlug": "yapay-zeka-guvenligi-tasarimda-baslar",
       "draft": false,
       "tagline": "Before any filter: decide what an AI system protects, which four principles guide its design and who owns each risk.",
-      "updated": "2026-11-01"
+      "updated": "2026-11-15"
     },
     {
       "slug": "how-to-read-a-gpu-datasheet",

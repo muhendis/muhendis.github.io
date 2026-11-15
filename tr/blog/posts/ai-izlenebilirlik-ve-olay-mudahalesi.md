@@ -20,9 +20,16 @@ Bu yazı destek asistanı için kayıtları ve müdahaleyi tasarlıyor. Trace'le
 - [2. Bir kararı yeniden kurmak: Ne kaydedilmeli?](#2-bir-kararı-yeniden-kurmak-ne-kaydedilmeli)
 - [3. İkinci bir sızıntı olmadan gözlemlenebilirlik](#3-ikinci-bir-sızıntı-olmadan-gözlemlenebilirlik)
 - [4. Kalıcı teslimat ve örneklemenin matematiği](#4-kalıcı-teslimat-ve-örneklemenin-matematiği)
+  - [4.1. Denetim olayları neden örneklenmemeli?](#41-denetim-olayları-neden-örneklenmemeli)
+  - [4.2. Güvenli biçimde başarısız olan teslimat](#42-güvenli-biçimde-başarısız-olan-teslimat)
+  - [4.3. Sonucu bilinmeyen işlemler](#43-sonucu-bilinmeyen-işlemler)
 - [5. Olayları tespit etmek](#5-olayları-tespit-etmek)
 - [6. Müdahale: Kontrol altına al, geri al, toparlan, öğren](#6-müdahale-kontrol-altına-al-geri-al-toparlan-öğren)
 - [7. Pratik çıktı: Olay şeması, denetim motoru ve runbook](#7-pratik-çıktı-olay-şeması-denetim-motoru-ve-runbook)
+  - [7.1. Güvenlik denetim olayı şeması (örnek)](#71-güvenlik-denetim-olayı-şeması-örnek)
+  - [7.2. Adli yeniden oynatma ve giden kutusu denetim motoru](#72-adli-yeniden-oynatma-ve-giden-kutusu-denetim-motoru)
+  - [7.3. AI güvenlik olayı müdahale runbook'u (kesit)](#73-ai-güvenlik-olayı-müdahale-runbooku-kesit)
+  - [7.4. Mühendisliğin iki gözü: Kurulum ve çalışma zamanı](#74-mühendisliğin-iki-gözü-kurulum-ve-çalışma-zamanı)
 - [Bütün hikâye altı satırda](#bütün-hikâye-altı-satırda)
 - [Terimler sözlüğü](#terimler-sözlüğü)
 - [Daha derine inmek için](#daha-derine-inmek-için)
@@ -158,7 +165,7 @@ Tek bir kullanıcı isteğine ait bütün olaylar aynı `trace_id`'yi taşır ve
 
 Giriş olayının en kolay önlenebilecek zararı ikinci sızıntıydı: Soruşturma, prompt'lar ve yanıtlar trace'lere kaydedilip dışa aktarıldığı için müşteri verisini gözlemlenebilirlik sağlayıcısının platformunda buldu. İkinci bölüm log aktarımını TB6 güven sınırı olarak işaretlemişti; acısı burada çıkıyor.
 
-OpenTelemetry GenAI kuralları da aynı görüşte: Talimatlar, kullanıcı mesajları ve model çıktıları hassastır ve çoğu zaman büyüktür; bu yüzden enstrümantasyonlar onları varsayılan olarak kaydetmemelidir. `OTEL_INSTRUMENTATION_GENAI_CAPTURE_CONTENT` yapılandırmasının varsayılanı `NO_CONTENT`'tir. Kurallar, üretim için içeriği span'lerin üzerine koymak yerine harici bir depoda tutmayı ve referansları kaydetmeyi önerir.
+OpenTelemetry GenAI kuralları da aynı görüşte: Talimatlar, kullanıcı mesajları ve model çıktıları hassastır ve çoğu zaman büyüktür; bu yüzden enstrümantasyonlar onları varsayılan olarak kaydetmemelidir. `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` yapılandırmasının varsayılanı `NO_CONTENT`'tir. Kurallar, üretim için içeriği span'lerin üzerine koymak yerine harici bir depoda tutmayı ve referansları kaydetmeyi önerir.
 
 Destek asistanı için kurallar:
 
@@ -363,13 +370,13 @@ Her kaldıraç olaydan *önce* var olmalı, test edilmiş olmalı ve nöbetçi e
 
 ### 7.2. Adli yeniden oynatma ve giden kutusu denetim motoru
 
-Aşağıdaki Python motoru, denetim olaylarını güvenli giden kutusuna (transactional outbox) yazar ve bir olay anında geçmiş bir kararı deterministik olarak yeniden doğrular:
+Aşağıdaki sadeleştirilmiş Python motoru üç iş yapar: denetim olaylarını üretici başına sıra numarasıyla bir giden kutusuna (outbox) ekler, bir olay anında geçmiş bir politika kararını deterministik olarak yeniden doğrular ve denetim deposuna ulaşanlardaki boşlukları bulur:
 
 ```python
 import hashlib
 import json
-from dataclasses import dataclass, asdict
-from typing import Dict, Any, Tuple, Optional
+from dataclasses import dataclass
+from typing import Dict, Any, List, Tuple
 
 @dataclass(frozen=True)
 class AuditDecisionEvent:
@@ -390,7 +397,7 @@ class ForensicReplayEngine:
 
     @staticmethod
     def hash_canonical_json(data: Dict[str, Any], salt: str = "") -> str:
-        """RFC 8785 kurallarına uygun sıralı JSON özeti oluşturur."""
+        """Anahtarları sıralı, boşluksuz JSON üzerinde SHA-256 (RFC 8785 JCS'ye bir yaklaşım)."""
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256((canonical + salt).encode("utf-8")).hexdigest()
 
@@ -411,6 +418,52 @@ class ForensicReplayEngine:
         expected_decision = "allow" if context_trust >= min_required_trust else "require_approval"
         is_consistent = (expected_decision == event.decision)
         return (is_consistent, f"Beklenen: {expected_decision}, Kaydedilen: {event.decision}")
+
+
+class AuditOutbox:
+    """Üretici başına giden kutusu: üretimde append(), durum değişikliğiyle aynı transaction içinde çalışır."""
+
+    def __init__(self, producer_id: str):
+        self.producer_id = producer_id
+        self.seq = 0
+        self.pending: List[AuditDecisionEvent] = []
+
+    def append(self, **fields) -> AuditDecisionEvent:
+        self.seq += 1
+        event = AuditDecisionEvent(producer_id=self.producer_id, seq=self.seq, **fields)
+        self.pending.append(event)   # ayrı bir iletici bunları yeniden denemelerle denetim deposuna taşır
+        return event
+
+def find_gaps(received_seqs: List[int]) -> List[int]:
+    """Alınan en küçük ve en büyük sıra numarası arasında eksik olanlar."""
+    expected = set(range(min(received_seqs), max(received_seqs) + 1))
+    return sorted(expected - set(received_seqs))
+
+
+# 7.1'deki tool_decision olayıyla gösterim
+params = {"to": "ayse@example.com", "case_id": 8812}
+outbox = AuditOutbox("executor-3")
+event = outbox.append(
+    event_id="01J-demo", trace_id="4f2c", model_version="support-7b@a1b2c3",
+    policy_version="2026-10-29.3", prompt_hash="9e1d",
+    proposed_tool="send_email",
+    params_hash=ForensicReplayEngine.hash_canonical_json(params),
+    decision="require_approval",
+)
+engine = ForensicReplayEngine({"send_email.min_trust": 3})
+print("replay, context trust 0 :", engine.replay_decision(event, params, context_trust=0))
+print("replay, edited params   :", engine.replay_decision(event, dict(params, to="x@outside.example"), context_trust=0))
+
+# Denetim deposunun executor-3'ten aldıkları üzerinde boşluk tespiti
+print("eksik sıra numaraları    :", find_gaps([884210, 884211, 884213, 884216]))
+```
+
+Konsol çıktısı:
+
+```text
+replay, context trust 0 : (True, 'Beklenen: require_approval, Kaydedilen: require_approval')
+replay, edited params   : (False, 'Parametre bütünlük ihlali: Hash eşleşmiyor!')
+eksik sıra numaraları    : [884212, 884214, 884215]
 ```
 
 ### 7.3. AI güvenlik olayı müdahale runbook'u (kesit)

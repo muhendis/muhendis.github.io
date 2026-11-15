@@ -1,6 +1,6 @@
 Kurumsal yapay zekâ asistanının bağımsız bir siber güvenlik firması tarafından gerçekleştirilen sızma testi (penetration test) raporu masaya geldiğinde yönetim şok geçirdi. Raporda kritik dereceli üç temel güvenlik açığı listelenmişti ve bunların hiçbiri modelin kendi ağırlıklarıyla veya eğitim verisiyle ilgili değildi:
 
-1. **Model Sunucusunun Açıkta Olması:** vLLM çıkarım sunucusunun çalıştığı 8000 portuna şirket içi yerel ağdaki (LAN) tüm kullanıcılar doğrudan erişebiliyordu. Mühendislik ekibi sunucuyu `--api-key` bayrağı ile başlatmıştı; bu nedenle standart `/v1/chat/completions` uç noktası yetkisiz isteklere 401 Unauthorized dönüyordu. Ancak vLLM mimarisinde API anahtarı yalnızca belirli yol öneklerini koruduğu için; `/invocations`, `/tokenize`, `/metrics`, `/pause` ve ağırlık güncelleme uç noktaları kimlik doğrulaması olmaksızın herkese yanıt veriyordu.
+1. **Model Sunucusunun Açıkta Olması:** vLLM çıkarım sunucusunun çalıştığı 8000 portuna şirket içi yerel ağdaki (LAN) tüm kullanıcılar doğrudan erişebiliyordu. Mühendislik ekibi sunucuyu `--api-key` bayrağı ile başlatmıştı; bu nedenle standart `/v1/chat/completions` uç noktası yetkisiz isteklere 401 Unauthorized dönüyordu. Ancak vLLM mimarisinde API anahtarı yalnızca belirli yol öneklerini koruduğu için; `/invocations`, `/tokenize`, `/metrics`, `/pause` ve `/update_weights` gibi uç noktalar kimlik doğrulaması olmaksızın herkese yanıt veriyordu.
 2. **Korumasız Yedek (Fallback) Rotası:** AI Gateway üzerinde, kurum içi GPU kümesi aşırı yüklendiğinde gelen trafiği harici bir bulut modeline yönlendiren otomatik bir yük dengeleme (fallback) rotası kurulmuştu. Ancak girdi ve çıktı guardrail filtreleri yalnızca yerel kümeye giden birincil yola bağlanmıştı. Şirket içi sunucular her yüke girdiğinde veya bir saldırgan sunucuyu kasıtlı olarak istek bombardımanına tuttuğunda, tüm trafik güvenlik kontrollerini tamamen atlayarak harici sağlayıcıya korumasız akıyordu.
 3. **Akış Sırasında Sızıntı (Streaming Leakage):** Çıktı guardrail filtresi, token akışı (streaming) yapan uç noktada sonradan denetim (`post_call`) kipinde çalışıyordu. Model, başka bir müşterinin T.C. kimlik numarasını ve telefonunu içeren bir yanıt ürettiğinde guardrail ihlali tespit etti; ancak tespit anında metin kullanıcının tarayıcısına token token çoktan aktarılmıştı.
 
@@ -8,28 +8,28 @@ Kurumsal yapay zekâ asistanının bağımsız bir siber güvenlik firması tara
 
 Sunum katmanının (serving layer) varlık sebebi tam olarak budur: Her çıkarım isteğinin, her alternatif rotada, her sistem arızasında tavizsiz biçimde aynı güvenlik süzgeçlerinden geçmesini sağlamak ve gateway arkasındaki donanım ve yazılım bileşenlerine doğrudan erişimi imkânsız kılmak.
 
-Bu rehberde, bir Principal AI Security Architect perspektifiyle kurumsal AI sunum altyapısını tahkim ediyoruz. Model sunucularını (vLLM) ve AI Gateway (LiteLLM) katmanını donanım seviyesinden ağ sınırına kadar izole ediyoruz. **NVIDIA H100 Confidential Computing**, SPDM (Security Protocol and Data Model) cihaz doğrulaması ve CPU TEE ile GPU VRAM arasındaki **PCIe IDE (Integrity and Data Encryption)** şifreleme mimarisini inceliyoruz. vLLM'in PagedAttention / Radix tree ortak önek önbelleğindeki (prefix cache) çok kiracılı zehirleme ve veri sızıntısı risklerini çözüyoruz. Akış gecikmesi (TTFT) ile sızıntı penceresi arasındaki gerilimi **Spekülatif Geri Çekme (Speculative Rollback)** algoritmalarıyla yönetiyor; çıkarım zamanı yan kanal saldırılarına (side-channel token timing) karşı mimari savunmalar geliştiriyoruz.
+Bu rehberde, bir Principal AI Security Architect perspektifiyle kurumsal AI sunum altyapısını tahkim ediyoruz. Model sunucularını (vLLM) ve AI Gateway (LiteLLM) katmanını donanım seviyesinden ağ sınırına kadar izole ediyoruz. **NVIDIA H100 Confidential Computing** mimarisini inceliyoruz: SPDM (Security Protocol and Data Model) ile cihaz kanıtlaması, CPU TEE ile GPU arasındaki şifreli aktarım ve **PCIe IDE (Integrity and Data Encryption)** standardının bu resimdeki yeri. vLLM'in önek önbelleğinin (prefix cache) kiracılar arasında açtığı zamanlama yan kanalını kiracı başına önbellek tuzuyla kapatıyoruz. Akış gecikmesi (TTFT) ile sızıntı penceresi arasındaki gerilimi bir bekletme penceresi ve **spekülatif geri çekme** (speculative rollback) ile yönetiyor; çıkarım zamanının belgelenmiş yan kanallarını ele alıyoruz.
 
 > **Önceki bölümden devraldığımız temel:** [Altıncı bölüm](post.html?slug=katmanli-guardrails), tespit katmanlarını kurdu ve hata davranışına işlem bazında karar verdi. [Sekizinci bölüm](post.html?slug=ajanlarda-en-az-yetki), yürütücüyü harici yan etkilere giden tek kapı yaptı. Şimdi gateway bileşenini model çıkarımına giden tek meşru kapı hâline getiriyoruz.
 
 > **Bu yazının sonunda**
 >
 > - Gateway, güvenlik servisi ve model sunucusu arasındaki mimari güven sınırlarını ve sorumluluk matrisini kurabileceksiniz.
-> - NVIDIA H100 TEE, SPDM firmware doğrulaması ve PCIe IDE şifrelemesi ile model ağırlıklarını ve KV cache'i fiziksel hat dinlemelerine karşı koruyabileceksiniz.
+> - GPU gizli bilişiminin neyi koruduğunu (kanıtlama, SPDM, şifreli aktarım), neyi korumadığını ve PCIe IDE'nin nereye oturduğunu açıklayabileceksiniz.
 > - vLLM sunucusunun API anahtarı arkasında kalmayan açık uç noktalarını ağ politikaları ve ters vekillerle izole edebileceksiniz.
-> - PagedAttention ortak önek önbelleğini kiracılar arası sızıntıya karşı kriptografik tuzlama ($K_{\text{tenant}}$) ile bölütleyebileceksiniz.
-> - Akış (streaming) guardrail'lerinde gecikme eklemeden spekülatif geri çekme (speculative rollback) tamponları uygulayabileceksiniz.
+> - Kiracılar arasındaki önek önbelleği zamanlama kanalını, gateway'in koyduğu kiracı başına `cache_salt` ile kapatabileceksiniz.
+> - Akış (streaming) uç noktalarında, TTFT'ye bilinen küçük bir bedelle yapılandırılmış PII'ı ekrana düşmeden yakalayan bekletme tamponları uygulayabileceksiniz.
 
 **Bu yazıda**
 
 - [1. Üç bileşen, üç sorumluluk: Gateway, güvenlik servisi ve model sunucusu](#1-üç-bileşen-üç-sorumluluk-gateway-güvenlik-servisi-ve-model-sunucusu)
 - [2. Donanım güvenliği ve Confidential AI: H100 TEE, SPDM ve PCIe IDE](#2-donanım-güvenliği-ve-confidential-ai-h100-tee-spdm-ve-pcie-ide)
   - [2.1. Donanım güven kökü ve SPDM firmware doğrulaması](#21-donanım-güven-kökü-ve-spdm-firmware-doğrulaması)
-  - [2.2. PCIe IDE veri ve bütünlük şifrelemesi ile KV cache koruması](#22-pcie-ide-veri-ve-bütünlük-şifrelemesi-ile-kv-cache-koruması)
+  - [2.2. PCIe veriyolunda şifreli aktarım ve korunmayan yerler](#22-pcie-veriyolunda-şifreli-aktarım-ve-korunmayan-yerler)
 - [3. Sağlayıcıdan bağımsız referans mimari: vLLM önünde LiteLLM](#3-sağlayıcıdan-bağımsız-referans-mimari-vllm-önünde-litellm)
 - [4. Ağ, kimlik, sırlar ve model sunucusu uç nokta envanteri](#4-ağ-kimlik-sırlar-ve-model-sunucusu-uç-nokta-envanteri)
   - [4.1. Bir API anahtarının kapsamadıkları: vLLM saldırı yüzeyi](#41-bir-api-anahtarının-kapsamadıkları-vllm-saldırı-yüzeyi)
-  - [4.2. PagedAttention / Radix tree ortak önek önbelleği zehirlemesi](#42-pagedattention-radix-tree-ortak-önek-önbelleği-zehirlemesi)
+  - [4.2. Çok kiracılı önek önbelleği: zamanlama sızıntısı ve önbellek tuzu](#42-çok-kiracılı-önek-önbelleği-zamanlama-sızıntısı-ve-önbellek-tuzu)
 - [5. Akış güvenliği (streaming guardrails): Gecikme bütçesi ve spekülatif geri çekme](#5-akış-güvenliği-streaming-guardrails-gecikme-bütçesi-ve-spekülatif-geri-çekme)
   - [5.1. Akışın gecikme ve sızıntı penceresi ikilemi](#51-akışın-gecikme-ve-sızıntı-penceresi-ikilemi)
   - [5.2. Kayan pencere tamponlaması ve spekülatif iptal algoritması](#52-kayan-pencere-tamponlaması-ve-spekülatif-iptal-algoritması)
@@ -143,36 +143,26 @@ Kurumsal bir AI sunum platformu da tam olarak bu üçlü sorumluluk ayrımına d
 
 ### 2.1. Donanım güven kökü ve SPDM firmware doğrulaması
 
-Geleneksel bulut sunucularında, hypervisor'e veya ana makine işletim sistemine (host OS) root seviyesinde erişen kötü niyetli bir yönetici veya saldırgan; GPU belleğindeki (VRAM) model ağırlıklarını, kullanıcı prompt'larını ve KV cache bloklarını doğrudan bellek dökümü (memory dump) alarak çalabilir.
+Geleneksel bir bulut kurulumunda hypervisor'ü ya da ana makine işletim sistemini kontrol eden kişi, bir misafirin GPU'suna gönderdiği her şeyi okuyabilir: model ağırlıkları, gelen prompt'lar ve KV cache içeriği, ana makinenin inceleyebildiği bellekten geçer.
 
-Bu tehdit, modern yapay zekâ altyapılarında **Confidential Computing (Gizli Bilişim / Confidential AI)** donanım mimarileriyle çözülür. NVIDIA H100/H200/B200 GPU'ları, CPU tabanlı Güvenilir Yürütme Ortamları (AMD SEV-SNP veya Intel TDX) ile entegre çalışabilen donanımsal TEE yeteneklerine sahiptir:
+**Confidential computing** (gizli bilişim), ana makineyi güvenilen tabandan çıkarır. İş yükü gizli bir sanal makinede (CPU TEE: AMD SEV-SNP ya da Intel TDX) çalışır; H100 kuşağından itibaren NVIDIA GPU'ları da bu TEE'yi hızlandırıcıya uzatan gizli bir kipe alınabilir. Tasarımı iki mekanizma taşır:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│            Confidential AI: Donanım Güven Kökü Mimarisi                │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. SPDM Doğrulaması (Security Protocol and Data Model):                │
-│    Host CPU TEE ──(SPDM Attestation Request)──> NVIDIA H100 GPU       │
-│    GPU, donanım kök anahtarıyla imzalı Device Attestation Token döner. │
-│    Model ağırlıkları SADECE GPU firmware hash'i onaylandığında yüklenir│
-│                                                                        │
-│ 2. PCIe IDE Şifreleme (PCIe Integrity and Data Encryption):            │
-│    Host RAM (Şifreli TEE) ◄──[AES-GCM-256 Tel Hızı]──► GPU VRAM (TEE) │
-│    Fiziksel PCIe veriyoluna bus-interposer/sniffer takılsa dahi        │
-│    hiçbir ağırlık veya KV önbellek düz metin olarak okunamaz!          │
-└────────────────────────────────────────────────────────────────────────┘
-```
+1. **Kanıtlama (attestation).** GPU'da bir donanım güven kökü ve NVIDIA sertifika otoritesine zincirlenen bir cihaz kimlik sertifikası bulunur. İstendiğinde firmware'inin ve yapılandırmasının imzalı ölçümlerini, yani *kanıtlama raporunu* üretir. Rapor, NVIDIA Remote Attestation Service (NRAS) üzerinden ya da dış ağa kapalı ortamlarda yerel olarak referans değerlerle karşılaştırılır.
+2. **SPDM oturumu.** Gizli sanal makinenin *içindeki* GPU sürücüsü, GPU ile SPDM (Security Protocol and Data Model; cihaz kimlik doğrulaması ve anahtar değişimi için DMTF standardı) üzerinden güvenli bir oturum açar ve veriyolundan geçecek her şeyin anahtarlarını türetir.
 
-Sistem başlatılırken **SPDM (Security Protocol and Data Model)** protokolü çalıştırılır:
-1. Ana makine CPU TEE ortamı, H100 GPU'ya bir kanıtlama (attestation) meydan okuması gönderir.
-2. GPU, dökümhane (foundry) seviyesinde gömülü donanımsal kök sertifikasıyla imzalanmış firmware ölçüm hash'ini döner.
-3. Model ağırlıklarını taşıyan anahtarlar, ancak ve ancak GPU firmware'inin tahrif edilmediği kriptografik olarak kanıtlandığında GPU'ya çözülerek aktarılır.
+Bir kurulum için asıl önemli kontrol **kanıtlamaya bağlı anahtar teslimidir**: model ağırlıklarını çözen anahtar, anahtar servisiniz tarafından ancak iki kanıtlama da (CPU TEE ve GPU) doğrulandıktan sonra verilir. Firmware'i kurcalanmış bir düğüm anahtarı hiç alamaz.
 
-### 2.2. PCIe IDE veri ve bütünlük şifrelemesi ile KV cache koruması
+### 2.2. PCIe veriyolunda şifreli aktarım ve korunmayan yerler
 
-CPU ana belleği ile GPU arasındaki en zayıf fiziksel halka PCIe veriyoludur. Fiziksel donanıma erişebilen bir saldırgan, anakart üzerindeki PCIe yuvasına donanımsal bir analiz aygıtı (interposer / bus sniffer) yerleştirerek aktarılan tüm tensörleri dinleyebilir.
+Ana bellek ile GPU arasındaki veriyolu en belirgin dinleme noktasıdır: cihazla paylaşılan bellek hypervisor'e görünür; fiziksel erişimi olan biri de PCIe yuvasına bir ara aygıt (interposer) yerleştirebilir.
 
-H100 mimarisinde **PCIe IDE (Integrity and Data Encryption)** standardı donanımsal olarak devrededir. CPU TEE'den çıkan her bir tensör paketi, PCIe hattına girmeden önce tel hızında (wire-speed) AES-GCM-256 ile şifrelenir ve bütünlük etiketleriyle mühürlenir. GPU'ya ulaşana kadar şifreli kalan veri, ancak H100'ün donanımsal TEE güvenlik sınırının içinde deşifre edilir. Bu sayede ne bulut sağlayıcısı ne de fiziksel veri merkezi personeli bellekteki KV cache veya model ağırlıklarını ele geçiremez.
+H100'de koruma, SPDM oturum anahtarlarıyla sürücü ve GPU tarafından uygulanır. Veri, paylaşılan bellekteki **şifreli bir sıçrama tamponundan** (encrypted bounce buffer) geçer; komut tamponları ve CUDA çekirdekleri veriyoluna çıkmadan önce şifrelenir ve imzalanır. Ana makine de ara aygıt da şifreli metin görür.
+
+Üç sınır tasarımın parçasıdır ve tehdit modelinize yazılmalıdır:
+
+- **GPU belleğinin kendisi şifrelenmez.** NVIDIA'nın kendi anlatımına göre paket üstü HBM, gündelik fiziksel saldırı araçlarına karşı güvenli kabul edilir ve şifrelenmez. Sınır, VRAM üzerindeki bir şifre değil, GPU paketinin kendisidir.
+- **PCIe IDE standarttır, H100'ün mekanizması değildir.** Veriyolunun bağlantı düzeyinde şifrelenmesi PCIe IDE (Integrity and Data Encryption, AES-GCM) olarak standartlaşmıştır; TDISP ise bir TEE'nin bir cihaz arayüzünü nasıl sahiplendiğini tanımlar. Bunların üzerine kurulan platformlar (Intel TDX Connect, AMD SEV-TIO) korumayı sürücüden bağlantıya taşır. Bir satıcı "PCIe IDE" diyorsa, gerçekte hangi CPU, GPU ve firmware kuşağını çalıştırdığınıza bakın.
+- **Gizli kip bir kiracılık sınırı değildir.** Tek bir iş yükünü altındaki altyapıdan korur. Aynı model sunucusu sürecini paylaşan iki kiracı için hiçbir şey yapmaz; o konu 4.2'dedir.
 
 ---
 
@@ -196,12 +186,12 @@ LiteLLM'in sunduğu özel kanca (custom guardrail) mekanizmaları üç farklı y
 model_list:
   - model_name: enterprise-assistant
     litellm_params:
-      model: hosted_vllm/qwen-72b
+      model: hosted_vllm/mistral-7b-instruct-v0.3
       api_base: "https://vllm-node.internal:8443/v1"
       ssl_verify: "/etc/ssl/certs/internal-ca.crt"
   - model_name: enterprise-assistant-fallback
     litellm_params:
-      model: hosted_external/gpt-4o
+      model: openai/gpt-4o
       api_key: "os.environ/SECURE_FALLBACK_KEY"
 
 router_settings:
@@ -216,7 +206,7 @@ guardrails:
   - guardrail_name: streaming-speculative-guard
     litellm_params:
       guardrail: enterprise_security.StreamingSpeculativeGuard
-      mode: post_call
+      mode: post_call          # akışta bu kanca parçaları kendisi tamponlar (5. bölüm)
       default_on: true
 ```
 
@@ -228,9 +218,10 @@ guardrails:
 
 vLLM'in güvenlik belgeleri açık bir mimari uyarıda bulunur: `--api-key` parametresi yalnızca `/v1`, `/v2`, `/inference` ve `/cohere` yol öneklerini korur. API anahtarı arkasında **olmayan** ve yerel ağdan doğrudan çağrılabilen kritik uç noktalar şunlardır:
 
-- **Yetkisiz Çıkarım Yolları:** `/invocations`, `/score`, `/pooling`, `/classify`. Saldırgan API anahtarı olmaksızın modeli bu yollardan çalıştırabilir.
-- **Hizmet Engelleme ve Yönetim Yolları:** `/pause`, `/resume`, `/abort_requests`, `/update_weights`. Saldırgan çıkarımı durdurabilir ya da ağırlıkları sıfırlayabilir.
-- **Dahili Dağıtık Portlar:** PyTorch Distributed veri paralelliği için açılan `:29500` master portu ve Ray / KV-cache transfer portu `:14579`. Bu portlar şifresizdir ve doğrudan kod çalıştırma (RCE) riski taşır.
+- **Yetkisiz Çıkarım Yolları:** `/invocations`, `/pooling`, `/classify`, `/score`, `/rerank`. Saldırgan API anahtarı olmaksızın modeli bu yollardan çalıştırabilir.
+- **Operasyonel Yollar:** `/pause`, `/resume`, `/abort_requests`, `/update_weights` ve diğerleri. Saldırgan çıkarımı durdurabilir, başka kullanıcıların isteklerini iptal edebilir ya da model ağırlıklarını değiştirebilir.
+- **Yardımcı Yollar:** `/metrics`, `/tokenize`, `/detokenize`, `/health`, `/version`. Yük, model kimliği ve tokenizer davranışı sızdırırlar.
+- **Dahili Dağıtık Portlar:** Veri paralelliği ana portu (varsayılan `:29500`) ve KV cache aktarım portu (`--kv-port`, varsayılan `:14579`). vLLM belgeleri düğümler arası bu iletişimi varsayılan olarak güvensiz diye tanımlar: şifresiz ve kimlik doğrulamasızdır, kendi ağına izole edilmelidir. İsteğe bağlı gRPC portunda da kimlik doğrulama ya da şifreleme yoktur.
 
 Çözüm: Model sunucusu private bir alt ağa (`subnet-private-inference`) hapsedilir; Kubernetes `NetworkPolicy` veya bulut güvenlik grupları ile `:8443` portuna yalnızca Gateway pod'unun mTLS sertifikasıyla erişmesine izin verilir. Diğer tüm portlar düğüm dışına tamamen kapatılır.
 
@@ -248,21 +239,31 @@ gateway :443 /v1/*      Uygulama / İstemci    OAuth2 JWT + Hız Sınırı (Rate
 --------------------------------------------------------------------------------
 ```
 
-### 4.2. PagedAttention / Radix tree ortak önek önbelleği zehirlemesi
+### 4.2. Çok kiracılı önek önbelleği: zamanlama sızıntısı ve önbellek tuzu
 
-vLLM, çıkarım gecikmesini ve bellek kullanımını optimize etmek amacıyla sistem prompt'ları ve ortak metin bloklarının anahtar-değer durumlarını (KV cache) bellekte tutan **PagedAttention ve Radix Attention** ortak önek önbelleklemesi (prefix caching) kullanır.
+Ortak prompt öneklerini yeniden hesaplamamak için vLLM'in otomatik önek önbelleği (automatic prefix caching) KV cache bloklarını saklar ve istekler arasında yeniden kullanır. Her blok, kendi token'larının özetinin bir önceki bloğun özetiyle zincirlenmesiyle tanımlanır; dolayısıyla bir istek bir bloğu ancak prompt'u **o blok dahil oraya kadar birebir aynıysa** yeniden kullanır.
 
-Çok kiracılı (multi-tenant) ortamlarda bu önbellek ciddi bir **Çapraz Kiracı Sızıntısı (Cross-Tenant KV Bleed)** ve **Önbellek Zehirlemesi (Prefix Cache Poisoning)** doğurabilir:
-- Eğer Kiracı A'nın prompt öneki ile Kiracı B'nin öneki aynı hash değerine denk gelirse veya hash alanı kiracı bazında ayrıştırılmamışsa; Kiracı B çıkarım yaparken Kiracı A'nın bellekteki gizli KV tensörlerine dikkat (attention) atar!
-- Kötü niyetli bir kiracı, yaygın kullanılan bir sistem talimatının önekini kasıtlı olarak bozarak ortak önbelleği zehirleyebilir.
+Bu bir korkuyu ortadan kaldırır, daha ince bir korkuyu bırakır. Bir isteğe başka bir kiracının *farklı* bağlamı verilemez: isabet aynı token'ları gerektirir; aynı token'lar da aynı KV tensörlerini üretir, yani içerik yeni bir şey açığa vurmaz. Sızan şey **isabetin kendisidir**. Önbellekteki bir önek prefill'i atlar; yanıt ölçülebilir biçimde erken başlar ve ilk token süresi (TTFT) bir kehanet makinesine dönüşür:
 
-Bu açığı bertaraf etmek için Radix ağacı önbellek anahtarları mutlaka kiracıya özel kriptografik tuz (salt) ile özetlenmelidir:
+1. Saldırgan aday bir önek gönderir ve TTFT'yi ölçer.
+2. Hızlı yanıt, başka bir kullanıcının yakın zamanda tam o öneki gönderdiği anlamına gelir.
+3. Tahmini blok blok uzatmak, bir sistem prompt'unu ya da bir başkasının belgesinin başını yeniden kurar.
+
+vLLM bunu bir zamanlama yan kanalı olarak belgeler (CVE-2025-46570) ve yalnızca 8 token'lık bir önekin 0,99 ROC AUC ile ayırt edilebildiğini gösteren araştırmaya atıf yapar.
+
+Önlem yerleşiktir. Bir istek `cache_salt` taşıyabilir; vLLM bu değeri ilk bloğun özetine karıştırır ve yalnızca aynı tuza sahip istekler önbellekteki önekleri paylaşabilir:
 
 $$
-\text{PrefixKey} = \text{HMAC}_{K_{\text{tenant}}}(\text{model\_id} \parallel \text{tokens}_{1:L})
+h_1 = H(\text{cache\_salt} \parallel \text{tokens}_{\text{blok }1}), \qquad h_i = H(h_{i-1} \parallel \text{tokens}_{\text{blok }i})
 $$
 
-Böylece iki kiracının sistem prompt'ları harfi harfine aynı olsa dahi, farklı GPU bellek sayfalarına haritalanır; kiracılar arası önbellek sızıntısı matematiksel olarak imkânsız hâle gelir.
+Bunu ipucu olmaktan çıkarıp kontrole çeviren üç kural vardır:
+
+- **Tuzu istemci değil gateway koyar.** Kiracı başına, doğrulanmış kimlikten türetilir; örneğin $\text{cache\_salt} = \text{HMAC}_{K}(\text{tenant\_id})$. İstemcinin gönderdiği değerin üzerine yazılır.
+- **Tuzlar gizlidir ve rastgele görünür** (256 bit); tahmin edilebilir kiracı kimlikleri değildir.
+- **Tuz bir izolasyon sınırı değildir.** vLLM'in kendi yönergesi, aynı sunucu sürecini paylaşan kiracıları izole etmediğidir; birbirini hiçbir biçimde etkilememesi gereken kiracılar için kiracı başına ayrı örnek çalıştırın.
+
+Bedeli önbellek verimidir: birebir aynı sistem prompt'u artık toplamda bir kez değil, kiracı başına bir kez hesaplanır.
 
 ---
 
@@ -277,7 +278,7 @@ Son kullanıcı uygulamalarında ilk token gecikmesi (TTFT - Time-to-First-Token
 Modelin üretim hızı saniyede $v$ karakter ve geride tutulan pencere boyutu $W$ karakter olduğunda; istemciye yansıyan ilk gecikme artışı ($\Delta t$) ve ihlalin kullanıcıya gösterilmeden yakalanma şartı şudur:
 
 $$
-\Delta t = \frac{W}{v_{\text{gen}}}, \qquad \text{gösterilmeden yakalanır} \iff s \le W
+\Delta t = \frac{W}{v}, \qquad \text{gösterilmeden yakalanır} \iff s \le W
 $$
 
 Burada $s$, bir dedektörün ihlali tespit etmesi için ihtiyaç duyduğu karakter sayısıdır ($s_{\text{TCKN}} = 11$, $s_{\text{IBAN}} \approx 26$, $s_{\text{API\_KEY}} \approx 40$).
@@ -334,26 +335,26 @@ W = 200 karakter (Cümle düzeyinde prompt injection ve hakaret):
 <text x="28" y="332" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Kayan pencere (holdback window), hassas veriyi kullanıcı ekranına düşmeden önce yakalayıp spekülatif akışı iptal etmek (SPECULATIVE_REVOKE) için gereken en düşük gecikme maliyetidir.</text>
 </svg>
 
+Yakalama koşulu iki yönlü çalışır: pencereden uzun bir ihlal ya da ancak daha fazla bağlamla tanınabilen bir ihlal (cümle düzeyinde bir politika ihlali), yakalanmadan önce kısmen ekrana düşer. $W$'yi dedektörün eşleştirmesi gereken en uzun örüntüye göre boyutlandırın; akış üzerindeki anlamsal denetimleri ise elden gelenin en iyisi sayın.
+
 ### 5.2. Kayan pencere tamponlaması ve spekülatif iptal algoritması
 
 En gelişmiş mimari çözüm, Server-Sent Events (SSE) protokolü üzerinde çalışan **Spekülatif Geri Çekme (Speculative Rollback)** algoritmasıdır:
 1. Gateway, modelden gelen token'ları $W = 64$ karakterlik bir kayan pencerede tutar.
 2. Pencere boyutu aşıldıkça, pencerenin arkasında kalan güvenli metin istemciye `TOKEN` olayı olarak akıtılır.
-3. Tampon içindeki metinde bir ihlal (PII, enjeksiyon) yakalandığı anda; gateway akışı keser ve SSE hattına anında bir `SPECULATIVE_REVOKE` olayı fırlatır.
-4. İstemci kütüphanesi bu olayı aldığında, henüz onaylanmamış spekülatif tamponu kullanıcının ekranından siler ve yerine *"Güvenlik kuralı nedeniyle yanıt sonlandırıldı"* uyarısını yerleştirir.
+3. Tampon içindeki metinde bir ihlal (PII, enjeksiyon) yakalandığı anda gateway üretimi keser, **gateway'den hiç çıkmamış olan bekletilen metni atar** ve SSE hattına bir `SPECULATIVE_REVOKE` olayı gönderir.
+4. İstemci bu olayı aldığında, ekrandaki yarım yanıtın yerine *"Güvenlik kuralı nedeniyle yanıt sonlandırıldı"* uyarısını koyar. O metin denetimden geçmişti; ama bekletilen bir tanımlayıcının hemen öncesinde kesilen bir cümle başlı başına bir ipucudur, bu yüzden o da geri çekilir. "Geri çekme" ekrana aittir; hassas hiçbir şey gönderilmemiştir.
 
 ---
 
 ## 6. Çıkarım zamanı yan kanal saldırıları (side-channel attacks)
 
-Ağ trafiğinin TLS ile şifrelenmiş olması, çıkarım sürecinin tamamen gizli olduğunu garanti etmez. Saldırganlar ağ paketlerinin zamanlama ve boyut profillerini inceleyerek **Yan Kanal Saldırıları (Side-Channel Attacks)** gerçekleştirebilirler:
+TLS bir yanıtın içeriğini gizler. *Biçimini* gizlemez: her paketin ne kadar büyük olduğunu ve ne zaman geldiğini. Bir sunum katmanı için belgelenmiş iki kanal önemlidir:
 
-- **Token Zamanlama Yan Kanalı (Token-Timing Side Channel):** Ardışık iki token arasındaki üretim süresi ($\Delta t_{\text{inter}}(k) = t_{k+1} - t_k$) modelin o anki güven katsayısıyla ve dikkat entropisiyle doğrudan ilişkilidir:
-  $$\Delta t_{\text{inter}}(k) = t_{k+1} - t_k, \qquad \text{Var}(\Delta t_{\text{inter}}) \propto H(P(y_{k+1} \mid y_{\le k}))$$
-  Karışım Uzmanları (MoE - Mixture of Experts) modellerinde farklı uzman katmanlarına yapılan yönlendirmeler belirgin gecikme imzaları yaratır. Saldırgan yalnızca token geliş aralıklarını ölçerek modelin hangi gizli konulardan bahsettiğini yüksek doğrulukla tahmin edebilir.
-- **PagedAttention Bellek Tahsis Deseni:** Çok kiracılı GPU sunucularında yeni bellek sayfalarının tahsis edilme sıklığı, kurbanın ürettiği metin uzunluğunu ve konuşma turu sayısını ağ dinleyicisine sızdırır.
+- **Token uzunluğu kanalı.** Her token kendi olayında akıtıldığında, şifreli her paketin boyutu o token'ın uzunluğunu açığa vurur. Weiss ve ark. (USENIX Security 2024) tam olarak bu uzunluk dizisini kullanarak şifreli trafikten asistan yanıtlarının büyük bölümünü yeniden kurdu. Sonraki çalışmalar, yalnızca paket boyutlarının ve zamanlamalarının bir konuşmanın *konusunu* sınıflandırmaya yettiğini gösterdi.
+- **Önbellek zamanlaması kanalı.** 4.2'deki önek önbelleği kehaneti: hızlı gelen ilk token, saldırgana başka birinin aynı öneki gönderdiğini söyler.
 
-Savunma: AI Gateway katmanında token çıkışlarına mikro-gecikmeler (jitter / token padding) eklenerek inter-token varansı yapay olarak düzleştirilir.
+Önlemler ucuzdur ve gateway'de durur: akıtılan her olayı sabit ya da rastgele bir boyuta doldurun (padding) ve olay başına tek token yerine birkaç token'ı birlikte gönderin. İkisi de uzunluk dizisini bulanıklaştırır. Önbellek zamanlamasına karşı kontrol, kiracı başına `cache_salt`'tır; rastgele gecikmeler yalnızca saldırganın ortalamayla silebileceği bir gürültü ekler.
 
 ---
 
@@ -382,7 +383,7 @@ Bu 500 istek rastgele dağılmaz; tam da birincil sunucunun saldırı altında o
 
 Bir model sunucusunun kullanılabilirliği ve maliyet bütünlüğü birincil varlıktır. Klasik web uygulamalarında IP başına istek sayısı yeterli bir metrik iken; AI sistemlerinde bir istek başka bir isteğin 1.000 katı GPU kaynağı tüketebilir. Bu nedenle kotalar **token ve maliyet** cinsinden tanımlanır:
 
-| Kota Türü | Uygulama Kapsamı | Tipik Kurumsal Değer |
+| Kota Türü | Uygulama Kapsamı | Örnek Değer |
 | :--- | :--- | :--- |
 | **İstek Sayısı** | İstemci / API Key başına | 60 istek / dakika |
 | **Token Hacmi** | Kullanıcı oturumu başına | 40.000 girdi+çıktı token / dakika |
@@ -390,7 +391,7 @@ Bir model sunucusunun kullanılabilirliği ve maliyet bütünlüğü birincil va
 | **Finansal Bütçe Tavanı** | Departman / Proje başına | Günlük belirlenen limit; %80'de alarm, %100'de blokaj |
 | **Eşzamanlı Akış Sayısı** | Kullanıcı başına | Maksimum 3 aktif soket |
 
-Bu sınırlar, saldırganın deneme-yanılma (brute-force prompt injection) kapasitesini matematiksel bir tavana hapseder.
+Bu kotalar, Bölüm 5'teki $1 - (1-p)^n$ ifadesinde $n$ üssü üzerindeki deterministik kontroldür: saldırganın dakikada kaç deneme yapabileceğine tavan koyarlar.
 
 ---
 
@@ -409,13 +410,13 @@ Aşağıdaki kabul testleri, altyapıdaki hiçbir bileşenin güvenlik kontrolle
 | **S-5** | Akışta Spekülatif İptal | 300. karakterinde sahte TCKN bulunan yanıtı akıt | TCKN kullanıcıya gösterilmeden akış kesilir; `REVOKE` üretilir |
 | **S-6** | İstemci Tarafı Markdown Koruması| Model çıktısında `![exfil](https://attacker.com/leak)` gönder | UI görselleri ve linkleri render etmez; salt metin kalır |
 | **S-7** | Guardrail Zaman Aşımı | Güvenlik servisini yanıt vermez hâle getir | Yüksek riskli istekler derhal 503 ile reddedilir (Fail-Closed) |
-| **S-8** | Önbellek İzolasyonu (Radix) | İki farklı kiracı kimliğiyle birebir aynı prompt önekini sorgula | Radix cache hit olmaz; iki ayrı GPU sayfası tahsis edilir |
+| **S-8** | Önek Önbelleği İzolasyonu | Birebir aynı prompt önekini iki kiracı kimliğiyle gönder; istemcinin seçtiği bir `cache_salt` gönder | Kiracılar arasında önbellek isabeti olmaz (isabet sayacı değişmez, TTFT kısalmaz); gateway istemcinin tuzunun üzerine yazar |
 | **S-9** | Token ve Maliyet Sınırı | Belirlenen dakika/token bütçesini kasıtlı olarak aş | 429 Too Many Requests anlaşılır JSON ile döner |
 | **S-10**| Statik Gizli Anahtar Taraması| Dağıtım imajlarında ve konfigürasyonlarda API anahtarı ara | CI/CD tarayıcısı sır yöneticisi dışında 0 anahtar bulur |
 
 ### 9.2. Üretim tipi Python sunum güvenlik motoru
 
-Aşağıdaki çalıştırılabilir Python betiği; kiracı izolasyonlu Radix tree önbellek yöneticisini ve spekülatif geri çekme (speculative rollback) yeteneğine sahip kayan pencereli akış guardrail'ini modeller:
+Aşağıdaki çalıştırılabilir Python betiği; bir önek önbelleğinin kiracı başına tuzlanmasını ve bekletme pencereli bir akış guardrail'ini simüle eder:
 
 ```python
 import hmac
@@ -426,15 +427,19 @@ from typing import List, Dict, Any, Generator, Tuple
 class TenantPrefixCacheManager:
     def __init__(self, secret_key: bytes):
         self.secret_key = secret_key
-        self.radix_cache: Dict[str, str] = {}
+        self.block_cache: Dict[str, str] = {}
+
+    def cache_salt(self, tenant_id: str) -> str:
+        # Tuzu gateway doğrulanmış kiracıdan türetir; istemci asla seçmez
+        return hmac.new(self.secret_key, tenant_id.encode(), hashlib.sha256).hexdigest()
 
     def get_or_set_prefix(self, tenant_id: str, model_id: str, tokens: List[int], kv_pointer: str) -> Tuple[bool, str]:
-        # Kiracı bazlı izole HMAC anahtarı türet
-        payload = f"{tenant_id}:{model_id}:{tokens}".encode()
-        cache_key = hmac.new(self.secret_key, payload, hashlib.sha256).hexdigest()
-        if cache_key in self.radix_cache:
-            return True, self.radix_cache[cache_key]
-        self.radix_cache[cache_key] = kv_pointer
+        # vLLM'in ilk blok özeti gibi: tuz, önbellekteki önekin anahtarına karışır
+        payload = f"{self.cache_salt(tenant_id)}:{model_id}:{tokens}".encode()
+        cache_key = hashlib.sha256(payload).hexdigest()
+        if cache_key in self.block_cache:
+            return True, self.block_cache[cache_key]
+        self.block_cache[cache_key] = kv_pointer
         return False, kv_pointer
 
 class SpeculativeStreamingGuardrail:
@@ -463,12 +468,15 @@ class SpeculativeStreamingGuardrail:
 # Test ve Doğrulama
 cache_mgr = TenantPrefixCacheManager(b"kv-master-salt-key-32b")
 tokens = [1, 512, 1024, 2048]
-hit_a, ptr_a = cache_mgr.get_or_set_prefix("tenant-alpha", "llama-3-70b", tokens, "gpu-page-0x1A")
-hit_b, ptr_b = cache_mgr.get_or_set_prefix("tenant-beta", "llama-3-70b", tokens, "gpu-page-0x9F")
+MODEL = "mistral-7b-instruct-v0.3"
+hit_a, ptr_a = cache_mgr.get_or_set_prefix("tenant-alpha", MODEL, tokens, "kv-block-0x1A")
+hit_b, ptr_b = cache_mgr.get_or_set_prefix("tenant-beta", MODEL, tokens, "kv-block-0x9F")
+hit_a2, ptr_a2 = cache_mgr.get_or_set_prefix("tenant-alpha", MODEL, tokens, "kv-block-0x2C")
 
 print("--- 1. Multi-Tenant Prefix Cache Isolation ---")
-print(f"Tenant-A cache hit: {hit_a} (Pointer: {ptr_a})")
-print(f"Tenant-B cache hit with same prefix tokens: {hit_b} (Pointer: {ptr_b})")
+print(f"Tenant-A first request, cache hit: {hit_a} (Block: {ptr_a})")
+print(f"Tenant-B same prefix tokens, cache hit: {hit_b} (Block: {ptr_b})")
+print(f"Tenant-A same prefix again, cache hit: {hit_a2} (Block: {ptr_a2})")
 
 guard = SpeculativeStreamingGuardrail(window_chars=16)
 incoming_tokens = ["Sayın çalışan, ", "ilgili müşterinin ", "TCKN: 10987654321", " numaralı hesabına iade yapılmıştır."]
@@ -481,8 +489,9 @@ Program çalıştırıldığında üretilen çıktı:
 
 ```text
 --- 1. Multi-Tenant Prefix Cache Isolation ---
-Tenant-A cache hit: False (Pointer: gpu-page-0x1A)
-Tenant-B cache hit with same prefix tokens: False (Pointer: gpu-page-0x9F)
+Tenant-A first request, cache hit: False (Block: kv-block-0x1A)
+Tenant-B same prefix tokens, cache hit: False (Block: kv-block-0x9F)
+Tenant-A same prefix again, cache hit: True (Block: kv-block-0x1A)
 
 --- 2. Speculative Streaming Guardrail ---
 Event: TOKEN_EMIT -> Sayın çalışan, il
@@ -497,17 +506,17 @@ Event: SPECULATIVE_REVOKE -> Hassas veri deseni tespit edildi
 
 **Soru 1:** vLLM model sunucusunu `--api-key` bayrağı ile çalıştırmak sunucunun tüm HTTP ve RPC yollarını tam olarak korumak için neden yeterli değildir?
 - A) API anahtarları yalnızca tek kullanımlık olduğu için.
-- B) API anahtarı vLLM mimarisinde yalnızca `/v1`, `/v2` gibi çıkarım öneklerini korur; `/invocations`, `/tokenize`, `/pause` ve dağıtık iç haberleşme portlarını korumaz.
+- B) `--api-key` yalnızca `/v1`, `/v2`, `/inference` ve `/cohere` öneklerini korur; `/invocations`, `/tokenize`, `/pause` gibi yolları ve düğümler arası portları korumaz.
 - C) vLLM açık kaynak kodlu olduğu için API anahtarlarını şifreleyemez.
 - D) vLLM yalnızca UDP trafiğini şifreleyebilir.
 *(Doğru Cevap: B. Belgelerde açıklandığı üzere API anahtarı yönetimsel ve yardımcı yolları kapsamaz; ters vekil ve ağ politikası zorunludur.)*
 
-**Soru 2:** NVIDIA H100 Confidential Computing mimarisinde CPU TEE ile GPU VRAM arasındaki PCIe veriyolu trafiğini fiziksel dinlemelere (interposer sniffer) karşı koruyan teknoloji hangisidir?
-- A) SSH Tüneli
-- B) PCIe IDE (Integrity and Data Encryption)
-- C) RSA-4096
-- D) DNSSEC
-*(Doğru Cevap: B. PCIe IDE, tel hızında AES-GCM-256 şifrelemesi yaparak fiziksel hat dinlemelerini engeller.)*
+**Soru 2:** NVIDIA H100 gizli bilişiminde veri, gizli sanal makine ile GPU arasındaki PCIe veriyolundan geçerken nasıl korunur?
+- A) Korunmaz; veriyolu güvenilir kabul edilir.
+- B) Sürücü ve GPU bir SPDM oturumunda anahtar türetir ve veriyi şifreli bir sıçrama tamponundan (bounce buffer) geçirir.
+- C) GPU belleği (HBM) şifrelidir, bu yüzden veriyolunun korunmasına gerek yoktur.
+- D) Hypervisor veriyi misafir adına şifreler.
+*(Doğru Cevap: B. Bağlantı düzeyindeki PCIe IDE, yeni platformların üzerine kurulduğu standarttır; paket üstü HBM'in kendisi şifrelenmez.)*
 
 **Soru 3:** Akış yapan (streaming) bir LLM çıktısında `post_call` guardrail kullanmanın temel yapısal güvenlik zaafiyeti nedir?
 - A) Modelin bellek tüketimini iki katına çıkarması.
@@ -516,25 +525,25 @@ Event: SPECULATIVE_REVOKE -> Hassas veri deseni tespit edildi
 - D) Ağ paketlerinin kaybolmasına yol açması.
 *(Doğru Cevap: B. Akışta post-call yalnızca denetim amaçlıdır; önlemek için spekülatif tamponlama şarttır.)*
 
-**Soru 4:** Çok kiracılı vLLM sunucularında PagedAttention Radix tree ortak önek önbelleklemesi (prefix caching) kiracı bazlı izole edilmezse ne olur?
+**Soru 4:** Çok kiracılı bir vLLM sunucusu önek önbelleğini kiracı başına `cache_salt` olmadan paylaştırırsa hangi risk doğar?
 - A) GPU çekirdekleri aşırı ısınarak kapanır.
-- B) Bir kiracının istemi diğer kiracının önbelleğe alınmış KV tensörlerine dikkat (attention) atarak çapraz veri sızıntısına veya önbellek zehirlenmesine yol açabilir.
+- B) Önbellek isabeti ilk token süresini kısaltır; bir kiracı yanıt sürelerini ölçerek başka bir kiracının prompt öneki hakkındaki tahminlerini sınayabilir.
 - C) Modelin parametre sayısı kendiliğinden azalır.
 - D) LLM yalnızca İngilizce yanıt vermeye başlar.
-*(Doğru Cevap: B. Ortak önekler kiracı tuzuyla izole edilmezse çapraz bellek sızıntısı doğar.)*
+*(Doğru Cevap: B. Önbellek içerik adreslidir, yabancı içerik sunulmaz; sızan şey isabetin zamanlamasıdır, CVE-2025-46570.)*
 
 ### Düşünce deneyi
 
-**Fiziksel PCIe Dinlemesi ve PCIe IDE Koruması:**
+**Gizli kipteki bir GPU'ya karşı PCIe ara aygıtı:**
 Bir siber casusluk grubu, hedef şirketin veritabanı sunucularının barındığı ortak yerleşimli (co-location) veri merkezine sızıyor. Sunucu kabinini açarak H100 GPU kartının takılı olduğu PCIe x16 yuvasına yüksek hızlı bir donanımsal veri kaydedici (PCIe bus analyzer / interposer) yerleştiriyor.
 
-*Soru:* Şirket standart çıkarım yapıyorsa saldırganlar ne elde eder? H100 Confidential Computing ve PCIe IDE aktifse ne elde ederler?
-*Cevap:* Standart çıkarımda CPU ana belleğinden GPU'ya akan tüm model ağırlıkları, kullanıcı prompt'ları ve açık KV cache sayfaları PCIe hattından düz metin tensörler olarak geçer; saldırganlar tüm şirket sırlarını anında kaydeder. PCIe IDE devrede olduğunda ise veriyolundaki tüm baytlar donanımsal AES-GCM-256 ile şifrelenmiştir. Saldırgan yalnızca anlamsız kriptografik gürültü kaydeder; kök anahtar CPU TEE ve GPU donanım silikonunun içinde kilitli olduğundan veriyi deşifre edemez.
+*Soru:* Şirket standart çıkarım yapıyorsa saldırganlar ne elde eder? GPU gizli kipteyse ne elde ederler?
+*Cevap:* Standart çıkarımda CPU ana belleğinden GPU'ya akan tüm model ağırlıkları, kullanıcı prompt'ları ve açık KV cache sayfaları PCIe hattından düz metin tensörler olarak geçer; saldırganlar tüm şirket sırlarını anında kaydeder. Gizli kipte ise veriyolundan geçen yükler, gizli sanal makinenin içindeki sürücü tarafından SPDM oturumundan gelen anahtarlarla şifrelenmiştir; kaydedilen şey şifreli metindir. Ara aygıtın değiştirmediği şey kalan risktir: GPU paketindeki HBM şifrelenmez; paketin kendisini yoklayabilen bir saldırgan bu tasarımın savunduğu alanın dışındadır.
 
 ### Kavramları ayrıştırma
 
-- **mTLS vs PCIe IDE:** mTLS, ağ üzerindeki iki bağımsız yazılım süreci (Gateway pod'u ile vLLM pod'u) arasındaki TCP trafiğini şifreler. PCIe IDE ise anakart üzerindeki CPU çipi ile GPU silikonu arasındaki fiziksel donanım veriyolunu şifreler. Biri ağ dinlemelerini, diğeri fiziksel laboratuvar saldırılarını engeller.
-- **Yalnızca Denetim (Audit-Only) vs Spekülatif Geri Çekme (Speculative Rollback):** Yalnızca denetim, sızıntı gerçekleştikten sonra log tutar. Spekülatif geri çekme ise token'ları kısa bir kayan pencerede askıya alır; ihlal anında ekrana düşmeden istemci tarafındaki tamponu geri çeker.
+- **mTLS vs veriyolu şifrelemesi:** mTLS, iki yazılım uç noktası (gateway ile vLLM pod'u) arasındaki ağ trafiğini şifreler. Veriyolu şifrelemesi ise CPU TEE ile GPU arasındaki veriyi korur: H100'de SPDM anahtarlı şifreli sıçrama tamponlarıyla, yeni platformlarda PCIe IDE ile bağlantının kendisinde. Biri ağ dinlemesine, diğeri düşman bir ana makineye ya da veriyolu sondasına yanıttır.
+- **Yalnızca Denetim (Audit-Only) vs Spekülatif Geri Çekme (Speculative Rollback):** Yalnızca denetim, sızıntı gerçekleştikten sonra log tutar. Spekülatif geri çekme ise token'ları kısa bir kayan pencerede askıya alır; ihlal anında gönderilmemiş metni atar ve istemciye yarım yanıtı geri çekmesini bildirir.
 
 ### Okuyucu artık hangi sorulara kendi başına yanıt verebilir?
 
@@ -550,9 +559,9 @@ Bir siber casusluk grubu, hedef şirketin veritabanı sunucularının barındı�
 
 - Saldırganlar güvenlik kontrollerinin etrafından dolaşabiliyorsa onları aşmak zorunda kalmaz; sunum katmanı her yolu tavizsiz kontrol eder.
 - Gateway doğrular, kotaları uygular ve yönlendirir; model sunucusu yalnızca izole mTLS bağlantısıyla gateway'e yanıt verir.
-- NVIDIA H100 Confidential Computing, SPDM cihaz doğrulaması ve PCIe IDE şifrelemesiyle VRAM tensörlerini donanım seviyesinde mühürler.
-- vLLM API anahtarı yönetim yollarını korumaz; PagedAttention Radix önbelleği kiracılar arası sızıntıyı önlemek için tuzlanmalıdır.
-- Akışta post-call kontroller sızıntıyı durduramaz; spekülatif kayan pencere tamponlaması PII'ı ekrana düşmeden önce iptal eder.
+- GPU gizli bilişimi cihazı kanıtlar, bir SPDM oturumu anahtarlar ve veriyolundan geçeni şifreler; paket üstü HBM şifrelenmez, PCIe IDE ise yeni platformların benimsediği bağlantı düzeyi standarttır.
+- vLLM'in API anahtarı dört öneki kapsar, operasyonel yolları açık bırakır; paylaşılan önek önbelleği zamanlama üzerinden sızdırır, bu yüzden gateway kiracı başına `cache_salt` koyar.
+- Akışta post-call kontroller sızıntıyı durduramaz; bir bekletme penceresi yapılandırılmış PII'ı gateway'den çıkmadan yakalar.
 - Korumasız yedek yollar erişilemezlik anında trafiği savunmasız bırakır; token ve para kotaları hizmet sürekliliğini teminat altına alır.
 
 ---
@@ -562,10 +571,10 @@ Bir siber casusluk grubu, hedef şirketin veritabanı sunucularının barındı�
 - **AI Gateway:** İstemcilerin kimliğini doğrulayan, kotaları ve hız sınırlarını uygulayan, istekleri yönlendiren ve guardrail kancalarını yöneten tek giriş kapısı.
 - **Model Sunucusu:** vLLM gibi büyük dil modellerini optimize tensör motorlarıyla GPU üzerinde çalıştıran çıkarım motoru.
 - **Confidential Computing (Gizli Bilişim):** Verilerin işlenme anında (in-use) donanımsal olarak izole edilmiş Güvenilir Yürütme Ortamlarında (TEE) şifreli tutulması standardı.
-- **PCIe IDE (Integrity and Data Encryption):** CPU TEE ile GPU VRAM arasındaki PCIe hattında tensörleri tel hızında AES-GCM-256 ile şifreleyen donanım protokolü.
+- **PCIe IDE (Integrity and Data Encryption):** Bağlantı düzeyinde şifreleme için PCIe standardı (AES-GCM). TDISP'li platformlar CPU TEE ile cihaz arasındaki trafiği bununla korur; H100 ise aktarımı sürücüde, SPDM oturum anahtarlarıyla şifreler.
 - **SPDM (Security Protocol and Data Model):** Donanım aygıtlarının kimliğini ve firmware bütünlüğünü sertifikalarla kanıtlayan standart güvenlik protokolü.
-- **Radix Tree Prefix Cache:** vLLM'de ortak prompt öneklerinin KV tensörlerini bellekte saklayarak çıkarımı hızlandıran ağaç veri yapısı.
-- **Spekülatif Geri Çekme (Speculative Rollback):** Akış sırasında güvenlik ihlali sezildiğinde istemciye iptal sinyali fırlatarak ekrandaki tamponu silen algoritma.
+- **Önek Önbelleği ve `cache_salt`:** vLLM, birebir aynı prompt önekleri için KV bloklarını zincirli blok özetleriyle tanıyıp yeniden kullanır; ilk özete karışan kiracı başına `cache_salt`, kiracıların birbirinin öneklerini paylaşmasını ve zamanlamasını engeller.
+- **Spekülatif Geri Çekme (Speculative Rollback):** Bekletme penceresinde bir ihlal görüldüğünde gateway'in gönderilmemiş metni atması ve istemciye ekrandaki yarım yanıtı geri çekmesini bildirmesi.
 - **TTFT (Time-to-First-Token):** Kullanıcının isteği göndermesiyle modelin ilk token'ı üretmesi arasında geçen süre.
 - **Yan Kanal Saldırısı (Side-Channel Attack):** Şifreli verinin kendisini kırmak yerine, paket boyutları ve token üretim sürelerindeki zamanlama desenlerinden veri çıkarımı yapılması.
 - **Fail-Closed (Kapalı Başarısız Olma):** Bir güvenlik kontrolü zaman aşımına uğradığında veya çöktüğünde işlemin güvenliği korumak amacıyla reddedilmesi ilkesi.
@@ -576,9 +585,10 @@ Bir siber casusluk grubu, hedef şirketin veritabanı sunucularının barındı�
 
 - Önceki bölüm: [Secure AI by Design (8): AI Ajanlarında En Az Yetki ve Güvenli Araç Kullanımı](post.html?slug=ajanlarda-en-az-yetki)
 - Sonraki bölüm: [Secure AI by Design (10): AI Güvenliğini Ölçmek, Red Teaming ve Türkçe Değerlendirme](post.html?slug=ai-guvenligini-olcmek)
-- NVIDIA, [*Confidential Computing on NVIDIA Hopper Architecture*](https://developer.nvidia.com/blog/confidential-computing-on-nvidia-hopper/) ve [*Hardware-Rooted Trust with SPDM*](https://docs.nvidia.com/confidential-computing/).
+- NVIDIA, [*Confidential Computing on NVIDIA H100 GPUs for Secure and Trustworthy AI*](https://developer.nvidia.com/blog/confidential-computing-on-h100-gpus-for-secure-and-trustworthy-ai/) ve [*Hardware-Rooted Trust with SPDM*](https://docs.nvidia.com/confidential-computing/).
 - vLLM, [*Security Best Practices*](https://docs.vllm.ai/en/latest/usage/security.html) ve [*Automatic Prefix Caching Architecture*](https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html).
 - LiteLLM, [*Custom Guardrail Implementation and Streaming Hooks*](https://docs.litellm.ai/docs/proxy/guardrails/custom_guardrail).
 - OWASP, [*API Security Top 10 (2023)*](https://owasp.github.io/www-project-api-security/) (API4, API9) ve [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) (LLM06, LLM10).
+- R. Weiss ve ark., [*What Was Your Prompt? A Remote Keylogging Attack on AI Assistants*](https://arxiv.org/abs/2403.09751) (USENIX Security 2024).
 - OWASP, [*AISVS 1.0*](https://owasp.github.io/www-project-artificial-intelligence-security-verification-standard-aisvs-docs/), C4 (Altyapı ve Dağıtım Güvenliği).
 - Bu blogdan: Çıkarım motoru optimizasyonları için [vLLM derinlemesine mimarisi](post.html?slug=vllm-derinlemesine) ve [LLM maliyet ve gecikme optimizasyonu](post.html?slug=llm-maliyet-ve-gecikme-optimizasyonu).

@@ -36,7 +36,7 @@ Bu yazı *Secure AI by Design* serisinin kurucu ilk bölümüdür. İşe filtrel
 
 ## 1. Ortak örnek: Bir destek asistanının anatomisi ve altı güven bölgesi
 
-Bir güvenlik konuşması ancak tahtada mimari güven sınırları çizildiğinde somutlaşır. Bu yüzden herhangi bir ilkeden önce, on iki yazı boyunca savunacağımız destek asistanı mimarisini kurumsal güvenlik standartlarına (NIST AI 600-1 ve Google SAIF) uygun olarak altı ayrı **güven bölgesine** (*trust zones*) ayıralım.
+Bir güvenlik konuşması ancak tahtada mimari güven sınırları çizildiğinde somutlaşır. Bu yüzden herhangi bir ilkeden önce, on iki yazı boyunca savunacağımız destek asistanı mimarisini altı ayrı **güven bölgesine** (*trust zones*) ayıralım. Altı bölgeli bu ayrım serinin kendi çalışma modelidir; NIST AI 600-1 de Google SAIF de böyle bir bölümleme dayatmaz, ama model ikisiyle yan yana rahatça durabilecek biçimde kurulmuştur.
 
 Bir müşteri temsilcisi sohbet penceresini açıp şunu yazıyor: *"4711 numaralı müşterinin son şikâyetini özetle ve bir yanıt taslağı hazırla."* Bu istek sırasıyla altı güven bölgesinden geçer:
 
@@ -165,7 +165,7 @@ Bir yapay zekâ sisteminde de aynı dört varlık sınıfı mevcuttur ve mimarin
 
 Bu tabloda iki satır bir güvenlik mimarının radarında en üstte durmalıdır:
 
-**İşlem yetkisi**, klasik makine öğrenimi modellerinde bulunmayan bir varlıktır. Geleneksel bir churn tahmin modeli yalnızca bir olasılık skoru ($[0, 1]$) üretir; tek başına hiçbir veritabanını silemez, hiçbir para transferi başlatamaz. Araç kullanan bir ajan ise yetkisini birinden *ödünç alır*: oturum açmış kullanıcıdan, bir servis hesabından ya da ikisinden birden. OWASP'nin kurumsal LLM Uygulamaları Top 10 listesi *Excessive Agency* (aşırı özerklik/yetki) maddesini ilk üç arasına boşuna yerleştirmedi. OWASP Ajan Güvenliği (Agentic Security) listesi de *Agent Goal Hijack* (ASI01) ile açılır: Bir yapay zekâ sistemi işlem yetkisine kavuştuğu anda, manipüle edilmiş bir token dizisi artık yalnızca bir metin kalitesi kusuru değil, doğrudan fiziksel ve finansal bir ihlaldir.
+**İşlem yetkisi**, klasik makine öğrenimi modellerinde bulunmayan bir varlıktır. Geleneksel bir churn tahmin modeli yalnızca bir olasılık skoru ($[0, 1]$) üretir; tek başına hiçbir veritabanını silemez, hiçbir para transferi başlatamaz. Araç kullanan bir ajan ise yetkisini birinden *ödünç alır*: oturum açmış kullanıcıdan, bir servis hesabından ya da ikisinden birden. OWASP'nin LLM Uygulamaları Top 10 listesi, 2026 sürümünde *Excessive Agency* (aşırı özerklik/yetki) maddesini LLM03 olarak sıralar. OWASP Ajan Güvenliği (Agentic Security) listesi de *Agent Goal Hijack* (ASI01) ile açılır: Bir yapay zekâ sistemi işlem yetkisine kavuştuğu anda, manipüle edilmiş bir token dizisi artık yalnızca bir metin kalitesi kusuru değil, doğrudan fiziksel ve finansal bir ihlaldir.
 
 **Hizmet sürekliliği** doğrudan *finansal tükenmeyi* de kapsar. Modele her çağrıda 64.000 token ürettiren döngüsel bir enjeksiyon isteği klasik bir sunucu çökmesi yaratmayabilir. Fakat saldırgan bu istekleri paralel olarak bastığında birkaç saat içinde binlerce dolarlık API faturası oluşturur ve bütçe tavanına çarpılarak sistem tüm meşru kullanıcılar için erişilemez hâle gelir (OWASP *Unbounded Consumption*).
 
@@ -254,9 +254,9 @@ $$
 
 Şöyle okuyun: $p_i$, $i$. katmanın kaçırma oranıdır. $\prod$ işareti "tüm katmanların oranlarını birbiriyle çarp" demektir. Çıkan sonuç bağımsız durumdaki birleşik kaçırma olasılığıdır.
 
-Şimdi güvenlik mühendisliğinin acı gerçeğine gelelim: Güvenilirlik mühendisliğinde (IEC 61508 / ISO 26262) kullanılan **Beta-Faktör ($\beta$) Modeli**, sistemik arızaların belirli bir oranının bağımsız değil, *paylaşılan ortak bir nedenden* kaynaklandığını söyler. Yapay zekâ sistemlerinde bu ortak neden; tüm katmanların aynı temel modele dayanması, aynı BPE tokenizer'ı kullanması, aynı dil ailesine karşı eğitilmemiş olması veya aynı gizleme (*obfuscation*) biçimini tanıyamamasıdır.
+Şimdi gerçeğe gelelim. Güvenilirlik mühendisliği (IEC 61508, ISO 26262) yedekli kanallar için **beta-faktör ($\beta$) modelini** kullanır: arızaların $\beta$ kadarı *paylaşılan ortak bir nedenden* kaynaklanır ve bütün kanalları aynı anda düşürür. Biz standardın birebir tanımını değil, fikrini ödünç alıyoruz: bu yazıda $\beta$, *saldırıların* bütün katmanların paylaştığı kör noktaya düşen payıdır. Yapay zekâ sistemlerinde bu ortak neden; katmanların aynı temel modele dayanması, aynı BPE tokenizer'ı kullanması, aynı dil ailesini kapsamaması veya aynı gizleme (*obfuscation*) biçimini tanıyamamasıdır.
 
-Sistemik arızaların $\beta$ kadarının ortak bir kör noktaya düştüğünü ve bu kör noktada katmanların ortak kaçırma olasılığının $p_{\text{common}}$ olduğunu kabul edersek, birleşik kaçırma olasılığı şu kesin formülü alır:
+Saldırıların $\beta$ kadarının ortak bir kör noktaya düştüğünü ve bu kör noktada katmanların ortak kaçırma olasılığının $p_{\text{common}}$ olduğunu kabul edersek, birleşik kaçırma olasılığı şu kesin formülü alır:
 
 $$
 P_{\text{kaçırma}} = \beta \cdot p_{\text{common}} + (1 - \beta) \prod_{i=1}^{n} p_i
@@ -275,49 +275,49 @@ $$
 Destek asistanımızın `send_email` aracı önünde üç katmanlı bir savunma hattı kurduğumuzu varsayalım:
 1. Katman 1 ($p_1 = 0,10$): Girdi prompt injection dedektörü (saldırıların %10'unu kaçırıyor).
 2. Katman 2 ($p_2 = 0,20$): LLM hakemli çıktı politika denetleyicisi (saldırıların %20'sini kaçırıyor).
-3. Katman 3 ($p_3 = 0,05$): Deterministik alıcı allowlist ve şema denetleyicisi (kural dışı adreslerin %5'ini yapılandırma hatasıyla kaçırıyor).
+3. Katman 3 ($p_3 = 0,30$): Taslak e-posta üzerinde model tabanlı içerik denetimi (saldırıların %30'unu kaçırıyor).
 
-Katmanlar arasında $\beta = 0,04$ (%4) oranında ortak bir tokenizer manipülasyonu kör noktası olduğunu ve bu kör noktada ortak kaçırmanın $p_{\text{common}} = 1,0$ olduğunu varsayalım:
+Üçü de *metin okuyan* modellerdir. Aralarında ortak bir kör nokta olduğunu varsayalım: örneğin ortak tokenizer'ın zararsız görünen parçalara böldüğü bir gizleme biçimi. Saldırıların $\beta = 0,05$'i (%5) bu kör noktaya düşsün ve orada $p_{\text{common}} = 1,0$ olsun:
 
 ```text
 Katman parametreleri:
   p1 = 0,10   (Girdi injection dedektörü)
-  p2 = 0,20   (Çıktı güvenlik hakemi)
-  p3 = 0,05   (Şema ve kural denetleyicisi)
-  β  = 0,04   (Ortak mimari kör nokta payı)
-  p_common = 1,0 (Kör noktada tam sızma)
+  p2 = 0,20   (Çıktı politika hakemi)
+  p3 = 0,30   (İçerik denetimi)
+  β  = 0,05   (Saldırıların ortak kör noktaya düşen payı)
+  p_common = 1,0 (Kör noktada bütün katmanlar kaçırır)
 
 1. Adım: Bağımsız olasılık hesabı
   P_indep = p1 × p2 × p3
-          = 0,10 × 0,20 × 0,05
-          = 0,02 × 0,05
-          = 0,0010              → Kâğıt üstünde 1.000 saldırıda yalnızca 1 kaçırma (%0,10)
+          = 0,10 × 0,20 × 0,30
+          = 0,02 × 0,30
+          = 0,0060              → Kâğıt üstünde 1.000 saldırıda 6 kaçırma (%0,60)
 
-2. Adım: Ortak nedenli arıza (Beta-faktör) hesabı
+2. Adım: Ortak nedenli arıza (beta-faktör) hesabı
   P_ortak   = β × p_common
-            = 0,04 × 1,0 = 0,0400
+            = 0,05 × 1,0 = 0,0500
   P_rutin   = (1 - β) × P_indep
-            = (1 - 0,04) × 0,0010
-            = 0,96 × 0,0010 = 0,00096
+            = (1 - 0,05) × 0,0060
+            = 0,95 × 0,0060 = 0,0057
   P_toplam  = P_ortak + P_rutin
-            = 0,0400 + 0,00096
-            = 0,04096           → Gerçekte 1.000 saldırıda ~41 kaçırma (%4,10)
+            = 0,0500 + 0,0057
+            = 0,0557            → Gerçekte 1.000 saldırıda ~56 kaçırma (%5,57)
 
-3. Adım: Yanılsama katsayısı
-  Oran = 0,04096 / 0,0010 ≈ 41 kat daha zayıf sistem!
+3. Adım: Kâğıt üstündeki tahmin ne kadar yanıldı?
+  Oran = 0,0557 / 0,0060 ≈ 9,3 kat daha zayıf
 ```
 
-Bu hesaplama bir güvenlik mimarı için hayati bir ders sunar: **Katmanların altına konulan $\beta$ tabanı, eklediğiniz yapay zekâ filtrelerinin sayısından bağımsızdır.** Dördüncü ve beşinci LLM tabanlı guardrail'i ekleseniz dahi sistemin sızma olasılığı asla %4'ün altına inemez. Çünkü saldırgan bu ortak kör noktayı keşfettiğinde tüm LLM filtreleri aynı anda devreden çıkar.
+Ders ilk terimdedir: **$\beta$'nın koyduğu taban, aynı türden kaç katman dizdiğinizden bağımsızdır.** Dördüncü ve beşinci model tabanlı filtreyi ekleseniz de kaçırma oranı %5'in altına inemez; çünkü ortak kör noktaya düşen saldırı hepsinden birlikte geçer.
 
-Bu tabanı kırmanın tek yolu **mimari çeşitliliktir** (*Architectural Diversity*): Savunmaya model tabanlı olmayan, tamamen deterministik bir kural katmanı eklemektir. Alıcı allowlist'i ve HMAC parametre doğrulaması tam olarak bu işi görür: "Bu metin bir saldırı mı?" diye analiz etmez; "Bu alıcı kayıtlı müşteri mi?" diye sorar.
+Bu tabanı kırmanın tek yolu **mimari çeşitliliktir** (*architectural diversity*): metni hiç yorumlamayan, *farklı türden* bir kontrol. `send_email` bu yüzden 3. Bölge'de ayrıca alıcı allowlist'i ve HMAC'e bağlı onayla korunur. Bu ikisi bilerek yukarıdaki üç katmanın arasında sayılmadı. "Bu metin saldırıya benziyor mu?" diye sormazlar; "Bu alıcı vakadaki müşteri mi?" diye sorarlar. Bu yüzden bütün modelleri kandıran bir gizleme onlara dokunmaz.
 
 Aşağıdaki Python betiği bu matematiksel yürüyüşü ve 1.000.000 döngülük Monte Carlo simülasyonunu doğrulamaktadır:
 
 ```python
 import random
 
-p = [0.10, 0.20, 0.05]   # Katman kaçırma oranları
-beta = 0.04              # Ortak nedenli kör nokta payı
+p = [0.10, 0.20, 0.30]   # Katman kaçırma oranları
+beta = 0.05              # Ortak nedenli kör nokta payı
 p_common = 1.0           # Kör noktadaki sızma oranı
 
 # 1. Teorik analitik hesaplama
@@ -351,10 +351,10 @@ print(f"Monte Carlo Simülasyonu : {simulated_rate:.6f} (%{simulated_rate*100:.3
 Konsol çıktısı:
 
 ```text
-Teorik Bağımsız Kaçırma : 0.001000 (%0.100)
-Teorik Beta-Faktör Kaçırma: 0.040960 (%4.096)
-Hata Katlanma Çarpanı   : 41.0x
-Monte Carlo Simülasyonu : 0.040845 (%4.085)
+Teorik Bağımsız Kaçırma : 0.006000 (%0.600)
+Teorik Beta-Faktör Kaçırma: 0.055700 (%5.570)
+Hata Katlanma Çarpanı   : 9.3x
+Monte Carlo Simülasyonu : 0.055948 (%5.595)
 ```
 
 ---
@@ -465,21 +465,21 @@ Kendi projenizin mimari tasarım belgesine (RFC / ADR) doğrudan ekleyebileceği
 
 ## 10. Seri buradan nereye gidiyor?
 
-Destek asistanımızı adım adım kurumsal bir kaleye dönüştüreceğimiz yol haritası:
+Destek asistanının her bölümde bir katman eklenen yol haritası:
 
 | Aşama | Bölümler | Çözülen Temel Mühendislik Problemi |
 | --- | --- | --- |
-| **Temeli kur** | 1–2 | Varlıklar, altı güven bölgesi, veri akışı ve STRIDE/ATLAS tehdit modeli |
-| **Veriyi ve modeli koru** | 3–4 | Diferansiyel mahremiyet, veri zehirleme, safetensors, SBOM ve MCP tedarik zinciri |
-| **Çalışma zamanı kontrolleri** | 5–9 | GCG jailbreak'leri, katmanlı guardrails, RAG yetki izolasyonu, ajan sandbox'ları ve gizli çıkarım |
-| **Ölç ve işlet** | 10–11 | Kırmızı takım testleri, Clopper-Pearson güven aralıkları, OTel logları ve olay runbook'u |
-| **Kanıtla ve yayınla** | 12 | ISO 42001, NIST AI 600-1 çapraz tablosu, imzalı yayın manifestosu ve canlıya geçiş kapısı |
+| **Temeli kur** | 1–2 | Varlıklar, altı güven bölgesi, veri akışı, STRIDE ve tehdit kaydı |
+| **Veriyi ve modeli koru** | 3–4 | Veri yaşam döngüsü ve silme, zehirleme, diferansiyel mahremiyet, safetensors, AI-BOM ve MCP tedarik zinciri |
+| **Çalışma zamanı kontrolleri** | 5–9 | Prompt injection'a karşı güven yayılımı, katmanlı guardrails, yetki bilinçli RAG ve bellek, en az yetkili ajanlar ve korumalı tek sunum yolu |
+| **Ölç ve işlet** | 10–11 | Wilson aralıklarıyla kırmızı takım, hakem kalibrasyonu, denetim olayları ve olay runbook'u |
+| **Kanıtla ve yayınla** | 12 | Standart eşlemesi, kanıt zinciri ve canlıya geçiş kapısı |
 
 ### Okuyucu artık hangi sorulara kendi başına yanıt verebilir?
 
 - Destek asistanının mimari diyagramında güvenilmeyen metin ile işlem yetkisi tam olarak hangi güven bölgesinde buluşur?
 - "Propose vs. Commit" ayrımı neden bir dil modelinin güvenliğini prompt seviyesinden mimari seviyeye taşır?
-- Katmanlı savunmada paylaşılan ortak bir kör nokta ($\beta = 0,04$), nominal olarak binde bir olan kaçırma olasılığını neden 41 kat artırır?
+- %5'lik ortak bir kör nokta ($\beta = 0,05$) üç katmanı kâğıt üstündeki tahmine göre neden dokuz kattan fazla zayıflatır ve aynı türden dördüncü bir katman bunu neden düzeltemez?
 - Emniyet (*safety*) ile güvenlik (*security*) arasındaki fark nedir ve neden biri olmadan diğeri sistemi koruyamaz?
 - Bir yapay zekâ bileşeni çöktüğünde *fail-closed* ile *fail-open* davranışı arasındaki mimari ödünleşim nasıl yönetilmelidir?
 
@@ -490,7 +490,7 @@ Destek asistanımızı adım adım kurumsal bir kaleye dönüştüreceğimiz yol
 - Bir AI sistemi dört varlık sınıfını korur: veri, model, işlem yetkisi ve (maliyet dahil) hizmet sürekliliği.
 - Model çıktıları yalnızca birer öneridir (*proposal*); hiçbir eylem deterministik PEP kapısından geçmeden yürütülemez (*commit*).
 - Güvenlik, emniyet, mahremiyet ve güvenilirlik dört farklı soruya yanıt verir; tek bir filtre hepsini karşılayamaz.
-- Katmanlar ancak bağımsız olduklarında riski çarpar; %4'lük ortak bir sistemik kör nokta kaçırma oranını 41 kat kötüleştirdi.
+- Katmanlar ancak bağımsız olduklarında riski çarpar; %5'lik ortak bir kör nokta üç katmanı 9,3 kat zayıflattı ve bu tabanı yalnızca farklı türden bir kontrol kırar.
 - Kurulum zamanı saldırıları yavaş ve kalıcıdır; çalışma zamanı saldırıları hızlı ve tekrarlıdır.
 - Her güvenlik faaliyetinin tek bir hesap veren sahibi olmalıdır; kalan riski güvenlik ekibi değil, iş birimi sahibi kabul eder.
 
@@ -514,10 +514,10 @@ Destek asistanımızı adım adım kurumsal bir kaleye dönüştüreceğimiz yol
 ## Daha derine inmek için
 
 - [K1] NIST, [*AI 600-1: Generative AI Profile to the AI Risk Management Framework*](https://doi.org/10.6028/NIST.AI.600-1) (Temmuz 2024): Üretken yapay zekâya özgü 12 risk profili ve mimari güven sınırları.
-- [K2] NIST, [*SP 800-218A: Secure Software Development Practices for Generative AI*](https://csrc.nist.gov/pubs/sp/800/218/a/ipd) (2024): Kurulum ve çalışma zamanı güvenlik kontrolleri.
+- [K2] NIST, [*SP 800-218A: Secure Software Development Practices for Generative AI and Dual-Use Foundation Models*](https://csrc.nist.gov/pubs/sp/800/218/a/final) (Temmuz 2024): Kurulum ve çalışma zamanı güvenlik kontrolleri.
 - [K3] ISO/IEC, [*42001:2023 Artificial Intelligence Management System*](https://www.iso.org/standard/42001): Kurumsal roller, sorumluluklar ve hesap verebilirlik standardı.
 - [K4] ETSI, [*EN 304 223: Securing Artificial Intelligence, Cyber Security Requirements*](https://www.etsi.org/newsroom/press-releases/2627-etsi-releases-world-leading-standard-for-securing-ai) (Ocak 2026): Beş yaşam döngüsü evresi boyunca 13 temel siber güvenlik gereksinimi.
 - [K5] IEC, [*61508: Functional Safety of Electrical/Electronic/Programmable Electronic Safety-related Systems*](https://www.iec.ch/functional-safety): Ortak Nedenli Arızalar (CCF) ve Beta-Faktör güvenilirlik modellemesi.
-- [K6] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2025/2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) ve [*Top 10 for Agentic Applications*](https://genai.owasp.org/): Excessive Agency ve Goal Hijacking kılavuzları.
+- [K6] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) ve [*Top 10 for Agentic Applications*](https://genai.owasp.org/): Excessive Agency ve Goal Hijacking kılavuzları.
 - [K7] Google, [*Secure AI Framework (SAIF)*](https://safety.google/cybersecurity-advancements/saif/): Kurumsal yapay zekâ sistemleri için 6 temel güvenlik prensibi.
 - [K8] Bu seriden: [Secure AI by Design (2): AI Sistemlerinde Tehdit Modelleme ve Güven Sınırları](post.html?slug=ai-tehdit-modelleme-ve-guven-sinirlari).

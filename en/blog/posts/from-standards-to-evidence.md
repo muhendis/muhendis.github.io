@@ -394,7 +394,7 @@ class ReleaseCandidateEvidence:
     harm_rate_upper_bound: float
     max_harm_limit: float
     acceptance_tests_passed: bool
-    unverified_gap_count: int
+    unowned_gap_count: int      # open items WITHOUT an owner, a plan or a signed acceptance
 
 def evaluate_release_gate(evidence: ReleaseCandidateEvidence) -> Tuple[bool, List[str]]:
     """Evaluates whether an AI release candidate satisfies all compliance & risk gates."""
@@ -418,11 +418,37 @@ def evaluate_release_gate(evidence: ReleaseCandidateEvidence) -> Tuple[bool, Lis
         violations.append("Serving and gateway acceptance test suite (S-1..S-10) failed!")
 
     # 4. Evidence index completeness check
-    if evidence.unverified_gap_count > 0:
-        violations.append(f"Evidence index contains {evidence.unverified_gap_count} unverified open items.")
+    if evidence.unowned_gap_count > 0:
+        violations.append(f"Evidence index has {evidence.unowned_gap_count} open items without an owner or acceptance.")
 
     passed = len(violations) == 0
     return (passed, violations)
+
+
+# The walk of Section 6
+rc = ReleaseCandidateEvidence(
+    release_id="rc-2026-11.2", manifest_hash="sha256:4f8a",
+    residual_risks={"T1": 4, "T2": 4, "T3": 4, "T4": 4, "T5": 5, "T6": 4},
+    risk_appetite=6, signed_acceptances=[],
+    harm_rate_upper_bound=3 / 1200, max_harm_limit=0.005,
+    acceptance_tests_passed=True,
+    unowned_gap_count=0,          # 16 open items, each with an owner and a plan
+)
+print("rc-2026-11.2  :", evaluate_release_gate(rc))
+
+# What the gate says if T5 scored 8 and two open items had no owner
+from dataclasses import replace
+worse = replace(rc, residual_risks={**rc.residual_risks, "T5": 8}, unowned_gap_count=2)
+print("T5 = 8, gaps  :", evaluate_release_gate(worse))
+print("T5 accepted   :", evaluate_release_gate(replace(worse, signed_acceptances=["T5"], unowned_gap_count=0)))
+```
+
+Console output:
+
+```text
+rc-2026-11.2  : (True, [])
+T5 = 8, gaps  : (False, ['Unaccepted residual risk: T5 (Score=8 > Appetite=6)', 'Evidence index has 2 open items without an owner or acceptance.'])
+T5 accepted   : (True, [])
 ```
 
 ### 7.4. Go-live checklist

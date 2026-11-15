@@ -496,7 +496,7 @@ p3 = 0,30 (içerik kontrolü)
 P_kaçırma = 0,10 × 0,20 × 0,30 = 0,02 × 0,30 = 0,006   → %0,6
 ```
 
-Ne var ki benzer veriyle eğitilmiş dedektörler aynı saldırıları kaçırma eğilimindedir. Saldırıların $\rho$ kadarı bütün katmanların paylaştığı bir kör noktaya düşüyorsa:
+Ne var ki benzer veriyle eğitilmiş dedektörler aynı saldırıları kaçırma eğilimindedir. Saldırıların $\rho$ kadarı bütün katmanların paylaştığı bir kör noktaya düşüyorsa (Bölüm 1 bu orana, güvenilirlik mühendisliğinin beta-faktör modelinden hareketle $\beta$ der):
 
 $$
 P_{\text{kaçırma}} = \rho + (1 - \rho) \prod_{i=1}^{n} p_i

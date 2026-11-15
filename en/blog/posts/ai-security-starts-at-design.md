@@ -36,7 +36,7 @@ This article is the founding piece of the *Secure AI by Design* series. We will 
 
 ## 1. The running example: anatomy of a support assistant and six trust zones
 
-A security conversation becomes concrete only when trust boundaries are formally drawn on the whiteboard. Therefore, before stating any principle, let us map our support assistant across six distinct **trust zones** aligned with enterprise security standards (NIST AI 600-1 and Google SAIF).
+A security conversation becomes concrete only when trust boundaries are formally drawn on the whiteboard. Therefore, before stating any principle, let us map our support assistant across six distinct **trust zones**. The six-zone split is this series' own working model; neither NIST AI 600-1 nor Google's SAIF prescribes it, but it is built to sit comfortably next to both.
 
 A support agent opens a chat window and types: *"Summarize customer 4711's last complaint and draft a reply."* The request traverses six distinct trust zones:
 
@@ -165,7 +165,7 @@ An AI system harbors the exact same four asset classes across its trust zones:
 
 Two rows demand special focus from an AI security architect:
 
-**Action authority** is absent from traditional ML threat models. A standard churn prediction model simply outputs a probability score ($[0, 1]$); it cannot delete databases or execute wire transfers. An agent armed with tools, however, *borrows* authority: from the logged-in user, from a service account, or both. OWASP's Top 10 for LLM Applications ranks *Excessive Agency* in its top tier. OWASP's Top 10 for Agentic Applications opens with *Agent Goal Hijack* (ASI01): The moment an AI system gains tool execution rights, a manipulated token sequence is no longer just a text quality glitch—it becomes an immediate, real-world exploit.
+**Action authority** is absent from traditional ML threat models. A standard churn prediction model simply outputs a probability score ($[0, 1]$); it cannot delete databases or execute wire transfers. An agent armed with tools, however, *borrows* authority: from the logged-in user, from a service account, or both. OWASP's Top 10 for LLM Applications lists *Excessive Agency* as LLM03 in its 2026 edition. OWASP's Top 10 for Agentic Applications opens with *Agent Goal Hijack* (ASI01): The moment an AI system gains tool execution rights, a manipulated token sequence is no longer just a text quality glitch—it becomes an immediate, real-world exploit.
 
 **Service continuity** includes *financial exhaustion*. A cyclical prompt injection inducing 64,000 generated tokens per call may not crash an operating system, but blasting parallel requests exhausts API credit limits within hours, rendering services unavailable to legitimate users (OWASP *Unbounded Consumption*).
 
@@ -254,7 +254,7 @@ $$
 
 Where $p_i$ is the miss rate of layer $i$, and $\prod$ denotes the product across all $n$ layers.
 
-Now consider reality: Reliability engineering (IEC 61508 / ISO 26262) utilizes the **Beta-Factor ($\beta$) Model** to account for the reality that a fraction of failures stem from a *shared systemic cause*. In AI systems, this common cause arises when all layers rely on identical base models, share identical BPE tokenizers, lack coverage for identical language families, or succumb to identical prompt obfuscation techniques.
+Now consider reality. Reliability engineering (IEC 61508, ISO 26262) uses the **beta-factor ($\beta$) model** for redundant channels: a fraction $\beta$ of failures stems from a *shared cause* and takes out every channel at once. We borrow the idea, not the standard's exact definition: in this article $\beta$ is the fraction of *attacks* that land in a blind spot all layers share. In AI systems that shared cause appears when the layers rely on the same base model, share a BPE tokenizer, lack coverage for the same language family, or fall to the same obfuscation technique.
 
 If a fraction $\beta$ of adversarial inputs exploit a shared blind spot where the joint failure rate is $p_{\text{common}}$, the true breach probability becomes:
 
@@ -275,49 +275,49 @@ $$
 Suppose our support assistant protects `send_email` with three defense layers:
 1. Layer 1 ($p_1 = 0.10$): Input prompt injection detector (misses 10% of attacks).
 2. Layer 2 ($p_2 = 0.20$): LLM-as-a-judge output policy filter (misses 20% of attacks).
-3. Layer 3 ($p_3 = 0.05$): Deterministic schema and allowlist validator (fails on 5% of configuration oversights).
+3. Layer 3 ($p_3 = 0.30$): Model-based content check on the drafted email (misses 30% of attacks).
 
-Assume that across these layers exists a shared tokenizer vulnerability with $\beta = 0.04$ (4% common cause fraction) where $p_{\text{common}} = 1.0$:
+All three are models that *read text*. Assume they share a blind spot, for example an obfuscation that their common tokenizer splits into harmless-looking pieces, and that $\beta = 0.05$ (5% of attacks) lands in it with $p_{\text{common}} = 1.0$:
 
 ```text
-Layer Parameters:
+Layer parameters:
   p1 = 0.10   (Input injection detector)
   p2 = 0.20   (Output policy judge)
-  p3 = 0.05   (Schema & allowlist validator)
-  β  = 0.04   (Shared systemic blind spot)
-  p_common = 1.0 (Complete breach within blind spot)
+  p3 = 0.30   (Content check)
+  β  = 0.05   (Share of attacks in the shared blind spot)
+  p_common = 1.0 (Every layer misses inside the blind spot)
 
 Step 1: Independent probability calculation
   P_indep = p1 × p2 × p3
-          = 0.10 × 0.20 × 0.05
-          = 0.02 × 0.05
-          = 0.0010              → On paper: 1 breach per 1,000 attacks (0.10%)
+          = 0.10 × 0.20 × 0.30
+          = 0.02 × 0.30
+          = 0.0060              → On paper: 6 misses per 1,000 attacks (0.60%)
 
 Step 2: Beta-factor common cause calculation
-  P_common_term = β × p_common
-                = 0.04 × 1.0 = 0.0400
+  P_common_term  = β × p_common
+                 = 0.05 × 1.0 = 0.0500
   P_routine_term = (1 - β) × P_indep
-                 = (1 - 0.04) × 0.0010
-                 = 0.96 × 0.0010 = 0.00096
-  P_total       = P_common_term + P_routine_term
-                = 0.0400 + 0.00096
-                = 0.04096       → In reality: ~41 breaches per 1,000 attacks (4.10%)
+                 = (1 - 0.05) × 0.0060
+                 = 0.95 × 0.0060 = 0.0057
+  P_total        = P_common_term + P_routine_term
+                 = 0.0500 + 0.0057
+                 = 0.0557       → In reality: ~56 misses per 1,000 attacks (5.57%)
 
-Step 3: Vulnerability multiplier
-  Ratio = 0.04096 / 0.0010 ≈ 41.0x worse than the independent assumption!
+Step 3: How wrong was the paper estimate?
+  Ratio = 0.0557 / 0.0060 ≈ 9.3 times worse than the independent assumption
 ```
 
-This reveals an essential architectural axiom: **The systemic floor set by $\beta$ is entirely independent of how many AI guardrails you stack.** Adding a 4th and 5th LLM-based filter cannot push residual risk below 4%, because when an adversary discovers a representation bypass, all LLM-based layers fail in tandem.
+The lesson is in the first term: **the floor set by $\beta$ does not depend on how many layers of the same kind you stack.** Adding a fourth and a fifth model-based filter cannot push the miss rate below 5%, because an attack inside the shared blind spot passes all of them together.
 
-The only mechanism to break this floor is **Architectural Diversity**: introducing deterministic, non-model controls. Recipient allowlists and HMAC parameter verifications do not evaluate semantic nuance; they enforce strict relational logic.
+The only way through that floor is **architectural diversity**: a control of a *different kind*, one that does not interpret the text at all. That is why `send_email` is additionally guarded in Zone 3 by a recipient allowlist and an HMAC-bound approval. They are deliberately *not* among the three layers above. They do not ask "does this text look like an attack?"; they ask "is this recipient the customer on the case?", so an obfuscation that fools every model leaves them untouched.
 
 The following Python script verifies this analytical derivation against a 1,000,000-run Monte Carlo simulation:
 
 ```python
 import random
 
-p = [0.10, 0.20, 0.05]   # Layer miss rates
-beta = 0.04              # Common cause blind spot fraction
+p = [0.10, 0.20, 0.30]   # Layer miss rates
+beta = 0.05              # Common cause blind spot fraction
 p_common = 1.0           # Breach rate under common cause
 
 # 1. Theoretical analytical calculation
@@ -351,10 +351,10 @@ print(f"Monte Carlo Simulated Rate  : {simulated_rate:.6f} ({simulated_rate*100:
 Console output:
 
 ```text
-Theoretical Independent Miss: 0.001000 (0.100%)
-Theoretical Beta-Factor Miss: 0.040960 (4.096%)
-Vulnerability Multiplier    : 41.0x
-Monte Carlo Simulated Rate  : 0.040845 (4.085%)
+Theoretical Independent Miss: 0.006000 (0.600%)
+Theoretical Beta-Factor Miss: 0.055700 (5.570%)
+Vulnerability Multiplier    : 9.3x
+Monte Carlo Simulated Rate  : 0.055948 (5.595%)
 ```
 
 ---
@@ -465,21 +465,21 @@ A checklist directly portable into your project's architectural RFC or ADR:
 
 ## 10. Where this series goes next
 
-Our roadmap to transforming the support assistant into a battle-tested enterprise fortress:
+The roadmap for the support assistant, one layer per part:
 
 | Phase | Parts | Core Engineering Challenge Addressed |
 | --- | --- | --- |
-| **Establish Foundation** | 1–2 | Asset taxonomy, six trust zones, data flows, and STRIDE/ATLAS threat models |
-| **Secure Data & Models** | 3–4 | Differential privacy, data poisoning, Safetensors, SBOM, and MCP supply chains |
-| **Runtime Defenses** | 5–9 | GCG jailbreaks, layered guardrails, RAG access isolation, agent sandboxing, and confidential serving |
-| **Measure & Operate** | 10–11 | Automated red teaming, Clopper-Pearson intervals, OTel logging, and incident runbooks |
-| **Prove & Release** | 12 | ISO 42001 & NIST AI 600-1 mapping, signed deployment manifests, and release gates |
+| **Establish Foundation** | 1–2 | Asset taxonomy, six trust zones, data flows, STRIDE and the threat register |
+| **Secure Data & Models** | 3–4 | Data lifecycle and deletion, poisoning, differential privacy, safetensors, AI-BOM and MCP supply chains |
+| **Runtime Defenses** | 5–9 | Trust propagation against prompt injection, layered guardrails, permission-aware RAG and memory, least-privilege agents, and one guarded serving path |
+| **Measure & Operate** | 10–11 | Red teaming with Wilson intervals, judge calibration, audit events and incident runbooks |
+| **Prove & Release** | 12 | Standards mapping, the evidence chain and the go-live gate |
 
 ### What questions can the reader now answer independently?
 
 - Exactly where in the support assistant's architecture does untrusted input intersect with action authority?
 - Why does the "Propose vs. Commit" invariant elevate AI security from a prompt-level battle to an architectural guarantee?
-- Why does a 4% systemic common cause fraction ($\beta = 0.04$) multiply nominal breach probability by over 40 times?
+- Why does a 5% shared blind spot ($\beta = 0.05$) make three layers more than nine times weaker than the paper estimate, and why can a fourth layer of the same kind not fix it?
 - What distinguishes safety from security, and why can a system fail catastrophically in one while excelling in the other?
 - How should the architectural trade-off between *fail-closed* and *fail-open* be governed across high-impact and low-impact operations?
 
@@ -490,7 +490,7 @@ Our roadmap to transforming the support assistant into a battle-tested enterpris
 - An AI system protects four asset classes: data, model and configuration, action authority, and (including cost) service continuity.
 - Model outputs are unverified proposals; no action executes without passing a deterministic Policy Enforcement Point (PEP).
 - Security, safety, privacy, and reliability answer four distinct questions; no single filter covers all four.
-- Layers multiply risk reduction only when independent; a 4% common systemic blind spot worsened the miss rate by 41 times.
+- Layers multiply risk reduction only when independent; a 5% shared blind spot made three layers 9.3 times weaker, and only a control of a different kind breaks that floor.
 - Build-time threats are stealthy and permanent; run-time threats are rapid and repeatable.
 - Every security activity must have exactly one accountable owner; residual risk is accepted by the business owner, not security.
 
@@ -514,10 +514,10 @@ Our roadmap to transforming the support assistant into a battle-tested enterpris
 ## Going deeper
 
 - [K1] NIST, [*AI 600-1: Generative AI Profile to the AI Risk Management Framework*](https://doi.org/10.6028/NIST.AI.600-1) (July 2024): Twelve generative AI risk profiles and architectural trust boundaries.
-- [K2] NIST, [*SP 800-218A: Secure Software Development Practices for Generative AI*](https://csrc.nist.gov/pubs/sp/800/218/a/ipd) (2024): Build-time and run-time security controls for AI lifecycles.
+- [K2] NIST, [*SP 800-218A: Secure Software Development Practices for Generative AI and Dual-Use Foundation Models*](https://csrc.nist.gov/pubs/sp/800/218/a/final) (July 2024): Build-time and run-time security controls for AI lifecycles.
 - [K3] ISO/IEC, [*42001:2023 Artificial Intelligence Management System*](https://www.iso.org/standard/42001): Governance, organizational roles, and accountability standards.
 - [K4] ETSI, [*EN 304 223: Securing Artificial Intelligence, Cyber Security Requirements*](https://www.etsi.org/newsroom/press-releases/2627-etsi-releases-world-leading-standard-for-securing-ai) (January 2026): 13 baseline cybersecurity requirements across five lifecycle phases.
 - [K5] IEC, [*61508: Functional Safety of Electrical/Electronic/Programmable Electronic Safety-related Systems*](https://www.iec.ch/functional-safety): Common Cause Failures (CCF) and Beta-Factor reliability modeling.
-- [K6] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2025/2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) and [*Top 10 for Agentic Applications*](https://genai.owasp.org/): Guidance on Excessive Agency and Goal Hijacking.
+- [K6] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) and [*Top 10 for Agentic Applications*](https://genai.owasp.org/): Excessive Agency (LLM03) and Agent Goal Hijack (ASI01).
 - [K7] Google, [*Secure AI Framework (SAIF)*](https://safety.google/cybersecurity-advancements/saif/): Foundational security framework for enterprise AI systems.
 - [K8] In this series: [Secure AI by Design (2): Threat Modeling and Trust Boundaries in AI Systems](post.html?slug=ai-threat-modeling-and-trust-boundaries).

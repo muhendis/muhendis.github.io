@@ -1,6 +1,6 @@
 {
   "lang": "tr",
-  "updated": "2026-10-30",
+  "updated": "2026-11-15",
   "stages": [
     {
       "id": "orientation",
@@ -166,7 +166,8 @@
       "readingMinutes": 32,
       "translationSlug": "how-ai-security-works",
       "draft": false,
-      "tagline": "Bir müşteri e-postasına gizlenmiş tek bir talimatı AI asistanının içinden geçiriyor ve tehdit modelinden denetim kanıtına kadar her adımda onu hangi tasarım kararının durdurduğunu görüyoruz."
+      "tagline": "Bir müşteri e-postasına gizlenmiş tek bir talimatı AI asistanının içinden geçiriyor ve tehdit modelinden denetim kanıtına kadar her adımda onu hangi tasarım kararının durdurduğunu görüyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "standarttan-kanita",
@@ -187,7 +188,8 @@
       "readingMinutes": 16,
       "translationSlug": "from-standards-to-evidence",
       "draft": false,
-      "tagline": "'Uyumluyuz ve güvenliyiz' cümlesinin yerine gereksinimden kalan riske uzanan bir kanıt zinciri ve birinin imzalayabileceği bir canlıya geçiş kararı koyuyoruz."
+      "tagline": "'Uyumluyuz ve güvenliyiz' cümlesinin yerine gereksinimden kalan riske uzanan bir kanıt zinciri ve birinin imzalayabileceği bir canlıya geçiş kararı koyuyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-izlenebilirlik-ve-olay-mudahalesi",
@@ -208,7 +210,8 @@
       "readingMinutes": 16,
       "translationSlug": "ai-observability-and-incident-response",
       "draft": false,
-      "tagline": "Her AI kararını sürümleriyle kaydediyor, telemetrinin ikinci bir sızıntıya dönüşmesini engelliyor ve bir olayı dakikalar içinde kontrol altına alacak kaldıraçları hazırlıyoruz."
+      "tagline": "Her AI kararını sürümleriyle kaydediyor, telemetrinin ikinci bir sızıntıya dönüşmesini engelliyor ve bir olayı dakikalar içinde kontrol altına alacak kaldıraçları hazırlıyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-guvenligini-olcmek",
@@ -229,7 +232,8 @@
       "readingMinutes": 17,
       "translationSlug": "measuring-ai-security",
       "draft": false,
-      "tagline": "'Saldırıların %98'i engellendi' cümlesini kanıta dönüştürüyoruz: eşleştirilmiş test vakaları, doğal Türkçe setler, temiz veri ayrımı, güven aralıkları ve insanlara karşı ölçülmüş bir hakem."
+      "tagline": "'Saldırıların %98'i engellendi' cümlesini kanıta dönüştürüyoruz: eşleştirilmiş test vakaları, doğal Türkçe setler, temiz veri ayrımı, güven aralıkları ve insanlara karşı ölçülmüş bir hakem.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "guvenli-ai-sunumu",
@@ -237,7 +241,7 @@
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
       "seriesPart": 9,
-      "summary": "Ne: Gateway, güvenlik servisi ve model sunucusunun ayrıştırıldığı; NVIDIA H100 TEE, PCIe IDE şifreleme, PagedAttention önbellek izolasyonu ve spekülatif akış guardrail'leri içeren güvenli sunum mimarisi. Neden önemli: vLLM API anahtarı yönetim ve çıkarım yollarını açıkta bırakır; akışta post-call filtreleri sızıntıyı engelleyemez; PagedAttention çok kiracılı önbellek zehirlenmesine açıktır; korumasız yedek yollar erişilemezlik anında trafiği savunmasız bırakır. Nasıl: LiteLLM ve vLLM referans mimarisi, H100 Confidential Computing ve SPDM firmware doğrulaması, CPU-GPU arasında tel hızında PCIe IDE şifrelemesi, kiracı bazlı tuzlanmış (HMAC) Radix tree önek önbelleklemesi, kayan pencereli spekülatif geri çekme (speculative rollback) tamponları, çıkarım zamanı yan kanal (token-timing) savunmaları ve S-1'den S-10'a kabul testleri. Nerede: Kurum içi ve bulut GPU kümelerinde, AI Gateway katmanında ve vLLM çıkarım düğümlerinde. Kim için: MLOps mühendisleri, AI platform ekipleri ve siber güvenlik mimarları için. Ne zaman: Bir LLM çıkarım sunucusu yerel ağa açılmadan, çok kiracılı önbellek veya akışlı çıkarım devreye alınmadan önce.",
+      "summary": "Ne: Gateway, güvenlik servisi ve model sunucusunun ayrıştırıldığı; GPU gizli bilişimi, kiracı başına önek önbelleği tuzlaması ve bekletme pencereli akış guardrail'leri içeren güvenli sunum mimarisi. Neden önemli: vLLM API anahtarı yönetim ve çıkarım yollarını açıkta bırakır; akışta post-call filtreleri sızıntıyı engelleyemez; paylaşılan önek önbelleği başka kiracıların prompt'larını yanıt zamanlaması üzerinden sızdırır; korumasız yedek yollar erişilemezlik anında trafiği savunmasız bırakır. Nasıl: LiteLLM ve vLLM referans mimarisi, kanıtlama, SPDM ve şifreli aktarımla H100 gizli bilişimi (ve PCIe IDE'nin yeri), vLLM önek önbelleği için gateway'in koyduğu kiracı başına cache_salt, spekülatif geri çekmeli bekletme pencereleri, token uzunluğu ve önbellek zamanlaması yan kanallarına karşı önlemler ve S-1'den S-10'a kabul testleri. Nerede: Kurum içi ve bulut GPU kümelerinde, AI Gateway katmanında ve vLLM çıkarım düğümlerinde. Kim için: MLOps mühendisleri, AI platform ekipleri ve siber güvenlik mimarları için. Ne zaman: Bir LLM çıkarım sunucusu yerel ağa açılmadan, çok kiracılı önbellek veya akışlı çıkarım devreye alınmadan önce.",
       "tags": [
         "güvenlik",
         "sunum",
@@ -250,7 +254,8 @@
       "readingMinutes": 21,
       "translationSlug": "secure-ai-serving",
       "draft": false,
-      "tagline": "Gateway'i modele giden tek yol yapıyoruz: kapalı vLLM uç noktaları, korumalı yedek yollar, akışta geride tutma ve her atlatma yolu için kabul testleri."
+      "tagline": "Gateway'i modele giden tek yol yapıyoruz: kapalı vLLM uç noktaları, korumalı yedek yollar, akışta geride tutma ve her atlatma yolu için kabul testleri.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ajanlarda-en-az-yetki",
@@ -258,7 +263,7 @@
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
       "seriesPart": 8,
-      "summary": "Ne: Modelin yalnızca önerdiği, bağımsız PEP/PDP katmanının karar verip uyguladığı; Macaroon yetenekleri, MCP şema sabitleme ve Saga telafi edici işlemler içeren otonom ajan yürütme mimarisi. Neden önemli: Servis hesabıyla çalışan alt ajan ortam yetkisi (ambient authority) nedeniyle şaşırtılmış vekil (confused deputy) açığı üretir; idempotency anahtarı ve telafi edici işlem (Saga rollback) bulunmayan bir akış mükerrer ve yetkisiz finansal yan etkilere yol açar. Nasıl: Öneri ve çalıştırma ayrımı (PEP/PDP), kullanıcı, ajan ve görev yetkilerinin kesişimi (P_U ∩ P_A ∩ P_T), merkezi sunucusuz Macaroon HMAC kısıtlama zincirlemesi, RFC 8785 kanonik JSON ile MCP şema tahrifatı (rug-pull) engelleme, kanonik parametre hash'ine bağlı HMAC onay token'ları, çok boyutlu bütçeler ve Saga telafi edici işlem koordinatörü. Nerede: E-posta gönderen, veritabanı güncelleyen, finansal işlem yapan otonom ajanlarda ve MCP sunucularında. Kim için: AI güvenlik mimarları, ajan platform mühendisleri ve backend sistem mimarları için. Ne zaman: Bir ajana yan etkili herhangi bir araç teslim edilmeden veya çok ajanlı iş akışları kurulmadan önce.",
+      "summary": "Ne: Modelin yalnızca önerdiği, bağımsız PEP/PDP katmanının karar verip uyguladığı; Macaroon yetenekleri, MCP şema sabitleme ve Saga telafi edici işlemler içeren otonom ajan yürütme mimarisi. Neden önemli: Servis hesabıyla çalışan alt ajan ortam yetkisi (ambient authority) nedeniyle şaşırtılmış vekil (confused deputy) açığı üretir; idempotency anahtarı ve telafi edici işlem (Saga rollback) bulunmayan bir akış mükerrer ve yetkisiz finansal yan etkilere yol açar. Nasıl: Öneri ve çalıştırma ayrımı (PEP/PDP), kullanıcı, ajan ve görev yetkilerinin kesişimi (P_U ∩ P_A ∩ P_T), merkezi sunucusuz Macaroon HMAC kısıtlama zincirlemesi, RFC 8785 kanonik JSON ile MCP şema tahrifatı (rug-pull) engelleme, kanonik parametre hash'ine bağlı HMAC onay token'ları, çok boyutlu bütçeler ve telafi edilebileni telafi eden Saga koordinatörü. Nerede: E-posta gönderen, veritabanı güncelleyen, finansal işlem yapan otonom ajanlarda ve MCP sunucularında. Kim için: AI güvenlik mimarları, ajan platform mühendisleri ve backend sistem mimarları için. Ne zaman: Bir ajana yan etkili herhangi bir araç teslim edilmeden veya çok ajanlı iş akışları kurulmadan önce.",
       "tags": [
         "güvenlik",
         "ajanlar",
@@ -271,7 +276,8 @@
       "readingMinutes": 24,
       "translationSlug": "least-privilege-for-ai-agents",
       "draft": false,
-      "tagline": "En az yetkiyi ajanların işlem yaptığı yere koyuyoruz: kimlik bilgilerini tutan bir yürütücü, kesişim olarak devredilen yetkiler ve tam parametrelere bağlı onaylar."
+      "tagline": "En az yetkiyi ajanların işlem yaptığı yere koyuyoruz: kimlik bilgilerini tutan bir yürütücü, kesişim olarak devredilen yetkiler ve tam parametrelere bağlı onaylar.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "rag-ve-bellek-guvenligi",
@@ -292,7 +298,8 @@
       "readingMinutes": 26,
       "translationSlug": "rag-and-memory-security",
       "draft": false,
-      "tagline": "Bir RAG dizininin yan kapıya dönüşmesini engelliyoruz: vektör sorgusunun içinde yetkiler, güvene göre ayrılmış koleksiyonlar ve karantinalı bir bellek yazma yolu."
+      "tagline": "Bir RAG dizininin yan kapıya dönüşmesini engelliyoruz: vektör sorgusunun içinde yetkiler, güvene göre ayrılmış koleksiyonlar ve karantinalı bir bellek yazma yolu.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "katmanli-guardrails",
@@ -313,7 +320,8 @@
       "readingMinutes": 19,
       "translationSlug": "layered-guardrails",
       "draft": false,
-      "tagline": "Bulguları kararlardan ayırıyor; regex, NER, sınıflandırıcılar, güvenlik SLM'leri ve LLM hakemleri arasında seçim yapıyor ve eşikleri gerçek taban oranlardan belirliyoruz."
+      "tagline": "Bulguları kararlardan ayırıyor; regex, NER, sınıflandırıcılar, güvenlik SLM'leri ve LLM hakemleri arasında seçim yapıyor ve eşikleri gerçek taban oranlardan belirliyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "prompt-injection-guven-siniri",
@@ -334,7 +342,8 @@
       "readingMinutes": 23,
       "translationSlug": "prompt-injection-and-the-trust-boundary",
       "draft": false,
-      "tagline": "%99 başarılı bir injection dedektörünün ısrarcı bir saldırgana neden yine de yenildiğini ve güven yayılımının güvenilmeyen metni işlem seçmekten nasıl alıkoyduğunu gösteriyoruz."
+      "tagline": "%99 başarılı bir injection dedektörünün ısrarcı bir saldırgana neden yine de yenildiğini ve güven yayılımının güvenilmeyen metni işlem seçmekten nasıl alıkoyduğunu gösteriyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-tedarik-zinciri-guvenligi",
@@ -355,7 +364,8 @@
       "readingMinutes": 22,
       "translationSlug": "securing-the-ai-supply-chain",
       "draft": false,
-      "tagline": "Çalıştırdığınız modelin, tokenizer'ın, paketlerin ve MCP araçlarının tam olarak onayladıklarınız olduğunu ve onları yüklemenin kod çalıştıramayacağını kanıtlıyoruz."
+      "tagline": "Çalıştırdığınız modelin, tokenizer'ın, paketlerin ve MCP araçlarının tam olarak onayladıklarınız olduğunu ve onları yüklemenin kod çalıştıramayacağını kanıtlıyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "guvenli-ai-verisi",
@@ -376,7 +386,8 @@
       "readingMinutes": 21,
       "translationSlug": "securing-ai-data-from-source-to-deletion",
       "draft": false,
-      "tagline": "Tek bir şikâyeti dokuz kopyası boyunca izliyor, kişisel veriyi sağlama toplamı ve NER ile buluyor ve silmeyi gerçekten eksiksiz hâle getiriyoruz."
+      "tagline": "Tek bir şikâyeti dokuz kopyası boyunca izliyor, kişisel veriyi sağlama toplamı ve NER ile buluyor ve silmeyi gerçekten eksiksiz hâle getiriyoruz.",
+      "updated": "2026-11-15"
     },
     {
       "slug": "ai-tehdit-modelleme-ve-guven-sinirlari",
@@ -384,7 +395,7 @@
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
       "seriesPart": 2,
-      "summary": "Ne: LLM uygulamaları için Von Neumann kırılması ve yönlü bilgi akışına dayalı tehdit modelleme yöntemi. Neden önemli: LLM'lerde veri kod gibi davranabilir; tek bir istek yedi güven sınırından geçer, hiç oturum açmayan bir saldırgan e-posta aracına ulaşabilir ve %95 başarı oranına sahip bir filtre 100 denemeli ısrarcı bir saldırgana karşı %99,41 ihtimalle delinir. Nasıl: Yedi güven sınırlı veri akış diyagramı (TB1-TB7), NIST AI 100-2 ve MITRE ATLAS eşlemesi, güvenilmeyen metnin girdiği dört kapı, bileşen bazında STRIDE, ölümcül üçlü üzerinde deterministik çizge kesisi ve stokastik ihlal matematiği içeren yaşayan bir tehdit kaydı. Nerede: Dış içerik okuyan ve araç çağıran asistan ve ajanlarda. Kim için: Güvenlik mimarları, AI mühendisleri ve uygulama güvenliği ekipleri için. Ne zaman: Yeni bir AI özelliği veya aracı tasarlanırken.",
+      "summary": "Ne: LLM uygulamaları için bant içi talimat sorununa (veri ile talimat arasında zorunlu bir ayrımın olmamasına) ve yönlü bilgi akışına dayalı tehdit modelleme yöntemi. Neden önemli: LLM'lerde veri kod gibi davranabilir; tek bir istek yedi güven sınırından geçer, hiç oturum açmayan bir saldırgan e-posta aracına ulaşabilir ve %95 başarı oranına sahip bir filtre 100 denemeli ısrarcı bir saldırgana karşı %99,41 ihtimalle delinir. Nasıl: Yedi güven sınırlı veri akış diyagramı (TB1-TB7), NIST AI 100-2 ve MITRE ATLAS eşlemesi, güvenilmeyen metnin girdiği dört kapı, bileşen bazında STRIDE, ölümcül üçlü üzerinde deterministik çizge kesisi ve stokastik ihlal matematiği içeren yaşayan bir tehdit kaydı. Nerede: Dış içerik okuyan ve araç çağıran asistan ve ajanlarda. Kim için: Güvenlik mimarları, AI mühendisleri ve uygulama güvenliği ekipleri için. Ne zaman: Yeni bir AI özelliği veya aracı tasarlanırken.",
       "tags": [
         "güvenlik",
         "tehdit-modelleme",
@@ -398,7 +409,7 @@
       "translationSlug": "ai-threat-modeling-and-trust-boundaries",
       "draft": false,
       "tagline": "Bir AI asistanının veri akışını çizip güvenilmeyen metnin işlem yetkisiyle buluştuğu yerleri işaretliyor ve her tehdidi test edilen bir kontrole dönüştürüyoruz.",
-      "updated": "2026-11-01"
+      "updated": "2026-11-15"
     },
     {
       "slug": "yapay-zeka-guvenligi-tasarimda-baslar",
@@ -406,7 +417,7 @@
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
       "seriesPart": 1,
-      "summary": "Ne: Müşteri kaydı okuyan ve onayla e-posta gönderebilen sentetik bir destek asistanı üzerinden güvenli AI mimarisinin temelleri. Neden önemli: Tek bir araç bir metin üretecini işlem yapan bir aktöre dönüştürür; modellerin çıktıları asla doğrudan yürütülmemelidir ve %4'lük ortak bir sistemik kör nokta, üç katmanlı savunmayı kâğıt üzerindeki tahminden 41 kat daha zayıf hâle getirir. Nasıl: Altı güven bölgesi (Z0-Z5), Propose vs. Commit ayrımı, dört varlık sınıfı, CIA ve güvenli davranış, güvenlik, emniyet, mahremiyet ve güvenilirlik ayrımı, dört tasarım ilkesi, güvenilirlik mühendisliğinin Beta-faktör formülü ve kurumsal bir RACI matrisi. Nerede: LLM, RAG ve ajan uygulamalarında. Kim için: AI güvenlik mimarları, yazılım ve platform ekipleri ile teknik liderler için. Ne zaman: Bir AI sisteminin ilk mimari tasarım ve tehdit modelleme incelemesinden önce.",
+      "summary": "Ne: Müşteri kaydı okuyan ve onayla e-posta gönderebilen sentetik bir destek asistanı üzerinden güvenli AI mimarisinin temelleri. Neden önemli: Tek bir araç bir metin üretecini işlem yapan bir aktöre dönüştürür; modellerin çıktıları asla doğrudan yürütülmemelidir ve %5'lik ortak bir kör nokta, üç katmanlı savunmayı kâğıt üzerindeki tahminden 9,3 kat daha zayıf hâle getirir. Nasıl: Altı güven bölgesi (Z0-Z5), Propose vs. Commit ayrımı, dört varlık sınıfı, CIA ve güvenli davranış, güvenlik, emniyet, mahremiyet ve güvenilirlik ayrımı, dört tasarım ilkesi, güvenilirlik mühendisliğinin Beta-faktör formülü ve kurumsal bir RACI matrisi. Nerede: LLM, RAG ve ajan uygulamalarında. Kim için: AI güvenlik mimarları, yazılım ve platform ekipleri ile teknik liderler için. Ne zaman: Bir AI sisteminin ilk mimari tasarım ve tehdit modelleme incelemesinden önce.",
       "tags": [
         "güvenlik",
         "llm",
@@ -419,7 +430,7 @@
       "translationSlug": "ai-security-starts-at-design",
       "draft": false,
       "tagline": "Herhangi bir filtreden önce bir AI sisteminin neyi koruduğuna, tasarımını hangi dört ilkenin yönettiğine ve her riskin sahibinin kim olduğuna karar veriyoruz.",
-      "updated": "2026-11-01"
+      "updated": "2026-11-15"
     },
     {
       "slug": "gpu-datasheet-nasil-okunur",

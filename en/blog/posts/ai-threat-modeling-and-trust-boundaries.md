@@ -2,8 +2,8 @@ The support assistant passed the security review with a single sentence: *"We ha
 
 The real failure was not the filter. No one had mapped where untrusted text *entered* the system, which components *trusted* it, and which *actions* it could reach. A single "summarize and reply" request crosses at least six trust boundaries: the employee's browser, the model provider's API, the CRM, the complaint archive containing text authored by strangers, the outbound mail server, and the log exporter. A filter placed on one boundary says nothing about the other five.
 
-> **The Foundational Law of AI Threat Modeling (The Von Neumann Breakdown):**
-> In traditional computing, the code segment (`.text`) and the data segment (`.data`) are hardware-isolated. In large language models, instructions and data are multiplexed onto the exact same token stream ($x_1, \dots, x_N \in \mathcal{V}$). Consequently, any text reaching the model carries the potential to behave as executable code; a trust boundary exists wherever text from a less trusted source enters a context with access to higher operational authority.
+> **The Foundational Law of AI Threat Modeling (the in-band instruction problem):**
+> Classical systems spent decades separating code from data: a memory page is writable *or* executable (W^X, the NX bit), and a parameterized SQL query keeps a value in the value slot whatever the value says. A large language model has no equivalent. Instructions and data are multiplexed onto the same token stream ($x_1, \dots, x_N \in \mathcal{V}$), and no bit marks a token as "data only". Consequently, any text reaching the model can behave like an instruction; a trust boundary exists wherever text from a less trusted source enters a context with access to higher operational authority.
 
 This article transforms that intuition into a mathematical and architectural methodology. Grounded in the six trust zones (Z0–Z5) established in [Part 1](post.html?slug=ai-security-starts-at-design), we will construct the support assistant's Data Flow Diagram (DFD), mark seven trust boundaries (TB1–TB7), and classify threat actors using NIST AI 100-2 and MITRE ATLAS taxonomies. We will then analyze the "lethal trifecta" of data exfiltration using directed information flow graphs, prove why stochastic attack success rates require deterministic execution gates ($1 - (1 - P)^k$), and build a living **threat register**.
 
@@ -40,9 +40,9 @@ Threat modeling is the structured practice of answering the four core questions 
 
 In traditional software, the boundary between **code** and **data** is enforced by compilers and operating systems. In a parameterized SQL query, a malicious input string like `' OR '1'='1` is handled strictly as a literal value; the SQL engine never executes it as structural grammar.
 
-In large language models, this hardware boundary vanishes. The system prompt, employee instructions, retrieved CRM details, and an untrusted customer email are tokenized into a continuous sequence. By training, the model is designed to follow instructions *wherever they surface* within that sequence. External text is not merely processed data; it is **data capable of executing as code**.
+In large language models no such enforced boundary exists. The system prompt, employee instructions, retrieved CRM details, and an untrusted customer email are tokenized into a continuous sequence. By training, the model is designed to follow instructions *wherever they surface* within that sequence. External text is not merely processed data; it is **data capable of executing as code**.
 
-NIST's foundational taxonomy (NIST AI 100-2 E2025) highlights this architectural reality: Developers cannot construct a deterministic semantic boundary between data and instructions because the model is an autoregressive token predictor, not a formal grammatical parser.
+NIST's adversarial machine learning taxonomy (AI 100-2 E2025) names the same root cause for indirect prompt injection: data and instructions travel in one channel. The application cannot draw a deterministic line between them at the model's input, because the model is an autoregressive token predictor, not a parser with a grammar.
 
 A second divergence lies in adversary objectives: Attackers rarely seek to disable the model. They aim to leverage model reasoning to access downstream databases or trigger privileged tools (`send_email`, `execute_refund`). Effective AI threat modeling begins not at the model, but at the **business impact** the adversary seeks to achieve, tracing backwards through the architecture.
 
@@ -160,7 +160,7 @@ Each trust boundary maps directly to an architectural verification question:
 
 ## 3. Who is the adversary? Objective, capability, access, knowledge
 
-Stating "an attacker might compromise the system" is insufficient for engineering defense. NIST AI 100-2 requires profiling threat actors across four dimensions:
+Stating "an attacker might compromise the system" is insufficient for engineering defense. NIST AI 100-2 classifies attacks by the attacker's objectives, capabilities and knowledge. For application threat modeling we add a fourth, practical dimension, access, and profile each actor along all four:
 
 1. **Objective:** What business impact is desired?
    - *Availability breakdown:* Exhausting GPU quotas, inducing latency.
@@ -192,20 +192,18 @@ Notice the critical vulnerability pattern: **Actor A1 possesses no credentials w
 
 To avoid conflating industry standards, we delineate their roles:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  NIST AI 100-2 / AI 600-1  → Taxonomy (Formal concepts and semantics) │
-│  MITRE ATLAS               → Tactics & Techniques (Adversary steps)    │
-│  OWASP GenAI Top 10        → Risk Awareness (Prevalent vulnerabilities)│
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Document | Kind | What it gives you |
+| --- | --- | --- |
+| NIST AI 100-2 / AI 600-1 | Taxonomy | Formal names and definitions for attacks and risks |
+| MITRE ATLAS | Tactics and techniques | The adversary's steps, each with a persistent ID |
+| OWASP Top 10 (LLM and Agentic) | Awareness list | The most common risk categories, for prioritization |
 
-- **NIST AI 100-2 E2025:** Establishes mathematical classifications: *Evasion* (adversarial perturbations), *Poisoning* (clean-label backdoors), *Privacy Attacks* (reconstruction, membership inference), and *Abuse Attacks* (indirect injection).
+- **NIST AI 100-2 E2025:** Classifies attacks on predictive AI (*evasion*, *poisoning*, *privacy attacks* such as reconstruction and membership inference) and on generative AI (*supply chain attacks*, *direct prompting*, *indirect prompt injection*), each by the attacker's objective.
 - **MITRE ATLAS (v5.6.0):** Catalogs attack techniques with persistent identifiers:
   1. `AML.T0051.001`: LLM Indirect Prompt Injection.
   2. `AML.T0054`: LLM Jailbreak.
   3. `AML.T0086`: Exfiltration via AI Agent Tool Invocation.
-- **OWASP GenAI Top 10 (2025/2026):** Ranks this attack as the intersection of **LLM01 (Prompt Injection)** and **LLM03 (Excessive Agency)**. In agentic standards, it maps to **ASI01 (Agent Goal Hijack)** and **ASI02 (Tool Misuse)**.
+- **OWASP Top 10 for LLM Applications (2026):** Places this attack as the intersection of **LLM01 (Prompt Injection)** and **LLM03 (Excessive Agency)**. In agentic standards, it maps to **ASI01 (Agent Goal Hijack)** and **ASI02 (Tool Misuse)**.
 
 > [!NOTE]
 > **Concept Untangling: Threat Modeling vs. Vulnerability Scanning**
@@ -289,7 +287,7 @@ Evaluating the Data Flow Diagram element by element through the STRIDE lens unco
 
 ## 7. The lethal trifecta and directed information flow analysis
 
-Simon Willison's **Lethal Trifecta** establishes that data exfiltration in agentic AI occurs if and only if three conditions hold simultaneously:
+Simon Willison's **Lethal Trifecta** says that an agent can be made to exfiltrate data when three conditions hold at the same time:
 
 $$
 \text{Breach}(s) = D(s) \land U(s) \land X(s)
@@ -300,24 +298,11 @@ For an active session $s$:
 - $U(s) \in \{0, 1\}$: The system ingests untrusted text into context (external customer complaints).
 - $X(s) \in \{0, 1\}$: The system possesses an external channel capable of transmitting data (`send_email`, webhooks, markdown image rendering).
 
-Because this is a logical conjunction ($\land$), eliminating any single term mathematically neutralizes exfiltration.
+Because this is a logical conjunction ($\land$), removing any single term closes this exfiltration path.
 
 ### Directed Graph Representation and Graph Cut
 
-We formulate the system as a directed information flow graph $G = (V, E)$:
-
-```text
-  [v_untrusted (Z0)] ──> [v_context (Z2)] <── [v_sensitive_data (Z4)]
-                               │
-                               ▼
-                       [v_reasoning (Z2)]
-                               │
-                               ▼  (Proposal: Tool Call)
-                        [v_PEP (Z3)]  <═══ [DETERMINISTIC GRAPH CUT: CUT(G)]
-                               │
-                               ▼  (Committed Action)
-                         [v_sink (Z4)] ──> [Outside World]
-```
+We formulate the system as a directed information flow graph $G = (V, E)$. Its nodes are the complaint $v_{\text{untrusted}}$ (Z0), the CRM record $v_{\text{sensitive}}$ (Z4), the assembled context $v_{\text{context}}$ and the model's reasoning $v_{\text{reasoning}}$ (both Z2), the enforcement point $v_{\text{PEP}}$ (Z3) and the outward tool $v_{\text{sink}}$ (Z4, `send_email` to the outside world). The complaint and the CRM record both flow into the context; the context feeds the reasoning; the reasoning emits a proposal; and a proposal can become a committed action only by passing $v_{\text{PEP}}$.
 
 Without the **Policy Enforcement Point (PEP)** in Zone 3, a directed walk ($\pi$) connects untrusted inputs directly to external exfiltration sinks:
 
@@ -365,7 +350,7 @@ This graph cut is implemented via three deterministic controls:
 <!-- Bottom Educational Banner -->
 <rect x="16" y="324" width="688" height="62" rx="6" style="fill:var(--c-accent);fill-opacity:.07;stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="28" y="343" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700;letter-spacing:.02em">💡 DIRECTED GRAPH CUT: SEVER THE LETHAL TRIFECTA (D ∩ U ∩ X) AT THE ROOT</text>
-<text x="28" y="361" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Whenever sensitive data (D), untrusted content (U), and external egress (X) coexist, exfiltration is inevitable.</text>
+<text x="28" y="361" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Whenever sensitive data (D), untrusted content (U), and external egress (X) coexist, exfiltration becomes possible.</text>
 <text x="28" y="377" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Robust security does not plead with the model via prompt wrappers; it severs the egress edge (X) deterministically.</text>
 </svg>
 
@@ -399,21 +384,21 @@ Parameters:
 Step 1: Probability that all 100 attempts are blocked
   P_blocked_all = (1 - 0.05)^100
                 = 0.95^100
-                = 0.00592        → Only 0.59% chance the system survives all attempts!
+                = 0.00592        → 0.59% chance that every attempt is blocked
 
 Step 2: Probability of at least one successful exploit
   P_breach = 1 - 0.00592
-           = 0.99408             → 99.41% CERTAIN BREACH!
+           = 0.99408             → at least one breach with 99.41% probability
 
 Step 3: Stricter filter benchmark (99% nominal efficacy, P_single = 0.01)
   P_breach_1pct = 1 - (1 - 0.01)^100
                 = 1 - 0.99^100
-                = 1 - 0.36603 = 0.63397 → 63.40% PROBABILITY OF BREACH!
+                = 1 - 0.36603 = 0.63397 → 63.40%
 ```
 
 > [!NOTE]
 > **Thought Experiment: The 100-Attempt Adversary**
-> Staking your architecture on a 99% effective prompt classifier leaves your application worse off than a coin toss (63.4% breach rate) against a simple 100-line Python loop. This mathematical reality leads to an indispensable architectural conclusion: **Defenses that merely suppress likelihood ($L \to L'$) inevitably fail against persistent adversaries. True enterprise resilience demands deterministic controls that drive impact to zero ($I \to I'$).**
+> Staking your architecture on a 99% effective prompt classifier leaves your application worse off than a coin toss (63.4% breach rate) against a simple 100-line Python loop. This mathematical reality leads to an indispensable architectural conclusion: **Defenses that only suppress likelihood ($L \to L'$) wear down against a persistent adversary; resilience needs deterministic controls that lower impact ($I \to I'$).** The formula even flatters the defender: real attempts are not independent, the attacker learns from each failure, so the real curve is steeper.
 
 The following Python script computes these probability curves and prioritizes our support assistant's threat register:
 
@@ -511,7 +496,7 @@ A threat register converts architectural modeling into verifiable engineering ta
 | ID | Threat (ATLAS / OWASP) | Entry Gate / Boundary | Asset | Mitigating Control | Verification Test (Pass Criteria) | Owner | R → R' |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **T1** | Data exfiltration via indirect injection (`AML.T0051.001`, `AML.T0086` / LLM01, ASI01) | Complaints / TB4 $\to$ TB5 | Customer PII | Recipient allowlist; HMAC-bound HITL approval; markdown image suppression | 200 adversarial test cases (EN+TR): 0 unauthorized dispatches | Software Architecture | 20 $\to$ 4 |
-| **T2** | Employee accesses records outside scope (`AML.T0056` / LLM02, ASI03) | Chat UI / TB1 $\to$ TB3 | Customer PII | CRM queries enforce session user's OAuth scope at API layer | 50 out-of-portfolio queries: 0 records returned by CRM API | Platform / Security | 12 $\to$ 4 |
+| **T2** | Employee accesses records outside scope (`AML.T0057` / LLM02, ASI03) | Chat UI / TB1 $\to$ TB3 | Customer PII | CRM queries enforce session user's OAuth scope at API layer | 50 out-of-portfolio queries: 0 records returned by CRM API | Platform / Security | 12 $\to$ 4 |
 | **T3** | Denial-of-wallet / resource exhaustion (`AML.T0034` / LLM06) | Chat UI / TB1 | Continuity | Per-user token ceilings, max 3 tool iterations, gateway rate limiting | Load test: requests exceeding quota blocked with HTTP 429 | SRE / Platform | 12 $\to$ 4 |
 | **T4** | Extraction of system prompt instructions (`AML.T0056` / LLM08) | Chat UI / TB1 | Model Config | Prompts contain zero secrets, API tokens, or internal URLs | 100 extraction probes: 0 sensitive architecture secrets leaked | AI / ML Engineering | 8 $\to$ 4 |
 | **T5** | Malicious / compromised model weights loaded (`AML.T0010` / LLM04) | Supply Chain / TB7 | Model | Sigstore/Cosign cryptographic verification & hash pinning | CI/CD gate rejects unsigned weights from registry | Platform / DevSecOps | 10 $\to$ 5 |
@@ -539,7 +524,7 @@ Operationalizing the threat register requires maintaining both lenses:
 ## Glossary
 
 - **Trust Boundary:** A semantic line demarcating shifts in trust levels, privilege scopes, or data ownership (TB1 through TB7).
-- **Von Neumann Breakdown:** The architectural merging of code and data into a single token stream in LLMs, rendering structural separation impossible.
+- **In-Band Instructions:** In an LLM, instructions and data share one token stream, with no enforced marker (no W^X for tokens) that keeps data from acting as an instruction.
 - **Indirect Prompt Injection:** Adversarial instructions embedded within data sources (emails, documents) read by an LLM (`AML.T0051.001`).
 - **Confused Deputy:** A privileged software component manipulated into executing its authority on behalf of an unauthorized external entity.
 - **Lethal Trifecta:** The intersection of private data ($D$), untrusted content ($U$), and external channels ($X$) in an AI agent session.
@@ -557,7 +542,7 @@ Operationalizing the threat register requires maintaining both lenses:
 - [K2] NIST, [*AI 600-1: Generative AI Profile to the AI Risk Management Framework*](https://doi.org/10.6028/NIST.AI.600-1) (July 2024): Trust boundaries and DFD mapping for generative systems.
 - [K3] MITRE, [*ATLAS Knowledge Base*](https://atlas.mitre.org/): Adversarial Threat Landscape for AI Systems, v5.6.0 catalog.
 - [K4] K. Greshake et al., [*Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*](https://arxiv.org/abs/2302.12173) (2023).
-- [K5] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2025/2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) and [*Top 10 for Agentic Applications*](https://genai.owasp.org/): LLM01, LLM03, and ASI01 guidance.
+- [K5] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) and [*Top 10 for Agentic Applications*](https://genai.owasp.org/): LLM01, LLM03, and ASI01 guidance.
 - [K6] S. Willison, [*The lethal trifecta for AI agents: private data, untrusted content, and external communication*](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/) (2025).
 - [K7] Microsoft Security Response Center, [*CVE-2025-32711: Microsoft 365 Copilot Information Disclosure (EchoLeak)*](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-32711) (2025).
 - [K8] Threat Modeling Manifesto, [*Four Core Questions and Values*](https://www.threatmodelingmanifesto.org/).

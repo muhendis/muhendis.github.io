@@ -496,7 +496,7 @@ p3 = 0.30 (content check)
 P_miss = 0.10 × 0.20 × 0.30 = 0.02 × 0.30 = 0.006   → 0.6%
 ```
 
-Detectors trained on similar data tend to miss the same attacks, though. If a fraction $\rho$ of attacks falls into a blind spot all layers share:
+Detectors trained on similar data tend to miss the same attacks, though. If a fraction $\rho$ of attacks falls into a blind spot all layers share (Part 1 calls this fraction $\beta$, after the beta-factor model of reliability engineering):
 
 $$
 P_{\text{miss}} = \rho + (1 - \rho) \prod_{i=1}^{n} p_i

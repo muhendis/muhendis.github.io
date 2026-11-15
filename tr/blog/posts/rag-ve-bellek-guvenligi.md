@@ -57,43 +57,30 @@ Kurumsal bir RAG vektör dizini, tam olarak o açık fotokopi salonudur. Özgün
 2. **Yetkilerdeki dinamik güncellemeler ve Chunk Kayması (ACL Drift):** Kaynak sistemde bir belgenin gizlilik seviyesi artırıldığında veya bir çalışan departman değiştirdiğinde, kaynak sistem yetkileri mikrosaniyeler içinde günceller. Oysa vektör veritabanında o belgeden türetilmiş yüzlerce parça, eski yetki etiketleriyle günlerce veya aylarca yaşamaya devam eder.
 3. **Parçanın kökeni ve yazarlık güveni:** Müşteri şikâyet arşivindeki bir metin, sisteme dış dünyadan (güvenilmeyen bölge) girmiştir. Vektör dizini bu parçayı, sanki şirketin yönetim kurulu kararıymış gibi aynı koleksiyonda depolar.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│             Chunk Kayması (ACL Drift) Güvenlik Açığı                   │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. Kaynak Doküman (SharePoint / CRM):                                  │
-│    doc_id: "finans-rapor-2026.pdf"                                     │
-│    v1 ACL: ["finans", "yonetim"]  ───(Dizinleme ETL)───┐               │
-│                                                        │               │
-│ 2. Vektör Veritabanı Parçaları:                        ▼               │
-│    chunk_01 metadata: {doc: "finans-rapor-2026", acl: ["finans"]}      │
-│    chunk_02 metadata: {doc: "finans-rapor-2026", acl: ["finans"]}      │
-│                                                                        │
-│ 3. Olay Anı: Güvenlik Olayı Sonrası Yetki Kısıtlaması                  │
-│    doc_id "finans-rapor-2026.pdf" -> v2 ACL: SADECE ["yonetim"]        │
-│    SharePoint anında güncellendi!                                      │
-│                                                                        │
-│ 4. Vektör Veritabanı Drift Durumu:                                     │
-│    Vektör indeksindeki binlerce parça hâlâ acl: ["finans"] taşıyor!    │
-│    Finans uzmanı RAG üzerinden sorguladığında sızıntı gerçekleşir!     │
-└────────────────────────────────────────────────────────────────────────┘
-```
+Kaymanın adım adım örneği:
+
+1. **Dizinleme anı.** `finans-rapor-2026.pdf` kaynakta `["finans", "yonetim"]` ACL'ine sahiptir. ETL işi bu ACL'i ürettiği her parçanın üstverisine kopyalar.
+2. **Değişiklik.** Bir güvenlik olayından sonra belge `["yonetim"]` ile sınırlandırılır. SharePoint yeni ACL'i anında uygular.
+3. **Kayma.** Vektör deposundaki parçalar hâlâ eski ACL kopyasını, `["finans", "yonetim"]`, taşır.
+4. **Sızıntı.** Bir finans uzmanı asistana dördüncü çeyreği sorar; retrieval filtresi bayat kopyayı okur, parçaları geçirir ve yanıt, uzmanın kaynakta artık açamadığı bir belgeden alıntı yapar.
 
 Bu açığı bertaraf etmek için geleneksel yaklaşım, yetki değiştiğinde etkilenen tüm vektörleri silip yeniden dizinlemektir. Ancak milyonlarca belgenin bulunduğu kurumsal ortamlarda bu işlem yüksek GPU maliyeti, gecikme ve veritabanı kilitlenmelerine yol açar. Modern AI güvenlik mimarisinde çözüm, **Ayrık Epoch Versiyonlama (Decoupled Epoch Invalidation)** modelidir.
 
-Her belgeye kaynak sistemde bir versiyon epoch değeri atanır. Vektör parçaları üstverilerinde statik ACL dizileri yerine yalnızca belge kimliğini ve dizinlendiği andaki epoch değerini taşır: $(v_{\text{doc}}, \text{doc\_id})$. Kullanıcının yetkileri ve belgenin güncel epoch değeri ise bellek içi hızlı bir anahtar-değer deposunda (Redis / PDP Cache) tutulur:
+Her belgeye kaynak sistemde bir versiyon epoch değeri atanır. Her parça, dizin içi filtrenin ihtiyaç duyduğu ACL kopyasının yanında belge kimliğini ve dizinlendiği andaki epoch değerini taşır: $(v_{\text{doc}}, \text{doc\_id})$. Yetkili (asıl) ACL'ler ve belgenin güncel epoch değeri ise bellek içi hızlı bir anahtar-değer deposunda (Redis / PDP Cache) tutulur:
 
 $$
 \text{Valid}(c) \iff \Big( \text{Epoch}(c) = \text{Epoch}(\text{Doc}(c)) \Big) \land \Big( \text{ACL}(\text{Doc}(c)) \cap \mathcal{G}_{\text{user}} \neq \emptyset \Big)
 $$
 
-Kaynak sistemde belgenin yetkisi değiştiğinde, sadece ilgili belgenin epoch numarası artırılır ($v_{\text{doc}} \leftarrow v_{\text{doc}} + 1$). Retrieval anında eski epoch numarasına sahip parçalar $O(1)$ sürede doğrudan geçersiz sayılır; ne pahalı bir vektör silme işlemine ne de indeksin yeniden oluşturulmasına gerek kalır.
+Kaynak sistemde belgenin yetkisi değiştiğinde, sadece ilgili belgenin epoch numarası artırılır ($v_{\text{doc}} \leftarrow v_{\text{doc}} + 1$). Retrieval anında eski epoch numarasına sahip parçalar tek bir $O(1)$ sorguyla geçersiz sayılır; ne vektörlerin yeniden dizinlenmesine ne de indeksin yeniden kurulmasına gerek kalır.
+
+Bu artırımın ne yaptığını açıkça söyleyelim: **herkes için kapalı arıza** verir. Arka plandaki bir iş belgenin parçalarını yeni epoch ile yeniden damgalayana kadar belge, yetkisi süren kullanıcılar için bile görünmezdir. Kasıtlı ödünleşim tek cümledir: *bayat bir izin, bayat bir retten kötüdür.* Onarım ucuzdur; çünkü yeniden damgalama mevcut vektörler üzerinde bir üstveri yazımıdır, yeniden gömme değildir. Epoch denetiminin kendi arıza kuralı da olmalıdır: kayıt deposuna (Redis / PDP önbelleği) ulaşılamıyorsa retrieval, dizindeki kopyalara güvenmek yerine hiçbir şey döndürmez.
 
 ### Erken vs Geç Parçalama (Early vs Late Chunking) Güvenlik Çıkmazı
 
 Modern RAG mimarilerinde parçalama stratejisi doğrudan bir güvenlik sınırıdır:
 - **Erken Parçalama (Early Chunking):** Metin önce 512 token'lık parçalara ayrılır, ardından her parça bağımsız olarak embedding modeline verilir. Güvenlik açısından avantajlıdır çünkü her parçanın vektör temsili yalnızca kendi içeriğinden türetilir; bağlam sınırları katıdır. Ancak anlamsal bütünlük parçalanır.
-- **Geç Parçalama (Late Chunking):** Tüm belge (örneğin 8.192 token) çift yönlü bir Transformer modelinden geçirilir; her bir token'ın tüm belgeyle olan dikkat (cross-attention) ağırlıkları hesaplandıktan sonra parça aralıkları üzerinde havuzlama (mean pooling) yapılır. Anlamsal kalite yükselir ancak **Çapraz Dikkat Bilgi Bulaşması (Cross-Attention Taint Leakage)** doğar. Eğer bir belgenin A bölümü kamuya açık, B bölümü ise gizli maaş verilerini içeriyorsa; B bölümündeki gizli token'lar dikkat mekanizması üzerinden A bölümünün token temsillerine sızar. Yalnızca A bölümünü görme yetkisi olan bir kullanıcının sorgusu, maaşla ilgili bir semantik arama yaptığında A parçasının vektörü beklenmedik biçimde yüksek benzerlik üreterek dolaylı sızıntıya neden olabilir.
+- **Geç Parçalama (Late Chunking):** Tüm belge (örneğin 8.192 token) çift yönlü bir Transformer modelinden geçirilir; öz-dikkat (self-attention) bilgiyi bütün bağlam boyunca karıştırdıktan sonra parça aralıkları üzerinde havuzlama (mean pooling) yapılır. Anlamsal kalite yükselir ancak **dikkat yoluyla bilgi bulaşması** (attention taint leakage) doğar. Eğer bir belgenin A bölümü kamuya açık, B bölümü ise gizli maaş verilerini içeriyorsa; B bölümündeki gizli token'lar dikkat mekanizması üzerinden A bölümünün token temsillerine sızar. Yalnızca A bölümünü görme yetkisi olan bir kullanıcının sorgusu, maaşla ilgili bir semantik arama yaptığında A parçasının vektörü beklenmedik biçimde yüksek benzerlik üretebilir. Sızan şey metin değil, bir sinyaldir: kullanıcı belgenin ücret içeriği taşıdığını öğrenir; ayrıca A'nın vektörü artık B'nin bir kısmını kodlar ve vektörler tersine çevrilebiliyorsa (Bölüm 3) bu önem kazanır.
 
 ---
 
@@ -250,28 +237,16 @@ Mühendislik ekipleri bu sorunu fark ettiklerinde genellikle tehlikeli bir refle
 
 HNSW algoritması, çok katmanlı bir atlama grafiği (skip-graph) üzerinde açgözlü (greedy) arama yapar. Sorgu vektörüne en yakın komşular, kenarlar üzerinden zıplayarak bulunur. Eğer ön filtreleme *"arama başlamadan önce yetkisiz düğümleri graftan tamamen çıkar"* mantığıyla uygulanırsa, grafın küçük dünya (small-world) özelliği bozulur:
 
-1. **Graf Kopukluğu ve Adacıklar (Graph Disconnection):** Yetkisiz düğümler budandığında, graf birbirine bağlı olmayan küçük alt bileşenlere (adacıklara) bölünür. Rastgele graflarda perkolasyon eşiği ($p_c \approx \frac{\ln |V|}{|V|}$) altına düşüldüğünde devasa bileşen (giant component) aniden yok olur.
+1. **Graf Kopukluğu ve Adacıklar (Graph Disconnection):** Yetkisiz düğümler budandığında, graf birbirine bağlı olmayan küçük alt bileşenlere (adacıklara) bölünür. Bu bir perkolasyon etkisidir: hayatta kalan düğüm oranı kritik bir değerin altına indiğinde tek büyük bağlı bileşen dağılır; kullanıcının payı $f$ ne kadar düşükse budanmış graf o noktaya o kadar yaklaşır.
 2. **Yerel Minimum Tuzağı:** Arama başlangıç noktası (entry point), kullanıcının yetkili olduğu adacığa erişemez; arama bir "yetkisiz düğüm duvarına" çarparak erkenden sonlanır ve var olan en alakalı yetkili belgeler bulunamaz.
 
-Bu sorunu çözen modern mühendislik standardı **Tek Aşamalı Graf İçi Maskeleme (In-Traversal Filtering with Bitset Masks)** yöntemidir (Qdrant, Milvus, pgvector bu prensiple çalışır).
+Bu sorunu çözen modern mühendislik standardı **Tek Aşamalı Graf İçi Maskeleme (In-Traversal Filtering with Bitset Masks)** yöntemidir (Milvus graf geçişi sırasında bir bitset uygular; Qdrant'ın filtrelenebilir HNSW'si filtreyi geçiş sırasında denetler ve filtrelenmiş alt grafların bağlı kalması için ek bağlantılar kurar). Her motor böyle çalışmaz: pgvector filtreleri dizin taramasından *sonra* uygular; bu, aç bırakma sorunuyla birlikte sonradan filtrelemedir. 0.8.0 sürümünden beri bunu, yeterli satır filtreden geçene kadar taramayı sürdüren yinelemeli dizin taramalarıyla telafi eder.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│            HNSW Tek Aşamalı Graf İçi Filtreleme Mekanizması            │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. Kullanıcı oturum açtığında yetkili ID'ler bir Bitset'e açılır:       │
-│    Bitset Mask: [1, 0, 0, 1, 0, 1, ...] (1 = Yetkili, 0 = Yasaklı)     │
-│                                                                        │
-│ 2. HNSW Işın Araması (Beam Search) sırasında:                          │
-│    - Düğüm 5 (Yasaklı, bit=0): Grafta GEÇİŞ KÖPRÜSÜ olarak kullanılır! │
-│      Komşularına dallanmaya izin verilir. Graf kopmaz!                 │
-│    - Düğüm 8 (Yetkili, bit=1): Hem geçiş yapılır hem de                │
-│      Aday Sonuç Kuyruğuna (Top-K Result Queue) eklenir.                │
-│                                                                        │
-│ 3. Sonuç: Graf bütünlüğü %100 korunur; sıfır bilgi sızıntısıyla        │
-│    yalnızca yetkili düğümler modele döner.                             │
-└────────────────────────────────────────────────────────────────────────┘
-```
+Geçişin işleyişi:
+
+1. **Maskeyi kur.** Kimlik doğrulamada kullanıcının yetkileri, parça kimlikleri üzerinde bellek içi bir bitset'e açılır; örneğin `[1, 0, 0, 1, 0, 1, ...]` (1 = yetkili, 0 = yasaklı).
+2. **Hepsinden geç, seçerek topla.** Işın araması sırasında yasaklı bir düğüm (bit 0) yine *geçiş köprüsü* işi görür: kenarları izlenir, graf kopmaz; ama sonuç kuyruğuna asla girmez. Yetkili bir düğümden (bit 1) hem geçilir hem de düğüm en iyi $k$ adayına eklenir.
+3. **Sonuç.** Bağlantılılık korunur ve model bağlamına yalnızca yetkili parçalar dönebilir.
 
 Kullanıcı yetkisi son derece kısıtlı olduğunda ($f < 0,001$), graf içi geçiş çok fazla boş düğüm taramak zorunda kalarak $efSearch$ sınırını tüketebilir. Bu özel sınır durumunda veritabanı motoru otomatik olarak vektör grafından ters indeks (inverted index / flat scan) taramasına geçiş yapmalıdır (hybrid query planning).
 
@@ -293,7 +268,7 @@ Mimari kararı belirleyen temel kural şudur: *Tek bir sorguda filtreleme parame
 
 Geliştiricilerin en sık düştüğü yanılgı, yüksek boyutlu kayan noktalı (floating-point) embedding vektörlerinin tek yönlü bir özet (kriptografik hash) gibi davrandığı ve kaynak metni ifşa etmeyeceğidir.
 
-Morris ve ark. tarafından geliştirilen **Vec2Text** (2023) araştırması, modern embedding modellerinin (contriever, text-embedding-ada-002 vb.) ürettiği vektörlerin tersine mühendislikle çözülebildiğini kanıtlamıştır. Vec2Text, 32 token uzunluğundaki metinlerin **%92'sini harfi harfine (exact match)** geri inşa edebilmektedir. 
+Morris ve ark. tarafından geliştirilen **Vec2Text** (2023) araştırması, modern embedding modellerinin (GTR-base, text-embedding-ada-002) ürettiği vektörlerin tersine mühendislikle çözülebildiğini kanıtlamıştır. Vec2Text, 32 token uzunluğundaki metinlerin **%92'sini harfi harfine (exact match)** geri inşa edebilmektedir. 
 
 Bu nedenle bir vektör veritabanının diskteki depolama alanı, anlık yedekleri veya bellek dökümleri; doğrudan düz metin içeren bir SQL veritabanı ile tamamen aynı gizlilik sınıflandırmasına (KVKK, GDPR, HIPAA) tabidir ve mutlaka istirahatte şifrelenmelidir (encryption-at-rest).
 
@@ -302,10 +277,10 @@ Bu nedenle bir vektör veritabanının diskteki depolama alanı, anlık yedekler
 Gözden kaçan iki kritik sızıntı vektörü:
 
 1. **Üstveri ve Başlık Sızıntısı:** LLM yanıtının altındaki "Kaynaklar" paneline yansıtılan dosya adları, belge başlıkları ve özet metinleri (`snippet`), gövde metni filtrelenmiş olsa bile hassas bir projenin varlığını ifşa edebilir (*Örn:* `"Proje-Merkur-Satis-Gorusmeleri-Gizli.pdf"` başlığı tek başına şirket birleşmesini sızdırır). Üstveri de gövdeyle aynı ACL matrisine tabi tutulmalıdır.
-2. **Semantik Önbellek Sınır İhlali (Semantic Cache Crossing):** Çıkarım maliyetini düşürmek için sorgu benzerliğine dayalı semantik önbellekler kullanılır. Yalnızca soru metnine göre anahtarlanmış bir önbellek, Ankara çalışanının sorduğu *"İadeler ne kadar?"* sorusuna, az önce bir yöneticinin sorgusuyla önbelleğe alınmış gizli İzmir yanıtını döndürür. Semantik önbellek anahtarları mutlaka kullanıcı yetki karmasıyla mühürlenmelidir:
+2. **Semantik Önbellek Sınır İhlali (Semantic Cache Crossing):** Çıkarım maliyetini düşürmek için sorgu benzerliğine dayalı semantik önbellekler kullanılır. Yalnızca soru metnine göre anahtarlanmış bir önbellek, Ankara çalışanının sorduğu *"İadeler ne kadar?"* sorusuna, az önce bir yöneticinin sorgusuyla önbelleğe alınmış gizli İzmir yanıtını döndürür. Semantik önbellek tam anahtarla değil *benzerlikle* eşleştirir; sorgu metninin özetini almak onu işlevsiz kılar. Çözüm, önbelleği yetki kümesine göre bölmek ve yalnızca çağıranın bölmesinde aramaktır:
 
 $$
-\text{CacheKey} = \text{HMAC}_{K}(\text{QueryText} \parallel \mathcal{G}_{\text{user}})
+\text{CacheScope} = \text{HMAC}_{K}(\text{sort}(\mathcal{G}_{\text{user}})), \qquad \text{lookup}(q) \text{ yalnızca aynı } \text{CacheScope} \text{ girdilerinde arar}
 $$
 
 ---
@@ -318,20 +293,19 @@ RAG mimarisi, dışarıdan belge yazabilme yeteneğini, modelin yanıtlarını d
 
 Zou ve ark. (2024) tarafından ortaya konan **PoisonedRAG** çalışması, milyonlarca belgenin yer aldığı devasa bir kurumsal bilgi tabanına hedef soru kümesi başına yalnızca **5 adet zehirli parça** enjekte ederek yaklaşık **%90 saldırı başarı oranı (ASR)** elde etmiştir. Saldırganın tüm dizini manipüle etmesi gerekmez; hedef bir soru tipi için en iyi $k$ arasına sızması yeterlidir.
 
-Saldırgan, temiz bir metin gövdesine ($c$) öyle bir pertürbasyon ($\delta$) ekler ki; oluşturulan zehirli parça hedef soru kümesindeki ($\mathcal{Q}_{\text{target}}$) tüm sorgularla maksimum kosinüs benzerliği üretir:
+Makaledeki kurgu, pertürbasyon üzerinde bir optimizasyondan daha basittir. Her zehirli metin, iki ayrı işi olan iki parçanın birleşimidir: $P = S \oplus I$.
 
-$$
-\max_{\delta, \|\delta\|_2 \le \Delta} \min_{q \in \mathcal{Q}_{\text{target}}} \frac{\mathbf{e}(c + \delta) \cdot \mathbf{e}(q)}{\|\mathbf{e}(c + \delta)\|_2 \|\mathbf{e}(q)\|_2}
-$$
+- $S$ **erişim koşulunu** sağlar: hedef soru $Q$ için en iyi $k$ arasına girmelidir. Kara kutu senaryoda saldırgan doğrudan $S = Q$ alır, yani sorunun kendisini; bir soruya kendi metninden daha benzer bir şey yoktur. Retriever'a beyaz kutu erişim varsa $S$, $\text{sim}(\mathbf{e}(S \oplus I), \mathbf{e}(Q))$ değerini en çoklayacak biçimde optimize edilir.
+- $I$ **üretim koşulunu** sağlar: bağlam olarak okunduğunda modeli saldırganın seçtiği yanıta götürmelidir. Saldırgan bunu bir LLM'e yazdırır.
 
-Bu optimizasyon sonucunda ortaya çıkan zehirli metin, anlamsal uzayda hedef soruların doğrudan ağırlık merkezine oturur ($\cos(\mathbf{e}, \mathbf{q}) \ge 0,88$). Sonuç olarak model, meşru kurumsal politika belgeleri yerine saldırganın hazırladığı parçayı en yetkili kaynak olarak kabul eder.
+$k = 5$ ve soru başına beş böyle metinle zehirli parçalar bağlam penceresinin tamamını doldurabilir; model de yanıtı gerçek politika kaydından değil onlardan üretir.
 
 ### 4.2. Dizinleme işlem hattı savunma mimarisi
 
 Bu saldırıyı bertaraf etmenin yolu, retrieval anında değil; dizinleme (ingestion) işlem hattında savunma derinliği kurmaktır:
 
-1. **Koleksiyonları Güven Düzeyine Göre Ayırma ($\tau$-Segregation):** İncelenmiş, onaylanmış şirket politikaları ($\tau = 2$) ile dışarıdan gelen müşteri şikâyetleri ve e-postalar ($\tau = 0$) asla aynı koleksiyonda barındırılmaz. Politika soruları yalnızca Politika İndeksinden sorgulanır; şikâyet biletleri yalnızca geçmiş vaka incelemeleri için kanıt olarak getirilebilir.
-2. **Vektör Alanında Aykırı Değer (Outlier) Tespiti:** Zehirli parçalar, doğal kurumsal belgelerin oluşturduğu küme yoğunluklarından saparak çok sayıda farklı konunun kesişim noktasına konumlanmaya çalışır. Dizinleme anında parçaların yerel KNN yoğunluğu ve Mahalanobis mesafesi hesaplanarak doğal dağılımın dışındaki sentetik yoğunluklar karantinaya alınır.
+1. **Koleksiyonları Güven Düzeyine Göre Ayırma ($\tau$-Segregation):** İncelenmiş, onaylanmış şirket politikaları ($\tau = 1$; Bölüm 5 ölçeğinde iç veri) ile dışarıdan gelen müşteri şikâyetleri ve e-postalar ($\tau = 0$) asla aynı koleksiyonda barındırılmaz. Politika soruları yalnızca Politika İndeksinden sorgulanır; şikâyet biletleri yalnızca geçmiş vaka incelemeleri için kanıt olarak getirilebilir.
+2. **Vektör Alanında Aykırı Değer (Outlier) Tespiti:** Zehirli parçalar, doğal kurumsal belgelerin oluşturduğu küme yoğunluklarından saparak çok sayıda farklı konunun kesişim noktasına konumlanmaya çalışır. Dizinleme anında parçaların yerel KNN yoğunluğu ve Mahalanobis mesafesi hesaplanarak doğal dağılımın dışındaki sentetik yoğunluklar karantina adayı olarak işaretlenir. Bunu garanti değil sinyal sayın: yalnızca hedef soruyu yineleyen bir parça, konuyla ilgili sıradan bir metin gibi görünür.
 3. **Yazar Başına Çeşitlilik Sınırı (Author Diversity Capping):** Tek bir yanıta girecek $k$ parça içinde tek bir yazardan veya tek bir biletten gelebilecek parça sayısı $m \le 2$ ile sınırlandırılır. Saldırganın 5 varyasyonlu metin enjekte ederek tüm bağlam yuvalarını doldurması (Sybil flooding) engellenir.
 4. **Görünmez İçerik Temizliği:** Parçalama öncesinde sıfır genişlikli boşluklar (`\u200B`, `\u200C`, `\u200D`), Unicode etiketleri (Tags block), gizli HTML stilleri (`display:none`) ve beyaz zemin üzerine beyaz metinler temizlenir.
 
@@ -343,22 +317,11 @@ Bu saldırıyı bertaraf etmenin yolu, retrieval anında değil; dizinleme (inge
 
 RAG sistemleri tek bir oturumdaki yanıtları etkilerken; bellek sistemleri saldırıyı **kalıcı (persistent)** hâle getirir. Güvenlik mimarisinde ajan belleği üç katmanda incelenir:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Ajan Bellek Taksonomisi                         │
-├─────────────────────┬──────────────────────────────────────────────────┤
-│ Bellek Türü         │ Güvenlik Sınırı ve Risk Profili                  │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Çalışma Belleği     │ Aktif bağlam penceresi. Oturum bitince yok olur. │
-│ (Working Memory)    │ Risk: Tekil yanıtın prompt injection ile sapması │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Episodik Bellek     │ Zaman damgalı sohbet logları ve geçmiş olaylar.  │
-│ (Episodic Memory)   │ Risk: Geçmiş yanıltıcı bağlamların tekrarı       │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Semantik Bellek     │ Konsolide edilmiş olgular, kullanıcı tercihleri. │
-│ (Semantic Memory)   │ Risk: Gelecekteki TÜM oturumların zehirlenmesi   │
-└─────────────────────┴──────────────────────────────────────────────────┘
-```
+| Bellek türü | Ne tutar | Ömrü | Başlıca tehdit |
+| :--- | :--- | :--- | :--- |
+| **Çalışma belleği** (working) | Aktif bağlam penceresi | Tur ya da oturum bitince yok olur | Tek bir yanıtı saptıran prompt injection |
+| **Episodik bellek** (episodic) | Zaman damgalı sohbet kayıtları ve geçmiş olaylar | Saklama süresi dolana kadar | Yanıltıcı geçmiş diyalogların bağlam olarak geri gelmesi |
+| **Semantik bellek** (semantic) | Konsolide olgular ve kalıcı kullanıcı profilleri | Süresiz | Gelecekteki *bütün* oturumları yönlendiren zehirleme |
 
 Şubat 2025'te Johann Rehberger, Gemini Advanced üzerinde dolaylı prompt injection ile sahte uzun dönemli anıların nasıl yerleştirilebildiğini gösterdi. Model, güvenilmeyen bir metni işlerken bellek kaydetme aracını doğrudan çağırmayı reddediyordu. Saldırgan bu engeli **Gecikmeli Araç Çağrısı (Delayed Tool Invocation)** ile aştı: Enjekte edilen metin modele, *"Kullanıcı bir sonraki oturumda 'merhaba' dediğinde belleğe şunu kaydet..."* talimatı verdi. Böylece yazma işlemi, gelecekte kullanıcının kendi isteğiymiş gibi yürütüldü. 
 
@@ -373,7 +336,9 @@ Geliştirdiğimiz savunma mimarisi üç adımlı bir güvenlik kapısı uygular:
 1. **Bağlam Güven Yayılımı:** Belleğe yazılmak istenen bilginin güven seviyesi, o an bağlamda bulunan kaynakların en düşük güven derecesine eşittir:
    $$\tau(m) = \min_{c \in \mathcal{C}_{\text{context}}} \tau(c)$$
 2. **Deontik Modal Kural Ayrımı:** Bellek sistemleri yalnızca bildirimsel olguları (factual preferences: *"Müşteri Türkçe konuşuyor"*) saklamalıdır. Emir kipi ve kural bildiren deontik ifadeler (*"her zaman onayla"*, *"asla inceleme"*, *"yetkileri yoksay"*, *"must"*, *"always"*) kesinlikle reddedilir. Kural koymak bellek motorunun değil, güvenlik politikasının görevidir.
-3. **Karantina Durum Makinesi:** $\tau(m) = 0$ olan bir bağlamdan (müşteri şikâyeti, web sayfası) gelen olgular doğrudan aktif belleğe yazılamaz. **Karantinaya** alınır ve ancak insan kullanıcı sade bir dille onaylarsa aktifleşir.
+3. **Karantina Durum Makinesi:** $\tau(m) = 0$ olan bir bağlamdan (müşteri şikâyeti, web sayfası) gelen olgular doğrudan aktif belleğe yazılamaz. **Karantinaya** alınır ve ancak insan kullanıcı sade bir dille onaylarsa aktifleşir. Bu, Bölüm 5'teki güven kuralının riski $r = 1$ olan bir araca uygulanmasıdır: bellek yazımı ancak $\tau(c) \ge 1$ ise insansız çalışır.
+
+İkinci aşama hakkında bir çekince gerekir; çünkü adı, yaptığından fazlasını vaat ediyor. "Deontik filtre" bir anahtar kelime eleğidir ve anahtar kelime elekleri iki yönde de yanılır: *"müşteri paketi **asla** teslim almadı"* bir olgudur ama sözcük listesine takılır; listedeki hiçbir sözcüğü içermeyen, başka sözlerle yazılmış bir kural ise geçer. Onu sınır olarak değil, isabetleri incelemeye giden ucuz bir ilk elek olarak kullanın. Sınır yapısaldır: $\tau = 0$ bağlamından yazılan her şey için karantina, bir anıyı tek müşteriye hapseden kapsam anahtarı ve hepsinden önemlisi şu kural: geri çağrılan bir anı bağlama, kendi yetkisi olan bir talimat olarak değil, saklanan güven etiketiyle birlikte *veri* olarak döner.
 
 <!-- fig:p7_memory -->
 <svg viewBox="0 0 720 396" role="img" aria-label="Önerilen bir anı önce kökenini alır: onu kimin tetiklediği, bağlamda hangi kaynakların bulunduğu ve dolayısıyla güven düzeyi ve oturum. Ardından bir kapı karar verir. Güvenilir bir bağlamdan gelen bilgi niteliğindeki anı, müşteriye ya da çalışana kapsamlanmış ve bir yaşam süresi olan etkin bir anı olur. Güveni 0 olan bir bağlamdan gelen anı karantinaya gider ve ancak kullanıcı onu sade bir dille onayladıktan sonra etkinleşir. Talimat ya da politika benzeri anılar reddedilir. Anılar kullanıcılara görünür ve silinebilir; bir müşteriyi takma ada göre silmek onun anılarını da siler." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
@@ -403,7 +368,7 @@ Geliştirdiğimiz savunma mimarisi üç adımlı bir güvenlik kapısı uygular:
 <text x="610.0" y="76.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">müşteriye ya da</text>
 <text x="610.0" y="92.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">çalışana kapsamlı · TTL</text>
 <path d="M464 140 C 490 140, 490 72, 514 72" marker-end="url(#p7m-o)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
-<text x="468" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">τ≥2 bilgi</text>
+<text x="468" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">τ≥1 bilgi</text>
 <rect x="516" y="130" width="188" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
 <text x="610.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Karantina</text>
 <text x="610.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">etkin değil, kullanıcı</text>
@@ -437,7 +402,7 @@ $$
 \text{ScopeKey} = \text{HMAC}_{K_{\text{tenant}}}(\text{user\_id} \parallel \text{entity\_id})
 $$
 
-Bir müşteri KVKK / GDPR kapsamında silinme (unutulma hakkı) talep ettiğinde, KMS üzerindeki müşteri şifreleme anahtarı imha edilir (**crypto-shredding**). Böylece ilişkili tüm bellek kayıtları, loglar ve vektör indeksleri fiziksel olarak anında okunamaz hâle gelir.
+Bir müşteri KVKK / GDPR kapsamında silinme (unutulma hakkı) talep ettiğinde, KMS üzerindeki müşteri şifreleme anahtarı imha edilir (**crypto-shredding**). Böylece şifreli kopyalar (saklanan bellek içerikleri, episodik kayıtlar ve hepsinden önemlisi yedekler) depolar yeniden yazılmadan okunamaz olur. Bölüm 3'teki gibi canlı dizindeki vektörler istisnadır: aranabilmek için açık durmaları gerekir; bu yüzden `ScopeKey` ile silinir ve dizin sıkıştırılır.
 
 ---
 
@@ -456,7 +421,7 @@ Güvenlik mimarisi bu boşluğu iki aşamalı denetimle kapatır:
 - **Deterministik Kaynak Denetimi (Deterministic Citation Check):** Yanıt gövdesinde atıf yapılan tüm parça kimlikleri ($c_{\text{cited}}$), bu kullanıcı ve bu istek için arama motorunun döndürdüğü küme ($\mathcal{C}_{\text{retrieved}}$) ile karşılaştırılır:
   $$c_{\text{cited}} \in \mathcal{C}_{\text{retrieved}}$$
   Eğer model dizinde olmayan uydurma bir ID'ye (`c-999`) veya başka bir kullanıcının geçmiş oturumuna atıfta bulunmuşsa, atıf derhal düşürülür ve olay denetim kaydına yazılır. Bu bir model yargısı değil, kesin bir küme üyeliği testidir.
-- **Olasılıksal Dayanak Denetimi (Groundedness / NLI):** Küçük bir güvenlik modeli (IBM Granite Guardian veya Llama-Guard RAG kontrolörü), yanıtın her bir cümlesini kaynak parçayla Doğal Dil Çıkarımı (NLI - Natural Language Inference) testine tabi tutar ($P(\text{Premise} \models \text{Hypothesis}) > \theta_{\text{grounded}}$).
+- **Olasılıksal Dayanak Denetimi (Groundedness / NLI):** Küçük bir model (örneğin Granite Guardian'ın dayanak denetimi ya da sade bir NLI sınıflandırıcısı), yanıtın her bir cümlesini kaynak parçayla Doğal Dil Çıkarımı (NLI - Natural Language Inference) testine tabi tutar ($P(\text{Premise} \models \text{Hypothesis}) > \theta_{\text{grounded}}$).
 
 ---
 
@@ -483,7 +448,7 @@ Güvenlik mimarisi bu boşluğu iki aşamalı denetimle kapatır:
 | **R-5** | Gecikmeli Bellek Enjeksiyonu | Şikâyet gövdesinde kural/politika içeren bellek talimatı bulunur | Deontik modal filtre talimatı reddeder; aktif belleğe yazılmaz |
 | **R-6** | Güvenilmeyen Bilgi Belleği | Dış kaynaklı ($\tau=0$) meşru müşteri tercihi bildirimi | Doğrudan yazılmaz; karantinaya alınır ve kullanıcı onayı bekler |
 | **R-7** | Deterministik Atıf Denetimi | Model var olmayan veya yetkisiz bir parça kimliğini kaynak gösterir | Uydurma atıf temizlenir, yanıt işaretlenir ve SOC'ye loglanır |
-| **R-8** | Unutulma Hakkı (Crypto-Shredding) | Müşteri verisinin silinmesi talep edilir | Müşteri KMS anahtarı imha edilir; tüm anılar ve vektörler anında okunamaz olur |
+| **R-8** | Unutulma Hakkı (Crypto-Shredding) | Müşteri verisinin silinmesi talep edilir | Müşteri KMS anahtarı imha edilir ve dizin satırları kapsam anahtarıyla silinir; müşterinin kanarya ifadesi bellekte, dizinde ve geri yüklenen bir yedekte 0 sonuç döndürür |
 
 ### 7.3. Üretim tipi Python RAG ve bellek güvenlik motoru
 
@@ -502,7 +467,7 @@ class Chunk:
     allowed_groups: Set[str]
     similarity: float
     text: str
-    trust_label: int  # 0: untrusted/complaint, 1: internal, 2: audited policy
+    trust_label: int  # 0: dış (şikâyet), 1: iç (CRM, incelenmiş politika); Bölüm 5 ölçeği
 
 class DocumentAclRegistry:
     def __init__(self):
@@ -589,7 +554,7 @@ chunks = [
     Chunk('c-02', 'doc-crm-izmir', 1, {'izmir'}, 0.94, 'İzmir iade şikayeti #102', 0),
     Chunk('c-03', 'doc-crm-izmir', 1, {'izmir'}, 0.92, 'İzmir iade şikayeti #103', 0),
     Chunk('c-04', 'doc-crm-izmir', 1, {'izmir'}, 0.90, 'İzmir iade şikayeti #104', 0),
-    Chunk('c-05', 'doc-legal', 1, {'legal', 'executive'}, 0.88, 'Gizli şirket içi yasal mütalaa', 2),
+    Chunk('c-05', 'doc-legal', 1, {'legal', 'executive'}, 0.88, 'Gizli şirket içi yasal mütalaa', 1),
     Chunk('c-06', 'doc-crm-ankara', 1, {'ankara'}, 0.75, 'Ankara su ısıtıcı arıza kaydı #42', 0),
     Chunk('c-07', 'doc-crm-ankara', 1, {'ankara'}, 0.72, 'Ankara su ısıtıcı arıza kaydı #43', 0),
 ]
@@ -685,7 +650,7 @@ Legitimate citations: ['c-06'] | Hallucinated/Unpermitted citations: ['c-999']
 Bir insan kaynakları şirketi, 50 sayfalık bir "Şirket Stratejisi ve Ücret Politikası" belgesini Late Chunking yöntemiyle dizinliyor. Belgenin ilk 40 sayfası tüm personelin okuyabileceği genel şirket vizyonunu; son 10 sayfası ise yalnızca yönetim kurulunun görebileceği üst düzey yönetici maaşlarını içeriyor. Şirket, vektörleri parçalara ayırdıktan sonra ilk 40 sayfaya ait parçalara `acl: ["all_staff"]`, son 10 sayfaya ise `acl: ["executives"]` etiketi koyuyor.
 
 *Soru:* Bir çalışan asistana *"2026 yılı için şirket büyüme hedefleri nelerdir?"* diye sorduğunda sistem güvenli çalışır. Ancak çalışan *"Şirkette en yüksek tazminat paketini alan pozisyonun stratejik rolü nedir?"* diye sorduğunda, model ilk 40 sayfadaki bir parçayı yüksek benzerlikle getirip gizli maaş bilgilerini özetleyebilir mi?
-*Cevap:* **Evet.** Late Chunking sırasında tüm belge tek bir çift yönlü Transformer dikkat matrisinden geçer. İlk 40 sayfadaki vizyon cümlelerinin token temsilleri, dikkat (attention) katmanlarında son 10 sayfadaki maaş token'larıyla etkileşime girmiş ve bu bilgileri gizil durum vektörlerine soğurmuştur. Parçanın metni maaş içermese bile, embedding vektörü maaş sorgusuyla yüksek kosinüs benzerliği üretir. Bu nedenle güvenlik sınırları farklı olan bölümler asla tek bir Late Chunking bağlamında birleştirilmemelidir.
+*Cevap:* **Parça dönebilir ve bu tek başına bir sızıntıdır.** Late Chunking sırasında tüm belge tek bir çift yönlü Transformer dikkat matrisinden geçer. İlk 40 sayfadaki vizyon cümlelerinin token temsilleri, dikkat (attention) katmanlarında son 10 sayfadaki maaş token'larıyla etkileşime girmiş ve bu bilgileri gizil durum vektörlerine soğurmuştur. Parçanın metni maaş içermese bile, embedding vektörü maaş sorgusuyla yüksek kosinüs benzerliği üretir. Bu nedenle güvenlik sınırları farklı olan bölümler asla tek bir Late Chunking bağlamında birleştirilmemelidir.
 
 ### Kavramları ayrıştırma
 
@@ -707,7 +672,7 @@ Bir insan kaynakları şirketi, 50 sayfalık bir "Şirket Stratejisi ve Ücret P
 - Bir vektör dizini verinizin korunmasız bir kopyasıdır; işlem hattı üstveriyi açıkça taşımadıkça kaynak sistemin tüm erişim yetkileri kaybolur.
 - Erişim kontrolleri mutlaka vektör sorgusunun içinde ön filtrelemeyle uygulanmalıdır; malzemenin %10'unu gören kullanıcı için sonradan filtreleme soruların %59'unu tamamen bağlamsız bırakır.
 - HNSW graflarında graf kopukluğu ve perkolasyon çöküşünü engellemek için yetkisiz düğümleri silmek yerine bitset maskeli tek aşamalı graf içi filtreleme kullanılmalıdır.
-- Embedding vektörleri Vec2Text ile %92 oranında düz metne geri dönüştürülebilir; vektör depoları ve yedekleri düz metin gizlilik seviyesinde şifrelenmelidir.
+- Embedding vektörleri tersine çevrilebilir (Vec2Text 32 token'lık girdilerin %92'sini birebir geri kurdu); vektör depoları ve yedekleri geldikleri metin gibi korunur.
 - Ajan belleğine yazma yan etkili bir araç çağrısıdır: Kökeni kaydedin, emir kipi içeren deontik kuralları engelleyin ve güvenilmeyen bağlamdan gelen anıları karantinaya alın.
 - Erişilebilir, yetkili ve dayanaklı üç ayrı şeydir: Kaynak atıflarını deterministik küme üyeliğiyle, iddiaların doğruluğunu ise NLI modelleriyle denetleyin.
 
@@ -720,9 +685,9 @@ Bir insan kaynakları şirketi, 50 sayfalık bir "Şirket Stratejisi ve Ücret P
 - **Ön Filtreleme (Pre-Filtering):** Erişim yetkilerini vektör arama motorunun içine gömerek, benzerlik yarışına yalnızca kullanıcının görmeye yetkili olduğu parçaların sokulması.
 - **Sonradan Filtreleme (Post-Filtering):** Tüm dizinden genel benzerliğe göre $k$ parça çekildikten sonra yasaklı parçaların elenmesi; yüksek oranda bağlam açlığına ve bilgi kaybına neden olur.
 - **Tek Aşamalı Graf İçi Maskeleme (In-Traversal Bitset Filtering):** HNSW grafında gezinirken yasaklı düğümleri arama köprüsü olarak kullanan ancak aday sonuç kuyruğuna yalnızca bitset maskesi 1 olan yetkili düğümleri alan algoritma.
-- **PoisonedRAG:** Hedef soruların gömme vektörlerine anlamsal olarak yaklaşacak şekilde optimize edilmiş sentetik metinlerin dizine enjekte edilmesiyle model çıktısını yönlendiren saldırı.
+- **PoisonedRAG:** Hedef soru başına birkaç metin enjekte eden bilgi bozma saldırısı; her metin, getirilmeyi sağlayan bir parçadan (çoğu kez sorunun kendisi) ve yanıtı yönlendiren bir parçadan kurulur.
 - **Gecikmeli Araç Çağrısı (Delayed Tool Invocation):** Prompt injection yoluyla modelin anlık araç çağrısı yapmasını değil, gelecekteki meşru bir kullanıcı tetikleyicisiyle zararlı bir bellek kaydı oluşturmasını sağlayan teknik.
-- **Deontik Modalite Filtresi:** Belleğe yazılmak istenen metinlerde kural, yasak ve zorunluluk bildiren emir kiplerini (*"her zaman"*, *"asla"*, *"zorunlu"*) tespit edip engelleyen sözdizimsel denetleyici.
+- **Deontik Modalite Filtresi:** Belleğe yazılmak istenen metinlerde kural bildiren ifadeleri (*"her zaman"*, *"asla"*, *"zorunlu"*) incelemeye işaretleyen anahtar kelime eleği; sınır değil, ilk elek.
 - **Bellek Karantinası:** Güvenilmeyen veya dış kaynaklı bağlamlardan ($\tau=0$) türetilen anıların doğrudan aktif belleğe alınmayıp, insan kullanıcı onayı bekleyen askı durumunda tutulması.
 - **Deterministik Atıf Denetimi (Citation Check):** Modelin kaynak gösterdiği parça kimliklerinin, o kullanıcı için o istekte gerçekten getirilmiş yetkili parça kümesine ait olduğunu sınayan kesin matematiksel küme üyeliği testi.
 

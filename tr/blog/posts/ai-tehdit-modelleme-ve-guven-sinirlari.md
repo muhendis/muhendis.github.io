@@ -2,8 +2,8 @@ Destek asistanı güvenlik incelemesinden tek bir cümleyle geçti: *"Bir prompt
 
 Asıl başarısızlık filtre değildi. Metnin sisteme nereden *girdiğini*, hangi bileşenin ona *güvendiğini* ve hangi *işleme* ulaşabildiğini kimse çizmemişti. Tek bir "özetle ve yanıtla" isteği en az altı güven sınırından geçer: çalışanın tarayıcısı, model sağlayıcısının API'si, CRM, içeriğini bir yabancının yazdığı şikâyet arşivi, giden posta sunucusu ve log aktarıcısı. Bunlardan birine konan filtre, diğer beşi hakkında hiçbir şey söylemez.
 
-> **Yapay Zekâ Tehdit Modellemesinin Temel Yasası (Von Neumann Kırılması):**
-> Klasik bilgi işlemde kod segmenti (`.text`) ile veri segmenti (`.data`) donanım düzeyinde ayrıdır. Büyük dil modellerinde ise talimatlar ve veriler aynı token dizisi ($x_1, \dots, x_N \in \mathcal{V}$) üzerinde tek bir kanalda birleştirilir. Dolayısıyla modele ulaşan her metin yürütülebilir kod potansiyeline sahiptir; güven sınırı ise daha az güvenilen bir metnin daha yüksek yetkiye sahip bir bağlama girdiği her noktadır.
+> **Yapay Zekâ Tehdit Modellemesinin Temel Yasası (bant içi talimat sorunu):**
+> Klasik sistemler kodu veriden ayırmak için onlarca yıl uğraştı: bir bellek sayfası ya yazılabilir ya yürütülebilirdir (W^X, NX biti); parametreli bir SQL sorgusu, değer ne derse desin onu değer yuvasında tutar. Büyük dil modellerinde bunun karşılığı yoktur. Talimatlar ve veriler aynı token dizisi ($x_1, \dots, x_N \in \mathcal{V}$) üzerinde tek kanalda birleşir ve hiçbir bit bir token'ı "yalnızca veri" diye işaretlemez. Dolayısıyla modele ulaşan her metin talimat gibi davranabilir; güven sınırı ise daha az güvenilen bir metnin daha yüksek yetkiye sahip bir bağlama girdiği her noktadır.
 
 Bu yazı o sezgiyi matematiksel ve mimari bir yönteme dönüştürüyor. [Birinci bölümde](post.html?slug=yapay-zeka-guvenligi-tasarimda-baslar) tanımladığımız altı güven bölgesini (Z0–Z5) temel alarak destek asistanının veri akış diyagramını (DFD) çizecek, yedi güven sınırını işaretleyecek, saldırgan profillerini NIST AI 100-2 ve MITRE ATLAS taksonomisiyle eşleyeceğiz. Ardından veri sızdırmayı mümkün kılan "ölümcül üçlü"yü (*lethal trifecta*) yönlü çizge bilgi akışı teoremiyle analiz edecek, stokastik saldırı olasılıklarının neden deterministik koruma kapıları gerektirdiğini ($1 - (1 - P)^k$) kanıtlayacak ve canlı bir **tehdit kaydı** kuracağız.
 
@@ -40,9 +40,9 @@ Tehdit modelleme, Adam Shostack ve Threat Modeling Manifesto'nun yaygınlaştır
 
 Klasik bir web uygulamasında **kod** ile **veri** arasındaki çizgiyi işletim sistemi ve derleyici korur. Parametre bağlama (*parameter binding*) ile hazırlanmış bir SQL sorgusunda kullanıcının girdiği `' OR '1'='1` dizisi bir değer (string literal) olarak ele alınır; veri tabanı motoru bunu asla SQL komutu olarak yürütmez.
 
-Büyük dil modellerinde böyle bir donanımsal koruma yoktur. Sistem prompt'u, kullanıcının talebi, CRM'den çekilen müşteri bilgisi ve yabancı bir müşterinin şikâyet mektubu tek bir metin akışı hâlinde token'laştırılır. Model, ağırlıkları gereği bu dizinin *neresinde görünürse görünsün* talimat formatındaki metinlere uymaya meyillidir. Bu yüzden dışarıdan gelen metin yalnızca işlenen pasif bir veri değil; **muhakemeyi yönlendiren yürütülebilir koddur**.
+Büyük dil modellerinde zorla uygulanan böyle bir sınır yoktur. Sistem prompt'u, kullanıcının talebi, CRM'den çekilen müşteri bilgisi ve yabancı bir müşterinin şikâyet mektubu tek bir metin akışı hâlinde token'laştırılır. Model, ağırlıkları gereği bu dizinin *neresinde görünürse görünsün* talimat formatındaki metinlere uymaya meyillidir. Bu yüzden dışarıdan gelen metin yalnızca işlenen pasif bir veri değil; **muhakemeyi yönlendiren yürütülebilir koddur**.
 
-NIST'in yapay zekâ saldırı taksonomisi (NIST AI 100-2 E2025) bu gerçeği şöyle formüle eder: Geliştiriciler veriyi talimattan ayıran deterministik bir sınır çekemez; çünkü dil modelinin kendisi ayrıştırıcı (*parser*) değil, olasılıksal bir desen tamamlayıcıdır.
+NIST'in saldırı taksonomisi (AI 100-2 E2025) dolaylı prompt injection için aynı kök nedeni gösterir: veri ile talimat tek kanaldan akar. Uygulama, modelin girişinde ikisinin arasına deterministik bir çizgi çekemez; çünkü model bir dilbilgisine sahip ayrıştırıcı (*parser*) değil, otoregresif bir token tahmincisidir.
 
 İkinci kritik fark, saldırganın hedefidir: Düşman modeli çökertmek istemez. Model üzerindeki kontrolü kullanarak arkadaki hassas verilere erişmek veya yetkili araçları (`send_email`, `execute_refund`) tetiklemek ister. Dolayısıyla AI tehdit modellemesi modelden değil, **saldırganın ulaşmak istediği iş sonucundan** başlamalı ve mimaride geriye doğru iz sürerek sınırları çizmelidir.
 
@@ -160,7 +160,7 @@ Her bir sınır şu temel mimari soruya karşılık gelir:
 
 ## 3. Saldırgan kim? Hedef, yetenek, erişim, bilgi
 
-"Bir saldırgan sisteme sızabilir" cümlesi mühendislik açısından eksiktir. NIST AI 100-2, yapay zekâ tehdit aktörlerini dört eksende modellemeyi şart koşar:
+"Bir saldırgan sisteme sızabilir" cümlesi mühendislik açısından eksiktir. NIST AI 100-2 saldırıları saldırganın amacına, yeteneğine ve bilgisine göre sınıflandırır. Uygulama tehdit modellemesi için dördüncü, pratik bir eksen olarak erişimi ekliyor ve her aktörü dört eksende profilliyoruz:
 
 1. **Hedef (Objective):** Saldırgan neyi başarmak istiyor?
    - *Hizmet kesintisi (Availability):* GPU kotalarını tüketmek, sistemi yavaşlatmak.
@@ -192,20 +192,18 @@ Burada kritik çıkarım: **A1 profilindeki dış saldırgan sisteme asla giriş
 
 Farklı standartların terminolojilerini birbirine karıştırmamak için işlevsel rollerini netleştirelim:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  NIST AI 100-2 / AI 600-1  → Taksonomi (Kavramların resmi tanımları)  │
-│  MITRE ATLAS               → Taktik ve Teknikler (Saldırı adımları)    │
-│  OWASP Top 10 (LLM & Agent)→ Risk Farkındalığı (En yaygın zafiyetler)  │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Belge | Türü | Size ne verir |
+| --- | --- | --- |
+| NIST AI 100-2 / AI 600-1 | Taksonomi | Saldırı ve riskler için resmî adlar ve tanımlar |
+| MITRE ATLAS | Taktik ve teknikler | Saldırganın adımları, her biri kalıcı bir kimlikle |
+| OWASP Top 10 (LLM ve Agentic) | Farkındalık listesi | Önceliklendirme için en yaygın risk kategorileri |
 
-- **NIST AI 100-2 E2025:** Saldırıları matematiksel kökenlerine göre ayırır: *Evasion* (atlatma), *Poisoning* (veri ve model zehirleme), *Privacy Attacks* (yeniden kurma, üyelik çıkarımı) ve *Abuse Attacks* (dolaylı enjeksiyon).
+- **NIST AI 100-2 E2025:** Tahminleyici AI'a yönelik saldırıları (*evasion* yani atlatma, *poisoning* yani zehirleme, yeniden kurma ve üyelik çıkarımı gibi *privacy* saldırıları) ve üretken AI'a yönelik saldırıları (*tedarik zinciri*, *doğrudan prompt'lama*, *dolaylı prompt injection*) saldırganın amacına göre sınıflandırır.
 - **MITRE ATLAS (v5.6.0):** Saldırganın yaşam döngüsünü adlandırır. Örneğin destek asistanımıza yönelik dolaylı saldırı zinciri şu teknik kodlarla izlenir:
   1. `AML.T0051.001`: LLM Indirect Prompt Injection (şikâyet metninde payload saklama).
   2. `AML.T0054`: LLM Jailbreak (modelin güvenlik hizalamasını kırma).
   3. `AML.T0086`: Exfiltration via AI Agent Tool Invocation (yetkili `send_email` aracını kullanarak veriyi dışarıya sızdırma).
-- **OWASP GenAI Top 10 (2025/2026):** Bu saldırıyı **LLM01 (Prompt Injection)** ve **LLM03 (Excessive Agency)** kesişimi olarak etiketler. Ajan güvenliği tarafında ise doğrudan **ASI01 (Agent Goal Hijack)** ve **ASI02 (Tool Misuse)** maddelerine girer.
+- **OWASP LLM Uygulamaları Top 10 (2026):** Bu saldırıyı **LLM01 (Prompt Injection)** ve **LLM03 (Excessive Agency)** kesişimi olarak etiketler. Ajan güvenliği tarafında ise doğrudan **ASI01 (Agent Goal Hijack)** ve **ASI02 (Tool Misuse)** maddelerine girer.
 
 > [!NOTE]
 > **Ara Durak: Tehdit Modelleme vs Zafiyet Taraması**
@@ -289,7 +287,7 @@ STRIDE metodolojisini veri akış diyagramındaki her bir düğüme uyguladığ�
 
 ## 7. Ölümcül birleşim ve yönlü bilgi akışı analizi
 
-Simon Willison'ın formüle ettiği **Ölümcül Üçlü** (*Lethal Trifecta*), bir yapay zekâ ajanında veri sızdırma zafiyetinin oluşabilmesi için üç bileşenin aynı anda mevcut olması gerektiğini söyler:
+Simon Willison'ın formüle ettiği **Ölümcül Üçlü** (*Lethal Trifecta*), üç koşul aynı anda sağlandığında bir yapay zekâ ajanının veri sızdırmaya yönlendirilebileceğini söyler:
 
 $$
 \text{Sızdırma}(s) = D(s) \land U(s) \land X(s)
@@ -300,24 +298,11 @@ Burada bir $s$ oturumu için:
 - $U(s) \in \{0, 1\}$: Sistemin güvenilmeyen harici metne maruz kalması (şikâyet arşivi).
 - $X(s) \in \{0, 1\}$: Sistemin dış dünyaya veri taşıyabilecek bir çıkış kanalına sahip olması (`send_email`, web isteği, markdown görsel URL'si).
 
-Mantıksal çarpım ($\land$) gereği bu üç önermeden biri sıfırlandığında sızıntı matematiksel olarak imkânsızlaşır.
+Mantıksal çarpım ($\land$) gereği bu üç önermeden biri sıfırlandığında bu sızıntı yolu kapanır.
 
 ### Yönlü Çizge (Directed Graph) ve Bilgi Akışı Kesisi
 
-Bunu bir yönlü bilgi akış çizgesi $G = (V, E)$ olarak modelleyelim:
-
-```text
-  [v_untrusted (Z0)] ──> [v_context (Z2)] <── [v_sensitive_data (Z4)]
-                               │
-                               ▼
-                       [v_reasoning (Z2)]
-                               │
-                               ▼  (Öneri: Tool Call)
-                        [v_PEP (Z3)]  <═══ [DETERMİNİSTİK KESİ: CUT(G)]
-                               │
-                               ▼  (Onaylı Eylem)
-                         [v_sink (Z4)] ──> [Dış Dünya]
-```
+Bunu bir yönlü bilgi akış çizgesi $G = (V, E)$ olarak modelleyelim. Düğümler şunlardır: şikâyet $v_{\text{untrusted}}$ (Z0), CRM kaydı $v_{\text{sensitive}}$ (Z4), kurulan bağlam $v_{\text{context}}$ ile modelin muhakemesi $v_{\text{reasoning}}$ (ikisi de Z2), zorlama noktası $v_{\text{PEP}}$ (Z3) ve dışa dönük araç $v_{\text{sink}}$ (Z4, dış dünyaya `send_email`). Şikâyet de CRM kaydı da bağlama akar; bağlam muhakemeyi besler; muhakeme bir öneri üretir; öneri ise ancak $v_{\text{PEP}}$'ten geçerek onaylı bir eyleme dönüşebilir.
 
 Eğer sistemde Zone 3'teki **Politika Zorlama Noktası (PEP)** bulunmazsa, $v_{\text{untrusted}}$ ile $v_{\text{sink}}$ arasında kesintisiz bir yönlü yol ($\pi$) oluşur:
 
@@ -365,7 +350,7 @@ Bu kesi üç somut adımla atılır:
 <!-- Bottom Educational Banner -->
 <rect x="16" y="324" width="688" height="62" rx="6" style="fill:var(--c-accent);fill-opacity:.07;stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="28" y="343" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700;letter-spacing:.02em">💡 MİMARİ GRAF KESİSİ: ÖLÜMCÜL ÜÇLÜYÜ (D ∩ U ∩ X) FİZİKSEL OLARAK KESİN</text>
-<text x="28" y="361" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Özel veri (D), güvenilmeyen metin (U) ve dış kanal (X) aynı bağlamda buluştuğunda sızıntı kaçınılmazdır.</text>
+<text x="28" y="361" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Özel veri (D), güvenilmeyen metin (U) ve dış kanal (X) aynı bağlamda buluştuğunda sızıntı mümkün hâle gelir.</text>
 <text x="28" y="377" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Savunma, prompt filtreleriyle modeli ikna etmeye çalışmak değil; dış çıkış kanalını (X) deterministik kurallarla kesmektir.</text>
 </svg>
 
@@ -399,21 +384,21 @@ Parametreler:
 1. Adım: 100 denemenin hepsinde filtrenin başarılı olma olasılığı
   P_temiz = (1 - 0,05)^100
           = 0,95^100
-          = 0,00592        → Yalnızca %0,59 ihtimalle tüm denemeler engellenir!
+          = 0,00592        → Bütün denemelerin engellenme ihtimali %0,59
 
 2. Adım: Saldırganın en az bir kez sızma olasılığı
   P_ihlal = 1 - 0,00592
-          = 0,99408        → %99,41 KESİN İHLAL!
+          = 0,99408        → %99,41 olasılıkla en az bir ihlal
 
 3. Adım: Daha katı filtre (%99 korumalı, P_single = 0,01)
   P_ihlal_1pct = 1 - (1 - 0,01)^100
                = 1 - 0,99^100
-               = 1 - 0,36603 = 0,63397 → %63,40 İHLAL İHTİMALİ!
+               = 1 - 0,36603 = 0,63397 → %63,40
 ```
 
 > [!NOTE]
 > **Düşünce Deneyi: 100 Denemeli Bir Saldırgan**
-> %99 başarı oranına sahip bir filtreye güvenen bir ekip, 100 denemelik basit bir Python döngüsü karşısında yazı tura atmaktan daha kötü bir duruma (%63,4 risk) düşer. Bu matematiksel gerçek, bir yapay zekâ mimarına şunu haykırır: **Olasılığı ($L$) düşürmeye çalışan filtreler ısrarcı bir saldırgana karşı tek başına asla yeterli olamaz. Sistemin güvenliği, doğrudan etkiyi ($I \to I'$) düşüren deterministik kısıtlarla sağlanmak zorundadır.**
+> %99 başarı oranına sahip bir filtreye güvenen bir ekip, 100 denemelik basit bir Python döngüsü karşısında yazı tura atmaktan daha kötü bir duruma (%63,4 risk) düşer. Bu hesabın mimara söylediği şudur: **Yalnızca olasılığı ($L \to L'$) düşüren savunmalar ısrarcı bir saldırgan karşısında aşınır; dayanıklılık, etkiyi ($I \to I'$) düşüren deterministik kısıtlar gerektirir.** Üstelik formül savunmacının lehinedir: gerçek denemeler bağımsız değildir, saldırgan her başarısızlıktan öğrenir, dolayısıyla gerçek eğri daha diktir.
 
 Aşağıdaki Python betiği bu olasılık eğrisini doğrulamakta ve destek asistanının tehdit kaydı skorlarını üretmektedir:
 
@@ -511,7 +496,7 @@ Tehdit kaydı soyut analizleri somut mühendislik taahhütlerine dönüştürür
 | ID | Tehdit (ATLAS / OWASP) | Giriş / Sınır | Varlık | Uygulanan Kontrol | Doğrulama Testi (Geçme Ölçütü) | Sahip | R → R' |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **T1** | Dolaylı injection ile veri sızdırma (`AML.T0051.001`, `AML.T0086` / LLM01, ASI01) | Şikâyet / TB4 $\to$ TB5 | Müşteri Verisi | Alıcı allowlist'i; HMAC gövde mühürlü insan onayı; görsel filtresi | 200 enjekte test yükü (EN+TR): dış adrese 0 sızıntı | Yazılım Mimarisi | 20 $\to$ 4 |
-| **T2** | Çalışanın portföy dışı kayıt sorgulaması (`AML.T0056` / LLM02, ASI03) | Sohbet / TB1 $\to$ TB3 | Müşteri Verisi | CRM sorgularında oturum kullanıcısının OAuth token kapsamı zorlanır | 50 portföy dışı talep: CRM API seviyesinde 0 yetkisiz erişim | Platform / Güvenlik | 12 $\to$ 4 |
+| **T2** | Çalışanın portföy dışı kayıt sorgulaması (`AML.T0057` / LLM02, ASI03) | Sohbet / TB1 $\to$ TB3 | Müşteri Verisi | CRM sorgularında oturum kullanıcısının OAuth token kapsamı zorlanır | 50 portföy dışı talep: CRM API seviyesinde 0 yetkisiz erişim | Platform / Güvenlik | 12 $\to$ 4 |
 | **T3** | Token seli ile bütçe tüketimi (`AML.T0034` / LLM06) | Sohbet / TB1 | Süreklilik | Kullanıcı başına token kotası, maksimum 3 araç adımı, hız sınırlayıcı | Yük simülasyonu: kota aşıldığında sistem 429 ile durur | SRE / Platform | 12 $\to$ 4 |
 | **T4** | Sistem prompt'unun sızdırılması (`AML.T0056` / LLM08) | Sohbet / TB1 | Model Config | Prompt'ta hiçbir gizli anahtar veya iç mimari sır tutulmaz | 100 jailbreak denemesi: hassas iç mimari sır ifşası 0 | AI / ML Ekibi | 8 $\to$ 4 |
 | **T5** | Kurcalanmış model ağırlığı yüklenmesi (`AML.T0010` / LLM04) | Tedarik / TB7 | Model | Sigstore/Cosign ile kriptografik imza ve hash sabitleme | CI/CD hattında imzasız model yükleme denemesi: derleme reddedilir | Platform / DevSecOps | 10 $\to$ 5 |
@@ -539,7 +524,7 @@ Tehdit modelini yönetirken iki operasyonel gözümüz daima açık olmalıdır:
 ## Terimler sözlüğü
 
 - **Güven Sınırı (Trust Boundary):** Güven düzeyinin, yetki kapsamının veya veri sahipliğinin değiştiği mimari hat; TB1'den TB7'ye yedi sınır mevcuttur.
-- **Von Neumann Kırılması:** Büyük dil modellerinde talimatlar (kod) ile verinin aynı token dizisinde birleşerek ayrımının olanaksızlaşması.
+- **Bant İçi Talimat:** Bir LLM'de talimatlar ile veri aynı token dizisini paylaşır ve verinin talimat gibi davranmasını engelleyen zorunlu bir işaret yoktur (token'lar için W^X yok).
 - **Dolaylı Prompt Injection (Indirect Injection):** Modelin okuduğu e-posta, belge veya web içeriğine gizlenmiş saldırgan talimatları (`AML.T0051.001`).
 - **Şaşırtılmış Vekil (Confused Deputy):** Ayrıcalıklı bir bileşenin, yetkisiz bir dış aktörün isteği doğrultusunda bu ayrıcalığını kötüye kullanması.
 - **Ölümcül Üçlü (Lethal Trifecta):** Özel veri ($D$), güvenilmeyen içerik ($U$) ve dış kanalın ($X$) aynı oturumda kesişerek veri sızıntısını mümkün kılması.
@@ -557,7 +542,7 @@ Tehdit modelini yönetirken iki operasyonel gözümüz daima açık olmalıdır:
 - [K2] NIST, [*AI 600-1: Generative AI Profile to the AI Risk Management Framework*](https://doi.org/10.6028/NIST.AI.600-1) (Temmuz 2024): Üretken yapay zekâ güven sınırları ve DFD eşlemeleri.
 - [K3] MITRE, [*ATLAS Knowledge Base*](https://atlas.mitre.org/): Adversarial Threat Landscape for AI Systems, v5.6.0 taktik ve teknik kataloğu.
 - [K4] K. Greshake ve ark., [*Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*](https://arxiv.org/abs/2302.12173) (2023): Dolaylı enjeksiyonun öncü akademik makalesi.
-- [K5] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2025/2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) ve [*Top 10 for Agentic Applications*](https://genai.owasp.org/): LLM01, LLM03, ASI01 kılavuzları.
+- [K5] OWASP GenAI Security Project, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) ve [*Top 10 for Agentic Applications*](https://genai.owasp.org/): LLM01, LLM03, ASI01 kılavuzları.
 - [K6] S. Willison, [*The lethal trifecta for AI agents: private data, untrusted content, and external communication*](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/) (2025).
 - [K7] Microsoft Security Response Center, [*CVE-2025-32711: Microsoft 365 Copilot Information Disclosure (EchoLeak)*](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-32711) (2025).
 - [K8] Threat Modeling Manifesto, [*Dört Temel Soru ve Prensipler*](https://www.threatmodelingmanifesto.org/).

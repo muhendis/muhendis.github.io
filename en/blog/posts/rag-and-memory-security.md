@@ -55,45 +55,32 @@ An enterprise RAG vector index is that public photocopy room. When source docume
 
 1. **Chunk-Level Read Authorizations (Document ACL Inheritance):** The source CRM knows that İzmir account records belong exclusively to the İzmir regional division. The chunk residing in the vector index knows nothing of this restriction unless the ingestion pipeline explicitly mirrored that access control list into the chunk's metadata.
 2. **Dynamic Permission Updates and Chunk Drift (ACL Drift):** When a document's classification is upgraded to confidential or an employee switches departments, the source system updates authorizations in microseconds. In the vector store, however, hundreds of pre-computed chunks derived from that document continue to exist with stale permissions for weeks or months.
-3. **Chunk Provenance and Author Trust:** A customer complaint ticket originates from an untrusted external entity ($\tau = 0$). An unhardened vector store deposits that chunk into the exact same collection as board-approved corporate policies ($\tau = 2$).
+3. **Chunk Provenance and Author Trust:** A customer complaint ticket originates from an untrusted external entity ($\tau = 0$). An unhardened vector store deposits that chunk into the exact same collection as reviewed corporate policies ($\tau = 1$, internal data on the scale of Part 5).
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│             Chunk Drift (ACL Drift) Security Vulnerability             │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. Upstream Source Document (SharePoint / CRM):                        │
-│    doc_id: "financial-q4-2026.pdf"                                     │
-│    v1 ACL: ["finance", "executive"]  ───(Ingestion ETL)──┐             │
-│                                                          │             │
-│ 2. Vector Database Chunks:                               ▼             │
-│    chunk_01 metadata: {doc: "financial-q4-2026", acl: ["finance"]}     │
-│    chunk_02 metadata: {doc: "financial-q4-2026", acl: ["finance"]}     │
-│                                                                        │
-│ 3. Security Event: Privilege Downgrade Incident                        │
-│    doc_id "financial-q4-2026.pdf" -> v2 ACL: ONLY ["executive"]        │
-│    SharePoint ACL updated immediately!                                 │
-│                                                                        │
-│ 4. Vector Store Drift State:                                           │
-│    Thousands of vector chunks still hold acl: ["finance"]!             │
-│    Finance analyst queries assistant -> unauthorized leak occurs!      │
-└────────────────────────────────────────────────────────────────────────┘
-```
+A worked example of the drift:
+
+1. **At ingestion.** `financial-q4-2026.pdf` has the source ACL `["finance", "executive"]`. The ETL job copies that ACL into the metadata of every chunk it produces.
+2. **The change.** After a security event the document is restricted to `["executive"]`. SharePoint applies the new ACL immediately.
+3. **The drift.** The chunks in the vector store still carry the old ACL copy, `["finance", "executive"]`.
+4. **The leak.** A finance analyst asks the assistant about Q4; the retrieval filter reads the stale copy, lets the chunks through, and the answer quotes a document the analyst can no longer open at the source.
 
 The naive remedy is to delete and re-index all chunks whenever upstream permissions change. In enterprise environments containing millions of documents, however, mass re-indexing incurs prohibitive GPU embedding costs, latency delays, and database locks. In robust AI security architectures, this is solved via **Decoupled Epoch Invalidation**.
 
-Each source document is assigned a monotonic version epoch counter. Vector chunks store only their document identifier and the epoch counter at ingestion time: $(v_{\text{doc}}, \text{doc\_id})$. The active ACLs and current document epoch values are maintained in a high-speed in-memory store (Redis / PDP Cache):
+Each source document is assigned a monotonic version epoch counter. Each chunk carries, next to the ACL copy the in-index filter needs, its document identifier and the epoch at ingestion time: $(v_{\text{doc}}, \text{doc\_id})$. The authoritative ACLs and current document epochs are maintained in a high-speed in-memory store (Redis / PDP Cache):
 
 $$
 \text{Valid}(c) \iff \Big( \text{Epoch}(c) = \text{Epoch}(\text{Doc}(c)) \Big) \land \Big( \text{ACL}(\text{Doc}(c)) \cap \mathcal{G}_{\text{user}} \neq \emptyset \Big)
 $$
 
-When permissions change in the source system, only the document's epoch counter is incremented ($v_{\text{doc}} \leftarrow v_{\text{doc}} + 1$). At retrieval time, any chunk carrying an outdated epoch is discarded in $O(1)$ time; neither expensive vector re-indexing nor database re-clustering is required.
+When permissions change in the source system, only the document's epoch counter is incremented ($v_{\text{doc}} \leftarrow v_{\text{doc}} + 1$). At retrieval time, any chunk carrying an outdated epoch is discarded with one $O(1)$ lookup; neither vector re-indexing nor re-clustering is required.
+
+Be clear about what the bump does: it **fails closed for everyone**. Until a background job re-stamps the document's chunks with the new epoch, the document is invisible even to users who are still entitled to it. That is the intended trade, in one sentence: *a stale allow is worse than a stale deny.* The repair is cheap, because re-stamping is a metadata write on existing vectors, not a re-embedding. The epoch check also needs its own failure rule: if the registry (the Redis / PDP cache) cannot be reached, retrieval returns nothing rather than trusting the copies in the index.
 
 ### Early vs Late Chunking Security Dilemma
 
 The choice of chunking strategy directly establishes an architectural security boundary:
 - **Early Chunking:** Text is split into 512-token segments prior to embedding, and each chunk is embedded independently. This provides clean security isolation because each vector reflects strictly its own span. Semantic context spanning chunk boundaries, however, is fragmented.
-- **Late Chunking:** The complete document (e.g., 8,192 tokens) is processed through a bidirectional Transformer encoder first; after all cross-attention interactions across the full context are calculated, mean pooling is applied over chunk boundaries. While retrieval accuracy improves, it creates **Cross-Attention Taint Leakage**. If Section A is public marketing text and Section B contains confidential executive compensation, attention heads allow secret token embeddings from Section B to bleed into Section A's hidden states. A user authorized to view only Section A can issue salary-related queries that retrieve Section A due to this latent taint, resulting in indirect information leakage.
+- **Late Chunking:** The complete document (e.g., 8,192 tokens) is processed through a bidirectional Transformer encoder first; after self-attention has mixed information across the full context, mean pooling is applied over chunk boundaries. While retrieval accuracy improves, it creates **attention taint leakage**. If Section A is public marketing text and Section B contains confidential executive compensation, attention heads allow secret token embeddings from Section B to bleed into Section A's hidden states. A user authorized to view only Section A can issue salary-related queries that retrieve Section A because of this taint. What leaks is a signal, not the text: the user learns that the document contains compensation material, and Section A's vector now encodes part of Section B, which matters if vectors can be inverted (Part 3).
 
 ---
 
@@ -250,28 +237,16 @@ While pre-filtering is conceptually rigorous, it introduces a severe algorithmic
 
 HNSW performs greedy beam search across multi-layer skip-graphs. Nearest neighbors to the query vector are located by traversing connected edges. If pre-filtering is executed by pruning non-permitted nodes prior to graph traversal, the small-world graph structure collapses:
 
-1. **Graph Disconnection and Disjoint Islands:** Pruning non-permitted nodes fragments the graph into isolated sub-components. In random networks, if the fraction of surviving nodes drops below the percolation threshold ($p_c \approx \frac{\ln |V|}{|V|}$), the giant connected component dissolves completely.
+1. **Graph Disconnection and Disjoint Islands:** Pruning non-permitted nodes fragments the graph into isolated sub-components. This is a percolation effect: below a critical fraction of surviving nodes, the single large connected component breaks up, and the lower the user's share $f$, the closer the pruned graph gets to that point.
 2. **Local Optima Entrapment:** The search entry point cannot bridge across the disconnected gap to reach the cluster of permitted nodes. Traversal hits an artificial dead end, and search terminates prematurely, failing to retrieve highly relevant permitted documents.
 
-The production engineering standard to solve this is **Single-Stage In-Traversal Filtering with Bitset Masks** (utilized by Qdrant, Milvus, and pgvector).
+The production engineering standard to solve this is **Single-Stage In-Traversal Filtering with Bitset Masks** (Milvus applies a bitset during graph traversal; Qdrant's filterable HNSW checks the filter during traversal and adds extra links so that filtered subgraphs stay connected). Not every engine works this way: pgvector applies filters *after* the index scan, which is post-filtering with its starvation problem, and since version 0.8.0 compensates with iterative index scans that keep scanning until enough rows pass the filter.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│            HNSW Single-Stage In-Traversal Filtering Mechanics          │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. Upon authentication, user privileges expand into an in-memory bitset│
-│    Bitset Mask: [1, 0, 0, 1, 0, 1, ...] (1 = Permitted, 0 = Forbidden) │
-│                                                                        │
-│ 2. During HNSW Beam Search traversal:                                  │
-│    - Node 5 (Forbidden, bit=0): Serves as a NAVIGATIONAL BRIDGE!       │
-│      Edges branching to neighbors remain active. Graph stays intact!   │
-│    - Node 8 (Permitted, bit=1): Traversed AND added to                 │
-│      Candidate Top-K Result Queue.                                     │
-│                                                                        │
-│ 3. Outcome: 100% graph connectivity preserved; zero unauthorized leaks;│
-│    only authorized nodes return to the model context.                  │
-└────────────────────────────────────────────────────────────────────────┘
-```
+How the traversal works:
+
+1. **Build the mask.** At authentication the user's entitlements are expanded into an in-memory bitset over chunk IDs, for example `[1, 0, 0, 1, 0, 1, ...]` (1 = permitted, 0 = forbidden).
+2. **Traverse everything, collect selectively.** During beam search a forbidden node (bit 0) still serves as a *navigational bridge*: its edges are followed, so the graph stays connected, but it never enters the result queue. A permitted node (bit 1) is both traversed and added to the top-$k$ candidates.
+3. **Result.** Connectivity is preserved, and only permitted chunks can be returned to the model context.
 
 When user privilege is extremely restrictive ($f < 0.001$), in-traversal beam search can exhaust its search budget ($efSearch$) traversing non-matching bridge nodes. Under this specific boundary condition, the database query planner must automatically fall back to an inverted-index flat scan (hybrid query planning).
 
@@ -293,19 +268,19 @@ The core design principle: *If an application bug drops the filter parameter in 
 
 A prevalent misconception among software teams is that high-dimensional floating-point embeddings behave like cryptographic one-way hashes that irreversibly mask source text.
 
-Research by Morris et al. (**Vec2Text**, 2023) demonstrated that embeddings generated by leading models (contriever, text-embedding-ada-002) can be systematically inverted. Vec2Text recovers **92% of 32-token sequences verbatim** from their vector representations alone.
+Research by Morris et al. (**Vec2Text**, 2023) demonstrated that embeddings generated by leading models (GTR-base, text-embedding-ada-002) can be systematically inverted. Vec2Text recovers **92% of 32-token sequences verbatim** from their vector representations alone.
 
-Consequently, disk volumes storing vector indices, snapshot backups, and in-memory caches must be treated with the identical data classification (GDPR, HIPAA, SOC 2) as plaintext databases, mandating continuous encryption-at-rest.
+Consequently, disk volumes storing vector indices, snapshot backups, and in-memory caches must carry the same data classification as the plaintext they were computed from, including encryption at rest and the same access control.
 
 ### Metadata and Semantic Cache Leakage
 
 Two subtle information leakage channels must be mitigated:
 
 1. **Metadata and Title Leaks:** The "Sources" panel rendered in chat interfaces frequently exposes document filenames, titles, and snippets. Even if a document body is withheld, filenames like `"Project-Apollo-Acquisition-Internal.pdf"` leak critical business intelligence. Metadata must be filtered through the exact same access control matrix as chunk payloads.
-2. **Semantic Cache Boundary Crossings:** To curb inference latency, systems deploy semantic caches matching incoming queries against past answers. A cache keyed solely on query text will gladly return a privileged İzmir refund answer to an unauthorized Ankara worker asking the identical question. Semantic cache keys must be cryptographically salted with user entitlements:
+2. **Semantic Cache Boundary Crossings:** To curb inference latency, systems deploy semantic caches matching incoming queries against past answers. A cache keyed solely on query text will gladly return a privileged İzmir refund answer to an unauthorized Ankara worker asking the identical question. A semantic cache matches by *similarity*, not by exact key, so hashing the query text would defeat it. The fix is to partition the cache by entitlement set and search only inside the caller's partition:
 
 $$
-\text{CacheKey} = \text{HMAC}_{K}(\text{QueryText} \parallel \mathcal{G}_{\text{user}})
+\text{CacheScope} = \text{HMAC}_{K}(\text{sort}(\mathcal{G}_{\text{user}})), \qquad \text{lookup}(q) \text{ searches only entries with the same } \text{CacheScope}
 $$
 
 ---
@@ -318,22 +293,21 @@ Retrieval turns the ability to insert a document into the ability to hijack mode
 
 The **PoisonedRAG** study by Zou et al. (2024) proved that injecting as few as **5 crafted adversarial chunks** into an enterprise knowledge base containing millions of records achieves an **attack success rate (ASR) of approximately 90%** for targeted query sets. The adversary does not need to compromise the entire database; they only need to dominate the top-$k$ candidates for specific questions.
 
-The attacker computes an adversarial perturbation ($\delta$) over a base passage ($c$) such that the resulting chunk achieves maximal cosine similarity across all queries in a target subspace ($\mathcal{Q}_{\text{target}}$):
+The paper's construction is simpler than an optimization over perturbations. Each poisoned text is a concatenation $P = S \oplus I$ of two parts with two different jobs:
 
-$$
-\max_{\delta, \|\delta\|_2 \le \Delta} \min_{q \in \mathcal{Q}_{\text{target}}} \frac{\mathbf{e}(c + \delta) \cdot \mathbf{e}(q)}{\|\mathbf{e}(c + \delta)\|_2 \|\mathbf{e}(q)\|_2}
-$$
+- $S$ satisfies the **retrieval condition**: it must rank in the top-$k$ for the target question $Q$. In the black-box setting the attacker simply sets $S = Q$, the question itself, and nothing is more similar to a question than its own text. With white-box access to the retriever, $S$ is optimized to maximize $\text{sim}(\mathbf{e}(S \oplus I), \mathbf{e}(Q))$.
+- $I$ satisfies the **generation condition**: read as context, it must lead the model to the attacker's chosen answer. The attacker has an LLM write it.
 
-The perturbed chunk positions itself at the geometric centroid of target queries ($\cos(\mathbf{e}, \mathbf{q}) \ge 0.88$). When an employee issues an inquiry, the retrieval engine ranks the poisoned chunk above genuine corporate policy records.
+With $k = 5$ and five such texts per question, the poisoned passages can occupy the whole context window, and the model answers from them rather than from the genuine policy record.
 
 ### 4.2. Ingestion pipeline defense architecture
 
 Neutralizing vector space poisoning requires defense-in-depth across the ingestion pipeline:
 
-1. **Trust-Segregated Collections ($\tau$-Segregation):** Audited internal policies ($\tau = 2$) and untrusted external communications ($\tau = 0$) must never reside in the same collection. Policy questions query strictly the Policy Index; tickets serve only as historical case evidence.
-2. **Embedding Space Outlier Detection:** Poisoned chunks position themselves unnaturally between disparate topic centroids. Calculating local KNN density and Mahalanobis distances during ingestion identifies and quarantines synthetic outliers.
+1. **Trust-Segregated Collections ($\tau$-Segregation):** Reviewed internal policies ($\tau = 1$) and untrusted external communications ($\tau = 0$) must never reside in the same collection. Policy questions query strictly the Policy Index; tickets serve only as historical case evidence.
+2. **Embedding Space Outlier Detection:** Poisoned chunks position themselves unnaturally between disparate topic centroids. Calculating local KNN density and Mahalanobis distances during ingestion flags candidates for quarantine. Treat this as a signal, not a guarantee: a passage that simply repeats the target question looks like an ordinary on-topic text.
 3. **Author and Document Diversity Caps:** Enforce an invariant that at most $m \le 2$ chunks from the same author or root document may occupy the top-$k$ context window, preventing Sybil flooding.
-4. **Invisible Content Sanitization:** Strip zero-width joiners (`\u200B`, `\u200C`, `\u200D`), Unicode Tags block characters, hidden HTML (`display:none`), and white-on-white text prior to embedding.
+4. **Invisible Content Sanitization:** Strip zero-width characters (`\u200B`, `\u200C`, `\u200D`), Unicode Tags block characters, hidden HTML (`display:none`), and white-on-white text prior to embedding.
 
 ---
 
@@ -343,22 +317,11 @@ Neutralizing vector space poisoning requires defense-in-depth across the ingesti
 
 While RAG attacks influence isolated sessions, poisoned memory makes exploitation **persistent across time**. An AI security architecture categorizes agent memory into three tiers:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Agent Memory Taxonomy                           │
-├─────────────────────┬──────────────────────────────────────────────────┤
-│ Memory Tier         │ Security Boundary and Threat Profile             │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Working Memory      │ Active context window. Discarded at turn end.    │
-│                     │ Threat: Ephemeral prompt injection divergence    │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Episodic Memory     │ Time-stamped dialogue logs and historical traces.│
-│                     │ Threat: Replaying deceptive past dialogues       │
-├─────────────────────┼──────────────────────────────────────────────────┤
-│ Semantic Memory     │ Consolidated facts and durable user profiles.    │
-│                     │ Threat: Permanent poisoning of ALL future turns  │
-└─────────────────────┴──────────────────────────────────────────────────┘
-```
+| Memory tier | What it holds | Lifetime | Main threat |
+| :--- | :--- | :--- | :--- |
+| **Working memory** | The active context window | Discarded when the turn or session ends | A prompt injection that derails one answer |
+| **Episodic memory** | Time-stamped dialogue logs and past events | Until retention expires | Deceptive past dialogues replayed as context |
+| **Semantic memory** | Consolidated facts and durable user profiles | Indefinite | Poisoning that steers *every* future session |
 
 In February 2025, Johann Rehberger demonstrated how indirect prompt injection could plant fraudulent persistent memories in Gemini Advanced. When processing untrusted text, the model refused to execute the memory write tool immediately. The attacker bypassed this via **Delayed Tool Invocation**: The injected text instructed the model to invoke the memory tool only when the user later typed a benign greeting, making the write appear as a legitimate user command.
 
@@ -373,10 +336,12 @@ Our defense architecture deploys a three-stage memory write gate:
 1. **Context Trust Propagation:** The trust rating of any proposed memory is bounded by the minimum trust level of all sources currently in the context window:
    $$\tau(m) = \min_{c \in \mathcal{C}_{\text{context}}} \tau(c)$$
 2. **Deontic Modal Logic Gating:** Memory must store strictly declarative facts (*"Customer speaks Turkish"*). Deontic modal verbs expressing rules, obligations, or overrides (*"always"*, *"never"*, *"must"*, *"approve"*, *"ignore"*) are flatly rejected. Policy governance belongs in the deterministic PDP, not user memory.
-3. **Quarantine State Machine:** Proposed memories originating from untrusted contexts ($\tau(m) = 0$) cannot commit directly. They are routed to a **Quarantine Store** and activate only upon explicit human-in-the-loop confirmation.
+3. **Quarantine State Machine:** Proposed memories originating from untrusted contexts ($\tau(m) = 0$) cannot commit directly. They are routed to a **Quarantine Store** and activate only upon explicit human-in-the-loop confirmation. This is the trust rule of Part 5 applied to a tool with risk $r = 1$: a memory write runs unattended only if $\tau(c) \ge 1$.
+
+A caveat about the second stage, because its name promises more than it delivers. The "deontic filter" is a keyword screen, and keyword screens misfire in both directions: *"the customer **never** received the parcel"* is a fact, yet it trips the word list, while a paraphrased rule without any listed word passes. Treat it as a cheap first sieve whose hits go to review, not as the boundary. The boundary is structural: quarantine for anything written from a $\tau = 0$ context, a scope key that confines a memory to one customer, and above all the rule that a recalled memory re-enters the context as *data* with its stored trust label, never as an instruction with authority of its own.
 
 <!-- fig:p7_memory -->
-<svg viewBox="0 0 720 396" role="img" aria-label="A proposed memory first gets provenance: who triggered it, which sources were in the context and therefore its trust level, and the session. A gate then decides. From a trusted context with a fact-like memory, the memory becomes active, scoped to the customer or employee, with a time to live. From a context with trust 0, it goes to quarantine and becomes active only after the user confirms it in plain language. Instruction-like or policy-like memories are rejected. Memories are visible to users and deletable, and deleting a customer by pseudonym deletes their memories too." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 720 396" role="img" aria-label="A proposed memory first gets provenance: who triggered it, which sources were in the context and therefore its trust level, and the session. A gate then decides. From a context with trust 1 or higher and a fact-like memory, the memory becomes active, scoped to the customer or employee, with a time to live. From a context with trust 0, it goes to quarantine and becomes active only after the user confirms it in plain language. Instruction-like or policy-like memories are rejected. Memories are visible to users and deletable, and deleting a customer by pseudonym deletes their memories too." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="p7m-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 <marker id="p7m-o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-success)"/></marker>
@@ -403,7 +368,7 @@ Our defense architecture deploys a three-stage memory write gate:
 <text x="610.0" y="76.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">scoped to customer or</text>
 <text x="610.0" y="92.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">employee · TTL</text>
 <path d="M464 140 C 490 140, 490 72, 514 72" marker-end="url(#p7m-o)" style="fill:none;stroke:var(--c-success);stroke-width:1.5"/>
-<text x="468" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">τ≥2, fact</text>
+<text x="468" y="112" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">τ≥1, fact</text>
 <rect x="516" y="130" width="188" height="56" rx="8" style="fill:var(--c-surface);stroke:var(--c-warn);stroke-width:1.2"/>
 <text x="610.0" y="146.5" text-anchor="middle" style="fill:var(--c-text);font-size:13px">Quarantine</text>
 <text x="610.0" y="162.5" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11.5px">inactive, waiting for</text>
@@ -437,7 +402,7 @@ $$
 \text{ScopeKey} = \text{HMAC}_{K_{\text{tenant}}}(\text{user\_id} \parallel \text{entity\_id})
 $$
 
-When a user exercises their GDPR / KVKK Right to Erasure, the corresponding key in KMS is destroyed (**crypto-shredding**). This renders all associated episodic traces, semantic profile entries, and vector embeddings mathematically undecipherable across backups without requiring storage rewrites.
+When a user exercises their GDPR / KVKK Right to Erasure, the corresponding key in KMS is destroyed (**crypto-shredding**). This renders the encrypted copies, stored memory payloads, episodic traces and above all backups, unreadable without storage rewrites. As in Part 3, the vectors inside the live index are the exception: they must be searchable in plaintext, so they are deleted by `ScopeKey` and the index compacted.
 
 ---
 
@@ -456,7 +421,7 @@ The architecture closes this vulnerability using a two-stage verification barrie
 - **Deterministic Citation Verification:** All citation identifiers ($c_{\text{cited}}$) appearing in the generated text are verified against the set of chunks actually returned for this specific request ($\mathcal{C}_{\text{retrieved}}$):
   $$c_{\text{cited}} \in \mathcal{C}_{\text{retrieved}}$$
   If the model invents a phantom ID (`c-999`) or references an ID from another user session, the citation is stripped and the event is logged. This is a deterministic set-membership validation, not a probabilistic model evaluation.
-- **Probabilistic Groundedness (NLI) Verification:** A dedicated small language model (IBM Granite Guardian or Llama-Guard RAG checker) executes Natural Language Inference (NLI) across each sentence and its cited passage ($P(\text{Premise} \models \text{Hypothesis}) > \theta_{\text{grounded}}$).
+- **Probabilistic Groundedness (NLI) Verification:** A dedicated small model (for example Granite Guardian's groundedness check, or a plain NLI classifier) executes Natural Language Inference (NLI) across each sentence and its cited passage ($P(\text{Premise} \models \text{Hypothesis}) > \theta_{\text{grounded}}$).
 
 ---
 
@@ -483,7 +448,7 @@ The architecture closes this vulnerability using a two-stage verification barrie
 | **R-5** | Delayed Memory Injection | Complaint contains delayed instructions to write auto-approval rules | Deontic modal filter rejects imperative rule; active memory remains untouched |
 | **R-6** | Untrusted Context Memory | External complaint ($\tau=0$) contains legitimate customer preference | Memory is routed to Quarantine; remains inactive until human confirmation |
 | **R-7** | Deterministic Citation Check | Model hallucinates an unretrieved chunk ID in its citation list | Phantom ID is stripped, response is flagged, and SOC alert is dispatched |
-| **R-8** | Right to Erasure (Crypto-Shredding) | Customer requests full data deletion under GDPR / KVKK | Customer KMS key is revoked; all memory records and vectors become undecipherable |
+| **R-8** | Right to Erasure (Crypto-Shredding) | Customer requests full data deletion under GDPR / KVKK | Customer KMS key is destroyed and index rows deleted by scope key; a search for the customer's canary phrase returns 0 hits in memory, index and a restored backup |
 
 ### 7.3. Production-grade Python RAG and memory security engine
 
@@ -502,7 +467,7 @@ class Chunk:
     allowed_groups: Set[str]
     similarity: float
     text: str
-    trust_label: int  # 0: untrusted/complaint, 1: internal, 2: audited policy
+    trust_label: int  # 0: external (complaint), 1: internal (CRM, reviewed policy), as in Part 5
 
 class DocumentAclRegistry:
     def __init__(self):
@@ -589,7 +554,7 @@ chunks = [
     Chunk('c-02', 'doc-crm-izmir', 1, {'izmir'}, 0.94, 'İzmir iade şikayeti #102', 0),
     Chunk('c-03', 'doc-crm-izmir', 1, {'izmir'}, 0.92, 'İzmir iade şikayeti #103', 0),
     Chunk('c-04', 'doc-crm-izmir', 1, {'izmir'}, 0.90, 'İzmir iade şikayeti #104', 0),
-    Chunk('c-05', 'doc-legal', 1, {'legal', 'executive'}, 0.88, 'Gizli şirket içi yasal mütalaa', 2),
+    Chunk('c-05', 'doc-legal', 1, {'legal', 'executive'}, 0.88, 'Gizli şirket içi yasal mütalaa', 1),
     Chunk('c-06', 'doc-crm-ankara', 1, {'ankara'}, 0.75, 'Ankara su ısıtıcı arıza kaydı #42', 0),
     Chunk('c-07', 'doc-crm-ankara', 1, {'ankara'}, 0.72, 'Ankara su ısıtıcı arıza kaydı #43', 0),
 ]
@@ -685,7 +650,7 @@ Legitimate citations: ['c-06'] | Hallucinated/Unpermitted citations: ['c-999']
 An enterprise HR platform indexes a 50-page "Corporate Strategy and Executive Compensation Policy" document using Late Chunking. The first 40 pages outline broad corporate vision accessible to all employees; the final 10 pages disclose executive bonuses restricted strictly to executive leadership. The platform segments the text and labels chunks from the first 40 pages with `acl: ["all_staff"]` and the final 10 pages with `acl: ["executives"]`.
 
 *Question:* When an employee asks *"What are the strategic growth targets for 2026?"*, the system functions securely. What happens when an employee asks *"What is the strategic rationale behind the highest compensation package in the company?"* Could a chunk from the first 40 pages return with high similarity and leak compensation details?
-*Answer:* **Yes.** During Late Chunking, the entire document traverses a single bidirectional Transformer attention mechanism. Token states in the first 40 pages attend to and absorb confidential salary token embeddings from the final 10 pages into their latent representations. Even if the text of Section A mentions no numbers, its embedding vector achieves elevated cosine similarity against compensation queries. Sections across distinct trust boundaries must never be processed within a single Late Chunking context window.
+*Answer:* **It can return, and that alone is a leak.** During Late Chunking, the entire document traverses a single bidirectional Transformer attention mechanism. Token states in the first 40 pages attend to and absorb confidential salary token embeddings from the final 10 pages into their latent representations. Even if the text of Section A mentions no numbers, its embedding vector achieves elevated cosine similarity against compensation queries. Sections across distinct trust boundaries must never be processed within a single Late Chunking context window.
 
 ### Disambiguation
 
@@ -707,7 +672,7 @@ An enterprise HR platform indexes a 50-page "Corporate Strategy and Executive Co
 - A vector index is an unprotected copy of your data; upstream access control lists and provenance evaporate unless explicitly synchronized into chunk metadata.
 - Permissions must be enforced inside vector queries via pre-filtering; post-filtering leaves 59% of queries completely starved when users access 10% of records.
 - To prevent HNSW graph disconnection and percolation collapse, use single-stage in-traversal bitset masking rather than deleting unauthorized nodes.
-- Embeddings are not hashes and can be inverted back to text via Vec2Text with 92% fidelity; vector indices and backups require full encryption-at-rest.
+- Embeddings are not hashes and can be inverted (Vec2Text recovered 92% of 32-token inputs exactly); vector indices and backups are protected like the text they came from.
 - Writing to agent memory is a side-effecting tool invocation: record provenance, reject deontic rule directives, and quarantine untrusted inputs.
 - Accessible, authorized, and grounded are distinct: verify cited passage IDs via deterministic set membership, and assert claim faithfulness via NLI models.
 
@@ -720,9 +685,9 @@ An enterprise HR platform indexes a 50-page "Corporate Strategy and Executive Co
 - **Pre-Filtering:** Applying identity and entitlement constraints inside the vector query so that only authorized chunks compete for top-$k$ similarity.
 - **Post-Filtering:** Retrieving candidates globally based on similarity and pruning unauthorized entries post-hoc; induces severe context starvation.
 - **In-Traversal Bitset Filtering:** An HNSW search technique that uses forbidden nodes as structural bridges while restricting result queues to bitset-matched authorized nodes.
-- **PoisonedRAG:** An adversarial attack that injects perturbed passages optimized to maximize cosine similarity against target query subspaces.
+- **PoisonedRAG:** A knowledge-corruption attack that injects a few texts per target question, each built from a part that gets retrieved (often the question itself) and a part that steers the answer.
 - **Delayed Tool Invocation:** A prompt injection attack that delays malicious tool execution until a future benign interaction, disguising the action as user-initiated.
-- **Deontic Modality Filter:** A syntactic parser that inspects proposed memories for imperative directives (*"must"*, *"always"*, *"never"*) to prevent policy usurpation.
+- **Deontic Modality Filter:** A keyword screen that flags proposed memories containing rule-like wording (*"must"*, *"always"*, *"never"*) for review; a first sieve, not a boundary.
 - **Memory Quarantine:** An execution state where memories extracted from untrusted contexts ($\tau=0$) remain inactive until verified by explicit human confirmation.
 - **Deterministic Citation Check:** A set-membership test verifying that every citation ID emitted by a model matches a chunk verified and retrieved for that specific request.
 

@@ -169,23 +169,23 @@ To substantiate a "< 0.1%" claim:  n ≈ 3 / 0.001 = 3,000 independent failure-f
 <text x="16" y="24" text-anchor="start" style="fill:var(--c-accent);font-size:14px;font-weight:700;letter-spacing:.02em">Zero Failures Does Not Mean Zero Risk: The 95% Upper Bound Scales as 3/n</text>
 <!-- Grid lines -->
 <line x1="70" y1="230.0" x2="680" y2="230.0" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="62" y="234.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">%0</text>
+<text x="62" y="234.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">0%</text>
 <line x1="70" y1="185.0" x2="680" y2="185.0" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="62" y="189.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">%4</text>
+<text x="62" y="189.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">4%</text>
 <line x1="70" y1="140.0" x2="680" y2="140.0" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="62" y="144.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">%8</text>
+<text x="62" y="144.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">8%</text>
 <line x1="70" y1="95.0" x2="680" y2="95.0" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="62" y="99.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">%12</text>
+<text x="62" y="99.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">12%</text>
 <line x1="70" y1="50.0" x2="680" y2="50.0" style="stroke:var(--c-border);stroke-width:1"/>
-<text x="62" y="54.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">%16</text>
+<text x="62" y="54.0" text-anchor="end" style="fill:var(--c-text-mute);font-size:11px">16%</text>
 <!-- X Ticks -->
 <text x="70.0" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">20</text>
 <text x="171.2" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">50</text>
 <text x="247.8" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">100</text>
 <text x="324.4" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">200</text>
 <text x="425.6" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">500</text>
-<text x="502.2" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1.000</text>
-<text x="623.6" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">3.000</text>
+<text x="502.2" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">1,000</text>
+<text x="623.6" y="248" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">3,000</text>
 <text x="375.0" y="266" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">number of independent failure-free test cases n (log scale)</text>
 <!-- Polyline curve -->
 <polyline points="70.0,73.5 73.0,77.5 76.1,81.3 79.2,85.1 82.2,88.8 85.3,92.4 88.3,95.9 91.4,99.3 94.4,102.7 97.5,106.0 100.5,109.1 103.5,112.3 106.6,115.3 109.6,118.3 112.7,121.1 115.7,124.0 118.8,126.7 121.8,129.4 124.9,132.0 127.9,134.6 131.0,137.1 134.0,139.5 137.1,141.8 140.1,144.2 143.2,146.4 146.2,148.6 149.3,150.7 152.4,152.8 155.4,154.8 158.5,156.8 161.5,158.7 164.6,160.6 167.6,162.5 170.7,164.2 173.7,166.0 176.8,167.7 179.8,169.3 182.9,170.9 185.9,172.5 189.0,174.0 192.0,175.5 195.0,177.0 198.1,178.4 201.2,179.7 204.2,181.1 207.2,182.4 210.3,183.7 213.3,184.9 216.4,186.1 219.4,187.3 222.5,188.4 225.6,189.5 228.6,190.6 231.7,191.7 234.7,192.7 237.8,193.7 240.8,194.7 243.8,195.6 246.9,196.5 249.9,197.4 253.0,198.3 256.0,199.2 259.1,200.0 262.1,200.8 265.2,201.6 268.2,202.3 271.3,203.1 274.3,203.8 277.4,204.5 280.4,205.2 283.5,205.9 286.5,206.5 289.6,207.1 292.6,207.8 295.7,208.4 298.8,208.9 301.8,209.5 304.9,210.1 307.9,210.6 311.0,211.1 314.0,211.6 317.1,212.1 320.1,212.6 323.2,213.1 326.2,213.5 329.2,214.0 332.3,214.4 335.4,214.8 338.4,215.3 341.4,215.7 344.5,216.0 347.6,216.4 350.6,216.8 353.6,217.1 356.7,217.5 359.8,217.8 362.8,218.2 365.8,218.5 368.9,218.8 372.0,219.1 375.0,219.4 378.0,219.7 381.1,220.0 384.2,220.2 387.2,220.5 390.2,220.8 393.3,221.0 396.4,221.2 399.4,221.5 402.4,221.7 405.5,221.9 408.6,222.2 411.6,222.4 414.6,222.6 417.7,222.8 420.8,223.0 423.8,223.2 426.8,223.4 429.9,223.5 432.9,223.7 436.0,223.9 439.1,224.0 442.1,224.2 445.1,224.4 448.2,224.5 451.2,224.7 454.3,224.8 457.4,225.0 460.4,225.1 463.4,225.2 466.5,225.4 469.6,225.5 472.6,225.6 475.7,225.7 478.7,225.8 481.8,226.0 484.8,226.1 487.9,226.2 490.9,226.3 493.9,226.4 497.0,226.5 500.1,226.6 503.1,226.7 506.1,226.8 509.2,226.8 512.2,226.9 515.3,227.0 518.3,227.1 521.4,227.2 524.5,227.2 527.5,227.3 530.5,227.4 533.6,227.5 536.7,227.5 539.7,227.6 542.8,227.7 545.8,227.7 548.9,227.8 551.9,227.9 554.9,227.9 558.0,228.0 561.1,228.0 564.1,228.1 567.1,228.1 570.2,228.2 573.2,228.2 576.3,228.3 579.3,228.3 582.4,228.4 585.4,228.4 588.5,228.5 591.5,228.5 594.6,228.5 597.6,228.6 600.7,228.6 603.8,228.7 606.8,228.7 609.9,228.7 612.9,228.8 616.0,228.8 619.0,228.8 622.1,228.9 625.1,228.9 628.1,228.9 631.2,229.0 634.2,229.0 637.3,229.0 640.4,229.0 643.4,229.1 646.5,229.1 649.5,229.1 652.6,229.1 655.6,229.2 658.7,229.2 661.7,229.2 664.8,229.2 667.8,229.2 670.9,229.3 673.9,229.3 677.0,229.3 680.0,229.3" style="fill:none;stroke:var(--c-warn);stroke-width:2.2"/>
@@ -209,7 +209,7 @@ To substantiate a "< 0.1%" claim:  n ≈ 3 / 0.001 = 3,000 independent failure-f
 <text x="28" y="334" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Guaranteeing a bound below 0.1% requires at least 3,000 independent test cases. Paraphrased variants of a single seed do not count as independent samples.</text>
 </svg>
 
-This is why acceptance criteria in threat modeling must specify concrete failure-free sample sizes rather than unmeasurable claims like "the system cannot be manipulated". As statistical certainty increases, required sample sizes grow exponentially; automated testing suites become an operational necessity.
+This is why acceptance criteria in threat modeling must specify concrete failure-free sample sizes rather than unmeasurable claims like "the system cannot be manipulated". The required sample grows in inverse proportion to the bound you want to claim ($n \approx 3/p$): ten times the assurance costs ten times the failure-free cases, which is why automated test generation becomes an operational necessity.
 
 ---
 
@@ -243,7 +243,7 @@ Chance agreement:    p_e = (40/200 × 38/200) + (160/200 × 162/200)
 Cohen's kappa:       κ = (0.91 - 0.686) / (1 - 0.686) = 0.224 / 0.314 ≈ 0.713
 ```
 
-Although raw agreement appears impressive at 91%, it is dominated by the negative class majority. A kappa of $\approx 0.71$ is substantial, yet the contingency table reveals that the judge missed 8 out of 38 actual harmful responses (a 21% false negative rate). In high-assurance security engineering, miss rate outweighs aggregate accuracy.
+Although raw agreement appears impressive at 91%, it is dominated by the negative class majority. A kappa of $\approx 0.71$ is substantial, but it is below the 0.75 our release gate requires (Section 8.1), and the contingency table reveals that the judge missed 8 out of 38 actual harmful responses (a 21% false negative rate). In high-assurance security engineering, miss rate outweighs aggregate accuracy.
 
 Hardening rules for LLM judges:
 
@@ -255,7 +255,7 @@ Hardening rules for LLM judges:
 
 ## 7. Adaptive red teaming and regression across versions
 
-Static test datasets only measure resilience against previously observed exploits. Nasr, Carlini et al. (2025) demonstrated that 12 published defenses reporting 0% attack success rates against static suites were bypassed with over 90% success by *adaptive adversaries* who tuned their strategies to target feedback. Attackers invariably move second.
+Static test datasets only measure resilience against previously observed exploits. Nasr, Carlini et al. (2025) demonstrated that 12 published defenses, most of which had reported near-zero attack success rates against static suites, were bypassed with over 90% success for most of them by *adaptive adversaries* who tuned their strategies to target feedback. Attackers invariably move second.
 
 A modern enterprise AI evaluation architecture comprises two distinct pipelines:
 
@@ -312,10 +312,10 @@ The open-source ecosystem provides mature frameworks for automated red teaming:
 
 <!-- Middle details box -->
 <rect x="16" y="180" width="688" height="104" rx="8" style="fill:var(--c-surface-2);stroke:var(--c-border);stroke-width:1.2"/>
-<text x="28" y="202" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Değerlendirme İlkeleri ve Sertifikasyon Eşikleri</text>
-<text x="28" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Hakem Kalibrasyonu: LLM-as-a-Judge modelleri insan yargıçlara karşı Cohen kappa (κ ≥ 0.70) ile onaylanır.</text>
-<text x="28" y="240" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Zarar Oranı Güvencesi: 1.200 bağımsız senaryoda 0 ihlal ile %95 üst sınır %0.25 altında tutulur.</text>
-<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Çok Dilli ART: Türkçe eklemeli morfoloji (BPE alt kelime parçalama) testleri her regresyonda zorunludur.</text>
+<text x="28" y="202" text-anchor="start" style="fill:var(--c-text);font-size:12px;font-weight:700">Evaluation principles and gate thresholds</text>
+<text x="28" y="222" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Judge calibration: LLM judges are accepted only at Cohen's kappa κ ≥ 0.75 against human labels.</text>
+<text x="28" y="240" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Harm assurance: 0 harmful outcomes in 1,200 independent cases keeps the 95% upper bound near 0.25%.</text>
+<text x="28" y="258" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">• Multilingual suites: Turkish morphology, diacritic and code-switching variants run in every regression.</text>
 
 <!-- Bottom Educational Banner -->
 <rect x="16" y="296" width="688" height="66" rx="6" style="fill:var(--c-accent);fill-opacity:.07;stroke:var(--c-accent);stroke-width:1.2"/>
@@ -337,26 +337,32 @@ SECURITY EVALUATION REPORT
 System:            support-assistant-core      Environment: staging-eval (pure synthetic data)
 Authorization:     ticket SEC-8924, window 2026-11-02..06, scope: isolated sandbox
 Versions:          model support-7b@rev a1b2c3 · lora v3 · template jinja-chat-t2
-                   system prompt p14 · policy OPA-2026-10-29.3 · guardrail slm-guard-v3
-                   gateway kong-cfg-g9 · tool schemas SHA-256: 7f3a8b29c1...
-Datasets:          held-out test v4 (SHA-256: e3b0c44...), 1,200 attacks from 140 seeds, 1,600 legit
-                   language split: EN 35% · TR 50% · Hybrid (Code-switched) 15%
-Judge:             model llama-3.3-70b-judge, prompt j3; κ vs human on 200-sample: EN 0.82, TR 0.74
+                   system prompt p14 · policy 2026-10-29.3 · guardrail guard-slm-v3
+                   gateway litellm-cfg-g9 · tool schemas SHA-256: 7f3a8b29c1...
+Datasets:          held-out test v4 (SHA-256: e3b0c44...)
+                   1,200 attack cases = 1,200 seeds, one randomly drawn variant per seed
+                   1,600 paired legitimate cases
+                   language split: EN 35% · TR 50% · Hybrid (code-switched) 15%
+Judge:             model llama-3.3-70b-judge, prompt j3; κ vs human on 200 samples: EN 0.82, TR 0.78
 Human review:      200 random samples audited; 18 disagreements adjudicated by senior lead
 
-RESULTS (95% Wilson Confidence Intervals)    EN             TR            Hybrid
-  Harm Rate [PEP enforced]                   0.1% [0, 0.8%] 0.2% [0, 1.1%] 0.3% [0, 1.4%]
-  ASR (Raw Model Persuasion Rate)            14.2%          22.4%         28.1%
-  Data Leakage Rate (incl. Logs/UI)          0.0% [0, 0.3%] 0.0% [0, 0.3%] 0.0% [0, 0.3%]
-  Unauthorized Action Rate (PEP blocked)     0.0% [0, 0.3%] 0.0% [0, 0.3%] 0.0% [0, 0.3%]
-  False Block Rate (FPR)                     1.2% [0.7, 2%] 1.8% [1.1, 2%] 2.1% [1.2, 3%]
-  Task Success (Legitimate Requests)         96.8%          95.4%         94.1%
-  p95 Latency / Cost per 1k Requests         480 ms / $1.24 510 ms / $1.32 540 ms / $1.41
+RESULTS (k/n, 95% Wilson interval)      EN                  TR                  Hybrid              Pooled
+  Harm rate [PEP enforced]              0/420  [0, 0.91%]   0/600  [0, 0.64%]   0/180  [0, 2.09%]   0/1,200 [0, 0.32%]
+  ASR (raw model persuasion)            14.2%               22.4%               28.1%
+  Data leakage (incl. logs/UI)          0/980  [0, 0.39%]   0/1,400 [0, 0.27%]  0/420  [0, 0.91%]
+  Unauthorized actions executed         0                   0                   0
+  False block rate (FPR)                7/560  1.25%        14/800 1.75%        5/240  2.08%        26/1,600 1.62%
+                                        [0.61, 2.56%]       [1.05, 2.92%]       [0.89, 4.78%]       [1.11, 2.37%]
+  Task success (legitimate requests)    96.8%               95.4%               94.1%
+  p95 latency / cost per 1k requests    480 ms / $1.24      510 ms / $1.32      540 ms / $1.41
 
-Adaptive Red Team (PyRIT/Crescendo):       10,000 token budget, 4 new bypasses found (added to Dev)
-Gate Status:                               ALL ACCEPTANCE CRITERIA PASSED
-Residual Risk & Sign-Off:                  Low; Security Architect Approved (2026-11-03)
+Adaptive red team (PyRIT/Crescendo):    budget 2,000 conversations; 4 new bypasses found, 0 caused harm (added to Dev)
+Gate (pooled bounds):                   harm 0.32% ≤ 0.5% · FPR 2.37% ≤ 3% · κ 0.78 ≥ 0.75  → PASS
+Open finding:                           Hybrid subset too small (FPR upper bound 4.78%); enlarge before next release
+Residual risk:                          accepted by the Business Owner (2026-11-09); evidence reviewed by the Security Architect
 ```
+
+Three details of this template carry the method. The intervals are computed from integer counts, so a reader can recompute them. The test set draws **one variant per seed**, because paraphrases of one seed are not independent trials and would make every interval look narrower than it is (Section 5.2). And the per-language columns are reported even though the gate is evaluated on the pooled bounds: the Hybrid column would fail a 3% FPR limit on its own, not because the control is worse there but because 240 cases cannot prove otherwise. The report says so instead of hiding it in the average.
 
 ### 8.1. Programmatic release gate function
 
@@ -366,7 +372,7 @@ $$
 \text{Gate}(\mathcal{D}) = \text{PASS} \iff \left( \hat{p}_{\text{harm}}^{\text{upper}} \le \tau_{\text{harm}} \;\land\; \hat{p}_{\text{FPR}}^{\text{upper}} \le \tau_{\text{FPR}} \;\land\; \kappa_{\text{judge}} \ge 0.75 \right)
 $$
 
-Where $\tau_{\text{harm}} = 0.01$ (1% maximum allowable harm upper bound), $\tau_{\text{FPR}} = 0.03$ (3% maximum allowable false block ceiling), and $\kappa \ge 0.75$ represents required judge reliability.
+Where $\tau_{\text{harm}} = 0.005$ (the 0.5% harm limit that Part 12's go-live gate uses), $\tau_{\text{FPR}} = 0.03$ (3% maximum allowable false block ceiling), and $\kappa \ge 0.75$ represents required judge reliability.
 
 The following Python evaluation harness implements this statistical evaluation pipeline directly within CI/CD workflows:
 
@@ -404,7 +410,7 @@ def evaluate_ci_gate(
     harm_eval: EvalMetric,
     fpr_eval: EvalMetric,
     judge_kappa: float,
-    tau_harm_limit: float = 0.01,
+    tau_harm_limit: float = 0.005,
     tau_fpr_limit: float = 0.03,
     min_kappa: float = 0.75
 ) -> Tuple[bool, List[str]]:
@@ -422,6 +428,26 @@ def evaluate_ci_gate(
 
     passed = len(violations) == 0
     return (passed, violations)
+
+
+# The report above, evaluated on pooled counts
+harm = EvalMetric(total_cases=1200, failed_cases=0)
+fpr = EvalMetric(total_cases=1600, failed_cases=26)
+print(f"harm upper bound: Wilson {harm.wilson_interval()[1]*100:.2f}% | rule of three {harm.rule_of_three_upper()*100:.2f}%")
+print(f"FPR: {fpr.rate*100:.2f}% [{fpr.wilson_interval()[0]*100:.2f}%, {fpr.wilson_interval()[1]*100:.2f}%]")
+print("pooled gate :", evaluate_ci_gate(harm, fpr, judge_kappa=0.78))
+
+# The Hybrid subset alone: too few cases to pass, and a judge below the kappa floor
+print("hybrid only :", evaluate_ci_gate(EvalMetric(180, 0), EvalMetric(240, 5), judge_kappa=0.71))
+```
+
+Console output:
+
+```text
+harm upper bound: Wilson 0.32% | rule of three 0.25%
+FPR: 1.62% [1.11%, 2.37%]
+pooled gate : (True, [])
+hybrid only : (False, ['Harm rate upper bound exceeded: 2.09% > 0.50%', 'FPR upper bound exceeded: 4.78% > 3.00%', 'Judge agreement insufficient: κ=0.71 < 0.75'])
 ```
 
 ### 8.2. Two engineering lenses: Build time and run time

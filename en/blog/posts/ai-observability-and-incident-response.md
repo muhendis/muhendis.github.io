@@ -165,7 +165,7 @@ Two design details matter more than they look:
 
 The opening incident's most avoidable damage was the second leak: the investigation discovered customer data in the observability vendor's platform because prompts and responses had been captured in traces and exported. Part 2 marked log export as trust boundary TB6; this is where it bites.
 
-The OpenTelemetry GenAI conventions take the same position: instructions, user messages and model outputs are sensitive and often large, so instrumentations should not capture them by default. The configuration `OTEL_INSTRUMENTATION_GENAI_CAPTURE_CONTENT` defaults to `NO_CONTENT`; for production, the conventions recommend storing content externally and recording references, rather than putting it on spans.
+The OpenTelemetry GenAI conventions take the same position: instructions, user messages and model outputs are sensitive and often large, so instrumentations should not capture them by default. The setting `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` defaults to `NO_CONTENT`; for production, the conventions recommend storing content externally and recording references, rather than putting it on spans.
 
 Rules for the support assistant:
 
@@ -370,13 +370,13 @@ Each lever must exist *before* the incident, be tested, and be operable by the o
 
 ### 7.2. Forensic deterministic replay and outbox audit engine
 
-The following Python engine commits audit events to a durable transactional outbox and allows an incident responder to deterministically verify past policy decisions:
+The following simplified Python engine does three things: it appends audit events to an outbox with per-producer sequence numbers, lets an incident responder deterministically re-check a past policy decision, and finds gaps in what the audit store received:
 
 ```python
 import hashlib
 import json
-from dataclasses import dataclass, asdict
-from typing import Dict, Any, Tuple, Optional
+from dataclasses import dataclass
+from typing import Dict, Any, List, Tuple
 
 @dataclass(frozen=True)
 class AuditDecisionEvent:
@@ -397,7 +397,7 @@ class ForensicReplayEngine:
 
     @staticmethod
     def hash_canonical_json(data: Dict[str, Any], salt: str = "") -> str:
-        """Computes deterministic canonical JSON SHA-256 hash according to RFC 8785."""
+        """SHA-256 over sorted-key, whitespace-free JSON (an approximation of RFC 8785 JCS)."""
         canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256((canonical + salt).encode("utf-8")).hexdigest()
 
@@ -418,6 +418,52 @@ class ForensicReplayEngine:
         expected_decision = "allow" if context_trust >= min_required_trust else "require_approval"
         is_consistent = (expected_decision == event.decision)
         return (is_consistent, f"Expected: {expected_decision}, Recorded: {event.decision}")
+
+
+class AuditOutbox:
+    """Per-producer outbox: in production, append() runs in the same transaction as the state change."""
+
+    def __init__(self, producer_id: str):
+        self.producer_id = producer_id
+        self.seq = 0
+        self.pending: List[AuditDecisionEvent] = []
+
+    def append(self, **fields) -> AuditDecisionEvent:
+        self.seq += 1
+        event = AuditDecisionEvent(producer_id=self.producer_id, seq=self.seq, **fields)
+        self.pending.append(event)   # a separate forwarder ships these to the audit store, with retries
+        return event
+
+def find_gaps(received_seqs: List[int]) -> List[int]:
+    """Sequence numbers missing between the lowest and highest one received."""
+    expected = set(range(min(received_seqs), max(received_seqs) + 1))
+    return sorted(expected - set(received_seqs))
+
+
+# Demonstration with the tool_decision event of Section 7.1
+params = {"to": "ayse@example.com", "case_id": 8812}
+outbox = AuditOutbox("executor-3")
+event = outbox.append(
+    event_id="01J-demo", trace_id="4f2c", model_version="support-7b@a1b2c3",
+    policy_version="2026-10-29.3", prompt_hash="9e1d",
+    proposed_tool="send_email",
+    params_hash=ForensicReplayEngine.hash_canonical_json(params),
+    decision="require_approval",
+)
+engine = ForensicReplayEngine({"send_email.min_trust": 3})
+print("replay, context trust 0 :", engine.replay_decision(event, params, context_trust=0))
+print("replay, edited params   :", engine.replay_decision(event, dict(params, to="x@outside.example"), context_trust=0))
+
+# Gap detection on what the audit store received from executor-3
+print("missing sequence numbers :", find_gaps([884210, 884211, 884213, 884216]))
+```
+
+Console output:
+
+```text
+replay, context trust 0 : (True, 'Expected: require_approval, Recorded: require_approval')
+replay, edited params   : (False, 'Parameter integrity violation: Hash mismatch!')
+missing sequence numbers : [884212, 884214, 884215]
 ```
 
 ### 7.3. AI security incident runbook (excerpt)

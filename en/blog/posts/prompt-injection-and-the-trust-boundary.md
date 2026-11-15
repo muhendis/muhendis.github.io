@@ -2,7 +2,7 @@ The vendor's slide deck stated that their AI-powered prompt injection detector b
 
 An attacker does not send one attack. Sending an email to an organization's public support inbox carries zero marginal cost. Over a single weekend, an attacker transmitted one hundred variations of the same malicious instruction: rephrased syntactically, interleaved between Turkish and English, fragmented across paragraphs, and concealed within the invisible metadata of an attached PDF. If each attempt has a mere 1% probability of slipping past the detector ($p = 0.01$), the probability that **at least one of one hundred attempts** breaches the system is not 1%; it is **63.4%**. When the number of attempts reaches five hundred, the probability of compromise climbs above **99.3%**. A probabilistic detector that is 99% accurate per message is mathematically ineffective against a persistent attacker unless the architecture behind it deterministically restricts what a successful injection is capable of executing.
 
-In this guide, we treat prompt injection not as a superficial text-filtering problem, but as a foundational **trust boundary problem** arising from the erasure of the classical von Neumann boundary between code and data. We rigorously distinguish direct injection, indirect injection, and jailbreaks based on their architectural targets and adversary profiles. We examine automated gradient-based optimization attacks such as Greedy Coordinate Gradient (GCG), the context window saturation scaling laws of Many-Shot In-Context Jailbreaking, and steganographic Unicode exploits. We analyze the probabilistic limits of spotlighting, instruction hierarchy training, and heuristic detectors, and elevate defense to a deterministic foundation: the Information Flow Control (IFC) security lattice, the Privileged/Quarantined Dual LLM architecture, and a trust-propagation-based tool authorization engine.
+In this guide, we treat prompt injection not as a superficial text-filtering problem, but as a foundational **trust boundary problem** arising from the fact that an LLM has no enforced separation between code and data (no W^X for tokens, as Part 2 put it). We rigorously distinguish direct injection, indirect injection, and jailbreaks based on their architectural targets and adversary profiles. We examine automated gradient-based optimization attacks such as Greedy Coordinate Gradient (GCG), the context window saturation scaling laws of Many-Shot In-Context Jailbreaking, and steganographic Unicode exploits. We analyze the probabilistic limits of spotlighting, instruction hierarchy training, and heuristic detectors, and elevate defense to a deterministic foundation: the Information Flow Control (IFC) security lattice, the Privileged/Quarantined Dual LLM architecture, and a trust-propagation-based tool authorization engine.
 
 > **What we carry over from the previous part:** [Part 2](post.html?slug=ai-threat-modeling-and-trust-boundaries) demonstrated that prompt injection is an elevation-of-privilege exploit, showing how an assistant that combines private data, untrusted text, and an outward channel triggers the Lethal Trifecta. [Part 4](post.html?slug=securing-the-ai-supply-chain) cataloged MCP tool descriptions as an additional injection source. We now construct the mathematical and architectural mechanisms governing that trust boundary.
 
@@ -158,7 +158,7 @@ $$
 \min_{p \in \mathcal{V}^L} \mathcal{L}(p) = \min_{p \in \mathcal{V}^L} -\sum_{t=1}^H \log P_\theta(y_t^* \mid x_{\text{sys}} \oplus x_{\text{user}} \oplus p \oplus y_{<t}^*)
 $$
 
-Here $\mathcal{V}$ is the model vocabulary ($|\mathcal{V}| \approx 32,000 - 128,000$). Because optimization over a discrete token space is NP-hard, GCG employs a first-order Taylor approximation. For each position $i \in \{1, \dots, L\}$, the gradient with respect to the one-hot token embedding is evaluated:
+Here $\mathcal{V}$ is the model vocabulary ($|\mathcal{V}| \approx 32,000 - 128,000$). The search space has $|\mathcal{V}|^L$ candidates, far too many to enumerate, so GCG uses a first-order (Taylor) approximation. For each position $i \in \{1, \dots, L\}$ it takes the gradient of the loss with respect to that position's input embedding:
 
 $$
 G_i = \nabla_{e(p_i)} \mathcal{L}(p) \in \mathbb{R}^{d}
@@ -170,21 +170,49 @@ $$
 \text{TopK}_i = \operatorname{arg top-k}_{v \in \mathcal{V}} \left( - E_v \cdot G_i \right)
 $$
 
-The algorithm evaluates random candidate batches in parallel on GPU, greedily replacing tokens that yield the steepest loss reduction. The resulting strings (e.g., `! ! ! ! describing.\ + similarly := discrete`) appear nonsensical to human reviewers, yet systematically neutralize safety weights within the model's latent representation space.
+The algorithm evaluates random candidate batches in parallel on GPU, greedily replacing tokens that yield the steepest loss reduction. The resulting strings (e.g., `! ! ! ! describing.\ + similarly := discrete`) appear nonsensical to human reviewers, yet reliably push the model into starting its answer with the attacker's affirmative prefix. The paper's uncomfortable finding was transfer: suffixes optimized on open-weight models also worked against closed commercial ones.
+
+**Step-by-step numerical walk: picking candidate tokens.** Take a toy model with a vocabulary of four tokens and an embedding dimension of $d = 2$. The numbers are made up to show the mechanics.
+
+```text
+Embedding matrix E (one row per token):
+  E["!"]    = ( 1.0,  0.0)
+  E["sure"] = ( 0.0,  1.0)
+  E["no"]   = (-1.0,  0.0)
+  E["the"]  = ( 0.5,  0.5)
+
+Suffix position i currently holds "!". One backward pass gives the gradient of the
+loss with respect to that position's input embedding:
+  G_i = (0.2, -0.6)
+
+Step 1: Score every token v by E_v · G_i (the first-order change in loss if v is swapped in)
+  "!"    :  1.0×0.2 + 0.0×(-0.6) =  0.20
+  "sure" :  0.0×0.2 + 1.0×(-0.6) = -0.60   ← largest predicted decrease
+  "no"   : -1.0×0.2 + 0.0×(-0.6) = -0.20
+  "the"  :  0.5×0.2 + 0.5×(-0.6) = -0.20
+
+Step 2: Keep the top-k by -E_v · G_i (k = 2)
+  candidates = {"sure" (0.60), "no" (0.20)}       ("the" ties with "no")
+
+Step 3: The estimate is only linear, so run the real model on a batch of candidate
+        swaps and keep the one whose true loss is lowest.
+```
+
+One backward pass ranks all $|\mathcal{V}|$ tokens at every position at once; that is what makes a search over $|\mathcal{V}|^L$ strings feasible. It also explains the precondition: the attacker needs gradients, that is, white-box access to *some* model.
 
 ### 3.2. Many-Shot In-Context Jailbreaking scaling laws
 
 Discovered by Anil et al. (2024), **Many-Shot Jailbreaking** exploits the expansion of model context windows to 128K and 1M tokens.
 
-An attacker populates the context window with $k$ benign pseudo-dialogue demonstrations depicting the model answering sensitive queries. The model's safety alignment (enforced via RLHF or DPO) decays under the cumulative statistical weight of in-context learning (ICL).
+An attacker fills the context window with $k$ faux dialogues in which an assistant readily answers harmful questions, and ends with the question they actually want answered. The model's safety alignment (enforced via RLHF or DPO) decays under the cumulative statistical weight of in-context learning (ICL).
 
-Jailbreak success probability scales as a power law with respect to demonstration count $k$:
+The effect follows a power law in the number of shots. The quantity the paper tracks is the negative log-likelihood (NLL) of a harmful reply, where lower means harmful replies are more likely:
 
 $$
-P(\text{jailbreak} \mid k) \propto 1 - e^{-\alpha k^\beta}
+\text{NLL}(k) \approx C \cdot k^{-\alpha} + K
 $$
 
-Here $\alpha > 0$ and $\beta > 0$ are model-specific constants. While success is negligible at $k=5$, it surges to **over 90%** at $k=128$ or $k=256$. This demonstrates that in-context learning attention weights can overpower the parametric safety weights established during fine-tuning.
+Here $C > 0$, $\alpha > 0$ and $K$ are constants fitted per model and task; on a log-log plot the curve is a straight line that keeps falling. With a handful of dialogues the model's safety training still triggers; the authors tested up to 256 shots and found harmful replies increasingly likely as the count grew. Benign in-context learning tasks follow the same kind of power law, and that is the real lesson: many-shot jailbreaking is ordinary in-context learning pointed at the wrong examples, so a longer context window widens the attack surface by construction.
 
 ### 3.3. Multi-turn escalation (Crescendo) and Unicode steganography
 
@@ -218,7 +246,7 @@ Even if a retrieved document states *"Ignore the system prompt"*, the model supp
 ### 4.3. The limits of probabilistic defenses: "The attacker moves second"
 
 While spotlighting and instruction hierarchies provide valuable first-line defense, Nasr et al. (October 2025, *"The Attacker Moves Second"*) established that:
-Twelve contemporary defenses reporting 99%+ empirical resilience against static benchmarks were bypassed with **over 90% success rates** when subjected to **adaptive attacks** designed specifically against the target defense algorithm.
+Twelve recent defenses, most of which had reported near-zero attack success rates on static benchmarks, were bypassed at **above 90% attack success for most of them** once the authors used **adaptive attacks** designed against each specific defense.
 
 Probabilistic model-level defenses form the initial layer of defense; they can never serve as the sole trust boundary.
 
@@ -241,7 +269,7 @@ $$
 Evaluating typical per-message failure rates of $p = 0.01$ (99% filter) and $p = 0.001$ (99.9% filter):
 
 $$
-p = 0.01 \implies n_{50} \approx \frac{0.6931}{0.01} \approx 69.3 \implies 70 \text{ attempts yield a 50\% chance of breach}
+p = 0.01 \implies n_{50} = \frac{\ln 0.5}{\ln 0.99} = \frac{-0.6931}{-0.01005} \approx 68.97 \implies 69 \text{ attempts give a 50\% chance of breach}
 $$
 
 $$
@@ -582,11 +610,33 @@ if __name__ == "__main__":
         print(f"Attempt Count (n={n:3d}) -> Probability of At Least One Breach: {prob*100:5.2f}%")
 ```
 
+Console output:
+
+```text
+=== 1. Trust Propagation & Tool Authorization Test ===
+Clean Context  -> Tool: save_draft_reply | Result: Automated Execution Approved (Risk=1 <= Trust=2)
+Tainted Context -> Tool: save_draft_reply | Result: HUMAN APPROVAL MANDATORY! (Risk=1 > Context Trust=0)
+Tainted Context -> Tool: send_external_email | Result: HUMAN APPROVAL MANDATORY! (Risk=3 > Context Trust=0)
+
+=== 2. Dual LLM & Opaque Variable Handle Test ===
+Quarantined Model Output : Opaque Handle Generated -> $HANDLE_1
+Isolated Storage Payload : {'customer_intent': 'refund_request', 'extracted_amount': 150.0, 'raw_sanitized_snippet': 'My shipment arrived damaged. [SYSTEM INS...'}
+Privileged Model Plan    : {'tool': 'save_draft_reply', 'target_data': '$HANDLE_1', 'reply_template': 'Your inquiry has been logged. Reference: $HANDLE_1'}
+
+=== 3. Persistent Attacker Breach Probability (p = 0.01) ===
+Attempt Count (n=  1) -> Probability of At Least One Breach:  1.00%
+Attempt Count (n= 10) -> Probability of At Least One Breach:  9.56%
+Attempt Count (n= 50) -> Probability of At Least One Breach: 39.50%
+Attempt Count (n= 69) -> Probability of At Least One Breach: 50.02%
+Attempt Count (n=100) -> Probability of At Least One Breach: 63.40%
+Attempt Count (n=500) -> Probability of At Least One Breach: 99.34%
+```
+
 ---
 
 ### 8.3. Prompt injection defense checklist
 
-1. **Rigid Role Demarcation:** The chat template (`chat_template.json`) strictly preserves demarcating role tokens separating user, system, and tool payloads.
+1. **Rigid Role Demarcation:** The chat template (`chat_template.jinja` or the `chat_template` field of `tokenizer_config.json`) strictly preserves demarcating role tokens separating user, system, and tool payloads.
 2. **Comprehensive Source Labeling:** Every piece of ingested context carries a verified trust level ($\tau \in \{0, 1, 2, 3\}$); unlabeled text defaults to $\tau=0$.
 3. **Monotonic Trust Propagation:** Context trust is evaluated as $\tau(c) = \min \tau(s)$; high-risk tools ($r > \tau$) cannot run automatically.
 4. **Physical Dual LLM Separation:** The model reading untrusted external documents is physically isolated from the model invoking tools.
@@ -656,7 +706,7 @@ When your assistant retrieves top product reviews to draft a summary:
 - A jailbreak targets model policy; direct injection targets application instructions; indirect injection arrives through third-party content the model reads.
 - Every source in the context window can behave as an instruction, and most—complaints, documents, tool outputs—are required for the task.
 - A 1% per-attempt miss rate compounds to a 63% breach probability across 100 attempts; detection alone cannot form the boundary.
-- Spotlighting, instruction hierarchies, and detectors alter probabilities; yet adaptive attacks bypass modern defenses over 90% of the time.
+- Spotlighting, instruction hierarchies, and detectors alter probabilities; yet adaptive attacks bypassed most of twelve published defenses at over 90% success.
 - Design for a manipulated model: untrusted data may shape response content, but never tool selection or routing targets.
 - A context's trust equals its least-trusted source; tools whose risk exceeds that trust demand parameter-level approval regardless of detector verdicts.
 
@@ -689,3 +739,4 @@ When your assistant retrieves top product reviews to draft a summary:
 - [K8] E. Debenedetti et al., [*Defeating Prompt Injections by Design (CaMeL)*](https://arxiv.org/abs/2503.18813) (2025).
 - [K9] M. Nasr et al., [*The Attacker Moves Second: Stronger Adaptive Attacks Bypass Defenses Against LLM Jailbreaks and Prompt Injections*](https://arxiv.org/abs/2510.09023) (October 2025).
 - [K10] OWASP Foundation, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) (LLM01) and MITRE, [*ATLAS AML.T0051 & AML.T0054*](https://atlas.mitre.org/).
+- [K11] In this series: [Secure AI by Design (6): Layered Guardrails — Rules, NLP, Classifiers and Small Models](post.html?slug=layered-guardrails).

@@ -2,7 +2,7 @@ Sağlayıcının kurumsal sunum slaytında, yapay zekâ tabanlı prompt injectio
 
 Oysa gerçek bir saldırgan asla tek bir hamle yapmaz. Bir şirketin müşteri destek posta kutusuna e-posta göndermenin marjinal maliyeti sıfırdır. Bir saldırgan hafta sonu boyunca aynı kötü niyetli talimatın yüz farklı varyasyonunu gönderdi: cümle yapıları değiştirilmiş, Türkçe ve İngilizce arasına serpiştirilmiş, paragraflara bölünmüş ve bir PDF ekinin görünmeyen üstverilerine gizlenmiş yüz talimat. Eğer her bir denemenin dedektörden sızma olasılığı yalnızca %1 ise ($p = 0.01$), yüz bağımsız denemeden **en az birinin** başarılı olma olasılığı %1 değildir; tam **%63.4'tür**. Deneme sayısı beş yüze ulaştığında sistemin delinme olasılığı **%99.3'ün** üzerine çıkar. Mesaj başına %99 başarıyla çalışan olasılıksal bir dedektör, arkasında başarılı bir injection'ın neler yapabileceğini deterministik olarak sınırlayan mimari bir güven sınırı yoksa, ısrarcı bir saldırgana karşı matematiksel olarak etkisizdir.
 
-Bu rehberde prompt injection tehdidini yüzeysel bir metin filtreleme problemi olarak değil; doğrudan von Neumann mimarisindeki kod ile veri ayrımının silinmesinden kaynaklanan temel bir **güven sınırı (trust boundary) problemi** olarak ele alıyoruz. Doğrudan injection, dolaylı injection ve jailbreak saldırılarını hedef aldıkları katmanlara göre kesin çizgilerle ayırıyoruz. Greedy Coordinate Gradient (GCG) gibi otomatik gradyan optimizasyonu saldırılarını, bağlam penceresi doygunluğundan yararlanan Many-Shot In-Context Jailbreaking ölçekleme yasalarını ve gizli Unicode karakter manipülasyonlarını inceliyoruz. Spotlighting, talimat hiyerarşisi (instruction hierarchy) ve dedektörlerin olasılıksal sınırlarını ortaya koyup; savunmayı deterministik temele taşıyoruz: Bilgi Akışı Kontrolü (Information Flow Control - IFC) güvenlik kafesi, Privileged/Quarantined Dual LLM deseni ve güven yayılımına (trust propagation) dayalı araç yetkilendirme mimarisi.
+Bu rehberde prompt injection tehdidini yüzeysel bir metin filtreleme problemi olarak değil; bir LLM'de kod ile veri arasında zorla uygulanan bir ayrımın bulunmamasından (Bölüm 2'nin deyişiyle token'lar için W^X olmamasından) kaynaklanan temel bir **güven sınırı (trust boundary) problemi** olarak ele alıyoruz. Doğrudan injection, dolaylı injection ve jailbreak saldırılarını hedef aldıkları katmanlara göre kesin çizgilerle ayırıyoruz. Greedy Coordinate Gradient (GCG) gibi otomatik gradyan optimizasyonu saldırılarını, bağlam penceresi doygunluğundan yararlanan Many-Shot In-Context Jailbreaking ölçekleme yasalarını ve gizli Unicode karakter manipülasyonlarını inceliyoruz. Spotlighting, talimat hiyerarşisi (instruction hierarchy) ve dedektörlerin olasılıksal sınırlarını ortaya koyup; savunmayı deterministik temele taşıyoruz: Bilgi Akışı Kontrolü (Information Flow Control - IFC) güvenlik kafesi, Privileged/Quarantined Dual LLM deseni ve güven yayılımına (trust propagation) dayalı araç yetkilendirme mimarisi.
 
 > **Önceki bölümden devraldığımız temel:** [İkinci bölüm](post.html?slug=ai-tehdit-modelleme-ve-guven-sinirlari), prompt injection'ın bir yetki yükseltme (elevation of privilege) saldırısı olduğunu ve asistanımızın özel veriyi, güvenilmeyen içeriği ve dışarıya giden bir kanalı bir araya getirdiğinde "Ölümcül Üçlü"yü (Lethal Trifecta) oluşturduğunu gösterdi. [Dördüncü bölüm](post.html?slug=ai-tedarik-zinciri-guvenligi) ise araç açıklamalarını potansiyel bir enjeksiyon vektörü olarak listeledi. Şimdi bu güven sınırının matematiksel ve mimari kontrol mekanizmalarını inşa ediyoruz.
 
@@ -160,7 +160,7 @@ $$
 \min_{p \in \mathcal{V}^L} \mathcal{L}(p) = \min_{p \in \mathcal{V}^L} -\sum_{t=1}^H \log P_\theta(y_t^* \mid x_{\text{sys}} \oplus x_{\text{user}} \oplus p \oplus y_{<t}^*)
 $$
 
-Burada $\mathcal{V}$ modelin kelime dağarcığıdır (vocabulary, $|\mathcal{V}| \approx 32.000 - 128.000$). Kesikli (discrete) token uzayında optimizasyon yapmak NP-zor bir problem olduğundan, GCG birinci dereceden Taylor yaklaşımı (gradient projection) kullanır. Her $i \in \{1, \dots, L\}$ konumu için, token gömme vektörüne göre gradyan hesaplanır:
+Burada $\mathcal{V}$ modelin kelime dağarcığıdır (vocabulary, $|\mathcal{V}| \approx 32.000 - 128.000$). Arama uzayında $|\mathcal{V}|^L$ aday vardır; tek tek denemek imkânsızdır. Bu yüzden GCG birinci dereceden bir (Taylor) yaklaşım kullanır. Her $i \in \{1, \dots, L\}$ konumu için kaybın o konumdaki giriş embedding'ine göre gradyanını alır:
 
 $$
 G_i = \nabla_{e(p_i)} \mathcal{L}(p) \in \mathbb{R}^{d}
@@ -172,7 +172,35 @@ $$
 \text{TopK}_i = \operatorname{arg top-k}_{v \in \mathcal{V}} \left( - E_v \cdot G_i \right)
 $$
 
-Algoritma her adımda bu adaylar arasından rastgele bir alt kümeyi paralel olarak GPU'da değerlendirir ve kaybı en çok düşüren token değişimini kabul eder. Sonuçta ortaya anlamsız görünen karakter dizileri (örneğin: `! ! ! ! describing.\ + similarly := discrete`) çıkar; ancak bu diziler modelin latent temsil uzayında güvenlik filtrelerini tamamen sıfırlar.
+Algoritma her adımda bu adaylar arasından rastgele bir alt kümeyi paralel olarak GPU'da değerlendirir ve kaybı en çok düşüren token değişimini kabul eder. Sonuçta ortaya anlamsız görünen karakter dizileri (örneğin: `! ! ! ! describing.\ + similarly := discrete`) çıkar; ancak bu diziler modeli yanıtına saldırganın olumlu önekiyle başlamaya güvenilir biçimde iter. Makalenin rahatsız edici bulgusu aktarımdı: açık ağırlıklı modellerde optimize edilen sonekler kapalı ticari modellerde de işe yaradı.
+
+**Adım adım sayısal yürüyüş: aday token seçimi.** Dört token'lık bir sözlüğü ve $d = 2$ boyutlu embedding'i olan oyuncak bir model alalım. Sayılar mekanizmayı göstermek için uydurulmuştur.
+
+```text
+Embedding matrisi E (token başına bir satır):
+  E["!"]      = ( 1,0;  0,0)
+  E["elbette"] = ( 0,0;  1,0)
+  E["hayır"]  = (-1,0;  0,0)
+  E["bir"]    = ( 0,5;  0,5)
+
+Sonekin i. konumunda şu an "!" duruyor. Tek bir geri yayılım, kaybın o konumdaki
+giriş embedding'ine göre gradyanını verir:
+  G_i = (0,2; -0,6)
+
+1. Adım: Her v token'ını E_v · G_i ile puanla (v yerine konursa kayıptaki birinci derece değişim)
+  "!"       :  1,0×0,2 + 0,0×(-0,6) =  0,20
+  "elbette" :  0,0×0,2 + 1,0×(-0,6) = -0,60   ← öngörülen en büyük düşüş
+  "hayır"   : -1,0×0,2 + 0,0×(-0,6) = -0,20
+  "bir"     :  0,5×0,2 + 0,5×(-0,6) = -0,20
+
+2. Adım: -E_v · G_i değerine göre ilk k adayı tut (k = 2)
+  adaylar = {"elbette" (0,60), "hayır" (0,20)}     ("bir" ile "hayır" eşit)
+
+3. Adım: Tahmin yalnızca doğrusaldır; bu yüzden gerçek modeli bir aday değişim
+         kümesi üzerinde çalıştır ve gerçek kaybı en düşük olanı tut.
+```
+
+Tek bir geri yayılım, bütün konumlarda $|\mathcal{V}|$ token'ın tamamını aynı anda sıralar; $|\mathcal{V}|^L$ dizgilik bir uzayda aramayı mümkün kılan budur. Ön koşulu da buradan görülür: saldırganın gradyana, yani *herhangi bir* modele beyaz kutu erişimine ihtiyacı vardır.
 
 ### 3.2. Many-Shot In-Context Jailbreaking ölçekleme kanunu
 
@@ -180,13 +208,13 @@ Anil ve arkadaşlarının (2024) ortaya koyduğu **Many-Shot Jailbreaking**, mod
 
 Saldırgan, bağlam penceresine modelin daha önce sahte bir zararlı soruya başarıyla yanıt verdiğini gösteren $k$ adet diyalog örneği (few-shot demonstrations) yerleştirir. Modelin güvenlik uyumu (RLHF veya DPO ile kazandırılan güvenlik ağırlıkları), bağlam penceresinde biriken yüzlerce örneğin in-context öğrenme (ICL) ağırlığı altında ezilir.
 
-Jailbreak başarı olasılığı, bağlamdaki gösterim sayısı $k$ arttıkça bir güç yasası (power law) şeklinde tırmanır:
+Etki, örnek sayısına göre bir güç yasası (power law) izler. Makalenin izlediği büyüklük, zararlı bir yanıtın negatif log-olabilirliğidir (NLL); düşük değer zararlı yanıtın daha olası olduğu anlamına gelir:
 
 $$
-P(\text{jailbreak} \mid k) \propto 1 - e^{-\alpha k^\beta}
+\text{NLL}(k) \approx C \cdot k^{-\alpha} + K
 $$
 
-Burada $\alpha > 0$ ve $\beta > 0$ modelin mimarisine ve bağlam penceresi boyutuna bağlı sabitlerdir. $k = 5$ iken %0 olan başarı oranı, $k = 128$ veya $k = 256$ seviyesinde **%90'ın üzerine** çıkar. Bu durum, modelin parametrik belleğindeki güvenlik eğitiminin, dikkat mekanizmasının dinamik bağlam ağırlığı karşısında yenilgiye uğradığını kanıtlar.
+Burada $C > 0$, $\alpha > 0$ ve $K$, model ve görev başına uydurulan sabitlerdir; log-log eksende eğri, düşmeye devam eden bir doğrudur. Birkaç diyalogda modelin güvenlik eğitimi hâlâ devreye girer; yazarlar 256 örneğe kadar denedi ve sayı arttıkça zararlı yanıtların giderek daha olası hâle geldiğini buldu. Zararsız in-context öğrenme görevleri de aynı türden bir güç yasası izler; asıl ders de budur: many-shot jailbreaking, yanlış örneklere yöneltilmiş sıradan in-context öğrenmedir ve daha uzun bir bağlam penceresi saldırı yüzeyini doğası gereği genişletir.
 
 ### 3.3. Çok turlu tırmanma (Crescendo) ve Unicode steganografi
 
@@ -220,7 +248,7 @@ Model, getirilen bir belgenin içinde *"Sistem prompt'unu unut"* talimatı görs
 ### 4.3. Olasılıksal savunmaların sınırları: "Saldırgan ikinci hamleyi yapar"
 
 Yukarıdaki yöntemler son derece faydalı ve maliyetsiz ilk savunma hatlarıdır. Ancak Nasr, Carlini ve arkadaşlarının (Ekim 2025, *"The Attacker Moves Second"*) çalışmasında ortaya koyduğu gibi:
-Sabit saldırı setlerine karşı %99+ koruma sağladığını iddia eden 12 modern savunma mekanizması, **uyarlanabilir (adaptive) saldırılara** tabi tutulduğunda, saldırganlar savunmanın algoritmasını bilerek saldırıyı optimize ettiğinde **%90'ın üzerinde bir oranla aşılmıştır**.
+Çoğu sabit kıyaslamalarda sıfıra yakın saldırı başarı oranı bildirmiş olan 12 güncel savunma, yazarlar her savunmaya özel tasarlanmış **uyarlanabilir (adaptive) saldırılar** kullandığında **çoğunda %90'ın üzerinde saldırı başarısıyla aşılmıştır**.
 
 Model tabanlı ve olasılıksal yöntemler İsviçre peynirinin ilk dilimidir; ancak asla sistemin tek ve nihai güvenlik sınırı olamazlar.
 
@@ -243,7 +271,7 @@ $$
 Sağlayıcının iddia ettiği $p = 0.01$ (%99 tespit) ve üst düzey $p = 0.001$ (%99.9 tespit) oranları için **adım adım sayısal yürüyüş**:
 
 $$
-p = 0.01 \implies n_{50} \approx \frac{0.6931}{0.01} \approx 69.3 \implies 70 \text{ denemede \%50 şans}
+p = 0.01 \implies n_{50} = \frac{\ln 0.5}{\ln 0.99} = \frac{-0.6931}{-0.01005} \approx 68.97 \implies 69 \text{ denemede \%50 şans}
 $$
 
 $$
@@ -292,7 +320,7 @@ $$
 <text x="672.0" y="115.53908495419275" text-anchor="end" style="fill:var(--c-text);font-size:11.5px">n = 1.000 → %63,2</text>
 <!-- Bottom Educational Banner -->
 <rect x="16" y="294" width="688" height="62" rx="6" style="fill:var(--c-accent);fill-opacity:.07;stroke:var(--c-accent);stroke-width:1.2"/>
-<text x="28" y="313" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700;letter-spacing:.02em">💡 MATEMATİKSEL GERÇEK: ISINMIŞ SALDIRGAN KURALI (PERSISTENT ADVERSARY)</text>
+<text x="28" y="313" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700;letter-spacing:.02em">💡 MATEMATİKSEL GERÇEK: ISRARCI SALDIRGAN KURALI (PERSISTENT ADVERSARY)</text>
 <text x="28" y="331" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Tek deneme başarı olasılığı binde bir (p=0,001) olan zayıf bir injection dahi, 1.000 denemede %63,2 ihtimalle başarıya ulaşır.</text>
 <text x="28" y="347" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Yapay zekayı doğrudan eyleme bağlayan mimarilerde olasılıksal filtreler yeterli savunma olamaz; deterministik bariyerler zorunludur.</text>
 </svg>
@@ -586,11 +614,33 @@ if __name__ == "__main__":
         print(f"Deneme Sayısı (n={n:3d}) -> En Az Bir Başarılı İhlal Olasılığı: %{prob*100:5.2f}")
 ```
 
+Konsol çıktısı:
+
+```text
+=== 1. Güven Yayılımı ve Araç Yetkilendirme Testi ===
+Temiz Bağlam -> Araç: save_draft_reply | Sonuç: Otomatik İzin Verildi (Risk=1 <= Güven=2)
+Kirli Bağlam -> Araç: save_draft_reply | Sonuç: İNSAN ONAYI GEREKLİ! (Risk=1 > Bağlam Güveni=0)
+Kirli Bağlam -> Araç: send_external_email | Sonuç: İNSAN ONAYI GEREKLİ! (Risk=3 > Bağlam Güveni=0)
+
+=== 2. Dual LLM ve Opak Değişken Kancası Testi ===
+Karantina Modeli Çıktısı : Opak Referans Üretildi -> $HANDLE_1
+İzole Depodaki Veri      : {'customer_intent': 'refund_request', 'extracted_amount': 150.0, 'raw_sanitized_snippet': 'Siparişim kırık geldi. [SİSTEM TALİMATI:...'}
+Ayrıcalıklı Model Planı  : {'tool': 'save_draft_reply', 'target_data': '$HANDLE_1', 'reply_template': 'Talebiniz alınmıştır. İlgili veri: $HANDLE_1'}
+
+=== 3. Israrcı Saldırgan Matematiği (p = 0.01) ===
+Deneme Sayısı (n=  1) -> En Az Bir Başarılı İhlal Olasılığı: % 1.00
+Deneme Sayısı (n= 10) -> En Az Bir Başarılı İhlal Olasılığı: % 9.56
+Deneme Sayısı (n= 50) -> En Az Bir Başarılı İhlal Olasılığı: %39.50
+Deneme Sayısı (n= 69) -> En Az Bir Başarılı İhlal Olasılığı: %50.02
+Deneme Sayısı (n=100) -> En Az Bir Başarılı İhlal Olasılığı: %63.40
+Deneme Sayısı (n=500) -> En Az Bir Başarılı İhlal Olasılığı: %99.34
+```
+
 ---
 
 ### 8.3. Prompt injection savunma kontrol listesi
 
-1. **Katı Rol Sınırları:** Sohbet şablonu (`chat_template.json`) kullanıcı, sistem ve araç çıktılarını birbirinden izole eden özel token'ları asla atlamaz.
+1. **Katı Rol Sınırları:** Sohbet şablonu (`chat_template.jinja` ya da `tokenizer_config.json` içindeki `chat_template` alanı) kullanıcı, sistem ve araç çıktılarını birbirinden izole eden özel token'ları asla atlamaz.
 2. **Kapsamlı Kaynak Etiketleme:** Bağlam penceresine giren her metin parçası ($\tau \in \{0, 1, 2, 3\}$) etiketini taşır; etiketsiz metin doğrudan $\tau=0$ kabul edilir.
 3. **Monoton Güven Yayılımı:** Bağlamın güveni $\tau(c) = \min \tau(s)$ olarak hesaplanır; harici veri içeren bağlamlarda riskli araçlar ($r > \tau$) otomatik çalışamaz.
 4. **Dual LLM Ayrımı:** Güvenilmeyen harici belgeleri okuyan model ile araç çalıştıran model fiziksel olarak ayrılmıştır.
@@ -693,3 +743,4 @@ Asistanınız günün en çok satan ürünlerini özetlemek için veritabanını
 - [K8] E. Debenedetti ve ark., [*Defeating Prompt Injections by Design (CaMeL)*](https://arxiv.org/abs/2503.18813) (2025).
 - [K9] M. Nasr ve ark., [*The Attacker Moves Second: Stronger Adaptive Attacks Bypass Defenses Against LLM Jailbreaks and Prompt Injections*](https://arxiv.org/abs/2510.09023) (Ekim 2025).
 - [K10] OWASP Foundation, [*Top 10 for LLM Applications 2026*](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) (LLM01) ve MITRE, [*ATLAS AML.T0051 & AML.T0054*](https://atlas.mitre.org/).
+- [K11] Bu seride: [Secure AI by Design (6): Katmanlı Guardrails — Kurallar, NLP, Sınıflandırıcılar ve Küçük Modeller](post.html?slug=katmanli-guardrails).

@@ -3,7 +3,7 @@ Bir müşteri, şirketten kişisel verilerinin silinmesini istiyor. CRM ekibi si
 Bu, yapay zekâ sistemlerinde en sık rastlanan veri güvenliği arızasıdır ve bir algoritma hatası değil, bir sistemik envanter ve yaşam döngüsü problemidir. Bir AI sistemine giren veri hızla çoğalır. Tek bir müşteri şikâyeti bir retrieval parçasına, bir embedding vektörüne, bir prompt'a, bir model yanıtına, bir trace kaydına, önbelleğe alınmış bir yanıta ve belki bir fine-tuning veri setine dönüşür. Her kopyanın kendi depolaması, kendi erişim kontrolü ve kendi saklama süresi vardır. Silme süreci bunların yalnızca bir kısmını biliyorsa, her adım ne kadar hızlı olursa olsun silme eksik kalır.
 
 > **Yapay Zekâ Veri Güvenliğinin Temel Aksiyomu (Embedding Tersinirliği ve Model Kalıcılığı):**
-> Vektör embedding'leri ($\mathbf{v} \in \mathbb{R}^d$) anonimleştirilmiş veri değildir; modern tersine çevirme teknikleriyle (Vec2Text) orijinal metne geri döndürülebilir ve ham veriyle aynı gizlilik sınıfında korunmalıdır. Ayrıca bir kişisel veri parçası model ağırlıklarına ince ayar (fine-tuning) ile bir kez işlendiğinde, onu seçici bir sorguyla silmek matematiksel olarak imkânsızdır. Kişisel veri modelden sonra değil, eğitime girmeden **önce** diferansiyel mahremiyet ve katı temizlikle arındırılmalıdır.
+> Vektör embedding'leri ($\mathbf{v} \in \mathbb{R}^d$) anonimleştirilmiş veri değildir; modern tersine çevirme teknikleriyle (Vec2Text) orijinal metne geri döndürülebilir ve ham veriyle aynı gizlilik sınıfında korunmalıdır. Ayrıca bir kişisel veri parçası model ağırlıklarına ince ayar (fine-tuning) ile bir kez işlendiğinde, onu seçerek silen bir sorgu yoktur; bugünkü unutturma yöntemleri de bunu garanti edemez. Kişisel veri modelden sonra değil, eğitime girmeden **önce** diferansiyel mahremiyet ve katı temizlikle arındırılmalıdır.
 
 Bu yazı, veriyi destek asistanının içinde toplandığı andan ortadan kalkması gereken ana kadar adım adım izliyor. Bir AI sisteminin işlediği beş veri türünü ayıracak, Carlini ve Koh-Liang'ın etki fonksiyonları (*influence functions*) ile veri zehirlemenin gradyan seviyesindeki mekanizmasını açığa çıkaracak, Diferansiyel Mahremiyetin ($(\epsilon, \delta)$-DP) matematiksel garantilerini kuracak, sağlama toplamı (checksum) ve NER'i birleştiren bir PII dedektörü inşa edecek ve maskeleme, takma adlandırma (pseudonymization) ve anonimleştirme arasındaki hukuki ve teknik sınırları netleştireceğiz. Yazının sonunda elinizde dokuz evi kapsayan bir veri envanteri, bir PII işleme akışı ve test edilebilir bir yaşam döngüsü kontrol listesi olacak.
 
@@ -107,7 +107,7 @@ Destek asistanımız tam olarak o dairedir. Bir müşterinin adını, telefon nu
 2. **Retrieval Parçaları (Ev 2):** RAG araması için metin parçalarına (chunk) bölünmüş kayıt.
 3. **Embedding Vektörleri (Ev 3):** Her metin parçasının yüksek boyutlu uzaydaki ($\mathbb{R}^d$) sayısal izdüşümü.
 4. **Prompt'lar ve Yanıtlar (Ev 4):** Modelin bağlam penceresinde ve model sağlayıcısına gönderilen API yükü (TB2).
-5. **Semantik Önbellek (Ev 5):** Benzer şikâyetlerin özetlerini tekrar üretmemek için saklanan Redis veya vLLM prefix cache deposu.
+5. **Semantik Önbellek (Ev 5):** Benzer şikâyetlerin özetlerini tekrar üretmemek için saklanan Redis benzeri bir önbellek. (Sunum motorunun KV tensörlerini tutan önek önbelleği bundan ayrı, bellek içi ve kendi ömrü olan bir kopyadır.)
 6. **Log ve Trace Kayıtları (Ev 6):** Hata ayıklama ve telemetri için yakalanan OpenTelemetry span'leri.
 7. **Dışa Aktarımlar ve Analitik (Ev 7):** Operasyon analistinin masaüstüne indirdiği CSV veya Excel raporları.
 8. **Eğitim ve Değerlendirme Setleri (Ev 8):** Modeli ince ayar yapmak (fine-tuning) veya değerlendirmek için kopyalanmış altın veri setleri.
@@ -178,15 +178,15 @@ Kişisel verilerin yapay zekâda korunması iki derin matematiksel yanılsamayı
 
 Pek çok mühendislik ekibi, müşteri şikâyetlerini parçalayıp bir embedding modelinden (örn. `text-embedding-3-large`) geçirdikten sonra ortaya çıkan $\mathbf{v} \in \mathbb{R}^{3072}$ vektörlerinin güvenli olduğunu varsayar.
 
-Bu varsayım tehlikeli bir yanılgıdır. Morris ve ark. (2023) tarafından geliştirilen **Vec2Text** yöntemi, yoğun embedding vektörlerinin yüksek derecede tersinir (*invertible*) olduğunu kanıtlamıştır. Bir düzeltici dil modeli eğiterek embedding uzayından geriye doğru metin arayan bu yöntem:
-- 32 token uzunluğundaki metinlerin **%92'sini harfi harfine (verbatim)** geri kurabilmektedir.
-- Klinik sağlık kayıtlarındaki hasta isimlerini, teşhisleri ve ilaç adlarını %95'in üzerinde kesinlikle vektörden tekrar üretmiştir.
+Bu varsayım tehlikeli bir yanılgıdır. Morris ve ark. (2023) tarafından geliştirilen **Vec2Text** yöntemi, yoğun embedding vektörlerinin yüksek derecede tersinir (*invertible*) olduğunu göstermiştir. Yöntem bir metin öneren, onu yeniden gömen, sonucu hedef vektörle karşılaştıran ve tahminini birkaç turda düzelten bir model eğitir:
+- 32 token uzunluğundaki girdilerin **%92'sini birebir** geri kurabilmektedir.
+- Aynı çözücü, klinik notlardan oluşan bir veri setinden hastaların tam adları gibi kişisel bilgileri geri çıkarmıştır.
 
 $$\text{Optimizasyon:} \quad \hat{x}^* = \arg\min_{\hat{x}} \|\text{Embed}(\hat{x}) - \mathbf{v}\|_2^2$$
 
 > [!TIP]
 > **Öğrenme Kontrolü: Embedding Vektörleri Anonim Değildir**
-> Vektör veritabanınızda saklanan embedding dizileri, KVKK ve GDPR kapsamında ham müşteri metni ile **birebir aynı gizlilik derecesine** sahiptir. Vektör deposu açıkta bırakıldığında veya kiracılar arası izolasyon çöktüğünde, bir saldırgan vektörleri indirip saniyeler içinde orijinal müşteri kayıtlarına dönüştürebilir.
+> Vektör veritabanınızdaki embedding'leri **hesaplandıkları metinle birebir aynı sınıfta** sınıflandırın ve koruyun. Dizini ele geçiren ve aynı embedding modelini sorgulayabilen bir saldırgan, orijinal müşteri metninin büyük bölümünü yeniden kurabilir.
 
 ### 4.2. Diferansiyel Mahremiyet (Differential Privacy — DP-SGD)
 
@@ -203,10 +203,35 @@ $$
 Derin öğrenmede bu garanti **DP-SGD** (Abadi ve ark., 2016) algoritmasıyla sağlanır:
 1. **Gradyan Kırpma (Per-Sample Gradient Clipping):** Her örneğin gradyan normu sabit bir $C$ eşiğiyle sınırlandırılır:
    $$\bar{g}_t(x_i) = \frac{g_t(x_i)}{\max\left(1, \frac{\|g_t(x_i)\|_2}{C}\right)}$$
-2. **Gaussian Gürültü Enjeksiyonu:** Kırpılmış gradyanların ortalamasına calibrated Gaussian gürültüsü eklenir:
-   $$\tilde{g}_t = \frac{1}{B} \sum_{i=1}^B \bar{g}_t(x_i) + \mathcal{N}\left(0, \sigma^2 C^2 \mathbf{I}\right)$$
+2. **Gaussian Gürültü Enjeksiyonu:** Kırpma eşiğine göre ölçeklenmiş gürültü, kırpılmış gradyanların *toplamına* eklenir; sonuç ancak ondan sonra ortalanır:
+   $$\tilde{g}_t = \frac{1}{B} \left( \sum_{i=1}^B \bar{g}_t(x_i) + \mathcal{N}\left(0, \sigma^2 C^2 \mathbf{I}\right) \right)$$
 
-Bu gürültü, tek bir müşterinin ağırlıklar üzerindeki bireysel izini tamamen silerken kümenin genel istatistiksel örüntüsünün öğrenilmesini mümkün kılar.
+Bu gürültü, tek bir müşterinin ağırlıklar üzerindeki bireysel izini maskelerken kümenin genel istatistiksel örüntüsünün öğrenilmesini mümkün kılar.
+
+### Adım adım sayısal yürüyüş: kırpma ve gürültü
+
+İki boyutlu, $B = 3$ örnekli oyuncak bir mini-batch alalım; kırpma eşiği $C = 1$, gürültü çarpanı $\sigma = 1$ olsun. Sayılar mekanizmayı göstermek için uydurulmuştur; gerçek gradyanlar milyonlarca boyutludur.
+
+```text
+Örnek başına gradyanlar ve L2 normları:
+  g1 = (0,6; 0,8)    ‖g1‖ = karekök(0,36 + 0,64) = 1,0
+  g2 = (3,0; 4,0)    ‖g2‖ = karekök(9 + 16)      = 5,0   ← sıra dışı tek bir kayıt
+  g3 = (0,0; 0,5)    ‖g3‖ = 0,5
+
+1. Adım: Her gradyanı kırp (max(1, ‖g‖ / C) değerine böl)
+  ḡ1 = (0,6; 0,8) / max(1; 1,0) = (0,6; 0,8)
+  ḡ2 = (3,0; 4,0) / max(1; 5,0) = (0,6; 0,8)   ← 5 kat küçüldü; artık baskın olamaz
+  ḡ3 = (0,0; 0,5) / max(1; 0,5) = (0,0; 0,5)   ← küçük gradyanlara dokunulmaz
+
+2. Adım: Topla, koordinat başına σC = 1 standart sapmalı gürültü ekle, sonra ortala
+  toplam  = (0,6 + 0,6 + 0,0; 0,8 + 0,8 + 0,5) = (1,2; 2,1)
+  gürültü = (0,4; −0,7)                          ← N(0, 1)'den rastgele tek bir çekim
+  g̃      = (1/3) × ((1,2; 2,1) + (0,4; −0,7)) = (1/3) × (1,6; 1,4) ≈ (0,53; 0,47)
+
+DP olmadan: düz ortalama = (1/3) × (3,6; 5,3) = (1,20; 1,77)   ← tek başına g2 belirliyor
+```
+
+Kırpmadan sonra hiçbir kayıt toplamı norm olarak $C = 1$'den fazla oynatamaz; gürültünün standart sapması da aynı büyüklüktedir ($\sigma C = 1$). Belirli bir kaydın batch'te olup olmadığını gizleyen şey budur. Bedeli de görünüyor: üç örnekte gürültü sinyal kadar büyüktür. Gerçek DP-SGD binlerce örneklik batch'ler kullanır; çünkü *ortalama* üzerindeki gürültü $\sigma C / B$ ile küçülür, sinyal küçülmez.
 
 ---
 
@@ -295,8 +320,10 @@ Konsol çıktısı:
 ```text
 12345678950 geçerli mi?: True
 12345678951 geçerli mi?: False
-Rastgele 11 haneli dizilerin geçiş oranı: %1.00
+Rastgele 11 haneli dizilerin geçiş oranı: %0.99
 ```
+
+Simülasyon tam %1,00 yerine %0,99 verdi: beklenen $1/100$ çevresindeki örnekleme gürültüsü.
 
 ### 5.2. Türkçe NER Zorlukları
 
@@ -312,7 +339,7 @@ Sağlama toplamı isimleri ve adresleri bulamaz. Burada devreye giren NER modell
 Bu üç kavramın hukuki (GDPR / KVKK) ve teknik sonuçları taban tabana zıttır:
 
 <!-- fig:p3_spectrum -->
-<svg viewBox="0 0 720 328" role="img" aria-label="Daha az korumadan daha fazlasına dört sütun. Asıl değer: TCKN 12345678950; erişimi olan herkes okur; kişisel veridir. Maskelenmiş: 123******50; asıl değer saklanır; kişisel veridir. Takma adlı: HMAC ile üretilen ID; yalnızca anahtarla döner; hâlâ kişisel veridir. Anonim: hiçbir makul yolla geri döndürülemez; hukukun dışındadır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
+<svg viewBox="0 0 720 328" role="img" aria-label="Daha az korumadan daha fazlasına dört sütun. Asıl değer: TCKN 12345678950; erişimi olan herkes okur; kişisel veridir. Maskelenmiş: 123******50; asıl değer saklanır; kişisel veridir. Takma adlı: HMAC ile üretilen ID; yalnızca anahtarla yeniden eşleştirilir; hâlâ kişisel veridir. Anonim: hiçbir makul yolla geri döndürülemez; hukukun dışındadır." style="max-width:100%;height:auto;display:block;margin:var(--sp-5) auto;font-family:var(--font-sans)">
 <defs>
 <marker id="p3s-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--c-text-mute)"/></marker>
 </defs>
@@ -338,7 +365,7 @@ Bu üç kavramın hukuki (GDPR / KVKK) ve teknik sonuçları taban tabana zıtt�
 <text x="478" y="78" text-anchor="middle" style="fill:var(--c-text);font-size:13px;font-weight:600">Takma Adlı</text>
 <text x="478" y="104" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px;font-family:var(--font-mono)">ID_f0a155…</text>
 <text x="478" y="150" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">ayrı tutulan</text>
-<text x="478" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">anahtarla döner</text>
+<text x="478" y="164" text-anchor="middle" style="fill:var(--c-text-mute);font-size:11px">anahtarla eşleşir</text>
 <text x="478" y="202" text-anchor="middle" style="fill:var(--c-warn);font-size:11px;font-weight:600">Kişisel Veri</text>
 <text x="478" y="216" text-anchor="middle" style="fill:var(--c-text-mute);font-size:10px">(GDPR Ger. 26)</text>
 <rect x="556" y="58" width="140" height="182" rx="8" style="fill:var(--c-success);fill-opacity:.07;stroke:var(--c-success);stroke-width:1.3"/>
@@ -359,7 +386,7 @@ Bu üç kavramın hukuki (GDPR / KVKK) ve teknik sonuçları taban tabana zıtt�
 - **Maskeleme:** Bilgiyi ekranda gizler (`123******50`), veri tabanında aslı durur. Hukuken kişisel veridir.
 - **Takma Adlandırma (Pseudonymization):** Değeri ayrı bir kasada tutulan kriptografik bir anahtarla değiştirir:
   $$\text{Pseudonym} = \text{HMAC}_K(\text{TCKN})$$
-  $K$ anahtarına sahip olan orijinal veriye dönebilir. GDPR Madde 4(5) ve Gerekçe 26 uyarınca **takma adlı veri hâlâ kişisel veridir**; çünkü anahtar mevcuttur.
+  HMAC'in kendisi tek yönlüdür; ama $K$ anahtarını elinde tutan herkes aday bir kimlik numarasının takma adını yeniden hesaplayıp kayıtları yine eşleştirebilir. Geçerli TCKN sayısı bir milyardan az olduğu için hepsini sırayla denemek bile mümkündür. GDPR Madde 4(5) ve Gerekçe 26 uyarınca **takma adlı veri hâlâ kişisel veridir**; çünkü anahtar mevcuttur. KVKK aynı sonuca öbür yönden varır: 3. madde anonim hâle getirmeyi, verinin *başka verilerle eşleştirilerek dahi* kimliği belirli veya belirlenebilir bir gerçek kişiyle ilişkilendirilemeyecek hâle getirilmesi olarak tanımlar; takma adlı veri bu çıtayı aşamaz.
 - **Anonimleştirme:** Verinin makul hiçbir yöntemle, üçüncü taraf veri setleriyle birleştirilse dahi bir kişiye bağlanamamasıdır. Ancak o zaman KVKK ve GDPR kapsamından çıkar. Sweeney (2000), 5 haneli posta kodu, cinsiyet ve doğum tarihi üçlüsünün ABD nüfusunun %87'sini tekil olarak tanımladığını kanıtlamıştır. Dolayısıyla isimleri silmek anonimleştirme değildir; **yarı tanımlayıcıların (quasi-identifiers)** da genelletirilmesi şarttır.
 
 ---
@@ -399,8 +426,17 @@ Dokuz kopyalı bir mimaride her üç silme talebinden biri (%37'si) geride yetim
 
 $N$ depoyu tek tek dolaşıp silmek yerine mimariyi **kriptografik imha** (*crypto-shredding*) deseniyle kurarız:
 1. Her müşterinin verisi, o müşteriye özel tekil bir anahtarla ($K_{\text{user}}$) şifrelenerek depolara dağıtılır.
-2. Silme talebi geldiğinde 9 depoya dokunulmaz; yalnızca anahtar yönetim servisindeki (KMS) $K_{\text{user}}$ anahtarı kalıcı olarak imha edilir (`shred`).
-3. Anahtar yok edildiği anda CRM'deki, vektör veritabanındaki, yedeklerdeki ve önbellekteki tüm kopyalar anında çözülemez anlamsız gürültüye dönüşür.
+2. Silme talebi geldiğinde anahtar yönetim servisindeki (KMS) $K_{\text{user}}$ anahtarı kalıcı olarak imha edilir.
+3. O andan itibaren bütün şifreli kopyalar okunamaz olur: diskteki chunk metinleri, önbellek girdileri, trace içerikleri ve en önemlisi hiçbir silme taramasının ulaşamadığı değiştirilemez yedekler.
+
+**Kripto-imhanın ulaşmadığı yerler.** Yöntem yalnızca *sizin* anahtarınızla şifreli duran kopyaları kapsar. Haritamızdaki dört ev başka bir çözüm ister:
+
+- **Canlı ANN dizinindeki vektörler (Ev 3).** Benzerlik araması vektörlerin bellekte açık durmasını gerektirir; disk görüntüsü şifreli olsa bile çalışan dizin aranabilir bir kopya taşır. Bu satırları müşterinin takma adıyla silin, dizinin sıkıştırma ya da yeniden kurma döngüsünü bekleyin.
+- **Model sağlayıcıya gönderilmiş prompt'lar (Ev 4).** KMS'inizin dışındadırlar. Onları yalnızca sözleşmede ve sağlayıcı ayarlarında doğrulanmış bir sıfır veri saklama (ZDR) anlaşması kapsar.
+- **Analist dışa aktarımları (Ev 7).** Dizüstündeki bir CSV düz metindir. Burada çözüm $N$'yi düşürmektir: yalnızca takma adlı veri dışa aktarılır.
+- **İnce ayarlı ağırlıklar (Ev 8).** Gradyan inişinin emdiği şeyi hiçbir anahtar silemez. Tek kontrol, kişisel veriyi eğitim setine hiç sokmamaktır (2. Bölüm).
+
+Formülün diliyle: kripto-imha kapsadığı kopyalar için $q$'yu keskin biçimde düşürür, canlı dizini takma ada bağlı silme halleder, geri kalanı ise $N$'yi düşürerek, yani kopyayı hiç üretmeyerek çözülür. Bu üçünün hâlâ çalışıp çalışmadığını aşağıdaki kontrol listesindeki haftalık silme testi söyler.
 
 ---
 
@@ -471,13 +507,13 @@ $N$ depoyu tek tek dolaşıp silmek yerine mimariyi **kriptografik imha** (*cryp
 <path d="M404 192 V299 H320" marker-end="url(#p3f-arr)" style="fill:none;stroke:var(--c-text-mute);stroke-width:1.5;stroke-dasharray:5 4"/>
 <text x="410" y="250" text-anchor="start" style="fill:var(--c-text-mute);font-size:11px">takma adlar</text>
 <rect x="510" y="312" width="194" height="30" rx="6" style="fill:var(--c-danger);fill-opacity:.08;stroke:var(--c-danger);stroke-width:1.3;stroke-dasharray:5 4"/>
-<text x="607" y="331" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Kripto-İmha: Anahtarı sil, her yerde silinsin</text>
+<text x="607" y="331" text-anchor="middle" style="fill:var(--c-text);font-size:11.5px">Kripto-imha: anahtarı sil, şifreli kopya ölür</text>
 <path d="M318 312 H470 V327 H508" marker-end="url(#p3f-r)" style="fill:none;stroke:var(--c-danger);stroke-width:1.5;stroke-dasharray:5 4"/>
 <!-- Bottom Educational Banner -->
 <rect x="16" y="354" width="688" height="62" rx="6" style="fill:var(--c-accent);fill-opacity:.07;stroke:var(--c-accent);stroke-width:1.2"/>
 <text x="28" y="373" text-anchor="start" style="fill:var(--c-accent);font-size:11px;font-weight:700;letter-spacing:.02em">💡 MİMARİ ÇÖZÜM: KRİPTO-İMHA İLE ANINDA VE KESİN SİLME (CRYPTO-SHREDDING)</text>
 <text x="28" y="391" text-anchor="start" style="fill:var(--c-text);font-size:10.5px">Dokuz ayrı depoda silme sorguları koşturmak yerine, her veri konusu için benzersiz bir anahtar kullanılır.</text>
-<text x="28" y="407" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Silme talebinde yalnızca o şahsın anahtarı imha edilir; tüm vektörler ve loglar anında geri döndürülemez çöp baytlara dönüşür.</text>
+<text x="28" y="407" text-anchor="start" style="fill:var(--c-text-mute);font-size:10px">Anahtar imha edilince yedekler dahil bütün şifreli kopyalar okunamaz olur; canlı dizin satırları takma adla silinir.</text>
 </svg>
 
 ### 9.2. Veri Yaşam Döngüsü Kontrol Listesi
@@ -487,7 +523,7 @@ $N$ depoyu tek tek dolaşıp silmek yerine mimariyi **kriptografik imha** (*cryp
 3. **Fine-Tuning Öncesi PII Sıfırlama:** Model ağırlıklarına ham kişisel veri işlenmez; eğitim verisi diferansiyel mahremiyet süzgecinden geçirilir.
 4. **Çift Aşamalı PII Tespiti:** Yapılandırılmış veriler regex ve sağlama toplamıyla, serbest metinler Türkçe NER ile tespit edilir.
 5. **Embedding Güvenlik Sınıflandırması:** Vektör dizinleri ve önbellekler, düz metin PII ile aynı şifreleme ve ACL denetimine tabidir.
-6. **Kriptografik İmha (Crypto-Shredding):** Kullanıcı verileri kullanıcıya özel anahtarla şifrelenir; silme talebinde anahtar yok edilerek tüm kopyalar tek hamlede imha edilir.
+6. **Kriptografik İmha (Crypto-Shredding):** Kullanıcı verileri kullanıcıya özel anahtarla şifrelenir; silme talebinde anahtar yok edilir ve yedekler dahil bütün şifreli kopyalar okunamaz olur; canlı dizin satırları takma adla silinir, sağlayıcıdaki saklama ise sıfır veri saklama anlaşmasıyla kapatılır.
 7. **Periyodik Silme Doğrulama Testi:** Her hafta sentetik bir kayıt silinir ve dokuz deponun tamamında sıfır veri kaldığı otomatik testle raporlanır.
 
 ### Okuyucu artık hangi sorulara kendi başına yanıt verebilir?
@@ -503,11 +539,11 @@ $N$ depoyu tek tek dolaşıp silmek yerine mimariyi **kriptografik imha** (*cryp
 ## Bütün hikâye altı satırda
 
 - AI sistemlerinde veri çoğalır: Tek bir müşteri şikâyeti, her biri farklı saklama süresine sahip dokuz ayrı depoda yaşar.
-- Embedding vektörleri tersinirdir; Vec2Text saldırıları nedeniyle vektörler düz metinle aynı gizlilik sınıfında korunmalıdır.
+- Embedding vektörleri tersine çevrilebilir (Vec2Text 32 token'lık girdilerin %92'sini birebir geri kurdu); vektörler geldikleri metin gibi korunur.
 - Kişisel veri ağırlıklardan seçilerek silinemez; bu yüzden fine-tuning setleri eğitime girmeden önce temizlenmelidir.
 - Temiz etiketli zehirleme etki fonksiyonları ile çalışır; 250 adet zehirli belge 13B'lik bir modele arka kapı koymaya yetti.
 - Sağlama toplamı TCKN için yanlış pozitifleri %99 eler; serbest metin ise Türkçede değerlendirilmiş NER gerektirir.
-- Silmenin eksiksizliği $(1-q)^N$ ile hızla çöker; silmeyi prosedürel aramadan tek anahtarlı kripto-imhaya dönüştürün.
+- Silmenin eksiksizliği $(1-q)^N$ ile hızla çöker; $N$'yi düşürün, anahtarınızla şifreli olanı kripto-imha edin, canlı dizin satırlarını takma adla silin ve silmeyi her hafta test edin.
 
 ---
 
