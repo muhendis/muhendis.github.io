@@ -151,11 +151,11 @@
   "posts": [
     {
       "slug": "yapay-zeka-guvenligi-nasil-calisir",
-      "title": "Büyük Resim (3): Baştan Sona Yapay Zekâ Güvenliği — Tehdit Modelinden Denetim Kanıtına, Kötü Niyetli Bir Cümlenin Yolculuğu",
+      "title": "Büyük Resim (3): Baştan Sona Yapay Zekâ Güvenliği — Filtrelerin Ötesi, Deterministik Sınırlar ve Kanıtlanabilir Savunma Mimarisi",
       "date": "2026-10-30",
       "seriesId": "buyuk-resim",
       "seriesPart": 3,
-      "summary": "Ne: 12 bölümlük Secure AI by Design serisinden damıtılmış, bir müşteri e-postasına gizlenmiş kötü niyetli tek bir cümlenin destek asistanı içindeki yolculuğu olarak anlatılan, tek okumalık yapay zekâ güvenliği. Neden önemli: Denemelerin %1'ini kaçıran bir dedektör ısrarcı bir saldırgana 100 denemede %63 ihtimalle yenilir; %5'lik ortak bir kör nokta üç katmanlı kontrolü kâğıttaki tahminden 9,3 kat zayıflatır; yani güvenlik tek bir filtreye dayanamaz. Nasıl: Güven sınırları ve ölümcül üçlü, puanlanmış bir tehdit kaydı, kurulum zamanında veri ve tedarik zinciri kontrolleri, güvenilmeyen metnin işlem seçmesini engelleyen güven yayılımı, bulguyu karardan ayıran guardrail'ler, yetkiye duyarlı retrieval ve bellek, kullanıcı, ajan ve görev yetkilerini kesiştirip parametreye bağlı onay isteyen bir yürütücü, tek bir sunum yolu, katmanlı savunmanın matematiği ve Wilson aralıkları, eksiksiz denetim olayları ve kanıt zinciri üzerinde imzalı bir canlıya geçiş kapısıyla kanıt. Nerede: Dış içerik okuyan ve araç çağıran LLM, RAG ve ajan uygulamalarında. Kim için: Derin bölümlerden önce haritayı görmek isteyen AI mühendisleri, mimarlar, güvenlik ekipleri ve teknik karar vericiler için. Ne zaman: Araç erişimi olan bir AI özelliğini tasarlamadan, incelemeden ya da yayına almadan önce.",
+      "summary": "Ne: 12 bölümlük Secure AI by Design serisinin damıtıldığı, müşteri şikâyetine gizlenmiş kötü niyetli tek bir cümleyi posta kutusundan imzalı yayın kapısına kadar izleyip sonunda çerçeve konumlandırmalı üretim kontrol listesi sunan baştan sona yapay zekâ güvenliği rehberi. Neden önemli: Denemelerin %1'ini kaçıran bir dedektör ısrarcı saldırgana 100 denemede %63 ihtimalle yenilir; %5'lik ortak kör nokta ise üç katmanlı filtreyi kâğıttaki tahminden 9,3 kat zayıflatır—dolayısıyla gerçek güvenlik bir sınıflandırıcının omzuna yüklenemez. Nasıl: Varlık sahipliği ve ölümcül üçlü, yazara bağlı güven sınırları, dokuz evde veri silme ve tedarik zinciri sabitleme, monoton güven yayılımı, maliyet eşikli 4 kademeli guardrail hattı, dolaşım içi bit-dizisi ön filtrelemeli RAG ve karantinalı bellek, RFC 8785 HMAC onaylı PEP/PDP yetki kesişimi, spekülatif akış tamponlu mTLS/HMAC tuzlu tek sunum yolu, ortak kör nokta matematiği, Wilson güven aralıkları, örneklemesiz hash denetim izi, ikili canlıya geçiş kapısı ve EU AI Act, KVKK, BTK/7545, NIST AI, MITRE ATLAS ile OWASP LLM/Agentic Top 10 alt kırılımlarını tek mimariye konumlandıran kontrol listesi. Nerede: Dış metin okuyan ve araç çağıran tüm LLM, RAG ve ajan sistemlerinde. Kim için: AI mühendisleri, mimarlar, güvenlik ekipleri ve teknik karar vericiler için. Ne zaman: Veri veya araç erişimi olan bir yapay zekâ sistemini tasarlamadan, incelemeden ya da canlıya onaylamadan önce.",
       "tags": [
         "güvenlik",
         "llm",
@@ -163,10 +163,10 @@
         "prompt-injection",
         "yönetişim"
       ],
-      "readingMinutes": 32,
+      "readingMinutes": 53,
       "translationSlug": "how-ai-security-works",
       "draft": false,
-      "tagline": "Bir müşteri e-postasına gizlenmiş tek bir talimatı AI asistanının içinden geçiriyor ve tehdit modelinden denetim kanıtına kadar her adımda onu hangi tasarım kararının durdurduğunu görüyoruz.",
+      "tagline": "Bir müşteri şikâyetindeki gizli tek bir talimatı AI asistanının içinden geçirip filtrelerin neden kırıldığını, deterministik duvarların zararı nasıl sıfırladığını ve güvenliğin canlıya çıkmadan nasıl kanıtlandığını görüyoruz.",
       "updated": "2026-11-15"
     },
     {

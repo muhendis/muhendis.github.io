@@ -151,11 +151,11 @@
   "posts": [
     {
       "slug": "how-ai-security-works",
-      "title": "The Big Picture (3): AI Security, End to End — From Threat Model to Audit Evidence, the Journey of One Malicious Sentence",
+      "title": "The Big Picture (3): AI Security, End to End — Beyond Filters: Deterministic Boundaries and Provable Defense Architecture",
       "date": "2026-10-30",
       "seriesId": "the-big-picture",
       "seriesPart": 3,
-      "summary": "What: The whole of AI security in one read, told as the journey of one malicious sentence hidden in a customer email through a support assistant, distilled from the 12-part Secure AI by Design series. Why it matters: A detector that misses 1% of attempts loses to a persistent attacker 63% of the time after 100 tries, and a 5% shared blind spot makes three layered controls 9.3 times weaker than the paper estimate, so security cannot rest on one filter. How: Trust boundaries and the lethal trifecta, a scored threat register, data and supply chain controls at build time, trust propagation that keeps untrusted text from choosing actions, guardrails that separate findings from decisions, permission-aware retrieval and memory, an executor that intersects user, agent and task permissions with parameter-bound approvals, a single serving path, the math of defense in depth, and proof through Wilson intervals, complete audit events and a signed go-live gate over an evidence chain. Where: LLM, RAG and agent applications that read external content and call tools. For whom: AI engineers, architects, security teams and technical decision makers who want the map before the deep dives. When: Before designing, reviewing or shipping an AI feature with tool access.",
+      "summary": "What: A flagship end-to-end blueprint of AI security built from the 12-part Secure AI by Design series, following one malicious sentence hidden inside a customer email from inbox ingest to signed release evidence and closing with a framework-positioned production checklist. Why it matters: Even a 99%-accurate filter loses to a persistent attacker 63% of the time across 100 tries, and a 5% shared blind spot makes three stacked NLP filters 9.3 times weaker than expected—so real security cannot live inside a classifier. How: Intuition-first engineering walkthroughs covering asset RACI and the lethal trifecta, author-anchored trust boundaries, 9-home data erasure and supply chain pinning, monotonic trust propagation, cost-calibrated 4-tier guardrails, bitset pre-filtered RAG and quarantined memory, PEP/PDP permission intersection with RFC 8785 HMAC approvals, single-path mTLS/HMAC-salted serving with speculative holdbacks, common-mode failure limits, Wilson confidence bounds, unsampled SHA-256 audit logs, a binary go-live gate, and a unified checklist positioning EU AI Act, KVKK, BTK/Law No. 7545, NIST AI, MITRE ATLAS, and OWASP LLM/Agentic Top 10. Where: Production LLM, RAG, and tool-using agent systems. For whom: AI engineers, architects, security teams, and technical leaders. When: Before designing, reviewing, or approving an AI system with data or tool access.",
       "tags": [
         "security",
         "llm",
@@ -163,10 +163,10 @@
         "prompt-injection",
         "governance"
       ],
-      "readingMinutes": 37,
+      "readingMinutes": 58,
       "translationSlug": "yapay-zeka-guvenligi-nasil-calisir",
       "draft": false,
-      "tagline": "Follow one hidden instruction in a customer email through an AI assistant and see which design decision stops it at each step, from threat model to audit evidence.",
+      "tagline": "Follow one hidden instruction inside a customer ticket through an AI assistant and see why filters break, how deterministic boundaries stop harm, and how safety is proven before release.",
       "updated": "2026-11-15"
     },
     {
