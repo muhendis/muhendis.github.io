@@ -130,7 +130,7 @@
         return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
 
-      fetch('./posts.json', { cache: 'no-cache' })
+      fetch('/en/aklimda-kalanlar/posts.json', { cache: 'no-cache' })
         .then(function (r) { if (!r.ok) throw new Error('Failed to load'); return r.json(); })
         .then(function (data) {
           var posts = (data.posts || []).filter(function (p) { return !p.draft; });
@@ -145,7 +145,7 @@
 
           listEl.innerHTML = posts.map(function (p) {
             var mins = p.readingMinutes ? ('<span>' + p.readingMinutes + ' min read</span>') : '';
-            return '<li><a class="post-row" href="./post.html?slug=' + encodeURIComponent(p.slug) + '">' +
+            return '<li><a class="post-row" href="/en/aklimda-kalanlar/post.html?slug=' + encodeURIComponent(p.slug) + '">' +
               '<span class="post-row__body">' +
                 '<span class="post-row__title">' + escapeHtml(p.title) + '</span>' +
                 (p.summary ? '<span class="post-row__teaser">' + escapeHtml(p.summary) + '</span>' : '') +

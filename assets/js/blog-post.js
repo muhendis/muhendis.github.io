@@ -123,7 +123,7 @@
       dateModified: meta.updated || meta.date,
       inLanguage: LANG,
       keywords: (meta.tags || []).join(', '),
-      mainEntityOfPage: ORIGIN + '/' + LANG + '/blog/post.html?slug=' + slug,
+      mainEntityOfPage: ORIGIN + BASE + '/post.html?slug=' + slug,
       author: { '@type': 'Person', name: 'Engin Bozaba', url: ORIGIN + '/' + LANG + '/' }
     });
     document.head.appendChild(s);
@@ -462,7 +462,19 @@
         var meta = (idx.posts || []).filter(function (p) {
           return p.slug === slug && !p.draft;
         })[0];
-        if (!meta) throw new Error('missing');
+        if (!meta) {
+          var altSection = BASE.indexOf('/aklimda-kalanlar') !== -1 ? ('/' + LANG + '/blog') : ('/' + LANG + '/aklimda-kalanlar');
+          return fetch(altSection + '/posts.json', { cache: 'no-cache' })
+            .then(function (r) { if (!r.ok) throw new Error('missing'); return r.json(); })
+            .then(function (altIdx) {
+              var altMeta = (altIdx.posts || []).filter(function (p) { return p.slug === slug && !p.draft; })[0];
+              if (altMeta) {
+                location.replace(altSection + '/post.html?slug=' + encodeURIComponent(slug));
+                return;
+              }
+              throw new Error('missing');
+            });
+        }
 
         var relPath = (meta.path && PATH_RE.test(meta.path)) ? meta.path : (slug + '.md');
         return fetch(BASE + '/posts/' + relPath, { cache: 'no-cache' })
