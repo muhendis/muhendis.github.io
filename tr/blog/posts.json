@@ -151,6 +151,7 @@
   "posts": [
     {
       "slug": "yapay-zeka-guvenligi-nasil-calisir",
+      "path": "01-buyuk-resim/03-yapay-zeka-guvenligi-nasil-calisir.md",
       "title": "Büyük Resim (3): Baştan Sona Yapay Zekâ Güvenliği — Filtrelerin Ötesi, Deterministik Sınırlar ve Kanıtlanabilir Savunma Mimarisi",
       "date": "2026-10-30",
       "seriesId": "buyuk-resim",
@@ -171,6 +172,7 @@
     },
     {
       "slug": "standarttan-kanita",
+      "path": "08-guvenli-yapay-zeka-tasarimi/12-standarttan-kanita.md",
       "title": "Secure AI by Design (12): Standarttan Kanıta — AI Güvenliğini Denetlenebilir Hâle Getirmek",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -193,6 +195,7 @@
     },
     {
       "slug": "ai-izlenebilirlik-ve-olay-mudahalesi",
+      "path": "08-guvenli-yapay-zeka-tasarimi/11-ai-izlenebilirlik-ve-olay-mudahalesi.md",
       "title": "Secure AI by Design (11): AI Operasyonlarında İzlenebilirlik ve Olay Müdahalesi",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -215,6 +218,7 @@
     },
     {
       "slug": "ai-guvenligini-olcmek",
+      "path": "08-guvenli-yapay-zeka-tasarimi/10-ai-guvenligini-olcmek.md",
       "title": "Secure AI by Design (10): AI Güvenliğini Ölçmek — Red Teaming ve Türkçe Değerlendirme",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -237,6 +241,7 @@
     },
     {
       "slug": "guvenli-ai-sunumu",
+      "path": "08-guvenli-yapay-zeka-tasarimi/09-guvenli-ai-sunumu.md",
       "title": "Secure AI by Design (9): Güvenli AI Sunumu — API Gateway'den Model Sunucusuna",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -259,6 +264,7 @@
     },
     {
       "slug": "ajanlarda-en-az-yetki",
+      "path": "08-guvenli-yapay-zeka-tasarimi/08-ajanlarda-en-az-yetki.md",
       "title": "Secure AI by Design (8): AI Ajanlarında En Az Yetki ve Güvenli Araç Kullanımı",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -281,6 +287,7 @@
     },
     {
       "slug": "rag-ve-bellek-guvenligi",
+      "path": "08-guvenli-yapay-zeka-tasarimi/07-rag-ve-bellek-guvenligi.md",
       "title": "Secure AI by Design (7): RAG ve Bellek Güvenliği — Doğru Bilgiye Yetkili Erişim",
       "date": "2026-10-30",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -303,6 +310,7 @@
     },
     {
       "slug": "katmanli-guardrails",
+      "path": "08-guvenli-yapay-zeka-tasarimi/06-katmanli-guardrails.md",
       "title": "Secure AI by Design (6): Katmanlı Guardrails — Kurallar, NLP, Sınıflandırıcılar ve Küçük Modeller",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -325,6 +333,7 @@
     },
     {
       "slug": "prompt-injection-guven-siniri",
+      "path": "08-guvenli-yapay-zeka-tasarimi/05-prompt-injection-guven-siniri.md",
       "title": "Secure AI by Design (5): Prompt Injection — Veri ile Talimat Arasındaki Güven Sınırı",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -347,6 +356,7 @@
     },
     {
       "slug": "ai-tedarik-zinciri-guvenligi",
+      "path": "08-guvenli-yapay-zeka-tasarimi/04-ai-tedarik-zinciri-guvenligi.md",
       "title": "Secure AI by Design (4): Modelden Bağımlılığa — AI Tedarik Zincirini Güvenceye Almak",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -369,6 +379,7 @@
     },
     {
       "slug": "guvenli-ai-verisi",
+      "path": "08-guvenli-yapay-zeka-tasarimi/03-guvenli-ai-verisi.md",
       "title": "Secure AI by Design (3): Güvenli AI Verisi — Kaynaktan Silmeye Kadar Koruma",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -391,6 +402,7 @@
     },
     {
       "slug": "ai-tehdit-modelleme-ve-guven-sinirlari",
+      "path": "08-guvenli-yapay-zeka-tasarimi/02-ai-tehdit-modelleme-ve-guven-sinirlari.md",
       "title": "Secure AI by Design (2): AI Sistemlerinde Tehdit Modelleme ve Güven Sınırları",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -413,6 +425,7 @@
     },
     {
       "slug": "yapay-zeka-guvenligi-tasarimda-baslar",
+      "path": "08-guvenli-yapay-zeka-tasarimi/01-yapay-zeka-guvenligi-tasarimda-baslar.md",
       "title": "Secure AI by Design (1): Yapay Zekâ Güvenliği Tasarımda Başlar — Varlıklar, İlkeler ve Sahipler",
       "date": "2026-10-29",
       "seriesId": "guvenli-yapay-zeka-tasarimi",
@@ -434,6 +447,7 @@
     },
     {
       "slug": "gpu-datasheet-nasil-okunur",
+      "path": "07-yapay-zeka-altyapisi/06-gpu-datasheet-nasil-okunur.md",
       "title": "Yapay Zekâ Altyapısı (6): Bir GPU Datasheet'i Nasıl Okunur? — Ev mi, Veri Merkezi mi? DGX Station (GB300) Teardown'u",
       "date": "2026-10-18",
       "seriesId": "yapay-zeka-altyapisi",
@@ -457,6 +471,7 @@
     },
     {
       "slug": "ai-altyapisi-nasil-calisir",
+      "path": "01-buyuk-resim/02-ai-altyapisi-nasil-calisir.md",
       "title": "Büyük Resim (2): Baştan Sona Yapay Zekâ Altyapısı — Silikondan Süper Bilgisayara, Bir Tensörün Fiziksel Yolculuğu",
       "date": "2026-10-17",
       "summary": "Ne: Silikon mikro-mimarisinden 16.384 GPU'luk süper bilgisayara uzanan AI altyapısının eksiksiz panoraması. Neden önemli: Algoritmik kod fiziksel donanıma çarptığında yaşanan bellek, iletişim ve güç darboğazlarını tek bir zihinsel modelde birleştirmek. Nasıl: SM anatomisi, prefill/decode asimetrisi, rail-optimized kumaş, 4D paralellik, Young-Daly checkpointing ve FinOps analiziyle. Nerede: Modern veri merkezlerinde H100/H200, DGX ve SuperPOD sistemlerinde. Kim için: Kıdemli yazılım mühendisleri, sistem mimarları ve veri merkezi ekipleri. Ne zaman: Büyük ölçekli LLM eğitimi veya çıkarımı tasarlarken.",
@@ -475,6 +490,7 @@
     },
     {
       "slug": "kurumsal-ai-platform-mimarisi",
+      "path": "07-yapay-zeka-altyapisi/05-kurumsal-ai-platform-mimarisi.md",
       "title": "Yapay Zekâ Altyapısı (5): AI Donanım Kümesi Nasıl Tasarlanır? — GPU, Ağ, Depolama ve Güç",
       "date": "2026-10-17",
       "seriesId": "yapay-zeka-altyapisi",
@@ -498,6 +514,7 @@
     },
     {
       "slug": "gpudan-ai-super-bilgisayarina",
+      "path": "07-yapay-zeka-altyapisi/04-gpudan-ai-super-bilgisayarina.md",
       "title": "Yapay Zekâ Altyapısı (4): AI Kümesi Neden Yavaşlar? — Depolama, Arızalar ve MFU",
       "date": "2026-10-16",
       "seriesId": "yapay-zeka-altyapisi",
@@ -521,6 +538,7 @@
     },
     {
       "slug": "coklu-gpu-aglari-ve-dagitik-egitim",
+      "path": "07-yapay-zeka-altyapisi/03-coklu-gpu-aglari-ve-dagitik-egitim.md",
       "title": "Yapay Zekâ Altyapısı (3): GPU'lar Nasıl Birlikte Çalışır? — NVLink, InfiniBand ve Paralellik",
       "date": "2026-10-17",
       "seriesId": "yapay-zeka-altyapisi",
@@ -544,6 +562,7 @@
     },
     {
       "slug": "gpu-is-yukleri-ve-uretim-cikarimi",
+      "path": "07-yapay-zeka-altyapisi/02-gpu-is-yukleri-ve-uretim-cikarimi.md",
       "title": "Yapay Zekâ Altyapısı (2): LLM GPU'yu Nasıl Kullanır? — Training, Prefill ve Decode",
       "date": "2026-10-17",
       "seriesId": "yapay-zeka-altyapisi",
@@ -567,6 +586,7 @@
     },
     {
       "slug": "gpu-mimarisi-ve-llm-olcekleme",
+      "path": "07-yapay-zeka-altyapisi/01-gpu-mimarisi-ve-llm-olcekleme.md",
       "title": "Yapay Zekâ Altyapısı (1): GPU Nasıl Çalışır? — SM'den 16.384 GPU'ya",
       "date": "2026-10-10",
       "seriesId": "yapay-zeka-altyapisi",
@@ -590,6 +610,7 @@
     },
     {
       "slug": "baglam-penceresi-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/09-baglam-penceresi-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (9): Bağlam Penceresi (Context Window) — 2K duvarından FlashAttention, RoPE/YaRN ve 2026 hibrit Mamba modellerine",
       "date": "2026-10-10",
       "seriesId": "bir-promptun-yolculugu",
@@ -613,6 +634,7 @@
     },
     {
       "slug": "cikti-katmani-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/08-cikti-katmani-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (8): Çıktı Katmanı (LM Head) — logitler, bellek duvarı, Megatron-LM ve spekülatif kod çözme",
       "date": "2026-10-04",
       "seriesId": "bir-promptun-yolculugu",
@@ -635,6 +657,7 @@
     },
     {
       "slug": "agirlik-baslatma-ve-normalizasyon",
+      "path": "02-sinir-aglarinin-yapi-taslari/05-agirlik-baslatma-ve-normalizasyon.md",
       "title": "Sinir Ağlarının Yapı Taşları (5): Ağırlık Başlatma ve Normalizasyon — Xavier, Kaiming, LayerNorm ve RMSNorm matematiği",
       "date": "2026-10-01",
       "seriesId": "sinir-aglarinin-yapi-taslari",
@@ -655,6 +678,7 @@
     },
     {
       "slug": "optimizasyon-algoritmalari-derinlemesine",
+      "path": "02-sinir-aglarinin-yapi-taslari/04-optimizasyon-algoritmalari-derinlemesine.md",
       "title": "Sinir Ağlarının Yapı Taşları (4): Optimizasyon Algoritmaları — SGD salınımları, AdamW paradoksu ve Muon devrimi",
       "date": "2026-10-01",
       "seriesId": "sinir-aglarinin-yapi-taslari",
@@ -675,6 +699,7 @@
     },
     {
       "slug": "geriye-yayilim-ve-otomatik-turev",
+      "path": "02-sinir-aglarinin-yapi-taslari/03-geriye-yayilim-ve-otomatik-turev.md",
       "title": "Sinir Ağlarının Yapı Taşları (3): Geriye Yayılım ve Otomatik Türev — hesaplama çizgesi, aktivasyon belleği ve zincir kuralı anatomisi",
       "date": "2026-10-01",
       "seriesId": "sinir-aglarinin-yapi-taslari",
@@ -695,6 +720,7 @@
     },
     {
       "slug": "kayip-fonksiyonlari-derinlemesine",
+      "path": "02-sinir-aglarinin-yapi-taslari/02-kayip-fonksiyonlari-derinlemesine.md",
       "title": "Sinir Ağlarının Yapı Taşları (2): Kayıp Fonksiyonları — hatanın geometrisi, Log-Sum-Exp kararlılığı ve Cross-Entropy sadeleşmesi",
       "date": "2026-10-01",
       "seriesId": "sinir-aglarinin-yapi-taslari",
@@ -715,6 +741,7 @@
     },
     {
       "slug": "aktivasyon-fonksiyonlari-derinlemesine",
+      "path": "02-sinir-aglarinin-yapi-taslari/01-aktivasyon-fonksiyonlari-derinlemesine.md",
       "title": "Sinir Ağlarının Yapı Taşları (1): Aktivasyon Fonksiyonları — doğrusalsızlığın geometrisi, sönümlenen gradyanlar ve SwiGLU devrimi",
       "date": "2026-10-01",
       "seriesId": "sinir-aglarinin-yapi-taslari",
@@ -735,6 +762,7 @@
     },
     {
       "slug": "transformer-blogu-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/07-transformer-blogu-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (7): Transformer Bloğu — gradyan otoyolu, konveks örtü ve FFN'in ilişkisel belleği",
       "date": "2026-09-30",
       "seriesId": "bir-promptun-yolculugu",
@@ -756,6 +784,7 @@
     },
     {
       "slug": "causal-attention-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/05-causal-attention-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (5): Causal Attention — zamanın oku, alt üçgensel matris ve yokluğun matematiği",
       "date": "2026-09-28",
       "seriesId": "bir-promptun-yolculugu",
@@ -775,6 +804,7 @@
     },
     {
       "slug": "ajan-hafizasi-nasil-calisir",
+      "path": "05-promptingden-ajanlara/03-ajan-hafizasi-nasil-calisir.md",
       "title": "Prompting'den Ajanlara (3): Ajan Hafızası — yazma ve okuma yolları, geçersiz kılma, dreaming ve çok ajanlı kapsam",
       "date": "2026-09-27",
       "seriesId": "promptingden-ajanlara",
@@ -794,6 +824,7 @@
     },
     {
       "slug": "multi-head-attention-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/06-multi-head-attention-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (6): Multi-Head Attention — alt uzaylar, simetri kırılması ve kafa budama",
       "date": "2026-09-29",
       "seriesId": "bir-promptun-yolculugu",
@@ -813,6 +844,7 @@
     },
     {
       "slug": "tokenizasyon-nasil-calisir",
+      "path": "03-bir-promptun-yolculugu/01-tokenizasyon-nasil-calisir.md",
       "title": "Bir Prompt'un Yolculuğu (1): Tokenizasyon — kelimelerden tamsayılara, BPE mekaniği ve fertility",
       "date": "2026-09-19",
       "seriesId": "bir-promptun-yolculugu",
@@ -831,6 +863,7 @@
     },
     {
       "slug": "embedding-katmani-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/02-embedding-katmani-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (2): Embedding Katmanı — token ID'lerinden sürekli vektörlere, lookup tablosu ve RoPE",
       "date": "2026-09-20",
       "seriesId": "bir-promptun-yolculugu",
@@ -849,6 +882,7 @@
     },
     {
       "slug": "embeddingler-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/03-embeddingler-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (3): Anlamsal Embedding'ler — anlamın koordinatları, kosinüs mesafesi ve HNSW arama uzayı",
       "date": "2026-09-21",
       "seriesId": "bir-promptun-yolculugu",
@@ -867,6 +901,7 @@
     },
     {
       "slug": "self-attention-derinlemesine",
+      "path": "03-bir-promptun-yolculugu/04-self-attention-derinlemesine.md",
       "title": "Bir Prompt'un Yolculuğu (4): Self-Attention — Q, K, V mantığı, adım adım matris matematiği ve bağlam vektörleri",
       "date": "2026-09-26",
       "seriesId": "bir-promptun-yolculugu",
@@ -886,6 +921,7 @@
     },
     {
       "slug": "llm-maliyet-ve-gecikme-optimizasyonu",
+      "path": "04-uretimde-llm-sistemleri/01-llm-maliyet-ve-gecikme-optimizasyonu.md",
       "title": "Üretimde LLM Sistemleri (1): Maliyet ve Gecikme Anatomisi — TTFT, TPOT, prompt caching ve model yönlendirme",
       "date": "2026-09-04",
       "seriesId": "uretimde-llm-sistemleri",
@@ -904,6 +940,7 @@
     },
     {
       "slug": "vllm-derinlemesine",
+      "path": "04-uretimde-llm-sistemleri/02-vllm-derinlemesine.md",
       "title": "Üretimde LLM Sistemleri (2): vLLM Motor Mimarisi — continuous batching, prefix cache ve KV bellek yönetimi",
       "date": "2026-09-05",
       "seriesId": "uretimde-llm-sistemleri",
@@ -922,6 +959,7 @@
     },
     {
       "slug": "prompting-teknikleri",
+      "path": "05-promptingden-ajanlara/01-prompting-teknikleri.md",
       "title": "Prompting'den Ajanlara (1): Akıl Yürütme ve Prompting — Chain-of-Thought, ReAct ve akıl yürüten modeller çağı",
       "date": "2026-09-03",
       "seriesId": "promptingden-ajanlara",
@@ -940,6 +978,7 @@
     },
     {
       "slug": "ajan-promptunun-anatomisi",
+      "path": "05-promptingden-ajanlara/02-ajan-promptunun-anatomisi.md",
       "title": "Prompting'den Ajanlara (2): Ajan Prompt'unun Anatomisi — sistem sözleşmesi, araç sınırları ve 8 yapı taşı",
       "date": "2026-09-04",
       "seriesId": "promptingden-ajanlara",
@@ -958,6 +997,7 @@
     },
     {
       "slug": "vektor-veritabani-derinlemesine",
+      "path": "06-rag-ve-bilgi-erisimi/01-vektor-veritabani-derinlemesine.md",
       "title": "RAG ve Bilgi Erişimi (1): Vektör Veritabanı Mimarisi — ANN indekslerinden metadata filtreleme ve canlı veriye",
       "date": "2026-09-02",
       "seriesId": "rag-ve-bilgi-erisimi",
@@ -976,6 +1016,7 @@
     },
     {
       "slug": "hangi-rag-deseni",
+      "path": "06-rag-ve-bilgi-erisimi/02-hangi-rag-deseni.md",
       "title": "RAG ve Bilgi Erişimi (2): Üretimde RAG Desenleri — 4 temel hata teşhisi, HyDE, hybrid arama ve reranking",
       "date": "2026-09-03",
       "seriesId": "rag-ve-bilgi-erisimi",
@@ -994,6 +1035,7 @@
     },
     {
       "slug": "llm-nasil-calisir",
+      "path": "01-buyuk-resim/01-llm-nasil-calisir.md",
       "pinned": true,
       "title": "Büyük Resim (1): Baştan Sona Bir LLM — token, transformer, eğitim, çıkarım ve neden uydurduğu",
       "date": "2026-08-29",
@@ -1012,6 +1054,7 @@
     },
     {
       "slug": "langgraph-llm-uygulamalari",
+      "path": "_drafts/langgraph-llm-uygulamalari.md",
       "title": "LangGraph ile LLM uygulamalarında akış tasarımı",
       "date": "2026-08-29",
       "seriesId": null,
@@ -1028,6 +1071,7 @@
     },
     {
       "slug": "post-training-quantization-llm-cikarim",
+      "path": "_drafts/post-training-quantization-llm-cikarim.md",
       "title": "LLM çıkarımında post-training quantization (eğitim sonrası nicemleme)",
       "date": "2026-08-29",
       "seriesId": null,

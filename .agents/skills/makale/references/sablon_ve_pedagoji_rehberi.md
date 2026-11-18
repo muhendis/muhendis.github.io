@@ -6,7 +6,7 @@ Bu rehber; blogun mimari yazım standardını, **kolektif yol arkadaşı üslubu
 
 ## 1. Makale Anatomisi ve Canlı Açılış Kurgusu
 
-Her makale dosyasında (`en/blog/posts/<slug>.md` ve `tr/blog/posts/<slug>.md`) aşağıdaki yapı istisnasız korunur:
+Her makale dosyasında (`en/blog/posts/.../<slug>.md` ve `tr/blog/posts/.../<slug>.md`) aşağıdaki yapı istisnasız korunur:
 
 ```markdown
 [Başlıksız 3–4 paragraflık Canlı Zihinsel Giriş]

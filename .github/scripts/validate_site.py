@@ -37,7 +37,21 @@ for lang in LANGS:
         err(f"{lang}/blog/posts.json is not valid JSON: {e}"); continue
 
     entries = manifests[lang].get("posts", [])
+    posts_dir = ROOT / lang / "blog" / "posts"
+    stage_ids = [s.get("id") for s in manifests[lang].get("stages", [])]
+    groups = {sid: [] for sid in stage_ids}
+    other_series = []
+    for s in manifests[lang].get("series", []):
+        (groups[s.get("stage")] if s.get("stage") in groups else other_series).append(s)
+    ordered_series = [s for sid in stage_ids for s in groups[sid]] + other_series
+    expected_series_paths = {}
+    for mod_idx, s in enumerate(ordered_series, 1):
+        folder = f"{mod_idx:02d}-{s.get('id', '')}"
+        for part_idx, s_slug in enumerate(s.get("posts", []), 1):
+            expected_series_paths[s_slug] = f"{folder}/{part_idx:02d}-{s_slug}.md"
+
     slugs = set()
+    indexed_paths = set()
     for p in entries:
         slug = p.get("slug", "")
         if not slug:
@@ -52,20 +66,30 @@ for lang in LANGS:
                 err(f"{lang}/{slug}: missing '{field}'.")
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(p.get("date", ""))):
             err(f"{lang}/{slug}: date must be YYYY-MM-DD (got {p.get('date')!r}).")
-        if not (ROOT / lang / "blog" / "posts" / f"{slug}.md").exists():
-            err(f"{lang}/{slug}: posts.json references {slug}.md but that file does not exist.")
+        rel = p.get("path") or f"{slug}.md"
+        if ".." in rel or not re.fullmatch(r"[a-z0-9_-]+(?:/[a-z0-9_-]+)*\.md", rel):
+            err(f"{lang}/{slug}: invalid post path {rel!r}.")
+        elif rel in indexed_paths:
+            err(f"{lang}/{slug}: duplicate post path {rel!r}.")
+        else:
+            indexed_paths.add(rel)
+            if not (posts_dir / rel).exists():
+                err(f"{lang}/{slug}: posts.json references {rel} but that file does not exist.")
+            if slug in expected_series_paths and rel != expected_series_paths[slug]:
+                warn(f"{lang}/{slug}: series path is {rel!r}, expected {expected_series_paths[slug]!r}.")
 
-    # Every .md must be indexed. Leading underscore = template, exempt.
-    for md in sorted((ROOT / lang / "blog" / "posts").glob("*.md")):
+    # Every .md must be indexed. Leading underscore filename = template, exempt.
+    for md in sorted(posts_dir.rglob("*.md")):
         if md.name.startswith("_"):
             continue
-        if md.stem not in slugs:
-            err(f"{lang}: {md.name} exists but has no posts.json entry -- it is unreachable.")
+        rel = md.relative_to(posts_dir).as_posix()
+        if rel not in indexed_paths:
+            err(f"{lang}: {rel} exists but has no posts.json entry -- it is unreachable.")
         body = md.read_text(encoding="utf-8").lstrip()
         # Skip a leading HTML comment / blockquote before checking the heading.
         probe = re.sub(r"^(?:<!--.*?-->|>.*?(?:\n|$))+", "", body, flags=re.S).lstrip()
         if probe.startswith("# "):
-            err(f"{lang}/{md.name}: starts with an H1. The <h1> comes from posts.json; "
+            err(f"{lang}/{rel}: starts with an H1. The <h1> comes from posts.json; "
                 f"start the body at '##'.")
 
 # 3. translationSlug must be symmetric.

@@ -18,29 +18,47 @@ if [ "$#" -gt 0 ]; then
     TARGET="$1"
     SLUG="${TARGET##*/}"
     SLUG="${SLUG%.md}"
+    # Numaralı dosya adı verildiyse (örn. 01-how-llms-work.md) baştaki NN- önekini temizle
+    CLEAN_SLUG="${SLUG#[0-9][0-9]-}"
 
-    EN_FILE=""
-    TR_FILE=""
+    read -r EN_FILE TR_FILE < <(python3 - "$ROOT_DIR" "$TARGET" "$SLUG" "$CLEAN_SLUG" <<'PY'
+import json, pathlib, sys
 
-    if [ -f "$ROOT_DIR/en/blog/posts/$SLUG.md" ]; then
-        EN_FILE="$ROOT_DIR/en/blog/posts/$SLUG.md"
-    fi
-    if [ -f "$ROOT_DIR/tr/blog/posts/$SLUG.md" ]; then
-        TR_FILE="$ROOT_DIR/tr/blog/posts/$SLUG.md"
-    fi
+root = pathlib.Path(sys.argv[1])
+target = sys.argv[2]
+slug = sys.argv[3]
+clean_slug = sys.argv[4]
 
-    # Eğer tek dil eşleştiyse translationSlug üzerinden diğerini bul
-    if [ -n "$TR_FILE" ] && [ -z "$EN_FILE" ]; then
-        TRANS=$(python3 -c "import json; data=json.load(open('$ROOT_DIR/tr/blog/posts.json')); p=next((x for x in data.get('posts',[]) if x.get('slug')=='$SLUG'), None); print(p.get('translationSlug','') if p else '')")
-        if [ -n "$TRANS" ] && [ -f "$ROOT_DIR/en/blog/posts/$TRANS.md" ]; then
-            EN_FILE="$ROOT_DIR/en/blog/posts/$TRANS.md"
-        fi
-    elif [ -n "$EN_FILE" ] && [ -z "$TR_FILE" ]; then
-        TRANS=$(python3 -c "import json; data=json.load(open('$ROOT_DIR/en/blog/posts.json')); p=next((x for x in data.get('posts',[]) if x.get('slug')=='$SLUG'), None); print(p.get('translationSlug','') if p else '')")
-        if [ -n "$TRANS" ] && [ -f "$ROOT_DIR/tr/blog/posts/$TRANS.md" ]; then
-            TR_FILE="$ROOT_DIR/tr/blog/posts/$TRANS.md"
-        fi
-    fi
+manifests = {}
+for lang in ("en", "tr"):
+    mp = root / lang / "blog" / "posts.json"
+    manifests[lang] = json.loads(mp.read_text(encoding="utf-8")).get("posts", []) if mp.exists() else []
+
+def resolve(lang, s):
+    posts_dir = root / lang / "blog" / "posts"
+    for p in manifests[lang]:
+        if p.get("slug") == s or p.get("path") == target:
+            rel = p.get("path") or f"{p['slug']}.md"
+            cand = posts_dir / rel
+            if cand.exists():
+                return str(cand), p.get("translationSlug", "")
+    # Fallback: recursive search by exact or numbered filename
+    for cand in sorted(posts_dir.rglob("*.md")):
+        if cand.stem in (s, clean_slug) or cand.stem.endswith(f"-{clean_slug}"):
+            return str(cand), ""
+    return "", ""
+
+en_file, en_trans = resolve("en", clean_slug)
+tr_file, tr_trans = resolve("tr", clean_slug)
+
+if not en_file and tr_trans:
+    en_file, _ = resolve("en", tr_trans)
+if not tr_file and en_trans:
+    tr_file, _ = resolve("tr", en_trans)
+
+print(f"{en_file}\t{tr_file}")
+PY
+)
 
     FILES_TO_CHECK=()
     [ -n "$EN_FILE" ] && FILES_TO_CHECK+=("$EN_FILE")

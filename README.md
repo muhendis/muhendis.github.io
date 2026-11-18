@@ -44,7 +44,7 @@ git ls-files | grep -c nojekyll   # must print 1
 
 ## Adding a blog post
 
-1. **Write the Markdown** in `en/blog/posts/<slug>.md` (or `tr/…`).
+1. **Write the Markdown** in `en/blog/posts/<NN>-<series-id>/<NN>-<slug>.md` (or `tr/…`; drafts live in `_drafts/<slug>.md`, standalone posts in `standalone/<slug>.md`).
    - Start the body at `##`. **No `# H1`** — the `<h1>` is rendered from the
      `title` in `posts.json` so the heading, `<title>` and Open Graph tags
      cannot drift apart.
@@ -56,7 +56,8 @@ git ls-files | grep -c nojekyll   # must print 1
 
    ```json
    {
-     "slug": "my-post",            // must equal the filename without .md
+     "slug": "my-post",            // URL identifier (?slug=my-post)
+     "path": "01-the-big-picture/01-my-post.md", // path relative to blog/posts/
      "title": "My post",
      "date": "2026-09-01",         // YYYY-MM-DD
      "summary": "5W1H summary for meta description and link previews.",
@@ -176,8 +177,8 @@ assets/css/            tokens → base → layout → components
 assets/js/             site.js, blog-index.js, blog-post.js
 assets/js/vendor/      marked.umd.js + its MIT licence
 en/, tr/               one directory per language
-  blog/posts/*.md      post bodies
-  blog/posts.json      post index (source of truth for metadata)
+  blog/posts/          post bodies grouped by numbered module (<NN>-<series-id>/<NN>-<slug>.md) and _drafts/
+  blog/posts.json      post index (source of truth for metadata and file paths)
 .github/scripts/       validate_site.py
 ```
 

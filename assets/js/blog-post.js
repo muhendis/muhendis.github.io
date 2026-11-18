@@ -12,6 +12,7 @@
   /* Allowlist. Without this the slug parameter is concatenated straight into
      a fetch path (?slug=../../something). */
   var SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  var PATH_RE = /^(?!.*\.\.)[a-z0-9_-]+(?:\/[a-z0-9_-]+)*\.md$/;
 
   var T = {
     en: { notFound: 'Post not found.', failIndex: 'Could not load the post index.',
@@ -460,7 +461,8 @@
         })[0];
         if (!meta) throw new Error('missing');
 
-        return fetch(BASE + '/posts/' + slug + '.md', { cache: 'no-cache' })
+        var relPath = (meta.path && PATH_RE.test(meta.path)) ? meta.path : (slug + '.md');
+        return fetch(BASE + '/posts/' + relPath, { cache: 'no-cache' })
           .then(function (res) {
             if (!res.ok) throw new Error('missing');
             return res.text();

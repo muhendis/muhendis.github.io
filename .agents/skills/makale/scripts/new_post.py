@@ -23,8 +23,12 @@ def main():
     root = Path(__file__).resolve().parents[4]
     today = datetime.date.today().isoformat()
 
-    tr_md_path = root / f"tr/blog/posts/{tr_slug}.md"
-    en_md_path = root / f"en/blog/posts/{en_slug}.md"
+    tr_rel = f"_drafts/{tr_slug}.md"
+    en_rel = f"_drafts/{en_slug}.md"
+    tr_md_path = root / "tr/blog/posts" / tr_rel
+    en_md_path = root / "en/blog/posts" / en_rel
+    tr_md_path.parent.mkdir(parents=True, exist_ok=True)
+    en_md_path.parent.mkdir(parents=True, exist_ok=True)
 
     if tr_md_path.exists():
         print(f"Hata: {tr_md_path} zaten mevcut!")
@@ -240,14 +244,15 @@ Console output:
     print(f"Oluşturuldu: {en_md_path}")
 
     # posts.json dosyalarına draft entry ekleme
-    for p_file, slug, title, trans in [
-        (root / "tr/blog/posts.json", tr_slug, tr_title, en_slug),
-        (root / "en/blog/posts.json", en_slug, en_title, tr_slug)
+    for p_file, slug, rel_path, title, trans in [
+        (root / "tr/blog/posts.json", tr_slug, tr_rel, tr_title, en_slug),
+        (root / "en/blog/posts.json", en_slug, en_rel, en_title, tr_slug)
     ]:
         if p_file.exists():
             data = json.loads(p_file.read_text(encoding='utf-8'))
             entry = {
                 "slug": slug,
+                "path": rel_path,
                 "title": title,
                 "date": today,
                 "summary": "Ne: ... Neden önemli: ... Nasıl: ... Nerede: ... Kim için: ... Ne zaman: ...",

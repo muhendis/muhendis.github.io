@@ -65,7 +65,7 @@ flowchart TD
 3. **İskelet Oluştur (Scaffold):**
    - Yeni bir makale çifti açılacaksa `./.agents/skills/makale/scripts/new_post.py` çalıştırılarak dosya şablonları ve `posts.json` taslak girdileri hazır kurulur.
 4. **EN ve TR'yi Eşzamanlı Yaz:**
-   - Önce İngilizce metin (`en/blog/posts/<slug>.md`), hemen ardından bağımsız okunan akıcı Türkçe metin (`tr/blog/posts/<slug>.md`) yazılır.
+   - Önce İngilizce metin (`en/blog/posts/<NN>-<series-id>/<NN>-<slug>.md` veya taslaksa `_drafts/<slug>.md`), hemen ardından bağımsız okunan akıcı Türkçe metin (`tr/blog/posts/<NN>-<series-id>/<NN>-<slug>.md`) yazılır.
 5. **Sayısal Hesabı Python ile Doğrula:**
    - Makaledeki tüm matris çarpımları, softmax değerleri ve varyans hesapları bağımsız Python scripti ile çalıştırılıp konsol çıktısı alınarak teyit edilir.
 6. **İndeksleri Güncelle:**

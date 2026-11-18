@@ -151,6 +151,7 @@
   "posts": [
     {
       "slug": "how-ai-security-works",
+      "path": "01-the-big-picture/03-how-ai-security-works.md",
       "title": "The Big Picture (3): AI Security, End to End — Beyond Filters: Deterministic Boundaries and Provable Defense Architecture",
       "date": "2026-10-30",
       "seriesId": "the-big-picture",
@@ -171,6 +172,7 @@
     },
     {
       "slug": "from-standards-to-evidence",
+      "path": "08-secure-ai-by-design/12-from-standards-to-evidence.md",
       "title": "Secure AI by Design (12): From Standards to Evidence — Making AI Security Auditable",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -193,6 +195,7 @@
     },
     {
       "slug": "ai-observability-and-incident-response",
+      "path": "08-secure-ai-by-design/11-ai-observability-and-incident-response.md",
       "title": "Secure AI by Design (11): Observability and Incident Response for AI Operations",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -215,6 +218,7 @@
     },
     {
       "slug": "measuring-ai-security",
+      "path": "08-secure-ai-by-design/10-measuring-ai-security.md",
       "title": "Secure AI by Design (10): Measuring AI Security — Red Teaming and Turkish Evaluation",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -237,6 +241,7 @@
     },
     {
       "slug": "secure-ai-serving",
+      "path": "08-secure-ai-by-design/09-secure-ai-serving.md",
       "title": "Secure AI by Design (9): Secure AI Serving — from API Gateway to Model Server",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -259,6 +264,7 @@
     },
     {
       "slug": "least-privilege-for-ai-agents",
+      "path": "08-secure-ai-by-design/08-least-privilege-for-ai-agents.md",
       "title": "Secure AI by Design (8): Least Privilege and Safe Tool Use for AI Agents",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -281,6 +287,7 @@
     },
     {
       "slug": "rag-and-memory-security",
+      "path": "08-secure-ai-by-design/07-rag-and-memory-security.md",
       "title": "Secure AI by Design (7): RAG and Memory Security — Authorized Access to the Right Knowledge",
       "date": "2026-10-30",
       "seriesId": "secure-ai-by-design",
@@ -303,6 +310,7 @@
     },
     {
       "slug": "layered-guardrails",
+      "path": "08-secure-ai-by-design/06-layered-guardrails.md",
       "title": "Secure AI by Design (6): Layered Guardrails — Rules, NLP, Classifiers and Small Models",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -325,6 +333,7 @@
     },
     {
       "slug": "prompt-injection-and-the-trust-boundary",
+      "path": "08-secure-ai-by-design/05-prompt-injection-and-the-trust-boundary.md",
       "title": "Secure AI by Design (5): Prompt Injection — the Trust Boundary Between Data and Instructions",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -347,6 +356,7 @@
     },
     {
       "slug": "securing-the-ai-supply-chain",
+      "path": "08-secure-ai-by-design/04-securing-the-ai-supply-chain.md",
       "title": "Secure AI by Design (4): From Model to Dependency — Securing the AI Supply Chain",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -369,6 +379,7 @@
     },
     {
       "slug": "securing-ai-data-from-source-to-deletion",
+      "path": "08-secure-ai-by-design/03-securing-ai-data-from-source-to-deletion.md",
       "title": "Secure AI by Design (3): Secure AI Data, from Source to Deletion",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -391,6 +402,7 @@
     },
     {
       "slug": "ai-threat-modeling-and-trust-boundaries",
+      "path": "08-secure-ai-by-design/02-ai-threat-modeling-and-trust-boundaries.md",
       "title": "Secure AI by Design (2): Threat Modeling and Trust Boundaries in AI Systems",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -413,6 +425,7 @@
     },
     {
       "slug": "ai-security-starts-at-design",
+      "path": "08-secure-ai-by-design/01-ai-security-starts-at-design.md",
       "title": "Secure AI by Design (1): AI Security Starts at Design — Assets, Principles and Owners",
       "date": "2026-10-29",
       "seriesId": "secure-ai-by-design",
@@ -434,6 +447,7 @@
     },
     {
       "slug": "how-to-read-a-gpu-datasheet",
+      "path": "07-ai-infrastructure/06-how-to-read-a-gpu-datasheet.md",
       "title": "AI Infrastructure (6): How to Read a GPU Datasheet — Home or Datacenter? The DGX Station (GB300) Teardown",
       "date": "2026-10-18",
       "seriesId": "ai-infrastructure",
@@ -457,6 +471,7 @@
     },
     {
       "slug": "how-ai-infrastructure-works",
+      "path": "01-the-big-picture/02-how-ai-infrastructure-works.md",
       "title": "The Big Picture (2): AI Infrastructure, End to End — From Silicon to Supercomputers, The Physical Lifecycle of a Tensor",
       "date": "2026-10-17",
       "summary": "What: The complete panoramic blueprint of AI infrastructure from silicon microarchitecture up to a 16,384-GPU supercomputer. Why it matters: Unifying memory, network, and power bottlenecks into a coherent mental model when algorithms meet physics. How: Via SM anatomy, prefill/decode duality, rail-optimized fabrics, 4D parallelism, Young-Daly checkpointing, and FinOps metrics. Where: Across modern H100/H200 DGX and SuperPOD data centers. For whom: Senior software engineers, systems architects, and platform teams. When: Designing large-scale LLM training or inference infrastructure.",
@@ -475,6 +490,7 @@
     },
     {
       "slug": "enterprise-ai-platform-architecture",
+      "path": "07-ai-infrastructure/05-enterprise-ai-platform-architecture.md",
       "title": "AI Infrastructure (5): How Do You Design AI Hardware? — GPUs, Network, Storage, and Power",
       "date": "2026-10-17",
       "seriesId": "ai-infrastructure",
@@ -498,6 +514,7 @@
     },
     {
       "slug": "from-gpus-to-ai-supercomputers",
+      "path": "07-ai-infrastructure/04-from-gpus-to-ai-supercomputers.md",
       "title": "AI Infrastructure (4): Why Does an AI Cluster Slow Down? — Storage, Failures, and MFU",
       "date": "2026-10-16",
       "seriesId": "ai-infrastructure",
@@ -521,6 +538,7 @@
     },
     {
       "slug": "multi-gpu-networks-and-distributed-training",
+      "path": "07-ai-infrastructure/03-multi-gpu-networks-and-distributed-training.md",
       "title": "AI Infrastructure (3): How Do GPUs Work Together? — NVLink, InfiniBand, and Parallelism",
       "date": "2026-10-17",
       "seriesId": "ai-infrastructure",
@@ -544,6 +562,7 @@
     },
     {
       "slug": "gpu-workloads-and-production-inference",
+      "path": "07-ai-infrastructure/02-gpu-workloads-and-production-inference.md",
       "title": "AI Infrastructure (2): How Does an LLM Use a GPU? — Training, Prefill, and Decode",
       "date": "2026-10-17",
       "seriesId": "ai-infrastructure",
@@ -567,6 +586,7 @@
     },
     {
       "slug": "understanding-gpus-and-llm-scaling",
+      "path": "07-ai-infrastructure/01-understanding-gpus-and-llm-scaling.md",
       "title": "AI Infrastructure (1): How Does a GPU Work? — From One SM to 16,384 GPUs",
       "date": "2026-10-10",
       "seriesId": "ai-infrastructure",
@@ -590,6 +610,7 @@
     },
     {
       "slug": "inside-the-context-window",
+      "path": "03-a-prompts-journey/09-inside-the-context-window.md",
       "title": "A Prompt's Journey (9): Inside the Context Window — From the 2K Wall to FlashAttention, RoPE/YaRN, and 2026 Hybrid Mamba Architectures",
       "date": "2026-10-10",
       "seriesId": "a-prompts-journey",
@@ -612,6 +633,7 @@
     },
     {
       "slug": "inside-the-output-layer",
+      "path": "03-a-prompts-journey/08-inside-the-output-layer.md",
       "title": "A Prompt's Journey (8): The Output Layer (LM Head) — Logits, the Memory Wall, Megatron-LM, and Speculative Decoding",
       "date": "2026-10-04",
       "seriesId": "a-prompts-journey",
@@ -634,6 +656,7 @@
     },
     {
       "slug": "inside-initialization-and-normalization",
+      "path": "02-building-blocks-of-neural-networks/05-inside-initialization-and-normalization.md",
       "title": "Building Blocks of Neural Networks (5): Weight Initialization and Normalization — Xavier, Kaiming, LayerNorm, and RMSNorm mathematics",
       "date": "2026-10-01",
       "seriesId": "building-blocks-of-neural-networks",
@@ -654,6 +677,7 @@
     },
     {
       "slug": "inside-optimization-algorithms",
+      "path": "02-building-blocks-of-neural-networks/04-inside-optimization-algorithms.md",
       "title": "Building Blocks of Neural Networks (4): Optimization Algorithms — SGD oscillations, the AdamW paradox, and the Muon revolution",
       "date": "2026-10-01",
       "seriesId": "building-blocks-of-neural-networks",
@@ -674,6 +698,7 @@
     },
     {
       "slug": "inside-backpropagation-and-autodiff",
+      "path": "02-building-blocks-of-neural-networks/03-inside-backpropagation-and-autodiff.md",
       "title": "Building Blocks of Neural Networks (3): Backpropagation and Autodiff — computational graphs, activation memory, and chain rule anatomy",
       "date": "2026-10-01",
       "seriesId": "building-blocks-of-neural-networks",
@@ -694,6 +719,7 @@
     },
     {
       "slug": "inside-loss-functions",
+      "path": "02-building-blocks-of-neural-networks/02-inside-loss-functions.md",
       "title": "Building Blocks of Neural Networks (2): Loss Functions — the geometry of error, Log-Sum-Exp stability, and the Cross-Entropy simplification",
       "date": "2026-10-01",
       "seriesId": "building-blocks-of-neural-networks",
@@ -714,6 +740,7 @@
     },
     {
       "slug": "inside-activation-functions",
+      "path": "02-building-blocks-of-neural-networks/01-inside-activation-functions.md",
       "title": "Building Blocks of Neural Networks (1): Activation Functions — the geometry of non-linearity, vanishing gradients, and the SwiGLU revolution",
       "date": "2026-10-01",
       "seriesId": "building-blocks-of-neural-networks",
@@ -734,6 +761,7 @@
     },
     {
       "slug": "inside-the-transformer-block",
+      "path": "03-a-prompts-journey/07-inside-the-transformer-block.md",
       "title": "A Prompt's Journey (7): The Transformer Block — the gradient highway, the convex hull, and FFN associative memory",
       "date": "2026-09-30",
       "seriesId": "a-prompts-journey",
@@ -755,6 +783,7 @@
     },
     {
       "slug": "inside-causal-attention",
+      "path": "03-a-prompts-journey/05-inside-causal-attention.md",
       "title": "A Prompt's Journey (5): Inside Causal Attention — The Arrow of Time, Lower Triangular Matrices, and the Math of the Void",
       "date": "2026-09-28",
       "seriesId": "a-prompts-journey",
@@ -774,6 +803,7 @@
     },
     {
       "slug": "how-ai-agent-memory-works",
+      "path": "05-from-prompting-to-agents/03-how-ai-agent-memory-works.md",
       "title": "From Prompting to Agents (3): Agent Memory — write and read paths, supersession, dreaming, and multi-agent scope",
       "date": "2026-09-27",
       "seriesId": "from-prompting-to-agents",
@@ -793,6 +823,7 @@
     },
     {
       "slug": "inside-multi-head-attention",
+      "path": "03-a-prompts-journey/06-inside-multi-head-attention.md",
       "title": "A Prompt's Journey (6): Inside Multi-Head Attention — subspaces, symmetry breaking, and head pruning",
       "date": "2026-09-29",
       "seriesId": "a-prompts-journey",
@@ -812,6 +843,7 @@
     },
     {
       "slug": "how-tokenization-works",
+      "path": "03-a-prompts-journey/01-how-tokenization-works.md",
       "title": "A Prompt's Journey (1): Tokenization — from text to integers, BPE mechanics, and fertility",
       "date": "2026-09-19",
       "seriesId": "a-prompts-journey",
@@ -830,6 +862,7 @@
     },
     {
       "slug": "inside-the-embedding-layer",
+      "path": "03-a-prompts-journey/02-inside-the-embedding-layer.md",
       "title": "A Prompt's Journey (2): The Embedding Layer — from token IDs to continuous vectors, lookup tables, and RoPE",
       "date": "2026-09-20",
       "seriesId": "a-prompts-journey",
@@ -848,6 +881,7 @@
     },
     {
       "slug": "how-embeddings-work",
+      "path": "03-a-prompts-journey/03-how-embeddings-work.md",
       "title": "A Prompt's Journey (3): Semantic Embeddings — the coordinates of meaning, cosine distance, and HNSW search space",
       "date": "2026-09-21",
       "seriesId": "a-prompts-journey",
@@ -866,6 +900,7 @@
     },
     {
       "slug": "inside-self-attention",
+      "path": "03-a-prompts-journey/04-inside-self-attention.md",
       "title": "A Prompt's Journey (4): Inside Self-Attention — Q, K, V mechanics, step-by-step matrix arithmetic, and context vectors",
       "date": "2026-09-26",
       "seriesId": "a-prompts-journey",
@@ -885,6 +920,7 @@
     },
     {
       "slug": "optimizing-llm-cost-and-latency",
+      "path": "04-llm-systems-in-production/01-optimizing-llm-cost-and-latency.md",
       "title": "LLM Systems in Production (1): Cost & Latency Anatomy — TTFT, TPOT, prompt caching, and model routing",
       "date": "2026-09-04",
       "seriesId": "llm-systems-in-production",
@@ -903,6 +939,7 @@
     },
     {
       "slug": "vllm-from-paper-to-production",
+      "path": "04-llm-systems-in-production/02-vllm-from-paper-to-production.md",
       "title": "LLM Systems in Production (2): Inside the vLLM Engine — continuous batching, prefix caching, and KV memory management",
       "date": "2026-09-05",
       "seriesId": "llm-systems-in-production",
@@ -921,6 +958,7 @@
     },
     {
       "slug": "prompting-techniques",
+      "path": "05-from-prompting-to-agents/01-prompting-techniques.md",
       "title": "From Prompting to Agents (1): Reasoning & Prompting — Chain-of-Thought, ReAct, and the era of reasoning models",
       "date": "2026-09-03",
       "seriesId": "from-prompting-to-agents",
@@ -939,6 +977,7 @@
     },
     {
       "slug": "anatomy-of-an-agent-prompt",
+      "path": "05-from-prompting-to-agents/02-anatomy-of-an-agent-prompt.md",
       "title": "From Prompting to Agents (2): Anatomy of an Agent Prompt — system contracts, tool boundaries, and 8 building blocks",
       "date": "2026-09-04",
       "seriesId": "from-prompting-to-agents",
@@ -957,6 +996,7 @@
     },
     {
       "slug": "what-a-vector-database-actually-does",
+      "path": "06-rag-and-retrieval/01-what-a-vector-database-actually-does.md",
       "title": "RAG & Retrieval Architecture (1): Vector Database Architecture — from ANN indexing to metadata filtering and live data",
       "date": "2026-09-02",
       "seriesId": "rag-and-retrieval",
@@ -975,6 +1015,7 @@
     },
     {
       "slug": "which-rag-pattern-do-you-need",
+      "path": "06-rag-and-retrieval/02-which-rag-pattern-do-you-need.md",
       "title": "RAG & Retrieval Architecture (2): Production RAG Patterns — diagnosing 4 root failures, HyDE, hybrid search, and reranking",
       "date": "2026-09-03",
       "seriesId": "rag-and-retrieval",
@@ -993,6 +1034,7 @@
     },
     {
       "slug": "how-llms-work",
+      "path": "01-the-big-picture/01-how-llms-work.md",
       "pinned": true,
       "title": "The Big Picture (1): An LLM, End to End — tokens, transformer, training, inference, and why it makes things up",
       "date": "2026-08-29",
@@ -1011,6 +1053,7 @@
     },
     {
       "slug": "langgraph-flow-design-llm-applications",
+      "path": "_drafts/langgraph-flow-design-llm-applications.md",
       "title": "Flow design in LLM applications with LangGraph",
       "date": "2026-08-29",
       "seriesId": null,
@@ -1027,6 +1070,7 @@
     },
     {
       "slug": "post-training-quantization-llm-inference",
+      "path": "_drafts/post-training-quantization-llm-inference.md",
       "title": "Post-training quantization for LLM inference",
       "date": "2026-08-29",
       "seriesId": null,

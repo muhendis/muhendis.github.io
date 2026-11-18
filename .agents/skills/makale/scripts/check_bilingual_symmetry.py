@@ -71,25 +71,32 @@ def main():
     root = Path(__file__).resolve().parents[4]
 
     if len(sys.argv) == 2:
-        slug = sys.argv[1].replace('.md', '')
-        # slug translationSlug olabilir; kontrol et
-        en_path = root / f"en/blog/posts/{slug}.md"
-        tr_path = root / f"tr/blog/posts/{slug}.md"
+        import json
+        slug = Path(sys.argv[1]).stem
+        slug = re.sub(r"^\d{2}-", "", slug)
 
-        if not en_path.exists() or not tr_path.exists():
-            # posts.json'dan translationSlug bak
-            import json
-            for p_file in [root / "tr/blog/posts.json", root / "en/blog/posts.json"]:
-                if p_file.exists():
-                    data = json.loads(p_file.read_text())
-                    for item in data.get('posts', []):
-                        if item.get('slug') == slug:
-                            trans = item.get('translationSlug')
-                            if trans:
-                                if not en_path.exists():
-                                    en_path = root / f"en/blog/posts/{trans}.md"
-                                if not tr_path.exists():
-                                    tr_path = root / f"tr/blog/posts/{trans}.md"
+        def find_post(lang, target_slug):
+            posts_dir = root / f"{lang}/blog/posts"
+            p_file = root / f"{lang}/blog/posts.json"
+            if p_file.exists():
+                data = json.loads(p_file.read_text(encoding='utf-8'))
+                for item in data.get('posts', []):
+                    if item.get('slug') == target_slug:
+                        rel = item.get('path') or f"{target_slug}.md"
+                        cand = posts_dir / rel
+                        if cand.exists():
+                            return cand, item.get('translationSlug')
+            for cand in sorted(posts_dir.rglob("*.md")):
+                if cand.stem == target_slug or re.sub(r"^\d{2}-", "", cand.stem) == target_slug:
+                    return cand, None
+            return posts_dir / f"{target_slug}.md", None
+
+        en_path, en_trans = find_post("en", slug)
+        tr_path, tr_trans = find_post("tr", slug)
+        if not en_path.exists() and tr_trans:
+            en_path, _ = find_post("en", tr_trans)
+        if not tr_path.exists() and en_trans:
+            tr_path, _ = find_post("tr", en_trans)
     else:
         en_path = Path(sys.argv[1])
         tr_path = Path(sys.argv[2])
