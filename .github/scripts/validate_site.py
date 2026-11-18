@@ -121,6 +121,7 @@ def normalise(s):
 for lang in LANGS:
     files = [ROOT / lang / p for p in PAGES]
     files += [ROOT / lang / "blog" / "index.html", ROOT / lang / "blog" / "post.html"]
+    files += [ROOT / lang / "aklimda-kalanlar" / "index.html", ROOT / lang / "aklimda-kalanlar" / "post.html"]
     seen = {}
     for f in files:
         if not f.exists():
@@ -159,6 +160,21 @@ else:
                 warn(f"sitemap.xml does not list {want}")
         if f"/{lang}/blog/" not in text:
             warn(f"sitemap.xml does not list /{lang}/blog/")
+        if f"/{lang}/aklimda-kalanlar/" not in text:
+            warn(f"sitemap.xml does not list /{lang}/aklimda-kalanlar/")
+        aklimda_json = ROOT / lang / "aklimda-kalanlar" / "posts.json"
+        if aklimda_json.exists():
+            try:
+                ak_data = json.loads(aklimda_json.read_text(encoding="utf-8"))
+                ak_dir = ROOT / lang / "aklimda-kalanlar" / "posts"
+                for ak_p in ak_data.get("posts", []):
+                    ak_rel = ak_p.get("path") or f"{ak_p.get('slug', '')}.md"
+                    if not (ak_dir / ak_rel).exists():
+                        err(f"{lang}/aklimda-kalanlar: {ak_rel} does not exist on disk.")
+                    if not ak_p.get("draft") and f"slug={ak_p['slug']}" not in text:
+                        warn(f"sitemap.xml does not list the published essay {lang}/aklimda-kalanlar/{ak_p['slug']}")
+            except Exception as e:
+                err(f"{lang}/aklimda-kalanlar/posts.json error: {e}")
     for lang, man in manifests.items():
         for p in man.get("posts", []):
             if p.get("draft"):

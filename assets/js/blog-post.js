@@ -6,7 +6,7 @@
 
   var LANG = document.documentElement.lang === 'tr' ? 'tr' : 'en';
   var OTHER = LANG === 'en' ? 'tr' : 'en';
-  var BASE = '/' + LANG + '/blog';
+  var BASE = (document.body && document.body.dataset && document.body.dataset.base) || ('/' + LANG + '/blog');
   var ORIGIN = 'https://muhendis.github.io';
 
   /* Allowlist. Without this the slug parameter is concatenated straight into
@@ -611,7 +611,7 @@
               document.head.appendChild(mjs);
             }
 
-            var url = ORIGIN + '/' + LANG + '/blog/post.html?slug=' + slug;
+            var url = ORIGIN + BASE + '/post.html?slug=' + slug;
             document.title = meta.title + ' — Engin Bozaba';
             setMeta('name', 'description', meta.summary || '');
             setMeta('property', 'og:title', meta.title);

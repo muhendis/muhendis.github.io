@@ -179,6 +179,9 @@ assets/js/vendor/      marked.umd.js + its MIT licence
 en/, tr/               one directory per language
   blog/posts/          post bodies grouped by numbered module (<NN>-<series-id>/<NN>-<slug>.md) and _drafts/
   blog/posts.json      post index (source of truth for metadata and file paths)
+  aklimda-kalanlar/    personal essays section ("Aklımda Kalanlar" / "Reflections")
+    posts/             essay markdown files
+    posts.json         essay index (slug, title, summary, date, draft)
 .github/scripts/       validate_site.py
 ```
 

@@ -1,0 +1,17 @@
+{
+  "lang": "en",
+  "title": "Reflections",
+  "description": "Questions that linger from work and life, ideas that changed my mind over time, and concepts I keep thinking about.",
+  "posts": [
+    {
+      "slug": "when-to-step-in-when-to-leave-room",
+      "path": "when-to-step-in-when-to-leave-room.md",
+      "title": "When to step in, when to leave room",
+      "date": "2026-11-18",
+      "summary": "Questions on leadership, mentorship, and knowing when to own a problem directly versus stepping back so the team can find their own solution.",
+      "readingMinutes": 3,
+      "translationSlug": "ne-zaman-devreye-girmeli-ne-zaman-alan-birakmali",
+      "draft": true
+    }
+  ]
+}

@@ -90,6 +90,22 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://muhendis.github.io/en/aklimda-kalanlar/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/aklimda-kalanlar/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/aklimda-kalanlar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/aklimda-kalanlar/"/>
+    <lastmod>2026-11-18</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/aklimda-kalanlar/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/aklimda-kalanlar/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/aklimda-kalanlar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/aklimda-kalanlar/"/>
+    <lastmod>2026-11-18</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://muhendis.github.io/en/blog/post.html?slug=how-llms-work</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-llms-work"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=llm-nasil-calisir"/>

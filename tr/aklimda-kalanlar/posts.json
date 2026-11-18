@@ -1,0 +1,17 @@
+{
+  "lang": "tr",
+  "title": "Aklımda Kalanlar",
+  "description": "İşte ve hayatta aklıma takılan sorular, yaşadıkça fikrimi değiştiren şeyler ve üzerine düşündüğüm kavramlar.",
+  "posts": [
+    {
+      "slug": "ne-zaman-devreye-girmeli-ne-zaman-alan-birakmali",
+      "path": "ne-zaman-devreye-girmeli-ne-zaman-alan-birakmali.md",
+      "title": "Ne zaman devreye girmeli, ne zaman alan bırakmalı?",
+      "date": "2026-11-18",
+      "summary": "Ekip çalışmasında ve teknik rehberlikte bir sorunu ne zaman doğrudan sahiplenmeli, ne zaman geri çekilip ekibin kendi çözümünü bulmasına alan bırakmalı?",
+      "readingMinutes": 3,
+      "translationSlug": "when-to-step-in-when-to-leave-room",
+      "draft": true
+    }
+  ]
+}
