@@ -4,6 +4,16 @@
   "description": "İşte ve hayatta aklıma takılan sorular, yaşadıkça fikrimi değiştiren şeyler ve üzerine düşündüğüm kavramlar.",
   "posts": [
     {
+      "slug": "cumlenin-devami",
+      "path": "cumlenin-devami.md",
+      "title": "Cümlenin Devamı",
+      "date": "2026-11-18",
+      "summary": "Bir dostunun sözünü bitirmesini beklemek neden bir öneride bulunmaktan daha zordur? Çay soğusa da dinlemenin, acele etmemenin ve cümlenin devamına kulak vermenin değeri üzerine.",
+      "readingMinutes": 3,
+      "translationSlug": "the-rest-of-the-sentence",
+      "draft": false
+    },
+    {
       "slug": "ne-zaman-devreye-girmeli-ne-zaman-alan-birakmali",
       "path": "ne-zaman-devreye-girmeli-ne-zaman-alan-birakmali.md",
       "title": "Ne zaman devreye girmeli, ne zaman alan bırakmalı?",

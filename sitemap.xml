@@ -106,6 +106,22 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://muhendis.github.io/en/aklimda-kalanlar/post.html?slug=the-rest-of-the-sentence</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/aklimda-kalanlar/post.html?slug=the-rest-of-the-sentence"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/aklimda-kalanlar/post.html?slug=cumlenin-devami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/aklimda-kalanlar/post.html?slug=the-rest-of-the-sentence"/>
+    <lastmod>2026-11-18</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://muhendis.github.io/tr/aklimda-kalanlar/post.html?slug=cumlenin-devami</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/aklimda-kalanlar/post.html?slug=the-rest-of-the-sentence"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/aklimda-kalanlar/post.html?slug=cumlenin-devami"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://muhendis.github.io/en/aklimda-kalanlar/post.html?slug=the-rest-of-the-sentence"/>
+    <lastmod>2026-11-18</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://muhendis.github.io/en/blog/post.html?slug=how-llms-work</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://muhendis.github.io/en/blog/post.html?slug=how-llms-work"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://muhendis.github.io/tr/blog/post.html?slug=llm-nasil-calisir"/>

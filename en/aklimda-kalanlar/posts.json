@@ -4,6 +4,16 @@
   "description": "Questions that linger from work and life, ideas that changed my mind over time, and concepts I keep thinking about.",
   "posts": [
     {
+      "slug": "the-rest-of-the-sentence",
+      "path": "the-rest-of-the-sentence.md",
+      "title": "The Rest of the Sentence",
+      "date": "2026-11-18",
+      "summary": "Why is waiting for a friend to finish their thought harder than offering a solution? On patience, letting the tea cool down, and the value of listening to the rest of the sentence.",
+      "readingMinutes": 3,
+      "translationSlug": "cumlenin-devami",
+      "draft": false
+    },
+    {
       "slug": "when-to-step-in-when-to-leave-room",
       "path": "when-to-step-in-when-to-leave-room.md",
       "title": "When to step in, when to leave room",
