@@ -77,11 +77,14 @@
     var link = document.querySelector('.lang-switch');
     if (!link) return;
 
+    var section = BASE.replace(/^\/(?:tr|en)/, '');
+    var otherBase = '/' + OTHER + section;
+
     if (translationSlug && SLUG_RE.test(translationSlug)) {
-      link.href = '/' + OTHER + '/blog/post.html?slug=' + encodeURIComponent(translationSlug);
+      link.href = otherBase + '/post.html?slug=' + encodeURIComponent(translationSlug);
       var alt = document.createElement('link');
       alt.rel = 'alternate'; alt.hreflang = OTHER;
-      alt.href = ORIGIN + '/' + OTHER + '/blog/post.html?slug=' + encodeURIComponent(translationSlug);
+      alt.href = ORIGIN + otherBase + '/post.html?slug=' + encodeURIComponent(translationSlug);
       document.head.appendChild(alt);
       return;
     }
@@ -101,7 +104,7 @@
       notice.hidden = false;
       notice.textContent = tOther.noTransNotice + ' ';
       var a = document.createElement('a');
-      a.href = '/' + OTHER + '/blog/';
+      a.href = otherBase + '/';
       a.setAttribute('lang', OTHER);
       a.textContent = tOther.allPosts;
       notice.appendChild(a);
